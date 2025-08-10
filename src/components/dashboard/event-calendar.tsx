@@ -108,16 +108,17 @@ const CalendarGrid = ({
         )}
       <div className={cn("divide-y border-t", {"border-t-0 divide-y-0": isYearView})}>
         {weeks.map((week, weekIndex) => {
-            const eventHeight = isYearView ? 22 : 30; // height of event item
-            const eventGap = isYearView ? 2 : 4; // gap between event items
-            const baseCellHeight = isYearView ? 28 : 32; // base h- of a cell (for day number)
-            
-            const maxEventsInWeek = Math.max(0, ...week.map(day => {
+            const eventHeight = isYearView ? 22 : 30;
+            const eventGap = isYearView ? 2 : 4;
+            const baseCellHeight = isYearView ? 28 : 32;
+
+            const maxEventsInWeek = Math.max(1, ...week.map(day => {
                 return events.filter(event => isSameDay(new Date(event.date), day)).length;
             }));
             
             const requiredContentHeight = maxEventsInWeek * (eventHeight + eventGap);
             const cellHeight = baseCellHeight + requiredContentHeight;
+
 
           return (
           <div key={weekIndex} className="table table-fixed w-full border-t first:border-t-0 md:border-t">
@@ -154,7 +155,7 @@ const CalendarGrid = ({
                         >
                             {format(day, 'd')}
                         </span>
-                        <div className="relative z-10 space-y-1">
+                        <div className="absolute top-0 left-0 w-full p-1.5 z-10 space-y-1">
                         {dayEvents.map((event, index) => (
                             <button
                                 key={event.id}
@@ -167,7 +168,14 @@ const CalendarGrid = ({
                                     event.status === 'public_holiday' ? 'bg-green-500/20 hover:bg-green-500/30' :
                                     'bg-accent/20 hover:bg-accent/30 text-accent-foreground'
                                 )}
-                                style={{ height: `${eventHeight}px` }}
+                                style={{
+                                    height: `${eventHeight}px`,
+                                    top: `${baseCellHeight + index * (eventHeight + eventGap)}px`,
+                                    position: 'absolute',
+                                    left: '0.375rem',
+                                    right: '0.375rem',
+                                    width: 'calc(100% - 0.75rem)'
+                                }}
                             >
                                 <div className={cn("flex items-start gap-1.5", { "gap-1": isYearView })}>
                                 <div className="flex-shrink-0 pt-0.5">

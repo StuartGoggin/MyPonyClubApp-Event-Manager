@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   eachDayOfInterval,
   endOfMonth,
@@ -67,16 +67,17 @@ const CalendarGrid = ({
   events,
   onEventClick,
   isYearView = false,
+  today,
 }: {
   month: Date;
   events: Event[];
   onEventClick: (eventId: string) => void;
   isYearView?: boolean;
+  today: Date;
 }) => {
   const start = startOfWeek(startOfMonth(month), { weekStartsOn });
   const end = endOfWeek(endOfMonth(month), { weekStartsOn });
   
-  // Create an array of weeks, where each week is an array of 7 days
   const weeks: Date[][] = [];
   let day = start;
   while (day <= end) {
@@ -109,6 +110,7 @@ const CalendarGrid = ({
                 const day = week.find(d => getDay(d) === dayIdx)!;
                 const isSaturday = getDay(day) === 6;
                 const isSunday = getDay(day) === 0;
+                const isCurrentDayToday = isSameDay(day, today);
 
                 return (
                     <div
@@ -117,7 +119,7 @@ const CalendarGrid = ({
                         'bg-background/50': !isSameMonth(day, month),
                         'bg-muted/20': !isSameMonth(day, month) && (isSaturday || isSunday),
                         'bg-muted/40': isSameMonth(day, month) && (isSaturday || isSunday),
-                        'relative': isToday(day),
+                        'relative': isCurrentDayToday,
                         'h-24': isYearView,
                         'col-span-2': isSaturday || isSunday,
                         'col-span-1': !isSaturday && !isSunday,
@@ -125,7 +127,7 @@ const CalendarGrid = ({
                     >
                         <span className={cn('font-medium text-sm', 
                         { 'text-muted-foreground': !isSameMonth(day, month) },
-                        { 'text-primary font-bold': isToday(day)},
+                        { 'text-primary font-bold': isCurrentDayToday},
                         { 'text-xs': isYearView }
                         )}>{format(day, 'd')}</span>
                         <div className="mt-1 space-y-1">
@@ -170,6 +172,12 @@ export function EventCalendar({
 }: EventCalendarProps) {
   const router = useRouter();
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [today, setToday] = useState<Date | null>(null);
+
+  useEffect(() => {
+    setToday(new Date());
+  }, []);
+  
   const [view, setView] = useState<'month' | 'year'>('month');
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [isDialogOpen, setDialogOpen] = useState(false);
@@ -272,6 +280,10 @@ export function EventCalendar({
     return setYear(startOfYear(new Date()), getYear(currentDate));
   }).map((d, i) => addMonths(d, i));
 
+  if (!today) {
+    return null; // or a loading skeleton
+  }
+
   return (
     <div className="bg-card rounded-lg border shadow-sm">
       <div className="flex flex-col gap-4 p-4 border-b">
@@ -357,7 +369,7 @@ export function EventCalendar({
       </div>
       
       {view === 'month' && (
-        <CalendarGrid month={currentDate} events={filteredEvents} onEventClick={handleEventClick} />
+        <CalendarGrid month={currentDate} events={filteredEvents} onEventClick={handleEventClick} today={today}/>
       )}
       
       {view === 'year' && (
@@ -365,7 +377,7 @@ export function EventCalendar({
             {yearMonths.map(month => (
                 <div key={month.toString()}>
                     <h3 className="text-lg font-semibold font-headline mb-2 text-center">{format(month, 'MMMM')}</h3>
-                    <CalendarGrid month={month} events={filteredEvents} onEventClick={handleEventClick} isYearView={true} />
+                    <CalendarGrid month={month} events={filteredEvents} onEventClick={handleEventClick} isYearView={true} today={today} />
                 </div>
             ))}
         </div>

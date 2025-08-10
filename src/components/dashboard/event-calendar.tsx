@@ -149,15 +149,16 @@ const CalendarGrid = ({
                                     'bg-accent/20 hover:bg-accent/30 text-accent-foreground'
                                 )}
                             >
-                                <div className={cn("flex items-center gap-1.5", { "gap-1": isYearView })}>
+                                <div className={cn("flex items-start gap-1.5", { "gap-1": isYearView })}>
+                                <div className="flex-shrink-0 pt-0.5">
                                 {event.status === 'approved' ? <CheckCircle className={cn("h-3 w-3 text-primary flex-shrink-0", { "h-2 w-2": isYearView })}/> :
                                  event.status === 'public_holiday' ? <FerrisWheel className={cn("h-3 w-3 text-green-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
                                  <Clock className={cn("h-3 w-3 text-accent flex-shrink-0", { "h-2 w-2": isYearView })}/>}
-                                <span className={cn("truncate font-medium", 
+                                </div>
+                                <span className={cn("font-medium whitespace-normal", 
                                     event.status === 'approved' ? 'text-primary' : 
                                     event.status === 'public_holiday' ? 'text-green-700' :
-                                    'text-accent',
-                                    { "hidden": isYearView }
+                                    'text-accent'
                                     )}>{event.name}</span>
                                 </div>
                             </button>

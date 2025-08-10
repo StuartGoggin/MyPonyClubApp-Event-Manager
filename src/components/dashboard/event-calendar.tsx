@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -93,7 +91,7 @@ const CalendarGrid = ({
   const dayIndexMap = [3, 4, 5, 6, 0, 1, 2]; // Wed=3, Thu=4, ..., Tue=2
 
   return (
-    <div className={cn("p-4 bg-card rounded-lg border shadow-sm", { "p-0 border-0 shadow-none": isYearView })}>
+    <div className={cn("bg-card rounded-lg border shadow-sm", { "p-0 border-0 shadow-none bg-transparent": isYearView })}>
         {!isYearView && (
              <div className="grid grid-cols-9 text-xs text-center font-medium text-muted-foreground">
                 {dayOrder.map((day, index) => (
@@ -103,9 +101,9 @@ const CalendarGrid = ({
                 ))}
             </div>
         )}
-      <div className="divide-y border-t">
+      <div className={cn("divide-y border-t", {"border-t-0 divide-y-0": isYearView})}>
         {weeks.map((week, weekIndex) => (
-          <div key={weekIndex} className="grid grid-cols-9 min-h-[h-32]">
+          <div key={weekIndex} className="grid grid-cols-9 min-h-[h-32] border-t first:border-t-0 md:border-t">
             {dayIndexMap.map(dayIdx => {
                 const day = week.find(d => getDay(d) === dayIdx)!;
                 const isSaturday = getDay(day) === 6;
@@ -116,20 +114,26 @@ const CalendarGrid = ({
                     <div
                         key={day.toString()}
                         className={cn('h-32 border-l p-1.5 overflow-y-auto', {
-                        'bg-background/50': !isSameMonth(day, month),
+                        'bg-background/50 text-muted-foreground': !isSameMonth(day, month),
                         'bg-muted/20': !isSameMonth(day, month) && (isSaturday || isSunday),
-                        'bg-muted/40': isSameMonth(day, month) && (isSaturday || isSunday),
+                        'bg-primary/5': isSameMonth(day, month) && (isSaturday || isSunday),
                         'relative': isCurrentDayToday,
                         'h-24': isYearView,
                         'col-span-2': isSaturday || isSunday,
                         'col-span-1': !isSaturday && !isSunday,
+                         'border-t-0': isYearView && weekIndex === 0
                         })}
                     >
-                        <span className={cn('font-medium text-sm', 
-                        { 'text-muted-foreground': !isSameMonth(day, month) },
-                        { 'text-primary font-bold': isCurrentDayToday},
-                        { 'text-xs': isYearView }
-                        )}>{format(day, 'd')}</span>
+                         <span
+                            className={cn(
+                                'flex items-center justify-center h-6 w-6 rounded-full text-sm',
+                                { 'text-muted-foreground': !isSameMonth(day, month) },
+                                { 'bg-primary text-primary-foreground font-bold': isCurrentDayToday },
+                                { 'text-xs h-5 w-5': isYearView }
+                            )}
+                        >
+                            {format(day, 'd')}
+                        </span>
                         <div className="mt-1 space-y-1">
                         {events
                             .filter(event => isSameDay(new Date(event.date), day))
@@ -140,13 +144,13 @@ const CalendarGrid = ({
                                 className={cn(
                                     "w-full text-left p-1 rounded-md text-xs leading-tight transition-colors",
                                     isYearView ? "p-0.5" : "p-1.5",
-                                    event.status === 'approved' ? 'bg-primary/10 hover:bg-primary/20' : 'bg-accent/10 hover:bg-accent/20'
+                                    event.status === 'approved' ? 'bg-primary/20 hover:bg-primary/30 text-primary-foreground' : 'bg-accent/20 hover:bg-accent/30 text-accent-foreground'
                                 )}
                             >
                                 <div className={cn("flex items-center gap-1.5", { "gap-1": isYearView })}>
                                 {event.status === 'approved' ? <CheckCircle className={cn("h-3 w-3 text-primary flex-shrink-0", { "h-2 w-2": isYearView })}/> : <Clock className={cn("h-3 w-3 text-accent flex-shrink-0", { "h-2 w-2": isYearView })}/>}
                                 <span className={cn("truncate font-medium", 
-                                    event.status === 'approved' ? 'text-primary-dark' : 'text-accent-dark',
+                                    event.status === 'approved' ? 'text-primary' : 'text-accent',
                                     { "hidden": isYearView }
                                     )}>{event.name}</span>
                                 </div>
@@ -369,7 +373,9 @@ export function EventCalendar({
       </div>
       
       {view === 'month' && (
-        <CalendarGrid month={currentDate} events={filteredEvents} onEventClick={handleEventClick} today={today}/>
+        <div className='p-4'>
+            <CalendarGrid month={currentDate} events={filteredEvents} onEventClick={handleEventClick} today={today}/>
+        </div>
       )}
       
       {view === 'year' && (

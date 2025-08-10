@@ -18,12 +18,23 @@ import {
 } from '@/components/ui/sidebar';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Calendar, PlusCircle, Wind, Database } from 'lucide-react';
+import { Calendar, PlusCircle, Database } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAtom } from 'jotai';
 import { eventSourceAtom, type EventSource } from '@/lib/state';
+
+// A simple SVG pony icon.
+const PonyIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+        <path d="M9.5 14.5A2.5 2.5 0 0 1 12 12h0a2.5 2.5 0 0 1 2.5 2.5v5.5h-5v-5.5Z" />
+        <path d="M12 12V6.5a2.5 2.5 0 0 1 5 0V9" />
+        <path d="m7 14 2-2" />
+        <path d="M14 14h1a2 2 0 0 1 2 2v2h-3v-3.5a2.5 2.5 0 0 0-5 0V20H6v-2a2 2 0 0 1 2-2h1" />
+        <path d="M12 9.5a2.5 2.5 0 1 1 5 0V12" />
+    </svg>
+)
 
 
 export function AppLayout({ children }: PropsWithChildren) {
@@ -49,7 +60,7 @@ export function AppLayout({ children }: PropsWithChildren) {
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" className="shrink-0" asChild>
               <Link href="/">
-                <Wind className="size-5 text-primary" />
+                <PonyIcon className="size-6 text-primary" />
               </Link>
             </Button>
             <h1 className="text-lg font-semibold tracking-tight font-headline">PonyClub Events</h1>

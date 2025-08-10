@@ -120,7 +120,6 @@ const CalendarGrid = ({
             const requiredContentHeight = maxEventsInWeek * (eventHeight + eventGap);
             const cellHeight = Math.max(baseCellHeight, topOffset + requiredContentHeight + (isYearView ? 4 : 8));
 
-
           return (
           <div key={weekIndex} className="table table-fixed w-full border-t first:border-t-0 md:border-t">
              <div className='table-row' style={{ height: `${cellHeight}px` }}>
@@ -132,7 +131,6 @@ const CalendarGrid = ({
 
                 const dayEvents = events.filter(event => isSameDay(new Date(event.date), day));
                 
-
                 return (
                     <div
                         key={day.toString()}
@@ -142,7 +140,9 @@ const CalendarGrid = ({
                           'bg-primary/5': isSameMonth(day, month) && (isSaturday || isSunday),
                           'relative': isCurrentDayToday,
                           'h-24': isYearView,
-                          'border-t-0': isYearView && weekIndex === 0
+                          'border-t-0': isYearView && weekIndex === 0,
+                          'w-[20%]': isSaturday || isSunday,
+                          'w-[12%]': !isSaturday && !isSunday
                         })}
                         style={{height: `${cellHeight}px`}}
                     >
@@ -156,14 +156,14 @@ const CalendarGrid = ({
                         >
                             {format(day, 'd')}
                         </span>
-                        <div className="absolute top-8 left-0 right-0 z-10 px-1 space-y-1">
+                        <div className={cn("absolute z-10 space-y-1 px-1", isYearView ? "top-7" : "top-8")}>
                         {dayEvents.map((event, index) => (
                             <button
                                 key={event.id}
                                 onClick={() => onEventClick(event.id)}
                                 className={cn(
                                     "w-auto text-left rounded-md text-xs leading-tight transition-colors shadow-sm",
-                                    "min-w-[calc(100%-0.5rem)] whitespace-normal",
+                                    "min-w-full whitespace-normal",
                                     isYearView ? "p-1" : "p-1.5",
                                     event.status === 'approved' ? 'bg-primary/20 hover:bg-primary/30 text-primary-foreground' :
                                     event.status === 'public_holiday' ? 'bg-green-500/20 hover:bg-green-500/30' :
@@ -434,5 +434,7 @@ export function EventCalendar({
     </div>
   );
 }
+
+    
 
     

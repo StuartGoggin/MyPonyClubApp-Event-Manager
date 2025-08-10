@@ -107,9 +107,23 @@ const CalendarGrid = ({
             </div>
         )}
       <div className={cn("divide-y border-t", {"border-t-0 divide-y-0": isYearView})}>
-        {weeks.map((week, weekIndex) => (
-          <div key={weekIndex} className="table table-fixed w-full min-h-[h-32] border-t first:border-t-0 md:border-t">
-             <div className='table-row'>
+        {weeks.map((week, weekIndex) => {
+            const eventHeight = isYearView ? 20 : 28;
+            const eventGap = isYearView ? 2 : 4;
+            const baseCellHeight = isYearView ? 96 : 128; // h-24 or h-32
+            const topOffset = isYearView ? 28 : 32; // top-7 or top-8
+            
+            const maxEventsInWeek = Math.max(...week.map(day => {
+                return events.filter(event => isSameDay(new Date(event.date), day)).length;
+            }));
+            
+            const requiredContentHeight = maxEventsInWeek * (eventHeight + eventGap);
+            const cellHeight = Math.max(baseCellHeight, topOffset + requiredContentHeight + (isYearView ? 4 : 8));
+
+
+          return (
+          <div key={weekIndex} className="table table-fixed w-full border-t first:border-t-0 md:border-t">
+             <div className='table-row' style={{ height: isYearView ? undefined : `${cellHeight}px` }}>
             {dayIndexMap.map(dayIdx => {
                 const day = week.find(d => getDay(d) === dayIdx)!;
                 const isSaturday = getDay(day) === 6;
@@ -117,13 +131,12 @@ const CalendarGrid = ({
                 const isCurrentDayToday = isSameDay(day, today);
 
                 const dayEvents = events.filter(event => isSameDay(new Date(event.date), day));
-                const eventHeight = isYearView ? 20 : 28;
-                const eventGap = isYearView ? 2 : 4;
+                
 
                 return (
                     <div
                         key={day.toString()}
-                        className={cn('table-cell h-32 border-l p-1.5 align-top relative', {
+                        className={cn('table-cell border-l p-1.5 align-top relative', {
                           'bg-background/50 text-muted-foreground': !isSameMonth(day, month),
                           'bg-muted/20': !isSameMonth(day, month) && (isSaturday || isSunday),
                           'bg-primary/5': isSameMonth(day, month) && (isSaturday || isSunday),
@@ -131,7 +144,7 @@ const CalendarGrid = ({
                           'h-24': isYearView,
                           'border-t-0': isYearView && weekIndex === 0
                         })}
-                        style={{minHeight: isYearView ? '6rem' : `calc(${dayEvents.length * (eventHeight + eventGap)}px + 2.5rem)`}}
+                        style={{height: isYearView ? 'auto' : `${cellHeight}px`}}
                     >
                          <span
                             className={cn(
@@ -177,7 +190,7 @@ const CalendarGrid = ({
             })}
             </div>
           </div>
-        ))}
+        )})}
       </div>
     </div>
   );

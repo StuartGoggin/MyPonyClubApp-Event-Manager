@@ -412,7 +412,7 @@ export function EventCalendar({
       )}
       
       {view === 'year' && (
-        <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="p-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {yearMonths.map(month => (
                 <div key={month.toString()}>
                     <h3 className="text-lg font-semibold font-headline mb-2 text-center">{format(month, 'MMMM')}</h3>

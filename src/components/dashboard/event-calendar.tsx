@@ -116,17 +116,22 @@ const CalendarGrid = ({
                 const isSunday = getDay(day) === 0;
                 const isCurrentDayToday = isSameDay(day, today);
 
+                const dayEvents = events.filter(event => isSameDay(new Date(event.date), day));
+                const eventHeight = isYearView ? 20 : 28;
+                const eventGap = isYearView ? 2 : 4;
+
                 return (
                     <div
                         key={day.toString()}
-                        className={cn('table-cell h-32 border-l p-1.5 overflow-y-auto align-top', {
-                        'bg-background/50 text-muted-foreground': !isSameMonth(day, month),
-                        'bg-muted/20': !isSameMonth(day, month) && (isSaturday || isSunday),
-                        'bg-primary/5': isSameMonth(day, month) && (isSaturday || isSunday),
-                        'relative': isCurrentDayToday,
-                        'h-24': isYearView,
-                         'border-t-0': isYearView && weekIndex === 0
+                        className={cn('table-cell h-32 border-l p-1.5 align-top relative', {
+                          'bg-background/50 text-muted-foreground': !isSameMonth(day, month),
+                          'bg-muted/20': !isSameMonth(day, month) && (isSaturday || isSunday),
+                          'bg-primary/5': isSameMonth(day, month) && (isSaturday || isSunday),
+                          'relative': isCurrentDayToday,
+                          'h-24': isYearView,
+                          'border-t-0': isYearView && weekIndex === 0
                         })}
+                        style={{minHeight: isYearView ? '6rem' : `calc(${dayEvents.length * (eventHeight + eventGap)}px + 2.5rem)`}}
                     >
                          <span
                             className={cn(
@@ -138,16 +143,14 @@ const CalendarGrid = ({
                         >
                             {format(day, 'd')}
                         </span>
-                        <div className="mt-1 space-y-1">
-                        {events
-                            .filter(event => isSameDay(new Date(event.date), day))
-                            .map(event => (
+                        <div className="absolute top-8 left-0 right-0 z-10 px-1 space-y-1">
+                        {dayEvents.map((event, index) => (
                             <button
                                 key={event.id}
                                 onClick={() => onEventClick(event.id)}
                                 className={cn(
-                                    "w-full text-left rounded-md text-xs leading-tight transition-colors",
-                                    isYearView ? "p-0.5" : "p-1.5",
+                                    "w-[calc(100%-0.5rem)] text-left rounded-md text-xs leading-tight transition-colors shadow-sm",
+                                    isYearView ? "p-1" : "p-1.5",
                                     event.status === 'approved' ? 'bg-primary/20 hover:bg-primary/30 text-primary-foreground' :
                                     event.status === 'public_holiday' ? 'bg-green-500/20 hover:bg-green-500/30' :
                                     'bg-accent/20 hover:bg-accent/30 text-accent-foreground'

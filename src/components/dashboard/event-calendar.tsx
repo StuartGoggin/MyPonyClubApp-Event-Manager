@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -14,6 +15,10 @@ import {
   addMonths,
   subMonths,
   differenceInDays,
+  getDay,
+  getYear,
+  setYear,
+  startOfYear,
 } from 'date-fns';
 import { ChevronLeft, ChevronRight, CheckCircle, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -21,7 +26,6 @@ import { cn } from '@/lib/utils';
 import { type Event, type Club, type EventType } from '@/lib/types';
 import { EventDialog } from './event-dialog';
 import { useRouter } from 'next/navigation';
-import { Badge } from '../ui/badge';
 
 interface EventCalendarProps {
   events: Event[];
@@ -29,22 +33,104 @@ interface EventCalendarProps {
   eventTypes: EventType[];
 }
 
+const CalendarGrid = ({
+  month,
+  events,
+  onEventClick,
+  isYearView = false,
+}: {
+  month: Date;
+  events: Event[];
+  onEventClick: (eventId: string) => void;
+  isYearView?: boolean;
+}) => {
+  const start = startOfWeek(startOfMonth(month));
+  const end = endOfWeek(endOfMonth(month));
+  const days = eachDayOfInterval({ start, end });
+
+  return (
+    <div className={cn("p-4 bg-card rounded-lg border shadow-sm", { "p-0 border-0 shadow-none": isYearView })}>
+        {!isYearView && (
+             <div className="grid grid-cols-7 text-xs text-center font-medium text-muted-foreground">
+                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                <div key={day} className="py-2">{day}</div>
+                ))}
+            </div>
+        )}
+      <div className="grid grid-cols-7">
+        {days.map(day => (
+          <div
+            key={day.toString()}
+            className={cn('h-32 border-t border-l p-1.5 overflow-y-auto', {
+              'bg-background/50': !isSameMonth(day, month),
+              'bg-muted/20': !isSameMonth(day, month) && (getDay(day) === 0 || getDay(day) === 6),
+              'bg-muted/40': isSameMonth(day, month) && (getDay(day) === 0 || getDay(day) === 6),
+              'relative': isToday(day),
+              'h-24': isYearView,
+            })}
+          >
+            <span className={cn('font-medium text-sm', 
+              { 'text-muted-foreground': !isSameMonth(day, month) },
+              { 'text-primary font-bold': isToday(day)},
+              { 'text-xs': isYearView }
+            )}>{format(day, 'd')}</span>
+            <div className="mt-1 space-y-1">
+              {events
+                .filter(event => isSameDay(new Date(event.date), day))
+                .map(event => (
+                  <button
+                    key={event.id}
+                    onClick={() => onEventClick(event.id)}
+                    className={cn(
+                        "w-full text-left p-1 rounded-md text-xs leading-tight transition-colors",
+                        isYearView ? "p-0.5" : "p-1.5",
+                        event.status === 'approved' ? 'bg-primary/10 hover:bg-primary/20' : 'bg-accent/10 hover:bg-accent/20'
+                    )}
+                  >
+                    <div className={cn("flex items-center gap-1.5", { "gap-1": isYearView })}>
+                       {event.status === 'approved' ? <CheckCircle className={cn("h-3 w-3 text-primary flex-shrink-0", { "h-2 w-2": isYearView })}/> : <Clock className={cn("h-3 w-3 text-accent flex-shrink-0", { "h-2 w-2": isYearView })}/>}
+                      <span className={cn("truncate font-medium", 
+                        event.status === 'approved' ? 'text-primary-dark' : 'text-accent-dark',
+                        { "hidden": isYearView }
+                        )}>{event.name}</span>
+                    </div>
+                  </button>
+                ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+
 export function EventCalendar({
   events,
   clubs,
   eventTypes,
 }: EventCalendarProps) {
   const router = useRouter();
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [view, setView] = useState<'month' | 'year'>('month');
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [isDialogOpen, setDialogOpen] = useState(false);
 
-  const start = startOfWeek(startOfMonth(currentMonth));
-  const end = endOfWeek(endOfMonth(currentMonth));
-  const days = eachDayOfInterval({ start, end });
+  const next = () => {
+    if (view === 'month') {
+      setCurrentDate(addMonths(currentDate, 1));
+    } else {
+      setCurrentDate(addMonths(currentDate, 12));
+    }
+  };
 
-  const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
-  const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
+  const prev = () => {
+    if (view === 'month') {
+      setCurrentDate(subMonths(currentDate, 1));
+    } else {
+      setCurrentDate(subMonths(currentDate, 12));
+    }
+  };
 
   const handleEventClick = (eventId: string) => {
     setSelectedEventId(eventId);
@@ -70,61 +156,45 @@ export function EventCalendar({
     router.refresh();
   }
 
+  const yearMonths = Array.from({ length: 12 }, (_, i) => {
+    return setYear(startOfYear(new Date()), getYear(currentDate));
+  }).map((d, i) => addMonths(d, i));
+
   return (
-    <div className="p-4 bg-card rounded-lg border shadow-sm">
-      <div className="flex items-center justify-between mb-4">
+    <div className="bg-card rounded-lg border shadow-sm">
+      <div className="flex items-center justify-between p-4 border-b">
         <h2 className="text-xl font-semibold font-headline">
-          {format(currentMonth, 'MMMM yyyy')}
+          {view === 'month' ? format(currentDate, 'MMMM yyyy') : format(currentDate, 'yyyy')}
         </h2>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={prevMonth}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="icon" onClick={nextMonth}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+            <Button variant={view === 'month' ? 'secondary' : 'outline'} size="sm" onClick={() => setView('month')}>Month</Button>
+            <Button variant={view === 'year' ? 'secondary' : 'outline'} size="sm" onClick={() => setView('year')}>Year</Button>
+            <div className="flex items-center gap-2 ml-4">
+                <Button variant="outline" size="icon" onClick={prev}>
+                    <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="icon" onClick={next}>
+                    <ChevronRight className="h-4 w-4" />
+                </Button>
+            </div>
         </div>
       </div>
-      <div className="grid grid-cols-7 text-xs text-center font-medium text-muted-foreground">
-        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-          <div key={day} className="py-2">{day}</div>
-        ))}
-      </div>
-      <div className="grid grid-cols-7">
-        {days.map(day => (
-          <div
-            key={day.toString()}
-            className={cn('h-32 border-t border-l p-1.5 overflow-y-auto', {
-              'bg-background/50': !isSameMonth(day, currentMonth),
-              'relative': isToday(day),
-            })}
-          >
-            <span className={cn('font-medium text-sm', 
-              { 'text-muted-foreground': !isSameMonth(day, currentMonth) },
-              { 'text-primary font-bold': isToday(day)}
-            )}>{format(day, 'd')}</span>
-            <div className="mt-1 space-y-1">
-              {events
-                .filter(event => isSameDay(new Date(event.date), day))
-                .map(event => (
-                  <button
-                    key={event.id}
-                    onClick={() => handleEventClick(event.id)}
-                    className={cn(
-                        "w-full text-left p-1.5 rounded-md text-xs leading-tight transition-colors",
-                        event.status === 'approved' ? 'bg-primary/10 hover:bg-primary/20' : 'bg-accent/10 hover:bg-accent/20'
-                    )}
-                  >
-                    <div className="flex items-center gap-1.5">
-                       {event.status === 'approved' ? <CheckCircle className="h-3 w-3 text-primary flex-shrink-0"/> : <Clock className="h-3 w-3 text-accent flex-shrink-0"/>}
-                      <span className={cn("truncate font-medium", event.status === 'approved' ? 'text-primary-dark' : 'text-accent-dark' )}>{event.name}</span>
-                    </div>
-                  </button>
-                ))}
-            </div>
-          </div>
-        ))}
-      </div>
+      
+      {view === 'month' && (
+        <CalendarGrid month={currentDate} events={events} onEventClick={handleEventClick} />
+      )}
+      
+      {view === 'year' && (
+        <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {yearMonths.map(month => (
+                <div key={month.toString()}>
+                    <h3 className="text-lg font-semibold font-headline mb-2 text-center">{format(month, 'MMMM')}</h3>
+                    <CalendarGrid month={month} events={events} onEventClick={handleEventClick} isYearView={true} />
+                </div>
+            ))}
+        </div>
+      )}
+
       <EventDialog
         isOpen={isDialogOpen}
         onOpenChange={setDialogOpen}
@@ -137,3 +207,4 @@ export function EventCalendar({
     </div>
   );
 }
+

@@ -28,6 +28,8 @@ import { EventDialog } from './event-dialog';
 import { useRouter } from 'next/navigation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { useAtom } from 'jotai';
+import { eventSourceAtom } from '@/lib/state';
 
 interface EventCalendarProps {
   events: Event[];
@@ -139,6 +141,7 @@ export function EventCalendar({
   const [view, setView] = useState<'month' | 'year'>('month');
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [isDialogOpen, setDialogOpen] = useState(false);
+  const [eventSources] = useAtom(eventSourceAtom);
   
   const [filterMode, setFilterMode] = useState<'location' | 'distance'>('location');
   const [selectedZoneId, setSelectedZoneId] = useState<string>('all');
@@ -153,6 +156,11 @@ export function EventCalendar({
     return clubs.filter(club => club.zoneId === selectedZoneId);
   }, [selectedZoneId, clubs]);
 
+  const sourceFilteredEvents = useMemo(() => {
+    if (eventSources.length === 0) return events;
+    return events.filter(event => eventSources.includes(event.source));
+  }, [events, eventSources]);
+
   const filteredEvents = useMemo(() => {
     if (filterMode === 'distance' && homeClubId) {
         const homeClub = clubs.find(c => c.id === homeClubId);
@@ -160,7 +168,7 @@ export function EventCalendar({
 
         const homeCoords = { lat: homeClub.latitude, lon: homeClub.longitude };
         
-        return events.filter(event => {
+        return sourceFilteredEvents.filter(event => {
             const eventClub = clubs.find(c => c.id === event.clubId);
             if (!eventClub || eventClub.latitude === undefined || eventClub.longitude === undefined) return false;
 
@@ -171,7 +179,7 @@ export function EventCalendar({
     }
 
     // Location-based filtering
-    return events.filter(event => {
+    return sourceFilteredEvents.filter(event => {
       if (selectedClubId !== 'all') {
         return event.clubId === selectedClubId;
       }
@@ -181,7 +189,7 @@ export function EventCalendar({
       }
       return true;
     });
-  }, [events, clubs, filterMode, homeClubId, distance, selectedZoneId, selectedClubId]);
+  }, [sourceFilteredEvents, clubs, filterMode, homeClubId, distance, selectedZoneId, selectedClubId]);
 
   const handleZoneChange = (zoneId: string) => {
     setSelectedZoneId(zoneId);

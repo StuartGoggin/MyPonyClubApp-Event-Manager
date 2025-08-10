@@ -38,14 +38,14 @@ const today = new Date();
 const startOfThisMonth = startOfMonth(today);
 
 let events: Event[] = [
-  { id: '1', name: 'Monthly Rally Day', date: addDays(startOfThisMonth, 2), clubId: '1', eventTypeId: '1', status: 'approved', location: 'Geelong, VIC' },
-  { id: '2', name: 'Spring Show Jumping', date: addDays(startOfThisMonth, 9), clubId: '4', eventTypeId: '2', status: 'approved', location: 'Kyneton, VIC' },
-  { id: '3', name: 'Official Dressage Comp', date: addDays(startOfThisMonth, 10), clubId: '7', eventTypeId: '3', status: 'proposed', location: 'Wangaratta, VIC' },
-  { id: '4', name: 'Games Practice', date: subDays(startOfThisMonth, 5), clubId: '2', eventTypeId: '5', status: 'approved', location: 'Colac, VIC' },
-  { id: '5', name: 'C-Cert Assessment Day', date: addDays(startOfThisMonth, 20), clubId: '9', eventTypeId: '6', status: 'proposed', location: 'Echuca, VIC' },
-  { id: '6', name: 'XC Training Day', date: addDays(startOfThisMonth, 2), clubId: '6', eventTypeId: '4', status: 'proposed', location: 'Bairnsdale, VIC' },
-  { id: '7', name: 'Winter Woolies Rally', date: addDays(startOfMonth(addMonths(today, 1)), 5), clubId: '5', eventTypeId: '1', status: 'approved', location: 'Macedon, VIC' },
-  { id: '8', name: 'Grade 3/4 Show Jumping', date: addDays(startOfMonth(addMonths(today, 1)), 12), clubId: '10', eventTypeId: '2', status: 'proposed', location: 'Shepparton, VIC' },
+  { id: '1', name: 'Monthly Rally Day', date: addDays(startOfThisMonth, 2), clubId: '1', eventTypeId: '1', status: 'approved', location: 'Geelong, VIC', source: 'zone' },
+  { id: '2', name: 'Spring Show Jumping', date: addDays(startOfThisMonth, 9), clubId: '4', eventTypeId: '2', status: 'approved', location: 'Kyneton, VIC', source: 'pca' },
+  { id: '3', name: 'Official Dressage Comp', date: addDays(startOfThisMonth, 10), clubId: '7', eventTypeId: '3', status: 'proposed', location: 'Wangaratta, VIC', source: 'event_secretary' },
+  { id: '4', name: 'Games Practice', date: subDays(startOfThisMonth, 5), clubId: '2', eventTypeId: '5', status: 'approved', location: 'Colac, VIC', source: 'zone' },
+  { id: '5', name: 'C-Cert Assessment Day', date: addDays(startOfThisMonth, 20), clubId: '9', eventTypeId: '6', status: 'proposed', location: 'Echuca, VIC', source: 'pca' },
+  { id: '6', name: 'XC Training Day', date: addDays(startOfThisMonth, 2), clubId: '6', eventTypeId: '4', status: 'proposed', location: 'Bairnsdale, VIC', source: 'event_secretary' },
+  { id: '7', name: 'Winter Woolies Rally', date: addDays(startOfMonth(addMonths(today, 1)), 5), clubId: '5', eventTypeId: '1', status: 'approved', location: 'Macedon, VIC', source: 'zone' },
+  { id: '8', name: 'Grade 3/4 Show Jumping', date: addDays(startOfMonth(addMonths(today, 1)), 12), clubId: '10', eventTypeId: '2', status: 'proposed', location: 'Shepparton, VIC', source: 'pca' },
 ];
 
 // Data access functions
@@ -62,6 +62,7 @@ export const addEvent = async (event: Omit<Event, 'id'>) => {
   const newEvent: Event = {
     id: String(Date.now()),
     ...event,
+    source: 'event_secretary', // Default source for new events
   };
   events.push(newEvent);
   return Promise.resolve(newEvent);

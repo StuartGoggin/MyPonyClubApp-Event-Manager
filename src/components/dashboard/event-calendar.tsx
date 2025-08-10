@@ -149,7 +149,8 @@ const CalendarGrid = ({
                                 key={event.id}
                                 onClick={() => onEventClick(event.id)}
                                 className={cn(
-                                    "w-[calc(100%-0.5rem)] text-left rounded-md text-xs leading-tight transition-colors shadow-sm",
+                                    "w-auto text-left rounded-md text-xs leading-tight transition-colors shadow-sm",
+                                    "min-w-[calc(100%-0.5rem)] whitespace-nowrap",
                                     isYearView ? "p-1" : "p-1.5",
                                     event.status === 'approved' ? 'bg-primary/20 hover:bg-primary/30 text-primary-foreground' :
                                     event.status === 'public_holiday' ? 'bg-green-500/20 hover:bg-green-500/30' :
@@ -225,7 +226,7 @@ export function EventCalendar({
 
     if (filterMode === 'distance' && homeClubId) {
         const homeClub = clubs.find(c => c.id === homeClubId);
-        if (!homeClub || homeClub.latitude === undefined || homeClub.longitude === undefined) return eventsFromSource.filter(e => e.source === 'public_holiday');
+        if (!homeClub || homeClub.latitude === undefined || homeClub.longitude === undefined) return eventsFromsource.filter(e => e.source === 'public_holiday');
 
         const homeCoords = { lat: homeClub.latitude, lon: homeClub.longitude };
         
@@ -420,3 +421,5 @@ export function EventCalendar({
     </div>
   );
 }
+
+    

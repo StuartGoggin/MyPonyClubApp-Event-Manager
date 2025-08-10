@@ -123,7 +123,7 @@ const CalendarGrid = ({
 
           return (
           <div key={weekIndex} className="table table-fixed w-full border-t first:border-t-0 md:border-t">
-             <div className='table-row' style={{ height: isYearView ? undefined : `${cellHeight}px` }}>
+             <div className='table-row' style={{ height: `${cellHeight}px` }}>
             {dayIndexMap.map(dayIdx => {
                 const day = week.find(d => getDay(d) === dayIdx)!;
                 const isSaturday = getDay(day) === 6;
@@ -144,7 +144,7 @@ const CalendarGrid = ({
                           'h-24': isYearView,
                           'border-t-0': isYearView && weekIndex === 0
                         })}
-                        style={{height: isYearView ? 'auto' : `${cellHeight}px`}}
+                        style={{height: `${cellHeight}px`}}
                     >
                          <span
                             className={cn(

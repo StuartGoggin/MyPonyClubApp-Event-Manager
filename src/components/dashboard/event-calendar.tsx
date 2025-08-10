@@ -20,13 +20,14 @@ import {
   setYear,
   startOfYear,
 } from 'date-fns';
-import { ChevronLeft, ChevronRight, CheckCircle, Clock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckCircle, Clock, Pin, Route } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { type Event, type Club, type EventType, type Zone } from '@/lib/types';
 import { EventDialog } from './event-dialog';
 import { useRouter } from 'next/navigation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 
 interface EventCalendarProps {
   events: Event[];
@@ -34,6 +35,26 @@ interface EventCalendarProps {
   eventTypes: EventType[];
   zones: Zone[];
 }
+
+const haversineDistance = (
+  coords1: { lat: number; lon: number },
+  coords2: { lat: number; lon: number }
+) => {
+  const toRad = (x: number) => (x * Math.PI) / 180;
+  const R = 6371; // Earth radius in km
+
+  const dLat = toRad(coords2.lat - coords1.lat);
+  const dLon = toRad(coords2.lon - coords1.lon);
+  const lat1 = toRad(coords1.lat);
+  const lat2 = toRad(coords2.lat);
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return R * c;
+};
 
 const CalendarGrid = ({
   month,
@@ -118,8 +139,12 @@ export function EventCalendar({
   const [view, setView] = useState<'month' | 'year'>('month');
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [isDialogOpen, setDialogOpen] = useState(false);
+  
+  const [filterMode, setFilterMode] = useState<'location' | 'distance'>('location');
   const [selectedZoneId, setSelectedZoneId] = useState<string>('all');
   const [selectedClubId, setSelectedClubId] = useState<string>('all');
+  const [homeClubId, setHomeClubId] = useState<string | null>(null);
+  const [distance, setDistance] = useState<number>(50);
 
   const filteredClubs = useMemo(() => {
     if (selectedZoneId === 'all') {
@@ -129,6 +154,23 @@ export function EventCalendar({
   }, [selectedZoneId, clubs]);
 
   const filteredEvents = useMemo(() => {
+    if (filterMode === 'distance' && homeClubId) {
+        const homeClub = clubs.find(c => c.id === homeClubId);
+        if (!homeClub || homeClub.latitude === undefined || homeClub.longitude === undefined) return [];
+
+        const homeCoords = { lat: homeClub.latitude, lon: homeClub.longitude };
+        
+        return events.filter(event => {
+            const eventClub = clubs.find(c => c.id === event.clubId);
+            if (!eventClub || eventClub.latitude === undefined || eventClub.longitude === undefined) return false;
+
+            const eventCoords = { lat: eventClub.latitude, lon: eventClub.longitude };
+            const dist = haversineDistance(homeCoords, eventCoords);
+            return dist <= distance;
+        });
+    }
+
+    // Location-based filtering
     return events.filter(event => {
       if (selectedClubId !== 'all') {
         return event.clubId === selectedClubId;
@@ -139,7 +181,7 @@ export function EventCalendar({
       }
       return true;
     });
-  }, [events, selectedZoneId, selectedClubId, clubs]);
+  }, [events, clubs, filterMode, homeClubId, distance, selectedZoneId, selectedClubId]);
 
   const handleZoneChange = (zoneId: string) => {
     setSelectedZoneId(zoneId);
@@ -192,21 +234,36 @@ export function EventCalendar({
 
   return (
     <div className="bg-card rounded-lg border shadow-sm">
-      <div className="flex flex-wrap items-center justify-between gap-4 p-4 border-b">
-        <div className="flex items-center gap-4">
-            <h2 className="text-xl font-semibold font-headline">
-            {view === 'month' ? format(currentDate, 'MMMM yyyy') : format(currentDate, 'yyyy')}
-            </h2>
-            <div className="flex items-center gap-2">
-                <Button variant="outline" size="icon" onClick={prev}>
-                    <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button variant="outline" size="icon" onClick={next}>
-                    <ChevronRight className="h-4 w-4" />
-                </Button>
+      <div className="flex flex-col gap-4 p-4 border-b">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+                <h2 className="text-xl font-semibold font-headline">
+                {view === 'month' ? format(currentDate, 'MMMM yyyy') : format(currentDate, 'yyyy')}
+                </h2>
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" size="icon" onClick={prev}>
+                        <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" size="icon" onClick={next}>
+                        <ChevronRight className="h-4 w-4" />
+                    </Button>
+                </div>
+            </div>
+            <div className="flex items-center gap-2 ml-4">
+                <Button variant={view === 'month' ? 'secondary' : 'outline'} size="sm" onClick={() => setView('month')}>Month</Button>
+                <Button variant={view === 'year' ? 'secondary' : 'outline'} size="sm" onClick={() => setView('year')}>Year</Button>
             </div>
         </div>
         <div className="flex items-center gap-2">
+            <Button variant={filterMode === 'location' ? 'secondary' : 'outline'} size="sm" onClick={() => setFilterMode('location')}>
+                <Pin className="mr-2 h-4 w-4" /> Filter by Location
+            </Button>
+            <Button variant={filterMode === 'distance' ? 'secondary' : 'outline'} size="sm" onClick={() => setFilterMode('distance')}>
+                <Route className="mr-2 h-4 w-4" /> Filter by Distance
+            </Button>
+        </div>
+        <Separator />
+        {filterMode === 'location' ? (
             <div className="flex items-center gap-2">
                 <Select value={selectedZoneId} onValueChange={handleZoneChange}>
                     <SelectTrigger className="w-[180px]">
@@ -231,11 +288,32 @@ export function EventCalendar({
                     </SelectContent>
                 </Select>
             </div>
-             <div className="flex items-center gap-2 ml-4">
-                <Button variant={view === 'month' ? 'secondary' : 'outline'} size="sm" onClick={() => setView('month')}>Month</Button>
-                <Button variant={view === 'year' ? 'secondary' : 'outline'} size="sm" onClick={() => setView('year')}>Year</Button>
+        ) : (
+            <div className="flex items-center gap-2">
+                 <Select value={homeClubId ?? ''} onValueChange={(val) => setHomeClubId(val === 'none' ? null : val)}>
+                    <SelectTrigger className="w-[240px]">
+                        <SelectValue placeholder="Select a home club" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="none">Select a home club</SelectItem>
+                        {clubs.map(club => (
+                            <SelectItem key={club.id} value={club.id}>{club.name}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                 <Select value={String(distance)} onValueChange={(val) => setDistance(Number(val))} disabled={!homeClubId}>
+                    <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Select distance" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="25">Within 25 km</SelectItem>
+                        <SelectItem value="50">Within 50 km</SelectItem>
+                        <SelectItem value="100">Within 100 km</SelectItem>
+                        <SelectItem value="200">Within 200 km</SelectItem>
+                    </SelectContent>
+                </Select>
             </div>
-        </div>
+        )}
       </div>
       
       {view === 'month' && (
@@ -265,4 +343,3 @@ export function EventCalendar({
     </div>
   );
 }
-

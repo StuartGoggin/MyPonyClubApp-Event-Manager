@@ -13,16 +13,16 @@ let zones: Zone[] = [
 ];
 
 let clubs: Club[] = [
-  { id: '1', name: 'Barwon Valley Pony Club', zoneId: '1' },
-  { id: '2', name: 'Colac Pony Club', zoneId: '1' },
-  { id: '3', name: 'Bellarine Peninsula Pony Club', zoneId: '1' },
-  { id: '4', name: 'Kyneton Pony Club', zoneId: '2' },
-  { id: '5', name: 'Macedon Pony Club', zoneId: '2' },
-  { id: '6', name: 'Bairnsdale Pony Club', zoneId: '3' },
-  { id: '7', name: 'Wangaratta Pony Club', zoneId: '4' },
-  { id: '8', name: 'Benalla Pony Club', zoneId: '4' },
-  { id: '9', name: 'Echuca Pony Club', zoneId: '5' },
-  { id: '10', name: 'Shepparton Pony Club', zoneId: '5' },
+    { id: '1', name: 'Barwon Valley Pony Club', zoneId: '1', latitude: -38.1499, longitude: 144.3617 },
+    { id: '2', name: 'Colac Pony Club', zoneId: '1', latitude: -38.3403, longitude: 143.5855 },
+    { id: '3', name: 'Bellarine Peninsula Pony Club', zoneId: '1', latitude: -38.1736, longitude: 144.5623 },
+    { id: '4', name: 'Kyneton Pony Club', zoneId: '2', latitude: -37.2475, longitude: 144.4552 },
+    { id: '5', name: 'Macedon Pony Club', zoneId: '2', latitude: -37.4167, longitude: 144.5667 },
+    { id: '6', name: 'Bairnsdale Pony Club', zoneId: '3', latitude: -37.8278, longitude: 147.6275 },
+    { id: '7', name: 'Wangaratta Pony Club', zoneId: '4', latitude: -36.3575, longitude: 146.3156 },
+    { id: '8', name: 'Benalla Pony Club', zoneId: '4', latitude: -36.5511, longitude: 145.9822 },
+    { id: '9', name: 'Echuca Pony Club', zoneId: '5', latitude: -36.1333, longitude: 144.75 },
+    { id: '10', name: 'Shepparton Pony Club', zoneId: '5', latitude: -36.3833, longitude: 145.4 },
 ];
 
 let eventTypes: EventType[] = [

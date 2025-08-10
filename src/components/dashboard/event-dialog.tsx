@@ -14,7 +14,7 @@ import { approveEventAction } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 import { type Event, type Club, type EventType } from '@/lib/types';
 import { format } from 'date-fns';
-import { CheckCircle, Clock, MapPin, Users, Tag, AlertTriangle } from 'lucide-react';
+import { CheckCircle, Clock, MapPin, Users, Tag, AlertTriangle, FerrisWheel } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import React from 'react';
 
@@ -40,7 +40,10 @@ export function EventDialog({
   const { toast } = useToast();
   const [isApproving, setIsApproving] = React.useState(false);
 
-  if (!event || !club || !eventType) return null;
+  if (!event || !eventType) return null;
+   // For public holidays, club might be undefined.
+  if (event.source !== 'public_holiday' && !club) return null;
+
 
   const handleApprove = async () => {
     if (!event) return;
@@ -76,17 +79,22 @@ export function EventDialog({
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="flex items-center gap-2">
-            <Badge variant={statusBadgeVariant} className="capitalize">
+            <Badge variant={statusBadgeVariant} className={cn("capitalize", {
+                'bg-green-100 text-green-800 border-green-200': event.status === 'public_holiday'
+            })}>
                 {event.status === 'approved' && <CheckCircle className="mr-1 h-3 w-3" />}
                 {event.status === 'proposed' && <Clock className="mr-1 h-3 w-3" />}
-                {event.status}
+                {event.status === 'public_holiday' && <FerrisWheel className="mr-1 h-3 w-3" />}
+                {event.status.replace('_', ' ')}
             </Badge>
           </div>
           <div className="space-y-3 text-sm">
-            <div className="flex items-start gap-3">
-              <Users className="h-4 w-4 mt-0.5 text-muted-foreground" />
-              <span>{club.name}</span>
-            </div>
+            {club && (
+                <div className="flex items-start gap-3">
+                    <Users className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                    <span>{club.name}</span>
+                </div>
+            )}
             <div className="flex items-start gap-3">
               <Tag className="h-4 w-4 mt-0.5 text-muted-foreground" />
               <span>{eventType.name}</span>

@@ -20,7 +20,7 @@ import {
   startOfYear,
   addDays,
 } from 'date-fns';
-import { ChevronLeft, ChevronRight, CheckCircle, Clock, Pin, Route } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckCircle, Clock, Pin, Route, FerrisWheel } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { type Event, type Club, type EventType, type Zone } from '@/lib/types';
@@ -144,13 +144,19 @@ const CalendarGrid = ({
                                 className={cn(
                                     "w-full text-left p-1 rounded-md text-xs leading-tight transition-colors",
                                     isYearView ? "p-0.5" : "p-1.5",
-                                    event.status === 'approved' ? 'bg-primary/20 hover:bg-primary/30 text-primary-foreground' : 'bg-accent/20 hover:bg-accent/30 text-accent-foreground'
+                                    event.status === 'approved' ? 'bg-primary/20 hover:bg-primary/30 text-primary-foreground' :
+                                    event.status === 'public_holiday' ? 'bg-green-500/20 hover:bg-green-500/30' :
+                                    'bg-accent/20 hover:bg-accent/30 text-accent-foreground'
                                 )}
                             >
                                 <div className={cn("flex items-center gap-1.5", { "gap-1": isYearView })}>
-                                {event.status === 'approved' ? <CheckCircle className={cn("h-3 w-3 text-primary flex-shrink-0", { "h-2 w-2": isYearView })}/> : <Clock className={cn("h-3 w-3 text-accent flex-shrink-0", { "h-2 w-2": isYearView })}/>}
+                                {event.status === 'approved' ? <CheckCircle className={cn("h-3 w-3 text-primary flex-shrink-0", { "h-2 w-2": isYearView })}/> :
+                                 event.status === 'public_holiday' ? <FerrisWheel className={cn("h-3 w-3 text-green-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
+                                 <Clock className={cn("h-3 w-3 text-accent flex-shrink-0", { "h-2 w-2": isYearView })}/>}
                                 <span className={cn("truncate font-medium", 
-                                    event.status === 'approved' ? 'text-primary' : 'text-accent',
+                                    event.status === 'approved' ? 'text-primary' : 
+                                    event.status === 'public_holiday' ? 'text-green-700' :
+                                    'text-accent',
                                     { "hidden": isYearView }
                                     )}>{event.name}</span>
                                 </div>
@@ -213,6 +219,7 @@ export function EventCalendar({
         const homeCoords = { lat: homeClub.latitude, lon: homeClub.longitude };
         
         return sourceFilteredEvents.filter(event => {
+            if (event.source === 'public_holiday') return true; // Always show holidays
             const eventClub = clubs.find(c => c.id === event.clubId);
             if (!eventClub || eventClub.latitude === undefined || eventClub.longitude === undefined) return false;
 
@@ -224,6 +231,7 @@ export function EventCalendar({
 
     // Location-based filtering
     return sourceFilteredEvents.filter(event => {
+      if (event.source === 'public_holiday') return true; // Always show holidays
       if (selectedClubId !== 'all') {
         return event.clubId === selectedClubId;
       }
@@ -266,7 +274,7 @@ export function EventCalendar({
   const selectedEventType = eventTypes.find(et => et.id === selectedEvent?.eventTypeId);
 
   const getNearbyEvents = (event: Event) => {
-    if (!event) return [];
+    if (!event || event.status === 'public_holiday') return [];
     const eventDate = new Date(event.date);
     return events.filter(e => {
         if (e.id === event.id) return false;

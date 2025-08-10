@@ -1,5 +1,5 @@
 import type { Zone, Club, EventType, Event } from './types';
-import { addMonths, startOfMonth, addDays, subDays } from 'date-fns';
+import { addMonths, startOfMonth, addDays, subDays, getYear } from 'date-fns';
 
 // In a real application, this data would be stored in and fetched from a database.
 // For this example, we use mock data stored in memory.
@@ -32,6 +32,7 @@ let eventTypes: EventType[] = [
   { id: '4', name: 'Cross Country Clinic' },
   { id: '5', name: 'Mounted Games' },
   { id: '6', name: 'Certificate Assessment' },
+  { id: 'ph', name: 'Public Holiday'},
 ];
 
 const today = new Date();
@@ -48,17 +49,68 @@ let events: Event[] = [
   { id: '8', name: 'Grade 3/4 Show Jumping', date: addDays(startOfMonth(addMonths(today, 1)), 12), clubId: '10', eventTypeId: '2', status: 'proposed', location: 'Shepparton, VIC', source: 'pca' },
 ];
 
+interface PublicHoliday {
+    date: string;
+    localName: string;
+    name: string;
+    countryCode: string;
+    fixed: boolean;
+    global: boolean;
+    counties: string[] | null;
+    launchYear: number | null;
+    types: string[];
+}
+
+const getPublicHolidays = async (year: number): Promise<Event[]> => {
+    try {
+        const response = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/AU`);
+        if (!response.ok) {
+            console.error('Failed to fetch public holidays:', response.statusText);
+            return [];
+        }
+        const holidays: PublicHoliday[] = await response.json();
+        
+        // Filter for Victorian holidays (AU-VIC)
+        return holidays
+            .filter(holiday => holiday.counties === null || holiday.counties?.includes('AU-VIC'))
+            .map((holiday, index) => ({
+                id: `ph-${year}-${index}`,
+                name: holiday.localName,
+                date: new Date(holiday.date),
+                clubId: 'N/A',
+                eventTypeId: 'ph', 
+                status: 'public_holiday',
+                location: 'Victoria',
+                source: 'public_holiday',
+            }));
+    } catch (error) {
+        console.error('Error fetching public holidays:', error);
+        return [];
+    }
+};
+
+
 // Data access functions
 export const getZones = async () => Promise.resolve(zones);
 export const getClubs = async () => Promise.resolve(clubs);
 export const getEventTypes = async () => Promise.resolve(eventTypes);
-export const getEvents = async () => Promise.resolve(events);
-export const getEventById = async (id: string) => Promise.resolve(events.find(e => e.id === id));
+
+export const getEvents = async (): Promise<Event[]> => {
+    const currentYear = getYear(new Date());
+    const publicHolidays = await getPublicHolidays(currentYear);
+    // In a real app, you might want to fetch for previous/next year too depending on calendar view
+    return Promise.resolve([...events, ...publicHolidays]);
+};
+
+export const getEventById = async (id: string) => {
+    const allEvents = await getEvents();
+    return Promise.resolve(allEvents.find(e => e.id === id));
+}
 
 export const getClubById = async (id: string) => Promise.resolve(clubs.find(c => c.id === id));
 export const getEventTypeById = async (id: string) => Promise.resolve(eventTypes.find(et => et.id === id));
 
-export const addEvent = async (event: Omit<Event, 'id'>) => {
+export const addEvent = async (event: Omit<Event, 'id' | 'source'>) => {
   const newEvent: Event = {
     id: String(Date.now()),
     ...event,

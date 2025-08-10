@@ -16,8 +16,8 @@ export interface EventType {
   name: string;
 }
 
-export type EventStatus = 'proposed' | 'approved' | 'rejected';
-export type EventSource = 'pca' | 'event_secretary' | 'zone';
+export type EventStatus = 'proposed' | 'approved' | 'rejected' | 'public_holiday';
+export type EventSource = 'pca' | 'event_secretary' | 'zone' | 'public_holiday';
 
 export interface Event {
   id:string;

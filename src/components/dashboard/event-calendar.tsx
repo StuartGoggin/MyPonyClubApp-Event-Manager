@@ -126,8 +126,8 @@ const CalendarGrid = ({
              <div className='table-row' style={{ height: isYearView ? undefined : `${cellHeight}px` }}>
             {dayIndexMap.map(dayIdx => {
                 const day = week.find(d => getDay(d) === dayIdx)!;
-                const isSaturday = getDay(day) === 6;
-                const isSunday = getDay(day) === 0;
+                const isSaturday = getDay(d) === 6;
+                const isSunday = getDay(d) === 0;
                 const isCurrentDayToday = isSameDay(day, today);
 
                 const dayEvents = events.filter(event => isSameDay(new Date(event.date), day));

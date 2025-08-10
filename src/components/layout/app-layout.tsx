@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/sidebar';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Calendar, PlusCircle, Database } from 'lucide-react';
+import { Calendar, PlusCircle, Database, FerrisWheel } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -112,6 +112,12 @@ export function AppLayout({ children }: PropsWithChildren) {
                     <div className="flex items-center space-x-2">
                         <Checkbox id="zone" onCheckedChange={(checked) => handleSourceChange('zone', !!checked)} checked={eventSources.includes('zone')} />
                         <Label htmlFor="zone" className="text-sm font-medium leading-none">Zone Calendars</Label>
+                    </div>
+                     <div className="flex items-center space-x-2">
+                        <Checkbox id="public_holiday" onCheckedChange={(checked) => handleSourceChange('public_holiday', !!checked)} checked={eventSources.includes('public_holiday')} />
+                        <Label htmlFor="public_holiday" className="text-sm font-medium leading-none flex items-center gap-1.5">
+                            <FerrisWheel className="h-3.5 w-3.5" /> Public Holidays
+                        </Label>
                     </div>
                 </div>
               </SidebarGroupContent>

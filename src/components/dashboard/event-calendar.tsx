@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -19,6 +20,7 @@ import {
   getYear,
   setYear,
   startOfYear,
+  addDays,
 } from 'date-fns';
 import { ChevronLeft, ChevronRight, CheckCircle, Clock, Pin, Route } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -58,6 +60,8 @@ const haversineDistance = (
   return R * c;
 };
 
+const weekStartsOn = 1; // Monday
+
 const CalendarGrid = ({
   month,
   events,
@@ -69,59 +73,87 @@ const CalendarGrid = ({
   onEventClick: (eventId: string) => void;
   isYearView?: boolean;
 }) => {
-  const start = startOfWeek(startOfMonth(month));
-  const end = endOfWeek(endOfMonth(month));
-  const days = eachDayOfInterval({ start, end });
+  const start = startOfWeek(startOfMonth(month), { weekStartsOn });
+  const end = endOfWeek(endOfMonth(month), { weekStartsOn });
+  
+  // Create an array of weeks, where each week is an array of 7 days
+  const weeks: Date[][] = [];
+  let day = start;
+  while (day <= end) {
+    const week: Date[] = [];
+    for (let i = 0; i < 7; i++) {
+      week.push(day);
+      day = addDays(day, 1);
+    }
+    weeks.push(week);
+  }
+  
+  const dayOrder = ['Mon', 'Tue', 'Wed', 'Thu', 'Sat', 'Sun', 'Fri'];
+  const dayIndexMap = [1, 2, 3, 4, 6, 0, 5]; // Mon=1, Tue=2, ..., Sun=0, Fri=5
 
   return (
     <div className={cn("p-4 bg-card rounded-lg border shadow-sm", { "p-0 border-0 shadow-none": isYearView })}>
         {!isYearView && (
-             <div className="grid grid-cols-7 text-xs text-center font-medium text-muted-foreground">
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                <div key={day} className="py-2">{day}</div>
+             <div className="grid grid-cols-9 text-xs text-center font-medium text-muted-foreground">
+                {dayOrder.map((day, index) => (
+                    <div key={day} className={cn("py-2", (day === 'Sat' || day === 'Sun') ? "col-span-2" : "col-span-1")}>
+                        {day}
+                    </div>
                 ))}
             </div>
         )}
-      <div className="grid grid-cols-7">
-        {days.map(day => (
-          <div
-            key={day.toString()}
-            className={cn('h-32 border-t border-l p-1.5 overflow-y-auto', {
-              'bg-background/50': !isSameMonth(day, month),
-              'bg-muted/20': !isSameMonth(day, month) && (getDay(day) === 0 || getDay(day) === 6),
-              'bg-muted/40': isSameMonth(day, month) && (getDay(day) === 0 || getDay(day) === 6),
-              'relative': isToday(day),
-              'h-24': isYearView,
-            })}
-          >
-            <span className={cn('font-medium text-sm', 
-              { 'text-muted-foreground': !isSameMonth(day, month) },
-              { 'text-primary font-bold': isToday(day)},
-              { 'text-xs': isYearView }
-            )}>{format(day, 'd')}</span>
-            <div className="mt-1 space-y-1">
-              {events
-                .filter(event => isSameDay(new Date(event.date), day))
-                .map(event => (
-                  <button
-                    key={event.id}
-                    onClick={() => onEventClick(event.id)}
-                    className={cn(
-                        "w-full text-left p-1 rounded-md text-xs leading-tight transition-colors",
-                        isYearView ? "p-0.5" : "p-1.5",
-                        event.status === 'approved' ? 'bg-primary/10 hover:bg-primary/20' : 'bg-accent/10 hover:bg-accent/20'
-                    )}
-                  >
-                    <div className={cn("flex items-center gap-1.5", { "gap-1": isYearView })}>
-                       {event.status === 'approved' ? <CheckCircle className={cn("h-3 w-3 text-primary flex-shrink-0", { "h-2 w-2": isYearView })}/> : <Clock className={cn("h-3 w-3 text-accent flex-shrink-0", { "h-2 w-2": isYearView })}/>}
-                      <span className={cn("truncate font-medium", 
-                        event.status === 'approved' ? 'text-primary-dark' : 'text-accent-dark',
-                        { "hidden": isYearView }
-                        )}>{event.name}</span>
+      <div className="divide-y border-t">
+        {weeks.map((week, weekIndex) => (
+          <div key={weekIndex} className="grid grid-cols-9 min-h-[h-32]">
+            {dayIndexMap.map(dayIdx => {
+                const day = week.find(d => getDay(d) === dayIdx)!;
+                const isSaturday = getDay(day) === 6;
+                const isSunday = getDay(day) === 0;
+
+                return (
+                    <div
+                        key={day.toString()}
+                        className={cn('h-32 border-l p-1.5 overflow-y-auto', {
+                        'bg-background/50': !isSameMonth(day, month),
+                        'bg-muted/20': !isSameMonth(day, month) && (isSaturday || isSunday),
+                        'bg-muted/40': isSameMonth(day, month) && (isSaturday || isSunday),
+                        'relative': isToday(day),
+                        'h-24': isYearView,
+                        'col-span-2': isSaturday || isSunday,
+                        'col-span-1': !isSaturday && !isSunday,
+                        })}
+                    >
+                        <span className={cn('font-medium text-sm', 
+                        { 'text-muted-foreground': !isSameMonth(day, month) },
+                        { 'text-primary font-bold': isToday(day)},
+                        { 'text-xs': isYearView }
+                        )}>{format(day, 'd')}</span>
+                        <div className="mt-1 space-y-1">
+                        {events
+                            .filter(event => isSameDay(new Date(event.date), day))
+                            .map(event => (
+                            <button
+                                key={event.id}
+                                onClick={() => onEventClick(event.id)}
+                                className={cn(
+                                    "w-full text-left p-1 rounded-md text-xs leading-tight transition-colors",
+                                    isYearView ? "p-0.5" : "p-1.5",
+                                    event.status === 'approved' ? 'bg-primary/10 hover:bg-primary/20' : 'bg-accent/10 hover:bg-accent/20'
+                                )}
+                            >
+                                <div className={cn("flex items-center gap-1.5", { "gap-1": isYearView })}>
+                                {event.status === 'approved' ? <CheckCircle className={cn("h-3 w-3 text-primary flex-shrink-0", { "h-2 w-2": isYearView })}/> : <Clock className={cn("h-3 w-3 text-accent flex-shrink-0", { "h-2 w-2": isYearView })}/>}
+                                <span className={cn("truncate font-medium", 
+                                    event.status === 'approved' ? 'text-primary-dark' : 'text-accent-dark',
+                                    { "hidden": isYearView }
+                                    )}>{event.name}</span>
+                                </div>
+                            </button>
+                            ))}
+                        </div>
                     </div>
-                  </button>
-                ))}
-            </div>
+                );
+            })}
           </div>
         ))}
       </div>

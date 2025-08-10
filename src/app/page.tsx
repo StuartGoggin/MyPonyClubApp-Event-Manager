@@ -1,5 +1,5 @@
 import { EventCalendar } from '@/components/dashboard/event-calendar';
-import { getEvents, getClubs, getEventTypes } from '@/lib/data';
+import { getEvents, getClubs, getEventTypes, getZones } from '@/lib/data';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,6 +8,7 @@ export default async function DashboardPage() {
   const events = await getEvents();
   const clubs = await getClubs();
   const eventTypes = await getEventTypes();
+  const zones = await getZones();
 
   return (
     <div className="flex flex-col gap-6">
@@ -17,7 +18,7 @@ export default async function DashboardPage() {
           View and manage all proposed and approved events.
         </p>
       </div>
-      <EventCalendar events={events} clubs={clubs} eventTypes={eventTypes} />
+      <EventCalendar events={events} clubs={clubs} eventTypes={eventTypes} zones={zones} />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   eachDayOfInterval,
   endOfMonth,
@@ -23,14 +23,16 @@ import {
 import { ChevronLeft, ChevronRight, CheckCircle, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { type Event, type Club, type EventType } from '@/lib/types';
+import { type Event, type Club, type EventType, type Zone } from '@/lib/types';
 import { EventDialog } from './event-dialog';
 import { useRouter } from 'next/navigation';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface EventCalendarProps {
   events: Event[];
   clubs: Club[];
   eventTypes: EventType[];
+  zones: Zone[];
 }
 
 const CalendarGrid = ({
@@ -109,12 +111,40 @@ export function EventCalendar({
   events,
   clubs,
   eventTypes,
+  zones
 }: EventCalendarProps) {
   const router = useRouter();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<'month' | 'year'>('month');
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [isDialogOpen, setDialogOpen] = useState(false);
+  const [selectedZoneId, setSelectedZoneId] = useState<string>('all');
+  const [selectedClubId, setSelectedClubId] = useState<string>('all');
+
+  const filteredClubs = useMemo(() => {
+    if (selectedZoneId === 'all') {
+      return clubs;
+    }
+    return clubs.filter(club => club.zoneId === selectedZoneId);
+  }, [selectedZoneId, clubs]);
+
+  const filteredEvents = useMemo(() => {
+    return events.filter(event => {
+      if (selectedClubId !== 'all') {
+        return event.clubId === selectedClubId;
+      }
+      if (selectedZoneId !== 'all') {
+        const clubIsInZone = clubs.find(c => c.id === event.clubId)?.zoneId === selectedZoneId;
+        return clubIsInZone;
+      }
+      return true;
+    });
+  }, [events, selectedZoneId, selectedClubId, clubs]);
+
+  const handleZoneChange = (zoneId: string) => {
+    setSelectedZoneId(zoneId);
+    setSelectedClubId('all');
+  };
 
   const next = () => {
     if (view === 'month') {
@@ -162,14 +192,12 @@ export function EventCalendar({
 
   return (
     <div className="bg-card rounded-lg border shadow-sm">
-      <div className="flex items-center justify-between p-4 border-b">
-        <h2 className="text-xl font-semibold font-headline">
-          {view === 'month' ? format(currentDate, 'MMMM yyyy') : format(currentDate, 'yyyy')}
-        </h2>
-        <div className="flex items-center gap-2">
-            <Button variant={view === 'month' ? 'secondary' : 'outline'} size="sm" onClick={() => setView('month')}>Month</Button>
-            <Button variant={view === 'year' ? 'secondary' : 'outline'} size="sm" onClick={() => setView('year')}>Year</Button>
-            <div className="flex items-center gap-2 ml-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 p-4 border-b">
+        <div className="flex items-center gap-4">
+            <h2 className="text-xl font-semibold font-headline">
+            {view === 'month' ? format(currentDate, 'MMMM yyyy') : format(currentDate, 'yyyy')}
+            </h2>
+            <div className="flex items-center gap-2">
                 <Button variant="outline" size="icon" onClick={prev}>
                     <ChevronLeft className="h-4 w-4" />
                 </Button>
@@ -178,10 +206,40 @@ export function EventCalendar({
                 </Button>
             </div>
         </div>
+        <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
+                <Select value={selectedZoneId} onValueChange={handleZoneChange}>
+                    <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Select Zone" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All of Victoria</SelectItem>
+                        {zones.map(zone => (
+                            <SelectItem key={zone.id} value={zone.id}>{zone.name}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                <Select value={selectedClubId} onValueChange={setSelectedClubId} disabled={selectedZoneId === 'all' && filteredClubs.length === clubs.length}>
+                    <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Select Club" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Clubs</SelectItem>
+                        {filteredClubs.map(club => (
+                            <SelectItem key={club.id} value={club.id}>{club.name}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+             <div className="flex items-center gap-2 ml-4">
+                <Button variant={view === 'month' ? 'secondary' : 'outline'} size="sm" onClick={() => setView('month')}>Month</Button>
+                <Button variant={view === 'year' ? 'secondary' : 'outline'} size="sm" onClick={() => setView('year')}>Year</Button>
+            </div>
+        </div>
       </div>
       
       {view === 'month' && (
-        <CalendarGrid month={currentDate} events={events} onEventClick={handleEventClick} />
+        <CalendarGrid month={currentDate} events={filteredEvents} onEventClick={handleEventClick} />
       )}
       
       {view === 'year' && (
@@ -189,7 +247,7 @@ export function EventCalendar({
             {yearMonths.map(month => (
                 <div key={month.toString()}>
                     <h3 className="text-lg font-semibold font-headline mb-2 text-center">{format(month, 'MMMM')}</h3>
-                    <CalendarGrid month={month} events={events} onEventClick={handleEventClick} isYearView={true} />
+                    <CalendarGrid month={month} events={filteredEvents} onEventClick={handleEventClick} isYearView={true} />
                 </div>
             ))}
         </div>

@@ -434,9 +434,3 @@ export function EventCalendar({
     </div>
   );
 }
-
-    
-
-    
-
-    

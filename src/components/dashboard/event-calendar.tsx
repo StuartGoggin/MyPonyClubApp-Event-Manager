@@ -60,7 +60,7 @@ const haversineDistance = (
   return R * c;
 };
 
-const weekStartsOn = 1; // Monday
+const weekStartsOn = 3; // Wednesday
 
 const CalendarGrid = ({
   month,
@@ -88,8 +88,8 @@ const CalendarGrid = ({
     weeks.push(week);
   }
   
-  const dayOrder = ['Mon', 'Tue', 'Wed', 'Thu', 'Sat', 'Sun', 'Fri'];
-  const dayIndexMap = [1, 2, 3, 4, 6, 0, 5]; // Mon=1, Tue=2, ..., Sun=0, Fri=5
+  const dayOrder = ['Wed', 'Thu', 'Fri', 'Sat', 'Sun', 'Mon', 'Tue'];
+  const dayIndexMap = [3, 4, 5, 6, 0, 1, 2]; // Wed=3, Thu=4, ..., Tue=2
 
   return (
     <div className={cn("p-4 bg-card rounded-lg border shadow-sm", { "p-0 border-0 shadow-none": isYearView })}>

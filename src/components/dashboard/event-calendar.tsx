@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -91,19 +92,24 @@ const CalendarGrid = ({
   const dayIndexMap = [3, 4, 5, 6, 0, 1, 2]; // Wed=3, Thu=4, ..., Tue=2
 
   return (
-    <div className={cn("bg-card rounded-lg border shadow-sm", { "p-0 border-0 shadow-none bg-transparent": isYearView })}>
+    <div className={cn("bg-card rounded-lg border shadow-sm w-full", { "p-0 border-0 shadow-none bg-transparent": isYearView })}>
         {!isYearView && (
-             <div className="grid grid-cols-9 text-xs text-center font-medium text-muted-foreground">
-                {dayOrder.map((day, index) => (
-                    <div key={day} className={cn("py-2", (day === 'Sat' || day === 'Sun') ? "col-span-2" : "col-span-1")}>
-                        {day}
+             <div className="table table-fixed w-full text-xs text-center font-medium text-muted-foreground">
+                <div className='table-header-group'>
+                    <div className='table-row'>
+                        {dayOrder.map((day) => (
+                            <div key={day} className={cn("table-cell py-2", (day === 'Sat' || day === 'Sun') ? "w-[20%]" : "w-[12%]")}>
+                                {day}
+                            </div>
+                        ))}
                     </div>
-                ))}
+                </div>
             </div>
         )}
       <div className={cn("divide-y border-t", {"border-t-0 divide-y-0": isYearView})}>
         {weeks.map((week, weekIndex) => (
-          <div key={weekIndex} className="grid grid-cols-9 min-h-[h-32] border-t first:border-t-0 md:border-t">
+          <div key={weekIndex} className="table table-fixed w-full min-h-[h-32] border-t first:border-t-0 md:border-t">
+             <div className='table-row'>
             {dayIndexMap.map(dayIdx => {
                 const day = week.find(d => getDay(d) === dayIdx)!;
                 const isSaturday = getDay(day) === 6;
@@ -113,14 +119,12 @@ const CalendarGrid = ({
                 return (
                     <div
                         key={day.toString()}
-                        className={cn('h-32 border-l p-1.5 overflow-y-auto', {
+                        className={cn('table-cell h-32 border-l p-1.5 overflow-y-auto align-top', {
                         'bg-background/50 text-muted-foreground': !isSameMonth(day, month),
                         'bg-muted/20': !isSameMonth(day, month) && (isSaturday || isSunday),
                         'bg-primary/5': isSameMonth(day, month) && (isSaturday || isSunday),
                         'relative': isCurrentDayToday,
                         'h-24': isYearView,
-                        'col-span-2': isSaturday || isSunday,
-                        'col-span-1': !isSaturday && !isSunday,
                          'border-t-0': isYearView && weekIndex === 0
                         })}
                     >
@@ -142,7 +146,7 @@ const CalendarGrid = ({
                                 key={event.id}
                                 onClick={() => onEventClick(event.id)}
                                 className={cn(
-                                    "w-full text-left p-1 rounded-md text-xs leading-tight transition-colors",
+                                    "w-full text-left rounded-md text-xs leading-tight transition-colors",
                                     isYearView ? "p-0.5" : "p-1.5",
                                     event.status === 'approved' ? 'bg-primary/20 hover:bg-primary/30 text-primary-foreground' :
                                     event.status === 'public_holiday' ? 'bg-green-500/20 hover:bg-green-500/30' :
@@ -167,6 +171,7 @@ const CalendarGrid = ({
                     </div>
                 );
             })}
+            </div>
           </div>
         ))}
       </div>

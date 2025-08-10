@@ -7,6 +7,8 @@ export interface Club {
   id: string;
   name: string;
   zoneId: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface EventType {

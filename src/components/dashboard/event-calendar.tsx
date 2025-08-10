@@ -212,13 +212,15 @@ export function EventCalendar({
   }, [events, eventSources]);
 
   const filteredEvents = useMemo(() => {
+    const eventsFromSource = events.filter(event => eventSources.includes(event.source));
+
     if (filterMode === 'distance' && homeClubId) {
         const homeClub = clubs.find(c => c.id === homeClubId);
-        if (!homeClub || homeClub.latitude === undefined || homeClub.longitude === undefined) return [];
+        if (!homeClub || homeClub.latitude === undefined || homeClub.longitude === undefined) return eventsFromSource.filter(e => e.source === 'public_holiday');
 
         const homeCoords = { lat: homeClub.latitude, lon: homeClub.longitude };
         
-        return sourceFilteredEvents.filter(event => {
+        return eventsFromSource.filter(event => {
             if (event.source === 'public_holiday') return true; // Always show holidays
             const eventClub = clubs.find(c => c.id === event.clubId);
             if (!eventClub || eventClub.latitude === undefined || eventClub.longitude === undefined) return false;
@@ -230,7 +232,7 @@ export function EventCalendar({
     }
 
     // Location-based filtering
-    return sourceFilteredEvents.filter(event => {
+    return eventsFromSource.filter(event => {
       if (event.source === 'public_holiday') return true; // Always show holidays
       if (selectedClubId !== 'all') {
         return event.clubId === selectedClubId;
@@ -241,7 +243,7 @@ export function EventCalendar({
       }
       return true;
     });
-  }, [sourceFilteredEvents, clubs, filterMode, homeClubId, distance, selectedZoneId, selectedClubId]);
+  }, [events, clubs, eventSources, filterMode, homeClubId, distance, selectedZoneId, selectedClubId]);
 
   const handleZoneChange = (zoneId: string) => {
     setSelectedZoneId(zoneId);

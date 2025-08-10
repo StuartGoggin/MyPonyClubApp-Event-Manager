@@ -150,7 +150,7 @@ const CalendarGrid = ({
                                 onClick={() => onEventClick(event.id)}
                                 className={cn(
                                     "w-auto text-left rounded-md text-xs leading-tight transition-colors shadow-sm",
-                                    "min-w-[calc(100%-0.5rem)] whitespace-nowrap",
+                                    "min-w-[calc(100%-0.5rem)] whitespace-normal",
                                     isYearView ? "p-1" : "p-1.5",
                                     event.status === 'approved' ? 'bg-primary/20 hover:bg-primary/30 text-primary-foreground' :
                                     event.status === 'public_holiday' ? 'bg-green-500/20 hover:bg-green-500/30' :
@@ -163,7 +163,7 @@ const CalendarGrid = ({
                                  event.status === 'public_holiday' ? <FerrisWheel className={cn("h-3 w-3 text-green-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
                                  <Clock className={cn("h-3 w-3 text-accent flex-shrink-0", { "h-2 w-2": isYearView })}/>}
                                 </div>
-                                <span className={cn("font-medium whitespace-normal", 
+                                <span className={cn("font-medium", 
                                     event.status === 'approved' ? 'text-primary' : 
                                     event.status === 'public_holiday' ? 'text-green-700' :
                                     'text-accent'
@@ -226,7 +226,7 @@ export function EventCalendar({
 
     if (filterMode === 'distance' && homeClubId) {
         const homeClub = clubs.find(c => c.id === homeClubId);
-        if (!homeClub || homeClub.latitude === undefined || homeClub.longitude === undefined) return eventsFromsource.filter(e => e.source === 'public_holiday');
+        if (!homeClub || homeClub.latitude === undefined || homeClub.longitude === undefined) return eventsFromSource.filter(e => e.source === 'public_holiday');
 
         const homeCoords = { lat: homeClub.latitude, lon: homeClub.longitude };
         

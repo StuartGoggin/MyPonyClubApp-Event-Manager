@@ -112,7 +112,7 @@ const CalendarGrid = ({
             const eventGap = isYearView ? 2 : 4;
             const baseCellHeight = isYearView ? 28 : 32;
 
-            const maxEventsInWeek = Math.max(1, ...week.map(day => {
+            const maxEventsInWeek = Math.max(0, ...week.map(day => {
                 return events.filter(event => isSameDay(new Date(event.date), day)).length;
             }));
             

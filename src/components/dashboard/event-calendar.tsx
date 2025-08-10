@@ -108,17 +108,16 @@ const CalendarGrid = ({
         )}
       <div className={cn("divide-y border-t", {"border-t-0 divide-y-0": isYearView})}>
         {weeks.map((week, weekIndex) => {
-            const eventHeight = isYearView ? 20 : 28;
-            const eventGap = isYearView ? 2 : 4;
-            const baseCellHeight = isYearView ? 96 : 128; // h-24 or h-32
-            const topOffset = isYearView ? 28 : 32; // top-7 or top-8
+            const eventHeight = isYearView ? 22 : 30; // height of event item
+            const eventGap = isYearView ? 2 : 4; // gap between event items
+            const baseCellHeight = isYearView ? 28 : 32; // base h- of a cell (for day number)
             
-            const maxEventsInWeek = Math.max(...week.map(day => {
+            const maxEventsInWeek = Math.max(0, ...week.map(day => {
                 return events.filter(event => isSameDay(new Date(event.date), day)).length;
             }));
             
             const requiredContentHeight = maxEventsInWeek * (eventHeight + eventGap);
-            const cellHeight = Math.max(baseCellHeight, topOffset + requiredContentHeight + (isYearView ? 4 : 8));
+            const cellHeight = baseCellHeight + requiredContentHeight;
 
           return (
           <div key={weekIndex} className="table table-fixed w-full border-t first:border-t-0 md:border-t">
@@ -139,12 +138,11 @@ const CalendarGrid = ({
                           'bg-muted/20': !isSameMonth(day, month) && (isSaturday || isSunday),
                           'bg-primary/5': isSameMonth(day, month) && (isSaturday || isSunday),
                           'relative': isCurrentDayToday,
-                          'h-24': isYearView,
                           'border-t-0': isYearView && weekIndex === 0,
                           'w-[20%]': isSaturday || isSunday,
                           'w-[12%]': !isSaturday && !isSunday
                         })}
-                        style={{height: `${cellHeight}px`}}
+                        style={{minHeight: `${baseCellHeight}px`}}
                     >
                          <span
                             className={cn(
@@ -156,19 +154,20 @@ const CalendarGrid = ({
                         >
                             {format(day, 'd')}
                         </span>
-                        <div className={cn("absolute z-10 space-y-1 px-1", isYearView ? "top-7" : "top-8")}>
+                        <div className="relative z-10 space-y-1">
                         {dayEvents.map((event, index) => (
                             <button
                                 key={event.id}
                                 onClick={() => onEventClick(event.id)}
                                 className={cn(
-                                    "w-auto text-left rounded-md text-xs leading-tight transition-colors shadow-sm",
-                                    "min-w-full whitespace-normal",
+                                    "w-full text-left rounded-md text-xs leading-tight transition-colors shadow-sm",
+                                    "whitespace-normal",
                                     isYearView ? "p-1" : "p-1.5",
                                     event.status === 'approved' ? 'bg-primary/20 hover:bg-primary/30 text-primary-foreground' :
                                     event.status === 'public_holiday' ? 'bg-green-500/20 hover:bg-green-500/30' :
                                     'bg-accent/20 hover:bg-accent/30 text-accent-foreground'
                                 )}
+                                style={{ height: `${eventHeight}px` }}
                             >
                                 <div className={cn("flex items-start gap-1.5", { "gap-1": isYearView })}>
                                 <div className="flex-shrink-0 pt-0.5">

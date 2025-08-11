@@ -36,7 +36,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { EventCalendar } from '@/components/dashboard/event-calendar';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { suggestAlternativeDates, type SuggestAlternativeDatesOutput } from '@/ai/flows/suggest-alternative-dates';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -66,6 +65,26 @@ interface EventRequestFormProps {
   allEvents: Event[];
   zones: Zone[];
 }
+
+const haversineDistance = (
+  coords1: { lat: number; lon: number },
+  coords2: { lat: number; lon: number }
+) => {
+  const toRad = (x: number) => (x * Math.PI) / 180;
+  const R = 6371; // Earth radius in km
+
+  const dLat = toRad(coords2.lat - coords1.lat);
+  const dLon = toRad(coords2.lon - coords1.lon);
+  const lat1 = toRad(coords1.lat);
+  const lat2 = toRad(coords2.lat);
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return R * c;
+};
 
 export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventRequestFormProps) {
   const { toast } = useToast();
@@ -160,27 +179,54 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
   
   const handleAnalyzeDate = async (index: number) => {
     const preference = form.getValues(`preferences.${index}`);
-    if (!preference.date || !preference.eventTypeId) {
+    const clubId = form.getValues('clubId');
+    const club = clubs.find(c => c.id === clubId);
+
+    if (!preference.date || !preference.eventTypeId || !club) {
         toast({
             title: 'Missing Information',
-            description: 'Please select a date and event type before analyzing.',
+            description: 'Please select a club, date, and event type before analyzing.',
+            variant: 'destructive',
+        });
+        return;
+    }
+     if (!club.latitude || !club.longitude) {
+        toast({
+            title: 'Missing Club Location',
+            description: 'The selected club does not have location data needed for distance analysis.',
             variant: 'destructive',
         });
         return;
     }
 
+
     setIsLoadingSuggestions(prev => ({...prev, [index]: true}));
     setConflictSuggestions(prev => ({...prev, [index]: null}));
 
     const eventType = eventTypes.find(et => et.id === preference.eventTypeId);
+    const homeCoords = { lat: club.latitude, lon: club.longitude };
+
     const nearbyEvents = allEvents.filter(e => {
         const dayDiff = Math.abs(differenceInDays(preference.date!, new Date(e.date)));
-        return dayDiff <= 7; // Check for events within a week
-    }).map(e => ({
-        date: format(new Date(e.date), 'yyyy-MM-dd'),
-        type: eventTypes.find(et => et.id === e.eventTypeId)?.name || 'Unknown',
-        location: e.location,
-    }));
+        if (dayDiff > 7) return false;
+
+        const eventClub = clubs.find(c => c.id === e.clubId);
+        if (!eventClub || eventClub.latitude === undefined || eventClub.longitude === undefined) return false;
+
+        const eventCoords = { lat: eventClub.latitude, lon: eventClub.longitude };
+        const distance = haversineDistance(homeCoords, eventCoords);
+
+        return distance <= 100;
+    }).map(e => {
+        const eventClub = clubs.find(c => c.id === e.clubId)!;
+        const distance = haversineDistance(homeCoords, {lat: eventClub.latitude!, lon: eventClub.longitude!});
+        return {
+            date: format(new Date(e.date), 'yyyy-MM-dd'),
+            type: eventTypes.find(et => et.id === e.eventTypeId)?.name || 'Unknown',
+            location: e.location,
+            distance: Math.round(distance),
+        }
+    });
 
     try {
         const result = await suggestAlternativeDates({

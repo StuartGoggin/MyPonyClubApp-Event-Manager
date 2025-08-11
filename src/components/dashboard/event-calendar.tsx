@@ -106,20 +106,23 @@ const CalendarGrid = ({
   }, [events, month, isYearView]);
 
   return (
-    <div className={cn("bg-card rounded-lg border shadow-sm w-full", { "p-0 border-0 shadow-none bg-transparent": isYearView })}>
-        {!isYearView && (
-             <div className="grid grid-cols-7 text-xs text-center font-medium text-muted-foreground">
-                {dayOrder.map((day) => (
-                    <div key={day} className="py-2">
-                        {day}
-                    </div>
-                ))}
-            </div>
-        )}
+    <div className={cn("bg-card rounded-lg border shadow-sm w-full", { "p-4": isYearView })}>
+      {isYearView && (
+          <h3 className="text-lg font-semibold font-headline mb-2 text-center">{format(month, 'MMMM')}</h3>
+      )}
+      {!isYearView && (
+           <div className="grid grid-cols-7 text-xs text-center font-medium text-muted-foreground">
+              {dayOrder.map((day) => (
+                  <div key={day} className="py-2">
+                      {day}
+                  </div>
+              ))}
+          </div>
+      )}
       <div className={cn("divide-y border-t", {"border-t-0 divide-y-0": isYearView})}>
         {weeks.map((week, weekIndex) => {
           // Only render weeks that have at least one day in the current month
-          if (isYearView && !week.some(d => isSameMonth(d, month))) {
+          if (!week.some(d => isSameMonth(d, month))) {
             return null;
           }
           return (
@@ -135,7 +138,7 @@ const CalendarGrid = ({
                 const isDayInCurrentMonth = isSameMonth(day, month);
 
                 if (isYearView && !isDayInCurrentMonth) {
-                  return <div className="flex-1 basis-0" />;
+                  return <div key={day.toString()} className="flex-1 basis-0" />;
                 }
 
                 return (
@@ -417,10 +420,7 @@ export function EventCalendar({
       {view === 'year' && (
         <div className="p-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {yearMonths.map(month => (
-                <div key={month.toString()} className="bg-card rounded-lg border shadow-sm p-4">
-                    <h3 className="text-lg font-semibold font-headline mb-2 text-center">{format(month, 'MMMM')}</h3>
-                    <CalendarGrid month={month} events={filteredEvents} onEventClick={handleEventClick} isYearView={true} today={today} />
-                </div>
+                <CalendarGrid key={month.toString()} month={month} events={filteredEvents} onEventClick={handleEventClick} isYearView={true} today={today} />
             ))}
         </div>
       )}

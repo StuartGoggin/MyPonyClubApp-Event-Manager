@@ -105,7 +105,7 @@ const CalendarGrid = ({
       <div className={cn("divide-y border-t", {"border-t-0 divide-y-0": isYearView})}>
         {weeks.map((week, weekIndex) => {
           return (
-          <div key={weekIndex} className={cn("grid grid-cols-7 divide-x", { 'grid-flow-col auto-cols-fr': isYearView })}>
+          <div key={weekIndex} className={cn("grid divide-x", isYearView ? "grid-cols-[repeat(7,minmax(0,1fr))]" : "grid-cols-7")}>
             {dayIndexMap.map(dayIdx => {
                 const day = week.find(d => getDay(d) === dayIdx)!;
                 const isSaturday = getDay(day) === 6;

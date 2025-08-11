@@ -13,7 +13,7 @@ const eventRequestSchema = z.object({
   eventTypeId: z.string({ required_error: 'Please select an event type.' }).min(1, 'Please select an event type.'),
   location: z.string().min(3, { message: 'Location must be at least 3 characters.' }),
   isQualifier: z.boolean().default(false),
-  dates: z.array(z.date({ required_error: 'A date is required.' })).min(1, 'You must add at least one date preference.'),
+  dates: z.array(z.string()).min(1, 'You must add at least one date preference.').transform(arr => arr.map(str => new Date(str))),
   notes: z.string().optional(),
   submittedBy: z.string().optional(),
   submittedByContact: z.string().optional(),
@@ -34,7 +34,7 @@ export async function createEventRequestAction(
   formData: FormData
 ): Promise<FormState> {
     const rawData = Object.fromEntries(formData.entries());
-    const dates = formData.getAll('dates').map(d => new Date(d as string));
+    const dates = formData.getAll('dates');
     
     const validatedFields = eventRequestSchema.safeParse({
       clubId: rawData.clubId,

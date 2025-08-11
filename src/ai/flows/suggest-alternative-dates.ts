@@ -21,14 +21,19 @@ const SuggestAlternativeDatesInputSchema = z.object({
       type: z.string().describe('Type of the existing event.'),
       location: z.string().describe('Location of the existing event.'),
     })
-  ).describe('A list of other events within a 100km radius.'),
+  ).describe('A list of other events happening on or around the same date.'),
 });
 export type SuggestAlternativeDatesInput = z.infer<typeof SuggestAlternativeDatesInputSchema>;
 
 const SuggestAlternativeDatesOutputSchema = z.object({
+  conflictAnalysis: z
+    .string()
+    .describe(
+      'A natural language analysis of potential conflicts with the other events provided. If there are no conflicts, state that clearly. Otherwise, describe the conflicts.'
+    ),
   suggestedDates: z.array(
     z.string().describe('A list of suggested alternative dates (YYYY-MM-DD).')
-  ).describe('A list of suggested alternative dates to avoid conflicts.'),
+  ).describe('A list of 3 suggested alternative dates to avoid conflicts.'),
   reasoning: z.string().describe('The reasoning behind the suggested dates.'),
 });
 export type SuggestAlternativeDatesOutput = z.infer<typeof SuggestAlternativeDatesOutputSchema>;
@@ -41,20 +46,29 @@ const prompt = ai.definePrompt({
   name: 'suggestAlternativeDatesPrompt',
   input: {schema: SuggestAlternativeDatesInputSchema},
   output: {schema: SuggestAlternativeDatesOutputSchema},
-  prompt: `You are an event planning assistant for pony clubs. Your goal is to suggest alternative dates for events, minimizing conflicts with similar events in the same geographical area.
+  prompt: `You are an expert event planning assistant for pony clubs. Your goal is to analyze potential date conflicts and suggest alternatives.
 
-The user is requesting a date for an event, and you have a list of other events within a 100km radius.
+The user is requesting a date for an event, and you have a list of other events happening on or around the same time.
 
-Event Date: {{{eventDate}}}
-Event Type: {{{eventType}}}
-Event Location: {{{eventLocation}}}
+Analyze the requested event against the list of other events. 
+- Requested Date: {{{eventDate}}}
+- Event Type: {{{eventType}}}
+- Event Location: {{{eventLocation}}}
 
-Other Events:
+Other Nearby Events:
+{{#if otherEvents}}
 {{#each otherEvents}}
 - Date: {{{date}}}, Type: {{{type}}}, Location: {{{location}}}
 {{/each}}
+{{else}}
+None
+{{/if}}
 
-Based on this information, suggest 3 alternative dates that avoid conflicts with the other events. Explain your reasoning for each suggested date. Return the dates in YYYY-MM-DD format.
+First, provide a "conflictAnalysis". This should be a friendly, natural language summary. If there are no conflicts, say something like "This date looks clear! There are no other major events happening around this time." If there are conflicts, describe them clearly (e.g., "The Barwon Zone Rally is on the same day," or "The Spring Show Jumping is the next day, which might affect attendance.").
+
+Second, based on your analysis, suggest 3 alternative dates in YYYY-MM-DD format that avoid the identified conflicts. Prioritize weekend dates if possible.
+
+Finally, provide a brief "reasoning" for your suggestions, explaining why they are good alternatives.
 `,  
 });
 

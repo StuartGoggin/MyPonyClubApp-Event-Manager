@@ -20,6 +20,7 @@ import {
   setYear,
   startOfYear,
   addDays,
+  getDaysInMonth,
 } from 'date-fns';
 import { ChevronLeft, ChevronRight, CheckCircle, Clock, Pin, Route, FerrisWheel } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -91,6 +92,19 @@ const CalendarGrid = ({
   const dayOrder = ['Wed', 'Thu', 'Fri', 'Sat', 'Sun', 'Mon', 'Tue'];
   const dayIndexMap = [3, 4, 5, 6, 0, 1, 2]; // Wed=3, Thu=4, ..., Tue=2
 
+  const activeDaysOfMonth = useMemo(() => {
+    if (!isYearView) return new Set();
+
+    const activeDays = new Set<number>();
+    const monthEvents = events.filter(event => isSameMonth(new Date(event.date), month));
+    
+    monthEvents.forEach(event => {
+      activeDays.add(getDay(new Date(event.date)));
+    });
+    
+    return activeDays;
+  }, [events, month, isYearView]);
+
   return (
     <div className={cn("bg-card rounded-lg border shadow-sm w-full", { "p-0 border-0 shadow-none bg-transparent": isYearView })}>
         {!isYearView && (
@@ -105,7 +119,7 @@ const CalendarGrid = ({
       <div className={cn("divide-y border-t", {"border-t-0 divide-y-0": isYearView})}>
         {weeks.map((week, weekIndex) => {
           return (
-          <div key={weekIndex} className={cn(isYearView ? "flex divide-x" : "grid grid-cols-7 divide-x")}>
+          <div key={weekIndex} className={cn("divide-x", isYearView ? "flex" : "grid grid-cols-7")}>
             {dayIndexMap.map(dayIdx => {
                 const day = week.find(d => getDay(d) === dayIdx)!;
                 const isSaturday = getDay(day) === 6;
@@ -113,7 +127,8 @@ const CalendarGrid = ({
                 const isCurrentDayToday = isSameDay(day, today);
 
                 const dayEvents = events.filter(event => isSameDay(new Date(event.date), day));
-                
+                const isDayActiveInMonth = activeDaysOfMonth.has(dayIdx);
+
                 return (
                     <div
                         key={day.toString()}
@@ -122,9 +137,9 @@ const CalendarGrid = ({
                           'bg-muted/20': !isSameMonth(day, month) && (isSaturday || isSunday),
                           'bg-primary/5': isSameMonth(day, month) && (isSaturday || isSunday),
                           'relative': isCurrentDayToday,
-                           [isYearView ? 'p-1' : '']: true,
-                           [isYearView ? 'flex-1 basis-0' : '']: true,
-                           [isYearView && dayEvents.length > 0 ? 'flex-[2_1_0%]' : '']: true,
+                           'p-1': isYearView,
+                           'flex-1 basis-0': isYearView,
+                           'flex-[3_1_0%]': isYearView && isDayActiveInMonth,
                         })}
                     >
                          <span
@@ -137,7 +152,7 @@ const CalendarGrid = ({
                         >
                             {format(day, 'd')}
                         </span>
-                        <div className="flex flex-1 flex-col space-y-1">
+                        <div className="flex-1 space-y-1">
                         {dayEvents.map((event, index) => (
                             <button
                                 key={event.id}

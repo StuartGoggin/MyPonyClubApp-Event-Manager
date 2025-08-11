@@ -30,26 +30,10 @@ export type FormState = {
 };
 
 export async function createEventRequestAction(
-  prevState: FormState,
-  data: FormData
+  data: z.infer<typeof eventRequestSchema>
 ): Promise<FormState> {
-    const dates = data.getAll('dates').map(d => new Date(d as string));
-
-    const payload = {
-        clubId: data.get('clubId'),
-        coordinatorName: data.get('coordinatorName'),
-        coordinatorContact: data.get('coordinatorContact'),
-        name: data.get('name'),
-        eventTypeId: data.get('eventTypeId'),
-        location: data.get('location'),
-        isQualifier: data.get('isQualifier') === 'on',
-        dates: dates.filter(d => !isNaN(d.getTime())),
-        notes: data.get('notes'),
-        submittedBy: data.get('submittedBy'),
-        submittedByContact: data.get('submittedByContact'),
-    }
     
-    const validatedFields = eventRequestSchema.safeParse(payload);
+    const validatedFields = eventRequestSchema.safeParse(data);
     
     if (!validatedFields.success) {
         return {
@@ -59,10 +43,10 @@ export async function createEventRequestAction(
         };
     }
 
-    const { dates: validDates, clubId, name, eventTypeId, location, isQualifier, ...otherData } = validatedFields.data;
+    const { dates, clubId, name, eventTypeId, location, isQualifier, ...otherData } = validatedFields.data;
 
     try {
-        for (const date of validDates) {
+        for (const date of dates) {
             await addEvent({
                 name,
                 date,

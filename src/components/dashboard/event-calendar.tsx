@@ -38,6 +38,7 @@ interface EventCalendarProps {
   clubs: Club[];
   eventTypes: EventType[];
   zones: Zone[];
+  today: Date;
 }
 
 const haversineDistance = (
@@ -212,15 +213,11 @@ export function EventCalendar({
   events,
   clubs,
   eventTypes,
-  zones
+  zones,
+  today,
 }: EventCalendarProps) {
   const router = useRouter();
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [today, setToday] = useState<Date | null>(null);
-
-  useEffect(() => {
-    setToday(new Date());
-  }, []);
   
   const [view, setView] = useState<'month' | 'year'>('month');
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);

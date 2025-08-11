@@ -9,6 +9,7 @@ export default async function DashboardPage() {
   const clubs = await getClubs();
   const eventTypes = await getEventTypes();
   const zones = await getZones();
+  const today = new Date();
 
   return (
     <div className="flex flex-col gap-6">
@@ -18,7 +19,7 @@ export default async function DashboardPage() {
           View and manage all proposed and approved events.
         </p>
       </div>
-      <EventCalendar events={events} clubs={clubs} eventTypes={eventTypes} zones={zones} />
+      <EventCalendar events={events} clubs={clubs} eventTypes={eventTypes} zones={zones} today={today} />
     </div>
   );
 }

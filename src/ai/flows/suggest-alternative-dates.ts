@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -20,9 +21,9 @@ const SuggestAlternativeDatesInputSchema = z.object({
       date: z.string().describe('Date of the existing event (YYYY-MM-DD).'),
       type: z.string().describe('Type of the existing event.'),
       location: z.string().describe('Location of the existing event.'),
-      distance: z.number().describe('The distance in kilometers from the requested event location.')
+      distance: z.number().describe('The distance in kilometers from the requested event location. A distance of 0 means it is another date preference for the same event.')
     })
-  ).describe('A list of other events happening on or around the same date.'),
+  ).describe('A list of other events happening on or around the same date, including other date preferences for this same event request.'),
 });
 export type SuggestAlternativeDatesInput = z.infer<typeof SuggestAlternativeDatesInputSchema>;
 
@@ -49,25 +50,25 @@ const prompt = ai.definePrompt({
   output: {schema: SuggestAlternativeDatesOutputSchema},
   prompt: `You are an expert event planning assistant for pony clubs. Your goal is to analyze potential date conflicts and suggest alternatives to maximize participation.
 
-The user is requesting a date for an event, and you have a list of other events happening on or around the same time. Treat any nearby event (within ~100km) as a potential conflict, regardless of its type. For example, a dressage event can conflict with a show jumping event because they draw from the same pool of riders and volunteers. The distance to the other event is a key factor.
+The user is requesting a date for an event, and you have a list of other events happening on or around the same time. This list also includes other dates the user is considering for this same event (marked with a distance of 0). Treat any nearby event (within ~100km) as a potential conflict, regardless of its type. For example, a dressage event can conflict with a show jumping event because they draw from the same pool of riders and volunteers. The distance to the other event is a key factor.
 
 Analyze the requested event against the list of other events. 
 - Requested Date: {{{eventDate}}}
 - Event Type: {{{eventType}}}
 - Event Location: {{{eventLocation}}}
 
-Other Nearby Events (within 100km):
+Other Nearby Events & Date Preferences:
 {{#if otherEvents}}
 {{#each otherEvents}}
-- Date: {{{date}}}, Type: {{{type}}}, Location: {{{location}}}, Distance: ~{{{distance}}}km away
+- Date: {{{date}}}, Type: {{{type}}}, Location: {{{location}}}, {{#if (eq distance 0)}}This is another date preference{{else}}Distance: ~{{{distance}}}km away{{/if}}
 {{/each}}
 {{else}}
 None
 {{/if}}
 
-First, provide a "conflictAnalysis". This should be a friendly, natural language summary. If there are no conflicts, say something like "This date looks clear! There are no other major events happening around this time within a 100km radius." If there are conflicts, describe them clearly, mentioning the distance (e.g., "The Barwon Zone Rally is on the same day and is only 25km away," or "The Spring Show Jumping is the next day and is 80km away, which might affect attendance.").
+First, provide a "conflictAnalysis". This should be a friendly, natural language summary. If there are no conflicts, say something like "This date looks clear! There are no other major events happening around this time within a 100km radius." If there are conflicts, describe them clearly, mentioning the distance (e.g., "The Barwon Zone Rally is on the same day and is only 25km away," or "The Spring Show Jumping is the next day and is 80km away, which might affect attendance."). Be sure to mention if the conflict is with another of the user's preferred dates.
 
-Second, based on your analysis, suggest 3 alternative dates in YYYY-MM-DD format that avoid the identified conflicts. Prioritize weekend dates if possible.
+Second, based on your analysis, suggest 3 alternative dates in YYYY-MM-DD format that avoid all identified conflicts (including the user's other preferences). Prioritize weekend dates if possible.
 
 Finally, provide a brief "reasoning" for your suggestions, explaining why they are good alternatives.
 `,  

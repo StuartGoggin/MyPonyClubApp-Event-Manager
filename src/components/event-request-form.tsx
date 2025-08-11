@@ -101,6 +101,11 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
     defaultValues: {
       clubId: '',
       preferences: [{ name: '', location: '', isQualifier: false, eventTypeId: '' }],
+      coordinatorName: '',
+      coordinatorContact: '',
+      notes: '',
+      submittedBy: '',
+      submittedByContact: '',
     },
   });
 

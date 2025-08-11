@@ -169,8 +169,7 @@ const CalendarGrid = ({
                                     'bg-accent/20 hover:bg-accent/30 text-accent-foreground'
                                 )}
                                 style={{
-                                    height: `${eventHeight}px`,
-                                    top: `${baseCellHeight + index * (eventHeight + eventGap)}px`,
+                                    top: `${baseCellHeight + dayEvents.filter((_, i) => i < index).reduce((acc, prevEvent) => acc + (isYearView ? 22 : 30) + (isYearView ? 2 : 4), 0)}px`,
                                     position: 'absolute',
                                     left: '0.375rem',
                                     right: '0.375rem',

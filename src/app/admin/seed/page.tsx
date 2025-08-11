@@ -2,10 +2,11 @@
 'use client';
 
 import { useState } from 'react';
-import { seedData } from '@/lib/data';
-import { callSeedData } from '@/lib/serverActions'; // Import callSeedData from the new file
+import { callSeedData } from '@/lib/serverActions';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle, AlertTriangle } from 'lucide-react';
+
 export default function SeedPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);

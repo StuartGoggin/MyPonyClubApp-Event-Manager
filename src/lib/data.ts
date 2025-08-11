@@ -1,7 +1,10 @@
+
 import type { Zone, Club, EventType, Event } from './types';
 import { getYear } from 'date-fns';
 import { adminDb } from './firebase-admin';
-import { collection, getDocs, addDoc, updateDoc, doc, Timestamp, DocumentData } from 'firebase/firestore/lite';
+import { db } from './firebase';
+import { collection, getDocs, doc, getDoc, addDoc, updateDoc } from 'firebase/firestore/lite';
+import { Timestamp, DocumentData } from 'firebase-admin/firestore';
 
 
 // In a real application, this data would be stored in and fetched from a database.
@@ -150,7 +153,7 @@ let clubsMock: Club[] = [
     { id: 'w6', name: 'Heywood Pony Club', zoneId: '12', latitude: -38.1333, longitude: 141.6167 },
     { id: 'w7', name: 'Koroit Pony Club', zoneId: '12', latitude: -38.2500, longitude: 142.3833 },
     { id: 'w8', name: 'Macarthur Pony Club', zoneId: '12', latitude: -38.0500, longitude: 142.0000 },
-    { id: 'w9', name: 'Mortlake Pony Club', zoneId: '12', latitude: -38.0833, longitude: 142.7833 },
+    { id: 'w9', 'name': 'Mortlake Pony Club', zoneId: '12', latitude: -38.0833, longitude: 142.7833 },
     { id: 'w10', name: 'Mount Gambier Pony Club', zoneId: '12', latitude: -37.8292, longitude: 140.7808 },
     { id: 'w11', name: 'Port Fairy Pony Club', zoneId: '12', latitude: -38.3833, longitude: 142.2333 },
     { id: 'w12', name: 'Portland Pony Club', zoneId: '12', latitude: -38.3500, longitude: 141.6000 },
@@ -221,30 +224,38 @@ const getPublicHolidays = async (year: number): Promise<Event[]> => {
 // Data access functions
 export async function seedData() {
     console.log('Seeding data...');
+    const batch = adminDb.batch();
+
     try {
-        const zonesSnapshot = await getDocs(collection(adminDb as any, 'zones'));
+        const zonesSnapshot = await adminDb.collection('zones').limit(1).get();
         if (zonesSnapshot.empty) {
             console.log('Seeding zones...');
-            for (const zone of zonesMock) {
-                await addDoc(collection(adminDb as any, 'zones'), zone as DocumentData);
-            }
+            zonesMock.forEach(zone => {
+                const zoneRef = adminDb.collection('zones').doc(zone.id);
+                batch.set(zoneRef, zone);
+            });
         }
 
-        const clubsSnapshot = await getDocs(collection(adminDb as any, 'clubs'));
+        const clubsSnapshot = await adminDb.collection('clubs').limit(1).get();
         if (clubsSnapshot.empty) {
             console.log('Seeding clubs...');
-            for (const club of clubsMock) {
-                await addDoc(collection(adminDb as any, 'clubs'), club as DocumentData);
-            }
+            clubsMock.forEach(club => {
+                const clubRef = adminDb.collection('clubs').doc(club.id);
+                batch.set(clubRef, club);
+            });
         }
 
-        const eventTypesSnapshot = await getDocs(collection(adminDb as any, 'eventTypes'));
+        const eventTypesSnapshot = await adminDb.collection('eventTypes').limit(1).get();
         if (eventTypesSnapshot.empty) {
             console.log('Seeding event types...');
-            for (const eventType of eventTypesMock) {
-                await addDoc(collection(adminDb as any, 'eventTypes'), eventType as DocumentData);
-            }
+            eventTypesMock.forEach(eventType => {
+                const eventTypeRef = adminDb.collection('eventTypes').doc(eventType.id);
+                batch.set(eventTypeRef, eventType);
+            });
         }
+        
+        await batch.commit();
+
         console.log('Seeding complete.');
         return { success: true, message: "Database seeded successfully." };
     } catch (error) {
@@ -255,28 +266,29 @@ export async function seedData() {
 
 
 export const getZones = async (): Promise<Zone[]> => {
-    const querySnapshot = await getDocs(collection(adminDb as any, 'zones'));
+    const querySnapshot = await getDocs(collection(db, 'zones'));
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Zone));
 };
 
 export const getClubs = async (): Promise<Club[]> => {
-    const querySnapshot = await getDocs(collection(adminDb as any, 'clubs'));
+    const querySnapshot = await getDocs(collection(db, 'clubs'));
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Club));
 };
 
 export const getEventTypes = async (): Promise<EventType[]> => {
-    const querySnapshot = await getDocs(collection(adminDb as any, 'eventTypes'));
+    const querySnapshot = await getDocs(collection(db, 'eventTypes'));
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as EventType));
 };
 
 export const getEvents = async (): Promise<Event[]> => {
-    const querySnapshot = await getDocs(collection(adminDb as any, 'events'));
+    const querySnapshot = await getDocs(collection(db, 'events'));
     const events = querySnapshot.docs.map(doc => {
         const data = doc.data();
         return {
             id: doc.id,
             ...data,
-            date: (data.date as Timestamp).toDate(),
+            // The `date` field from firestore is a plain object, so we need to convert it to a Date
+            date: new Date(data.date.seconds * 1000),
         } as Event;
     });
 
@@ -286,34 +298,43 @@ export const getEvents = async (): Promise<Event[]> => {
 };
 
 export const getEventById = async (id: string) => {
-    const allEvents = await getEvents();
-    return allEvents.find(e => e.id === id);
+    const eventDocRef = doc(db, 'events', id);
+    const docSnap = await getDoc(eventDocRef);
+    if (!docSnap.exists()) return undefined;
+    const data = docSnap.data();
+    return {
+        id: docSnap.id,
+        ...data,
+        date: new Date(data.date.seconds * 1000),
+    } as Event;
 }
 
 export const getClubById = async (id: string) => {
-    // This could be optimized to fetch a single doc
-    const clubs = await getClubs();
-    return clubs.find(c => c.id === id);
+    const clubDocRef = doc(db, 'clubs', id);
+    const docSnap = await getDoc(clubDocRef);
+     if (!docSnap.exists()) return undefined;
+    return { id: docSnap.id, ...docSnap.data() } as Club;
 };
 
 export const getEventTypeById = async (id: string) => {
-    // This could be optimized to fetch a single doc
-    const eventTypes = await getEventTypes();
-    return eventTypes.find(et => et.id === id);
+    const eventTypeDocRef = doc(db, 'eventTypes', id);
+    const docSnap = await getDoc(eventTypeDocRef);
+    if (!docSnap.exists()) return undefined;
+    return { id: docSnap.id, ...docSnap.data() } as EventType;
 };
 
 export const addEvent = async (event: Omit<Event, 'id' | 'source'>) => {
   const newEventData = {
     ...event,
-    date: Timestamp.fromDate(event.date), // Convert JS Date to Firestore Timestamp
     source: 'event_secretary', // Default source for new events
   };
-  const docRef = await addDoc(collection(adminDb as any, 'events'), newEventData as DocumentData);
+  const eventsCollection = collection(db, 'events');
+  const docRef = await addDoc(eventsCollection, newEventData as any);
   return { id: docRef.id, ...event };
 };
 
 export const updateEventStatus = async (id: string, status: 'approved' | 'rejected') => {
-  const eventRef = doc(adminDb as any, 'events', id);
+  const eventRef = doc(db, 'events', id);
   await updateDoc(eventRef, { status });
   return { success: true };
 };

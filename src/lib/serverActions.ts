@@ -1,7 +1,8 @@
+
 "use server";
 
-import { seedData } from "./data"; // Assuming seedData is in a file named data.ts in the same directory. Adjust the path if necessary.
+import { seedData } from "./data";
 
-async function callSeedData() {
+export async function callSeedData() {
     return await seedData();
 }

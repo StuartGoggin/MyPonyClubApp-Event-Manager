@@ -34,7 +34,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
-import { EventCalendar } from '@/components/dashboard/event-calendar';
 import { suggestAlternativeDates, type SuggestAlternativeDatesOutput } from '@/ai/flows/suggest-alternative-dates';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useRouter } from 'next/navigation';
@@ -48,8 +47,7 @@ const eventRequestSchema = z.object({
   eventTypeId: z.string({ required_error: 'Please select an event type.' }).min(1, 'Please select an event type.'),
   location: z.string().min(3, { message: 'Location must be at least 3 characters.' }),
   isQualifier: z.boolean().default(false),
-  dates: z.array(z.object({ value: z.date({ required_error: 'A date is required.' }) }))
-    .min(1, 'You must add at least one date preference.'),
+  dates: z.array(z.string()).min(1, 'You must add at least one date preference.').transform(arr => arr.map(str => new Date(str))),
   notes: z.string().optional(),
   submittedBy: z.string().optional(),
   submittedByContact: z.string().optional(),
@@ -476,20 +474,7 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
                     )}
                 </CardContent>
             </Card>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle>Event Calendar</CardTitle>
-                    <CardDescription>Check for conflicts as you select dates.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                     <EventCalendar events={allEvents} clubs={clubs} eventTypes={eventTypes} zones={zones} />
-                </CardContent>
-            </Card>
-
         </div>
     </div>
   );
 }
-
-    

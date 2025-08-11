@@ -1,7 +1,7 @@
 import type { Zone, Club, EventType, Event } from './types';
 import { getYear } from 'date-fns';
-import { db } from './firebase';
-import { collection, getDocs, addDoc, updateDoc, doc, query, where, Timestamp } from 'firebase/firestore';
+import { adminDb } from './firebase-admin';
+import { collection, getDocs, addDoc, updateDoc, doc, Timestamp, DocumentData } from 'firebase/firestore/lite';
 
 
 // In a real application, this data would be stored in and fetched from a database.
@@ -222,27 +222,27 @@ const getPublicHolidays = async (year: number): Promise<Event[]> => {
 export async function seedData() {
     console.log('Seeding data...');
     try {
-        const zonesSnapshot = await getDocs(collection(db, 'zones'));
+        const zonesSnapshot = await getDocs(collection(adminDb as any, 'zones'));
         if (zonesSnapshot.empty) {
             console.log('Seeding zones...');
             for (const zone of zonesMock) {
-                await addDoc(collection(db, 'zones'), zone);
+                await addDoc(collection(adminDb as any, 'zones'), zone as DocumentData);
             }
         }
 
-        const clubsSnapshot = await getDocs(collection(db, 'clubs'));
+        const clubsSnapshot = await getDocs(collection(adminDb as any, 'clubs'));
         if (clubsSnapshot.empty) {
             console.log('Seeding clubs...');
             for (const club of clubsMock) {
-                await addDoc(collection(db, 'clubs'), club);
+                await addDoc(collection(adminDb as any, 'clubs'), club as DocumentData);
             }
         }
 
-        const eventTypesSnapshot = await getDocs(collection(db, 'eventTypes'));
+        const eventTypesSnapshot = await getDocs(collection(adminDb as any, 'eventTypes'));
         if (eventTypesSnapshot.empty) {
             console.log('Seeding event types...');
             for (const eventType of eventTypesMock) {
-                await addDoc(collection(db, 'eventTypes'), eventType);
+                await addDoc(collection(adminDb as any, 'eventTypes'), eventType as DocumentData);
             }
         }
         console.log('Seeding complete.');
@@ -255,22 +255,22 @@ export async function seedData() {
 
 
 export const getZones = async (): Promise<Zone[]> => {
-    const querySnapshot = await getDocs(collection(db, 'zones'));
+    const querySnapshot = await getDocs(collection(adminDb as any, 'zones'));
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Zone));
 };
 
 export const getClubs = async (): Promise<Club[]> => {
-    const querySnapshot = await getDocs(collection(db, 'clubs'));
+    const querySnapshot = await getDocs(collection(adminDb as any, 'clubs'));
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Club));
 };
 
 export const getEventTypes = async (): Promise<EventType[]> => {
-    const querySnapshot = await getDocs(collection(db, 'eventTypes'));
+    const querySnapshot = await getDocs(collection(adminDb as any, 'eventTypes'));
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as EventType));
 };
 
 export const getEvents = async (): Promise<Event[]> => {
-    const querySnapshot = await getDocs(collection(db, 'events'));
+    const querySnapshot = await getDocs(collection(adminDb as any, 'events'));
     const events = querySnapshot.docs.map(doc => {
         const data = doc.data();
         return {
@@ -308,12 +308,12 @@ export const addEvent = async (event: Omit<Event, 'id' | 'source'>) => {
     date: Timestamp.fromDate(event.date), // Convert JS Date to Firestore Timestamp
     source: 'event_secretary', // Default source for new events
   };
-  const docRef = await addDoc(collection(db, 'events'), newEventData);
+  const docRef = await addDoc(collection(adminDb as any, 'events'), newEventData as DocumentData);
   return { id: docRef.id, ...event };
 };
 
 export const updateEventStatus = async (id: string, status: 'approved' | 'rejected') => {
-  const eventRef = doc(db, 'events', id);
+  const eventRef = doc(adminDb as any, 'events', id);
   await updateDoc(eventRef, { status });
   return { success: true };
 };

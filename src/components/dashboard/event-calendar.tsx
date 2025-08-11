@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import {
   eachDayOfInterval,
   endOfMonth,
@@ -94,35 +94,18 @@ const CalendarGrid = ({
   return (
     <div className={cn("bg-card rounded-lg border shadow-sm w-full", { "p-0 border-0 shadow-none bg-transparent": isYearView })}>
         {!isYearView && (
-             <div className="table table-fixed w-full text-xs text-center font-medium text-muted-foreground">
-                <div className='table-header-group'>
-                    <div className='table-row'>
-                        {dayOrder.map((day) => (
-                            <div key={day} className={cn("table-cell py-2", (day === 'Sat' || day === 'Sun') ? "w-[20%]" : "w-[12%]")}>
-                                {day}
-                            </div>
-                        ))}
+             <div className="grid grid-cols-7 text-xs text-center font-medium text-muted-foreground">
+                {dayOrder.map((day) => (
+                    <div key={day} className={cn("py-2", (day === 'Sat' || day === 'Sun') ? "w-[20%]" : "w-[12%]")}>
+                        {day}
                     </div>
-                </div>
+                ))}
             </div>
         )}
       <div className={cn("divide-y border-t", {"border-t-0 divide-y-0": isYearView})}>
         {weeks.map((week, weekIndex) => {
-            const eventHeight = isYearView ? 22 : 30;
-            const eventGap = isYearView ? 2 : 4;
-            const baseCellHeight = isYearView ? 28 : 32;
-
-            const maxEventsInWeek = Math.max(0, ...week.map(day => {
-                return events.filter(event => isSameDay(new Date(event.date), day)).length;
-            }));
-            
-            const requiredContentHeight = maxEventsInWeek * (eventHeight + eventGap);
-            const cellHeight = baseCellHeight + requiredContentHeight;
-
-
           return (
-          <div key={weekIndex} className="table table-fixed w-full border-t first:border-t-0 md:border-t">
-             <div className='table-row' style={{ height: `${cellHeight}px` }}>
+          <div key={weekIndex} className="grid grid-cols-7 divide-x">
             {dayIndexMap.map(dayIdx => {
                 const day = week.find(d => getDay(d) === dayIdx)!;
                 const isSaturday = getDay(day) === 6;
@@ -134,20 +117,18 @@ const CalendarGrid = ({
                 return (
                     <div
                         key={day.toString()}
-                        className={cn('table-cell border-l p-1.5 align-top relative', {
+                        className={cn('flex flex-col p-1.5 h-auto min-h-24', {
                           'bg-background/50 text-muted-foreground': !isSameMonth(day, month),
                           'bg-muted/20': !isSameMonth(day, month) && (isSaturday || isSunday),
                           'bg-primary/5': isSameMonth(day, month) && (isSaturday || isSunday),
                           'relative': isCurrentDayToday,
-                          'border-t-0': isYearView && weekIndex === 0,
-                          'w-[20%]': isSaturday || isSunday,
-                          'w-[12%]': !isSaturday && !isSunday
+                          'col-span-1': true,
+                          'min-h-20': isYearView,
                         })}
-                        style={{minHeight: `${baseCellHeight}px`}}
                     >
                          <span
                             className={cn(
-                                'flex items-center justify-center h-6 w-6 rounded-full text-sm',
+                                'flex items-center justify-center h-6 w-6 rounded-full text-sm mb-1',
                                 { 'text-muted-foreground': !isSameMonth(day, month) },
                                 { 'bg-primary text-primary-foreground font-bold': isCurrentDayToday },
                                 { 'text-xs h-5 w-5': isYearView }
@@ -155,7 +136,7 @@ const CalendarGrid = ({
                         >
                             {format(day, 'd')}
                         </span>
-                        <div className="absolute top-0 left-0 w-full p-1.5 z-10 space-y-1">
+                        <div className="flex-1 space-y-1">
                         {dayEvents.map((event, index) => (
                             <button
                                 key={event.id}
@@ -168,13 +149,6 @@ const CalendarGrid = ({
                                     event.status === 'public_holiday' ? 'bg-green-500/20 hover:bg-green-500/30' :
                                     'bg-accent/20 hover:bg-accent/30 text-accent-foreground'
                                 )}
-                                style={{
-                                    top: `${baseCellHeight + dayEvents.filter((_, i) => i < index).reduce((acc, prevEvent) => acc + (isYearView ? 22 : 30) + (isYearView ? 2 : 4), 0)}px`,
-                                    position: 'absolute',
-                                    left: '0.375rem',
-                                    right: '0.375rem',
-                                    width: 'calc(100% - 0.75rem)'
-                                }}
                             >
                                 <div className={cn("flex items-start gap-1.5", { "gap-1": isYearView })}>
                                 <div className="flex-shrink-0 pt-0.5">
@@ -182,7 +156,7 @@ const CalendarGrid = ({
                                  event.status === 'public_holiday' ? <FerrisWheel className={cn("h-3 w-3 text-green-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
                                  <Clock className={cn("h-3 w-3 text-accent flex-shrink-0", { "h-2 w-2": isYearView })}/>}
                                 </div>
-                                <span className={cn("font-medium", 
+                                <span className={cn("font-medium break-words", 
                                     event.status === 'approved' ? 'text-primary' : 
                                     event.status === 'public_holiday' ? 'text-green-700' :
                                     'text-accent'
@@ -194,7 +168,6 @@ const CalendarGrid = ({
                     </div>
                 );
             })}
-            </div>
           </div>
         )})}
       </div>
@@ -440,3 +413,5 @@ export function EventCalendar({
     </div>
   );
 }
+
+    

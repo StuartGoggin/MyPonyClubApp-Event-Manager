@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   eachDayOfInterval,
   endOfMonth,
@@ -135,7 +135,7 @@ const CalendarGrid = ({
                         >
                             {format(day, 'd')}
                         </span>
-                        <div className="flex-1 space-y-1">
+                        <div className="flex flex-1 flex-col space-y-1">
                         {dayEvents.map((event, index) => (
                             <button
                                 key={event.id}
@@ -411,5 +411,7 @@ export function EventCalendar({
     </div>
   );
 }
+
+    
 
     

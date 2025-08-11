@@ -1,10 +1,13 @@
 import type { Zone, Club, EventType, Event } from './types';
-import { addMonths, startOfMonth, addDays, subDays, getYear } from 'date-fns';
+import { getYear } from 'date-fns';
+import { db } from './firebase';
+import { collection, getDocs, addDoc, updateDoc, doc, query, where, Timestamp } from 'firebase/firestore';
+
 
 // In a real application, this data would be stored in and fetched from a database.
 // For this example, we use mock data stored in memory.
 
-let zones: Zone[] = [
+let zonesMock: Zone[] = [
     { id: '1', name: 'Barwon Zone' },
     { id: '2', name: 'Central Zone' },
     { id: '3', name: 'East Gippsland Zone' },
@@ -20,7 +23,7 @@ let zones: Zone[] = [
     { id: '13', name: 'Wimmera Zone' },
 ];
 
-let clubs: Club[] = [
+let clubsMock: Club[] = [
     // Barwon Zone
     { id: 'b1', name: 'Anglesea Pony Club', zoneId: '1', latitude: -38.4116, longitude: 144.1793 },
     { id: 'b2', name: 'Barwon Heads Pony Club', zoneId: '1', latitude: -38.2705, longitude: 144.4820 },
@@ -98,7 +101,7 @@ let clubs: Club[] = [
     { id: 'n4', name: 'Kyabram Pony Club', zoneId: '8', latitude: -36.3167, longitude: 145.0500 },
     { id: 'n5', name: 'Nathalia Pony Club', zoneId: '8', latitude: -36.0667, longitude: 145.2167 },
     { id: 'n6', name: 'Rochester Pony Club', zoneId: '8', latitude: -36.3667, longitude: 144.7000 },
-    { id: 'n7', 'name': 'Shepparton Pony Club', zoneId: '8', latitude: -36.3833, longitude: 145.4000 },
+    { id: 'n7', name: 'Shepparton Pony Club', zoneId: '8', latitude: -36.3833, longitude: 145.4000 },
     { id: 'n8', name: 'Yarrawonga Pony Club', zoneId: '8', latitude: -36.0167, longitude: 146.0000 },
 
     // Port Phillip Zone
@@ -164,7 +167,7 @@ let clubs: Club[] = [
 ];
 
 
-let eventTypes: EventType[] = [
+let eventTypesMock: EventType[] = [
   { id: '1', name: 'Rally' },
   { id: '2', name: 'Show Jumping Competition' },
   { id: '3', name: 'Dressage Competition' },
@@ -172,20 +175,6 @@ let eventTypes: EventType[] = [
   { id: '5', name: 'Mounted Games' },
   { id: '6', name: 'Certificate Assessment' },
   { id: 'ph', name: 'Public Holiday'},
-];
-
-const today = new Date();
-const startOfThisMonth = startOfMonth(today);
-
-let events: Event[] = [
-  { id: '1', name: 'Monthly Rally Day', date: addDays(startOfThisMonth, 2), clubId: 'b3', eventTypeId: '1', status: 'approved', location: 'Geelong, VIC', source: 'zone' },
-  { id: '2', name: 'Spring Show Jumping', date: addDays(startOfThisMonth, 9), clubId: 'c6', eventTypeId: '2', status: 'approved', location: 'Kyneton, VIC', source: 'pca' },
-  { id: '3', name: 'Official Dressage Comp', date: addDays(startOfThisMonth, 10), clubId: 'ne8', eventTypeId: '3', status: 'proposed', location: 'Wangaratta, VIC', source: 'event_secretary' },
-  { id: '4', name: 'Games Practice', date: subDays(startOfThisMonth, 5), clubId: 'b4', eventTypeId: '5', status: 'approved', location: 'Colac, VIC', source: 'zone' },
-  { id: '5', name: 'C-Cert Assessment Day', date: addDays(startOfThisMonth, 20), clubId: 'n3', eventTypeId: '6', status: 'proposed', location: 'Echuca, VIC', source: 'pca' },
-  { id: '6', name: 'XC Training Day', date: addDays(startOfThisMonth, 2), clubId: 'eg1', eventTypeId: '4', status: 'proposed', location: 'Bairnsdale, VIC', source: 'event_secretary' },
-  { id: '7', name: 'Winter Woolies Rally', date: addDays(startOfMonth(addMonths(today, 1)), 5), clubId: 'c7', eventTypeId: '1', status: 'approved', location: 'Macedon, VIC', source: 'zone' },
-  { id: '8', name: 'Grade 3/4 Show Jumping', date: addDays(startOfMonth(addMonths(today, 1)), 12), clubId: 'n7', eventTypeId: '2', status: 'proposed', location: 'Shepparton, VIC', source: 'pca' },
 ];
 
 interface PublicHoliday {
@@ -230,40 +219,101 @@ const getPublicHolidays = async (year: number): Promise<Event[]> => {
 
 
 // Data access functions
-export const getZones = async () => Promise.resolve(zones);
-export const getClubs = async () => Promise.resolve(clubs);
-export const getEventTypes = async () => Promise.resolve(eventTypes);
+export async function seedData() {
+    console.log('Seeding data...');
+    try {
+        const zonesSnapshot = await getDocs(collection(db, 'zones'));
+        if (zonesSnapshot.empty) {
+            console.log('Seeding zones...');
+            for (const zone of zonesMock) {
+                await addDoc(collection(db, 'zones'), zone);
+            }
+        }
+
+        const clubsSnapshot = await getDocs(collection(db, 'clubs'));
+        if (clubsSnapshot.empty) {
+            console.log('Seeding clubs...');
+            for (const club of clubsMock) {
+                await addDoc(collection(db, 'clubs'), club);
+            }
+        }
+
+        const eventTypesSnapshot = await getDocs(collection(db, 'eventTypes'));
+        if (eventTypesSnapshot.empty) {
+            console.log('Seeding event types...');
+            for (const eventType of eventTypesMock) {
+                await addDoc(collection(db, 'eventTypes'), eventType);
+            }
+        }
+        console.log('Seeding complete.');
+        return { success: true, message: "Database seeded successfully." };
+    } catch (error) {
+        console.error("Error seeding database: ", error);
+        return { success: false, message: "Error seeding database." };
+    }
+}
+
+
+export const getZones = async (): Promise<Zone[]> => {
+    const querySnapshot = await getDocs(collection(db, 'zones'));
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Zone));
+};
+
+export const getClubs = async (): Promise<Club[]> => {
+    const querySnapshot = await getDocs(collection(db, 'clubs'));
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Club));
+};
+
+export const getEventTypes = async (): Promise<EventType[]> => {
+    const querySnapshot = await getDocs(collection(db, 'eventTypes'));
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as EventType));
+};
 
 export const getEvents = async (): Promise<Event[]> => {
+    const querySnapshot = await getDocs(collection(db, 'events'));
+    const events = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+            id: doc.id,
+            ...data,
+            date: (data.date as Timestamp).toDate(),
+        } as Event;
+    });
+
     const currentYear = getYear(new Date());
     const publicHolidays = await getPublicHolidays(currentYear);
-    // In a real app, you might want to fetch for previous/next year too depending on calendar view
-    return Promise.resolve([...events, ...publicHolidays]);
+    return [...events, ...publicHolidays];
 };
 
 export const getEventById = async (id: string) => {
     const allEvents = await getEvents();
-    return Promise.resolve(allEvents.find(e => e.id === id));
+    return allEvents.find(e => e.id === id);
 }
 
-export const getClubById = async (id: string) => Promise.resolve(clubs.find(c => c.id === id));
-export const getEventTypeById = async (id: string) => Promise.resolve(eventTypes.find(et => et.id === id));
+export const getClubById = async (id: string) => {
+    // This could be optimized to fetch a single doc
+    const clubs = await getClubs();
+    return clubs.find(c => c.id === id);
+};
+
+export const getEventTypeById = async (id: string) => {
+    // This could be optimized to fetch a single doc
+    const eventTypes = await getEventTypes();
+    return eventTypes.find(et => et.id === id);
+};
 
 export const addEvent = async (event: Omit<Event, 'id' | 'source'>) => {
-  const newEvent: Event = {
-    id: String(Date.now()),
+  const newEventData = {
     ...event,
+    date: Timestamp.fromDate(event.date), // Convert JS Date to Firestore Timestamp
     source: 'event_secretary', // Default source for new events
   };
-  events.push(newEvent);
-  return Promise.resolve(newEvent);
+  const docRef = await addDoc(collection(db, 'events'), newEventData);
+  return { id: docRef.id, ...event };
 };
 
 export const updateEventStatus = async (id: string, status: 'approved' | 'rejected') => {
-  const eventIndex = events.findIndex(e => e.id === id);
-  if (eventIndex !== -1) {
-    events[eventIndex].status = status;
-    return Promise.resolve(events[eventIndex]);
-  }
-  return Promise.resolve(null);
+  const eventRef = doc(db, 'events', id);
+  await updateDoc(eventRef, { status });
+  return { success: true };
 };

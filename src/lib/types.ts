@@ -28,4 +28,12 @@ export interface Event {
   status: EventStatus;
   location: string;
   source: EventSource;
+
+  // New fields from form
+  coordinatorName?: string;
+  coordinatorContact?: string;
+  isQualifier?: boolean;
+  notes?: string;
+  submittedBy?: string;
+  submittedByContact?: string;
 }

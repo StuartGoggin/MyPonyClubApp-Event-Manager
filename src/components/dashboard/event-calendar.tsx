@@ -138,7 +138,12 @@ const CalendarGrid = ({
                 const isDayInCurrentMonth = isSameMonth(day, month);
 
                 if (isYearView && !isDayInCurrentMonth) {
-                  return <div key={day.toString()} className="flex-1 basis-0" />;
+                  return <div key={day.toString()} className={cn('flex flex-col p-1.5 min-h-[6rem]', {
+                     'text-muted-foreground': !isDayInCurrentMonth,
+                     'flex-1 basis-0': isYearView,
+                     'p-1 min-h-0': isYearView,
+                     'flex-[3_1_0%]': isYearView && isDayActiveInMonth,
+                  })}></div>
                 }
 
                 return (

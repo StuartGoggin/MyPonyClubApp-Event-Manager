@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useRef, useState, useMemo, useTransition } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -38,6 +38,7 @@ import { Separator } from '@/components/ui/separator';
 import { EventCalendar } from '@/components/dashboard/event-calendar';
 import { suggestAlternativeDates, type SuggestAlternativeDatesOutput } from '@/ai/flows/suggest-alternative-dates';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useActionState } from 'react';
 
 const preferenceSchema = z.object({
   name: z.string().min(3, { message: 'Event name must be at least 3 characters.' }),
@@ -89,10 +90,12 @@ const haversineDistance = (
 export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventRequestFormProps) {
   const { toast } = useToast();
   const formRef = useRef<HTMLFormElement>(null);
-  const [isPending, startTransition] = useTransition();
 
   const [conflictSuggestions, setConflictSuggestions] = useState<Record<string, SuggestAlternativeDatesOutput | null>>({});
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState<Record<string, boolean>>({});
+  
+  const initialState: FormState = { message: '', success: false };
+  const [state, dispatch, isPending] = useActionState(createEventRequestAction, initialState);
 
   const form = useForm<EventRequestFormValues>({
     resolver: zodResolver(eventRequestSchema),
@@ -134,6 +137,41 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
       future: clubEvents.filter(event => new Date(event.date) >= today).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
     };
   }, [selectedClubId, allEvents]);
+
+    useEffect(() => {
+        if (state.success) {
+            toast({
+                title: 'Success!',
+                description: state.message,
+            });
+            form.reset({
+                clubId: '',
+                preferences: [{ name: '', location: '', isQualifier: false, eventTypeId: '' }],
+                coordinatorName: '',
+                coordinatorContact: '',
+                notes: '',
+                submittedBy: '',
+                submittedByContact: '',
+            });
+            setSelectedZoneId(undefined);
+            setConflictSuggestions({});
+        } else if (state.errors) {
+            for (const [field, errors] of Object.entries(state.errors)) {
+                if (errors) {
+                    form.setError(field as keyof EventRequestFormValues, {
+                        type: 'manual',
+                        message: errors.join(', '),
+                    });
+                }
+            }
+            toast({
+              title: 'Error',
+              description: state.message,
+              variant: 'destructive',
+            });
+        }
+    }, [state, form, toast]);
+
   
   const handleAnalyzeDate = async (index: number) => {
     const preference = form.getValues(`preferences.${index}`);
@@ -206,49 +244,6 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
     }
   };
   
-  const onSubmit = (data: EventRequestFormValues) => {
-    startTransition(async () => {
-      // We need to pass a FormData object to the server action
-      const formData = new FormData(formRef.current!);
-      const state = await createEventRequestAction(formData);
-
-      if (state.success) {
-        toast({
-          title: 'Success!',
-          description: state.message,
-        });
-        form.reset({
-          clubId: '',
-          preferences: [{ name: '', location: '', isQualifier: false, eventTypeId: '' }],
-          coordinatorName: '',
-          coordinatorContact: '',
-          notes: '',
-          submittedBy: '',
-          submittedByContact: '',
-        });
-        setSelectedZoneId(undefined);
-        setConflictSuggestions({});
-      } else {
-        if (state.errors) {
-            for (const [field, errors] of Object.entries(state.errors)) {
-                if (errors) {
-                    form.setError(field as keyof EventRequestFormValues, {
-                        type: 'manual',
-                        message: errors.join(', '),
-                    });
-                }
-            }
-        }
-        toast({
-          title: 'Error',
-          description: state.message,
-          variant: 'destructive',
-        });
-      }
-    });
-  };
-
-
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         <div className="lg:col-span-2">
@@ -257,7 +252,7 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
                 <Form {...form}>
                     <form
                       ref={formRef}
-                      onSubmit={form.handleSubmit(onSubmit)}
+                      action={dispatch}
                       className="space-y-8"
                     >
                         <Card>

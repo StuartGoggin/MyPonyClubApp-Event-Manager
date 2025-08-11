@@ -4,7 +4,7 @@
  * @fileOverview A flow to suggest alternative dates for a pony club event based on potential conflicts with similar events in close proximity.
  *
  * - suggestAlternativeDates - A function that takes event details and proximity information to suggest alternative dates.
- * - SuggestAlternativeDatesInput - The input type for the suggestAlternativeDates function.
+ * - SuggestAlternativeDatesInput - The input type for the suggestAlternativedates function.
  * - SuggestAlternativeDatesOutput - The return type for the suggestAlternativeDates function.
  */
 
@@ -46,9 +46,9 @@ const prompt = ai.definePrompt({
   name: 'suggestAlternativeDatesPrompt',
   input: {schema: SuggestAlternativeDatesInputSchema},
   output: {schema: SuggestAlternativeDatesOutputSchema},
-  prompt: `You are an expert event planning assistant for pony clubs. Your goal is to analyze potential date conflicts and suggest alternatives.
+  prompt: `You are an expert event planning assistant for pony clubs. Your goal is to analyze potential date conflicts and suggest alternatives to maximize participation.
 
-The user is requesting a date for an event, and you have a list of other events happening on or around the same time.
+The user is requesting a date for an event, and you have a list of other events happening on or around the same time. Treat any nearby event as a potential conflict, regardless of its type. For example, a dressage event can conflict with a show jumping event because they draw from the same pool of riders and volunteers.
 
 Analyze the requested event against the list of other events. 
 - Requested Date: {{{eventDate}}}

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useRef, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useTransition } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -16,7 +16,6 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from '@/components/ui/form';
 import {
   Select,
@@ -38,24 +37,20 @@ import { Separator } from '@/components/ui/separator';
 import { EventCalendar } from '@/components/dashboard/event-calendar';
 import { suggestAlternativeDates, type SuggestAlternativeDatesOutput } from '@/ai/flows/suggest-alternative-dates';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { useActionState } from 'react';
-
-const preferenceSchema = z.object({
-  name: z.string().min(3, { message: 'Event name must be at least 3 characters.' }),
-  eventTypeId: z.string({ required_error: 'Please select an event type.' }).min(1, 'Please select an event type.'),
-  date: z.date({ required_error: 'A date is required.' }),
-  location: z.string().min(3, { message: 'Location must be at least 3 characters.' }),
-  isQualifier: z.boolean().default(false),
-});
 
 const eventRequestSchema = z.object({
-    clubId: z.string({ required_error: 'Please select a club.' }).min(1, 'Please select a club.'),
-    coordinatorName: z.string().optional(),
-    coordinatorContact: z.string().optional(),
-    preferences: z.array(preferenceSchema).min(1, 'You must add at least one event preference.').max(4, 'You can add a maximum of 4 preferences.'),
-    notes: z.string().optional(),
-    submittedBy: z.string().optional(),
-    submittedByContact: z.string().optional(),
+  clubId: z.string({ required_error: 'Please select a club.' }).min(1, 'Please select a club.'),
+  coordinatorName: z.string().optional(),
+  coordinatorContact: z.string().optional(),
+  name: z.string().min(3, { message: 'Event name must be at least 3 characters.' }),
+  eventTypeId: z.string({ required_error: 'Please select an event type.' }).min(1, 'Please select an event type.'),
+  location: z.string().min(3, { message: 'Location must be at least 3 characters.' }),
+  isQualifier: z.boolean().default(false),
+  dates: z.array(z.object({ value: z.date({ required_error: 'A date is required.' }) }))
+    .min(1, 'You must add at least one date preference.'),
+  notes: z.string().optional(),
+  submittedBy: z.string().optional(),
+  submittedByContact: z.string().optional(),
 });
 
 type EventRequestFormValues = z.infer<typeof eventRequestSchema>;
@@ -89,19 +84,20 @@ const haversineDistance = (
 
 export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventRequestFormProps) {
   const { toast } = useToast();
-  const formRef = useRef<HTMLFormElement>(null);
-
+  const [isPending, startTransition] = useTransition();
+  
   const [conflictSuggestions, setConflictSuggestions] = useState<Record<string, SuggestAlternativeDatesOutput | null>>({});
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState<Record<string, boolean>>({});
   
-  const initialState: FormState = { message: '', success: false };
-  const [state, dispatch, isPending] = useActionState(createEventRequestAction, initialState);
-
   const form = useForm<EventRequestFormValues>({
     resolver: zodResolver(eventRequestSchema),
     defaultValues: {
       clubId: '',
-      preferences: [{ name: '', location: '', isQualifier: false, eventTypeId: '', date: undefined }],
+      name: '',
+      location: '',
+      isQualifier: false,
+      eventTypeId: '',
+      dates: [{ value: undefined }],
       coordinatorName: '',
       coordinatorContact: '',
       notes: '',
@@ -112,7 +108,7 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
-    name: 'preferences',
+    name: 'dates',
   });
 
   const selectedClubId = form.watch('clubId');
@@ -138,47 +134,57 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
     };
   }, [selectedClubId, allEvents]);
 
-    useEffect(() => {
-        if (state.success) {
-            toast({
-                title: 'Success!',
-                description: state.message,
-            });
-            form.reset({
-                clubId: '',
-                preferences: [{ name: '', location: '', isQualifier: false, eventTypeId: '' }],
-                coordinatorName: '',
-                coordinatorContact: '',
-                notes: '',
-                submittedBy: '',
-                submittedByContact: '',
-            });
-            setSelectedZoneId(undefined);
-            setConflictSuggestions({});
-        } else if (state.errors) {
-            for (const [field, errors] of Object.entries(state.errors)) {
-                if (errors) {
-                    form.setError(field as keyof EventRequestFormValues, {
-                        type: 'manual',
-                        message: errors.join(', '),
-                    });
-                }
-            }
-            toast({
-              title: 'Error',
-              description: state.message,
-              variant: 'destructive',
-            });
-        }
-    }, [state, form, toast]);
 
+  const onSubmit = (values: EventRequestFormValues) => {
+    startTransition(async () => {
+      // Flatten the dates array for the action
+      const actionData = {
+        ...values,
+        dates: values.dates.map(d => d.value),
+      };
+
+      const result = await createEventRequestAction(actionData);
+
+      if (result.success) {
+        toast({
+          title: 'Success!',
+          description: result.message,
+        });
+        form.reset();
+        setSelectedZoneId(undefined);
+        setConflictSuggestions({});
+      } else if (result.errors) {
+        toast({
+            title: 'Error',
+            description: result.message,
+            variant: 'destructive',
+        });
+        for (const [field, errors] of Object.entries(result.errors)) {
+            if (errors) {
+                form.setError(field as keyof EventRequestFormValues, {
+                    type: 'manual',
+                    message: errors.join(', '),
+                });
+            }
+        }
+      } else {
+         toast({
+            title: 'Error',
+            description: result.message,
+            variant: 'destructive',
+        });
+      }
+    });
+  };
   
   const handleAnalyzeDate = async (index: number) => {
-    const preference = form.getValues(`preferences.${index}`);
+    const preferenceDate = form.getValues(`dates.${index}.value`);
+    const eventTypeId = form.getValues('eventTypeId');
+    const location = form.getValues('location');
     const clubId = form.getValues('clubId');
     const club = clubs.find(c => c.id === clubId);
 
-    if (!preference.date || !preference.eventTypeId || !club) {
+    if (!preferenceDate || !eventTypeId || !club) {
         toast({
             title: 'Missing Information',
             description: 'Please select a club, date, and event type before analyzing.',
@@ -199,11 +205,16 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
     setIsLoadingSuggestions(prev => ({...prev, [index]: true}));
     setConflictSuggestions(prev => ({...prev, [index]: null}));
 
-    const eventType = eventTypes.find(et => et.id === preference.eventTypeId);
+    const eventType = eventTypes.find(et => et.id === eventTypeId);
     const homeCoords = { lat: club.latitude, lon: club.longitude };
+    
+    const otherSelectedDates = form.getValues('dates')
+      .map(d => d.value)
+      .filter((d, i): d is Date => d !== undefined && i !== index);
+
 
     const nearbyEvents = allEvents.filter(e => {
-        const dayDiff = Math.abs(differenceInDays(preference.date!, new Date(e.date)));
+        const dayDiff = Math.abs(differenceInDays(preferenceDate!, new Date(e.date)));
         if (dayDiff > 7) return false;
 
         const eventClub = clubs.find(c => c.id === e.clubId);
@@ -223,12 +234,22 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
             distance: Math.round(distance),
         }
     });
+    
+    // Add other selected dates to the context
+    otherSelectedDates.forEach(d => {
+       nearbyEvents.push({
+           date: format(d, 'yyyy-MM-dd'),
+           type: eventType?.name || 'Unknown',
+           location: location,
+           distance: 0,
+       });
+    });
 
     try {
         const result = await suggestAlternativeDates({
-            eventDate: format(preference.date, 'yyyy-MM-dd'),
+            eventDate: format(preferenceDate, 'yyyy-MM-dd'),
             eventType: eventType?.name || 'Unknown',
-            eventLocation: preference.location,
+            eventLocation: location,
             otherEvents: nearbyEvents,
         });
         setConflictSuggestions(prev => ({...prev, [index]: result}));
@@ -251,8 +272,7 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
                 <CardContent className="pt-6">
                 <Form {...form}>
                     <form
-                      ref={formRef}
-                      action={dispatch}
+                      onSubmit={form.handleSubmit(onSubmit)}
                       className="space-y-8"
                     >
                         <Card>
@@ -315,62 +335,73 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
                                 <FormField control={form.control} name="coordinatorContact" render={({ field }) => (<FormItem><FormLabel>Contact Number</FormLabel><FormControl><Input placeholder="Coordinator's Contact" {...field} /></FormControl><FormMessage /></FormItem>)} />
                             </CardContent>
                         </Card>
+                        
+                        <Card>
+                             <CardHeader>
+                                <CardTitle>Event Details</CardTitle>
+                                <CardDescription>Enter the details for the event you are requesting.</CardDescription>
+                             </CardHeader>
+                             <CardContent className="grid md:grid-cols-2 gap-4">
+                                <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Event Name</FormLabel><FormControl><Input placeholder="e.g., Spring Dressage Gala" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={form.control} name="eventTypeId" render={({ field }) => (<FormItem><FormLabel>Event Type</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger className='bg-card'><SelectValue placeholder="Select an event type" /></SelectTrigger></FormControl><SelectContent>{eventTypes.filter(t => t.id !== 'ph').map(type => (<SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
+                                <FormField control={form.control} name="location" render={({ field }) => (<FormItem><FormLabel>Location / Address</FormLabel><FormControl><Input placeholder="e.g., 123 Equestrian Rd" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={form.control} name="isQualifier" render={({ field }) => (<FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-card"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>Will this be a SMZ Qualifier?</FormLabel></div></FormItem>)} />
+                             </CardContent>
+                        </Card>
 
                         <Card>
                             <CardHeader>
-                                <CardTitle>Event Preferences</CardTitle>
-                                <CardDescription>Add up to 4 event preferences in order of priority.</CardDescription>
+                                <CardTitle>Date Preferences</CardTitle>
+                                <CardDescription>Add up to 4 preferred dates for this event.</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-6">
                                 {fields.map((field, index) => (
                                 <div key={field.id} className="p-4 border rounded-lg space-y-4 relative bg-muted/20">
                                     <div className='flex justify-between items-center'>
-                                      <h4 className="font-semibold text-lg">Preference {index + 1}</h4>
+                                      <h4 className="font-semibold text-lg">Date Option {index + 1}</h4>
                                       {fields.length > 1 && (
                                           <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => remove(index)}><Trash2 className="h-4 w-4" /></Button>
                                       )}
                                     </div>
                                     <div className="grid md:grid-cols-2 gap-4">
-                                        <FormField control={form.control} name={`preferences.${index}.name`} render={({ field }) => (<FormItem><FormLabel>Event Name</FormLabel><FormControl><Input placeholder="e.g., Spring Dressage Gala" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField control={form.control} name={`preferences.${index}.date`} render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Event Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={'outline'} className={cn('w-full pl-3 text-left font-normal bg-card', !field.value && 'text-muted-foreground' )}>{field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={date => date < new Date() || date < new Date('1900-01-01')} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
-                                        <FormField control={form.control} name={`preferences.${index}.eventTypeId`} render={({ field }) => (<FormItem><FormLabel>Event Type</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger className='bg-card'><SelectValue placeholder="Select an event type" /></SelectTrigger></FormControl><SelectContent>{eventTypes.filter(t => t.id !== 'ph').map(type => (<SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
-                                        <FormField control={form.control} name={`preferences.${index}.location`} render={({ field }) => (<FormItem><FormLabel>Location / Address</FormLabel><FormControl><Input placeholder="e.g., 123 Equestrian Rd" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField control={form.control} name={`preferences.${index}.isQualifier`} render={({ field }) => (<FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-card"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>Will this be a SMZ Qualifier?</FormLabel></div></FormItem>)} />
-                                        <div className="md:col-span-2 space-y-2">
+                                        <FormField control={form.control} name={`dates.${index}.value`} render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Event Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={'outline'} className={cn('w-full pl-3 text-left font-normal bg-card', !field.value && 'text-muted-foreground' )}>{field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={date => date < new Date() || date < new Date('1900-01-01')} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
+                                        
+                                        <div className="space-y-2 self-end">
                                             <Button type="button" onClick={() => handleAnalyzeDate(index)} disabled={isLoadingSuggestions[index]} className="w-full">
                                                 <Wand2 className="mr-2 h-4 w-4" />
                                                 {isLoadingSuggestions[index] ? 'Analyzing...' : 'Analyze Date for Conflicts'}
                                             </Button>
                                             {isLoadingSuggestions[index] && (
-                                                <p className="text-sm text-muted-foreground text-center">Checking for conflicts with the AI assistant...</p>
-                                            )}
-                                            {conflictSuggestions[index] && (
-                                                <Alert>
-                                                    <AlertTriangle className="h-4 w-4" />
-                                                    <AlertTitle>Conflict Analysis</AlertTitle>
-                                                    <AlertDescription>
-                                                        <p className="mb-2">{conflictSuggestions[index]?.conflictAnalysis}</p>
-                                                        <p className="font-semibold">Reasoning:</p>
-                                                        <p className="mb-2">{conflictSuggestions[index]?.reasoning}</p>
-                                                        <p className="font-semibold">Suggested Dates:</p>
-                                                        <ul className="list-disc pl-5">
-                                                            {conflictSuggestions[index]?.suggestedDates.map(date => (
-                                                                <li key={date}>{format(new Date(date), 'PPP')}</li>
-                                                            ))}
-                                                        </ul>
-                                                    </AlertDescription>
-                                                </Alert>
+                                                <p className="text-sm text-muted-foreground text-center">Checking for conflicts...</p>
                                             )}
                                         </div>
                                     </div>
+                                    
+                                     {conflictSuggestions[index] && (
+                                        <Alert>
+                                            <AlertTriangle className="h-4 w-4" />
+                                            <AlertTitle>Conflict Analysis</AlertTitle>
+                                            <AlertDescription>
+                                                <p className="mb-2">{conflictSuggestions[index]?.conflictAnalysis}</p>
+                                                <p className="font-semibold">Reasoning:</p>
+                                                <p className="mb-2">{conflictSuggestions[index]?.reasoning}</p>
+                                                <p className="font-semibold">Suggested Dates:</p>
+                                                <ul className="list-disc pl-5">
+                                                    {conflictSuggestions[index]?.suggestedDates.map(date => (
+                                                        <li key={date}>{format(new Date(date), 'PPP')}</li>
+                                                    ))}
+                                                </ul>
+                                            </AlertDescription>
+                                        </Alert>
+                                    )}
 
                                 </div>
                                 ))}
                                 {fields.length < 4 && (
-                                    <Button type="button" variant="outline" onClick={() => append({ name: '', location: '', isQualifier: false, eventTypeId: '', date: undefined })}><PlusCircle className="mr-2 h-4 w-4" /> Add another preference</Button>
+                                    <Button type="button" variant="outline" onClick={() => append({ value: undefined })}><PlusCircle className="mr-2 h-4 w-4" /> Add another date</Button>
                                 )}
                                  <Controller
-                                    name="preferences"
+                                    name="dates"
                                     control={form.control}
                                     render={({ fieldState }) => fieldState.error?.message ? <p className="text-sm font-medium text-destructive">{fieldState.error.message}</p> : null}
                                 />
@@ -388,8 +419,8 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
                             </CardContent>
                         </Card>
 
-                        <Button type="submit" disabled={isPending}>
-                        {isPending ? 'Submitting...' : 'Submit Request'}
+                        <Button type="submit" disabled={isPending || form.formState.isSubmitting}>
+                        {isPending || form.formState.isSubmitting ? 'Submitting...' : 'Submit Request'}
                         </Button>
                     </form>
                 </Form>

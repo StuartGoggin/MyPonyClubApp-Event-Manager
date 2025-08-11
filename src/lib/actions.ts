@@ -2,82 +2,38 @@
 'use server';
 
 import { z } from 'zod';
-import { addEvent, getEvents, updateEventStatus, getEventTypes } from './data';
-import { suggestAlternativeDates, type SuggestAlternativeDatesOutput } from '@/ai/flows/suggest-alternative-dates';
+import { addEvent } from './data';
 import { revalidatePath } from 'next/cache';
-import { format, formatISO, parse } from 'date-fns';
-
-const preferenceSchema = z.object({
-  name: z.string().min(3, { message: 'Event name must be at least 3 characters.' }),
-  eventTypeId: z.string({ required_error: 'Please select an event type.' }).min(1, 'Please select an event type.'),
-  date: z.date({ required_error: 'A date is required.' }),
-  location: z.string().min(3, { message: 'Location must be at least 3 characters.' }),
-  isQualifier: z.boolean().default(false),
-});
 
 const eventRequestSchema = z.object({
-    clubId: z.string({ required_error: 'Please select a club.' }).min(1, 'Please select a club.'),
-    coordinatorName: z.string().optional(),
-    coordinatorContact: z.string().optional(),
-    preferences: z.array(preferenceSchema).min(1, 'You must add at least one event preference.').max(4, 'You can add a maximum of 4 preferences.'),
-    notes: z.string().optional(),
-    submittedBy: z.string().optional(),
-    submittedByContact: z.string().optional(),
+  clubId: z.string({ required_error: 'Please select a club.' }).min(1, 'Please select a club.'),
+  coordinatorName: z.string().optional(),
+  coordinatorContact: z.string().optional(),
+  name: z.string().min(3, { message: 'Event name must be at least 3 characters.' }),
+  eventTypeId: z.string({ required_error: 'Please select an event type.' }).min(1, 'Please select an event type.'),
+  location: z.string().min(3, { message: 'Location must be at least 3 characters.' }),
+  isQualifier: z.boolean().default(false),
+  dates: z.array(z.date({ required_error: 'A date is required.' })).min(1, 'You must add at least one date preference.'),
+  notes: z.string().optional(),
+  submittedBy: z.string().optional(),
+  submittedByContact: z.string().optional(),
 });
 
 
 export type FormState = {
   message: string;
   success: boolean;
-  suggestions?: SuggestAlternativeDatesOutput;
   errors?: {
     [key: string]: string[] | undefined;
      _errors?: string[];
   };
 };
 
+// This function needs to be updated to handle the new form structure.
 export async function createEventRequestAction(
-  prevState: FormState,
-  formData: FormData
+  data: unknown
 ): Promise<FormState> {
-    
-    // This action needs to be updated to handle multiple event creations.
-    // For now, let's focus on validating the first preference as a proof of concept.
-    // The full implementation will loop through all preferences.
-    const rawPreferences: any[] = [];
-    formData.forEach((value, key) => {
-        const match = key.match(/preferences\[(\d+)\]\.(.+)/);
-        if (match) {
-            const index = parseInt(match[1], 10);
-            const field = match[2];
-            if (!rawPreferences[index]) {
-                rawPreferences[index] = {};
-            }
-            if (field === 'date' && typeof value === 'string') {
-                // The date comes in as 'Wed Jul 31 2024 00:00:00 GMT+1000 (Australian Eastern Standard Time)'
-                // We need to parse it correctly. Let's assume a simpler format is sent or adjust.
-                // For now, parsing from a standard format is more robust.
-                // The date from FormData is a string. `new Date(value)` is often reliable.
-                rawPreferences[index][field] = new Date(value);
-            } else if (field === 'isQualifier') {
-                 rawPreferences[index][field] = value === 'on';
-            } else {
-                 rawPreferences[index][field] = value;
-            }
-        }
-    });
-
-    const rawData = {
-        clubId: formData.get('clubId'),
-        coordinatorName: formData.get('coordinatorName'),
-        coordinatorContact: formData.get('coordinatorContact'),
-        notes: formData.get('notes'),
-        submittedBy: formData.get('submittedBy'),
-        submittedByContact: formData.get('submittedByContact'),
-        preferences: rawPreferences.filter(p => p.name), // Filter out empty preferences
-    };
-    
-    const validatedFields = eventRequestSchema.safeParse(rawData);
+    const validatedFields = eventRequestSchema.safeParse(data);
     
     if (!validatedFields.success) {
         return {
@@ -87,13 +43,17 @@ export async function createEventRequestAction(
         };
     }
 
-    const { preferences, clubId, ...otherData } = validatedFields.data;
+    const { dates, clubId, name, eventTypeId, location, isQualifier, ...otherData } = validatedFields.data;
 
     try {
-        for (const pref of preferences) {
+        for (const date of dates) {
             await addEvent({
-                ...pref,
-                clubId: clubId,
+                name,
+                date,
+                clubId,
+                eventTypeId,
+                location,
+                isQualifier,
                 status: 'proposed',
                 ...otherData,
             });
@@ -110,6 +70,7 @@ export async function createEventRequestAction(
         };
     }
 }
+
 
 export async function approveEventAction(eventId: string) {
     try {

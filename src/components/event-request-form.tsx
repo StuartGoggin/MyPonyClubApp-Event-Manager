@@ -171,25 +171,6 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
     }
   }, [state, toast, form]);
 
-  const onFormSubmit = (data: EventRequestFormValues) => {
-    const formData = new FormData();
-    formData.append('clubId', data.clubId);
-    data.coordinatorName && formData.append('coordinatorName', data.coordinatorName);
-    data.coordinatorContact && formData.append('coordinatorContact', data.coordinatorContact);
-    data.notes && formData.append('notes', data.notes);
-    data.submittedBy && formData.append('submittedBy', data.submittedBy);
-    data.submittedByContact && formData.append('submittedByContact', data.submittedByContact);
-    
-    data.preferences.forEach((pref, index) => {
-        formData.append(`preferences[${index}].name`, pref.name);
-        formData.append(`preferences[${index}].eventTypeId`, pref.eventTypeId);
-        formData.append(`preferences[${index}].date`, format(pref.date, 'yyyy-MM-dd'));
-        formData.append(`preferences[${index}].location`, pref.location);
-        formData.append(`preferences[${index}].isQualifier`, pref.isQualifier ? 'on' : 'off');
-    });
-
-    dispatch(formData);
-  };
   
   const handleAnalyzeDate = async (index: number) => {
     const preference = form.getValues(`preferences.${index}`);
@@ -269,7 +250,12 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
             <Card>
                 <CardContent className="pt-6">
                 <Form {...form}>
-                    <form ref={formRef} onSubmit={form.handleSubmit(onFormSubmit)} className="space-y-8">
+                    <form 
+                        ref={formRef} 
+                        action={dispatch}
+                        onSubmit={form.handleSubmit(() => formRef.current?.requestSubmit())} 
+                        className="space-y-8"
+                    >
                         <Card>
                             <CardHeader>
                                 <CardTitle>Club Details</CardTitle>

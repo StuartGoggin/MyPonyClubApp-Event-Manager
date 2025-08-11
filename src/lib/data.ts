@@ -120,9 +120,15 @@ let clubs: Club[] = [
     { id: 'sm3', name: 'Chelsea Pony Club', zoneId: '10', latitude: -38.0500, longitude: 145.1167 },
     { id: 'sm4', name: 'Cranbourne Pony Club', zoneId: '10', latitude: -38.1000, longitude: 145.2833 },
     { id: 'sm5', name: 'Dandenong Ranges Pony Club', zoneId: '10', latitude: -37.9000, longitude: 145.3500 },
-    { id: 'sm6', name: 'Pakenham Pony Club', zoneId: '10', latitude: -38.0667, longitude: 145.4833 },
-    { id: 'sm7', name: 'Peninsula Pony Club', zoneId: '10', latitude: -38.3500, longitude: 144.8833 },
-    { id: 'sm8', name: 'Upper Beaconsfield Pony Club', zoneId: '10', latitude: -38.0500, longitude: 145.4167 },
+    { id: 'sm6', name: 'Hampton & District Pony Club', zoneId: '10', latitude: -37.9150, longitude: 145.0060 },
+    { id: 'sm7', name: 'Keysborough Pony Club', zoneId: '10', latitude: -37.9890, longitude: 145.1650 },
+    { id: 'sm8', name: 'Monbulk Pony Club', zoneId: '10', latitude: -37.8809, longitude: 145.4243 },
+    { id: 'sm9', name: 'Mornington Peninsula Pony Club', zoneId: '10', latitude: -38.4063, longitude: 144.8622 },
+    { id: 'sm10', name: 'Pakenham Pony Club', zoneId: '10', latitude: -38.0667, longitude: 145.4833 },
+    { id: 'sm11', name: 'Peninsula Pony Club', zoneId: '10', latitude: -38.3500, longitude: 144.8833 },
+    { id: 'sm12', name: 'Upper Beaconsfield Pony Club', zoneId: '10', latitude: -38.0500, longitude: 145.4167 },
+    { id: 'sm13', name: 'Yarra Brae Pony Club', zoneId: '10', latitude: -37.7020, longitude: 145.3260 },
+    
 
     // West Gippsland Zone
     { id: 'wg1', name: 'Corner Inlet Pony Club', zoneId: '11', latitude: -38.6833, longitude: 146.3333 },

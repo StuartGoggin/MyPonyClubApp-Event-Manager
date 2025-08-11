@@ -87,6 +87,7 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
   const { toast } = useToast();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [formState, setFormState] = useState<FormState | null>(null);
   
   const [conflictSuggestions, setConflictSuggestions] = useState<Record<string, SuggestAlternativeDatesOutput | null>>({});
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState<Record<string, boolean>>({});
@@ -107,6 +108,33 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
       submittedByContact: '',
     },
   });
+
+  useEffect(() => {
+    if (!formState) return;
+
+    if (formState.success) {
+      toast({
+        title: 'Success!',
+        description: formState.message,
+      });
+      router.push('/');
+    } else if (formState.errors) {
+        for (const [field, errors] of Object.entries(formState.errors)) {
+          if (errors) {
+            form.setError(field as keyof EventRequestFormValues, {
+              type: 'manual',
+              message: errors.join(', '),
+            });
+          }
+        }
+    } else if (formState.message) {
+      toast({
+        title: 'Error',
+        description: formState.message,
+        variant: 'destructive',
+      });
+    }
+  }, [formState, form, toast, router]);
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -146,37 +174,7 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
       };
 
       const result = await createEventRequestAction(actionData);
-
-      if (result.success) {
-        toast({
-          title: 'Success!',
-          description: result.message,
-        });
-        form.reset();
-        setSelectedZoneId(undefined);
-        setConflictSuggestions({});
-        router.push('/');
-      } else if (result.errors) {
-        for (const [field, errors] of Object.entries(result.errors)) {
-          if (errors) {
-            form.setError(field as keyof EventRequestFormValues, {
-              type: 'manual',
-              message: errors.join(', '),
-            });
-          }
-        }
-        toast({
-          title: 'Error Submitting Request',
-          description: "Please check the form for errors and try again.",
-          variant: 'destructive',
-        });
-      } else {
-         toast({
-            title: 'Error',
-            description: result.message,
-            variant: 'destructive',
-        });
-      }
+      setFormState(result);
     });
   };
   

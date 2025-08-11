@@ -118,6 +118,10 @@ const CalendarGrid = ({
         )}
       <div className={cn("divide-y border-t", {"border-t-0 divide-y-0": isYearView})}>
         {weeks.map((week, weekIndex) => {
+          // Only render weeks that have at least one day in the current month
+          if (isYearView && !week.some(d => isSameMonth(d, month))) {
+            return null;
+          }
           return (
           <div key={weekIndex} className={cn("divide-x", isYearView ? "flex" : "grid grid-cols-7")}>
             {dayIndexMap.map(dayIdx => {
@@ -128,16 +132,21 @@ const CalendarGrid = ({
 
                 const dayEvents = events.filter(event => isSameDay(new Date(event.date), day));
                 const isDayActiveInMonth = activeDaysOfMonth.has(dayIdx);
+                const isDayInCurrentMonth = isSameMonth(day, month);
+
+                if (isYearView && !isDayInCurrentMonth) {
+                  return <div className="flex-1 basis-0" />;
+                }
 
                 return (
                     <div
                         key={day.toString()}
-                        className={cn('relative flex flex-col p-1.5', {
-                          'text-muted-foreground': !isSameMonth(day, month),
-                          'bg-muted/20': !isSameMonth(day, month) && (isSaturday || isSunday),
-                          'bg-primary/5': isSameMonth(day, month) && (isSaturday || isSunday),
+                        className={cn('relative flex flex-col p-1.5 min-h-[6rem]', {
+                          'text-muted-foreground': !isDayInCurrentMonth,
+                          'bg-muted/20': !isDayInCurrentMonth && (isSaturday || isSunday),
+                          'bg-primary/5': isDayInCurrentMonth && (isSaturday || isSunday),
                           'relative': isCurrentDayToday,
-                           'p-1': isYearView,
+                           'p-1 min-h-0': isYearView,
                            'flex-1 basis-0': isYearView,
                            'flex-[3_1_0%]': isYearView && isDayActiveInMonth,
                         })}
@@ -145,7 +154,7 @@ const CalendarGrid = ({
                          <span
                             className={cn(
                                 'flex items-center justify-center h-6 w-6 rounded-full text-sm mb-1',
-                                { 'text-muted-foreground': !isSameMonth(day, month) },
+                                { 'text-muted-foreground': !isDayInCurrentMonth },
                                 { 'bg-primary text-primary-foreground font-bold': isCurrentDayToday },
                                 { 'text-xs h-5 w-5': isYearView }
                             )}
@@ -408,7 +417,7 @@ export function EventCalendar({
       {view === 'year' && (
         <div className="p-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {yearMonths.map(month => (
-                <div key={month.toString()}>
+                <div key={month.toString()} className="bg-card rounded-lg border shadow-sm p-4">
                     <h3 className="text-lg font-semibold font-headline mb-2 text-center">{format(month, 'MMMM')}</h3>
                     <CalendarGrid month={month} events={filteredEvents} onEventClick={handleEventClick} isYearView={true} today={today} />
                 </div>

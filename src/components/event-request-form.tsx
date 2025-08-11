@@ -38,7 +38,7 @@ import { EventCalendar } from '@/components/dashboard/event-calendar';
 import { suggestAlternativeDates, type SuggestAlternativeDatesOutput } from '@/ai/flows/suggest-alternative-dates';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useRouter } from 'next/navigation';
-import { useActionState } from 'react';
+import { useFormState } from 'react-dom';
 
 const eventRequestSchema = z.object({
   clubId: z.string({ required_error: 'Please select a club.' }).min(1, 'Please select a club.'),
@@ -93,8 +93,7 @@ const initialState: FormState = {
 export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventRequestFormProps) {
   const { toast } = useToast();
   const router = useRouter();
-  const [state, dispatch, isPending] = useActionState(createEventRequestAction, initialState);
-  const formRef = useRef<HTMLFormElement>(null);
+  const [state, formAction] = useFormState(createEventRequestAction, initialState);
   
   const [conflictSuggestions, setConflictSuggestions] = useState<Record<string, SuggestAlternativeDatesOutput | null>>({});
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState<Record<string, boolean>>({});
@@ -115,6 +114,8 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
       submittedByContact: '',
     },
   });
+
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     if (!state) return;
@@ -267,12 +268,14 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
                 <Form {...form}>
                     <form
                       ref={formRef}
-                      action={dispatch}
+                      action={formAction}
                       onSubmit={(evt) => {
+                          evt.preventDefault();
                           form.handleSubmit(() => {
-                              // FormData is still required by server actions.
-                              const formData = new FormData(formRef.current!);
-                              dispatch(formData);
+                            if (formRef.current) {
+                                const formData = new FormData(formRef.current);
+                                formAction(formData);
+                            }
                           })(evt);
                       }}
                       className="space-y-8"
@@ -425,8 +428,8 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
                             </CardContent>
                         </Card>
 
-                        <Button type="submit" disabled={isPending}>
-                          {isPending ? 'Submitting...' : 'Submit Request'}
+                        <Button type="submit">
+                          Submit Request
                         </Button>
                     </form>
                 </Form>
@@ -488,3 +491,5 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
     </div>
   );
 }
+
+    

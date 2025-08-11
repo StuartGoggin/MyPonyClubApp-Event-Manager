@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useActionState, useEffect, useRef, useState, useMemo } from 'react';
+import { useEffect, useRef, useState, useMemo, useTransition } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -89,18 +89,17 @@ const haversineDistance = (
 export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventRequestFormProps) {
   const { toast } = useToast();
   const formRef = useRef<HTMLFormElement>(null);
+  const [isPending, startTransition] = useTransition();
 
   const [conflictSuggestions, setConflictSuggestions] = useState<Record<string, SuggestAlternativeDatesOutput | null>>({});
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState<Record<string, boolean>>({});
-
-  const initialState: FormState = { message: '', success: false };
-  const [state, dispatch] = useActionState(createEventRequestAction, initialState);
+  const [formState, setFormState] = useState<FormState>({ message: '', success: false });
 
   const form = useForm<EventRequestFormValues>({
     resolver: zodResolver(eventRequestSchema),
     defaultValues: {
       clubId: '',
-      preferences: [{ name: '', location: '', isQualifier: false, eventTypeId: '' }],
+      preferences: [{ name: '', location: '', isQualifier: false, eventTypeId: '', date: undefined }],
       coordinatorName: '',
       coordinatorContact: '',
       notes: '',
@@ -138,10 +137,10 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
   }, [selectedClubId, allEvents]);
 
   useEffect(() => {
-    if (state.success) {
+    if (formState.success) {
       toast({
         title: 'Success!',
-        description: state.message,
+        description: formState.message,
       });
       form.reset({
         clubId: '',
@@ -154,22 +153,22 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
       });
        setSelectedZoneId(undefined);
        setConflictSuggestions({});
-    } else if (state.message) {
-      if (state.errors?._errors) {
+    } else if (formState.message) {
+      if (formState.errors?._errors) {
          toast({
           title: 'Error submitting form',
-          description: state.errors._errors.join(', '),
+          description: formState.errors._errors.join(', '),
           variant: 'destructive',
         });
       } else {
          toast({
           title: 'Error',
-          description: state.message,
+          description: formState.message,
           variant: 'destructive',
         });
       }
     }
-  }, [state, toast, form]);
+  }, [formState, toast, form]);
 
   
   const handleAnalyzeDate = async (index: number) => {
@@ -242,6 +241,14 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
         setIsLoadingSuggestions(prev => ({...prev, [index]: false}));
     }
   };
+  
+  const onSubmit = form.handleSubmit(async () => {
+    const formData = new FormData(formRef.current!);
+    startTransition(async () => {
+      const state = await createEventRequestAction(formState, formData);
+      setFormState(state);
+    });
+  });
 
 
   return (
@@ -250,17 +257,10 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
             <Card>
                 <CardContent className="pt-6">
                 <Form {...form}>
-                    <form 
-                        ref={formRef} 
-                        onSubmit={(evt) => {
-                          evt.preventDefault();
-                          form.handleSubmit(() => {
-                            // FormData is still required by server actions.
-                            const formData = new FormData(formRef.current!);
-                            dispatch(formData);
-                          })(evt);
-                        }}
-                        className="space-y-8"
+                    <form
+                      ref={formRef}
+                      onSubmit={onSubmit}
+                      className="space-y-8"
                     >
                         <Card>
                             <CardHeader>
@@ -395,8 +395,8 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
                             </CardContent>
                         </Card>
 
-                        <Button type="submit" disabled={form.formState.isSubmitting}>
-                        {form.formState.isSubmitting ? 'Submitting...' : 'Submit Request'}
+                        <Button type="submit" disabled={isPending}>
+                        {isPending ? 'Submitting...' : 'Submit Request'}
                         </Button>
                     </form>
                 </Form>
@@ -458,3 +458,5 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
     </div>
   );
 }
+
+    

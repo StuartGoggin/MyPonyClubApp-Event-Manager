@@ -60,7 +60,7 @@ Analyze the requested event against the list of other events.
 Other Nearby Events & Date Preferences:
 {{#if otherEvents}}
 {{#each otherEvents}}
-- Date: {{{date}}}, Type: {{{type}}}, Location: {{{location}}}, {{#if (eq distance 0)}}This is another date preference{{else}}Distance: ~{{{distance}}}km away{{/if}}
+- Date: {{{date}}}, Type: {{{type}}}, Location: {{{location}}}, {{#if distance}}Distance: ~{{{distance}}}km away{{else}}This is another date preference{{/if}}
 {{/each}}
 {{else}}
 None

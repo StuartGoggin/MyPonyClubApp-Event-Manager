@@ -117,12 +117,12 @@ const CalendarGrid = ({
                 return (
                     <div
                         key={day.toString()}
-                        className={cn('relative flex flex-col p-1.5 min-h-24', {
+                        className={cn('relative flex flex-col p-1.5', {
                           'text-muted-foreground': !isSameMonth(day, month),
                           'bg-muted/20': !isSameMonth(day, month) && (isSaturday || isSunday),
                           'bg-primary/5': isSameMonth(day, month) && (isSaturday || isSunday),
                           'relative': isCurrentDayToday,
-                          'p-1 min-h-20': isYearView,
+                          'p-1': isYearView,
                         })}
                     >
                          <span
@@ -415,3 +415,4 @@ export function EventCalendar({
     
 
     
+

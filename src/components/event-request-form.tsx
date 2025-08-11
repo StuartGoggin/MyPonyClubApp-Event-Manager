@@ -28,7 +28,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon, PlusCircle, Trash2, History, Wand2, AlertTriangle } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
+import { format, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { type Club, type EventType, type Event, type Zone } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -37,6 +37,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { EventCalendar } from '@/components/dashboard/event-calendar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { suggestAlternativeDates, type SuggestAlternativeDatesOutput } from '@/ai/flows/suggest-alternative-dates';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const preferenceSchema = z.object({
   name: z.string().min(3, { message: 'Event name must be at least 3 characters.' }),
@@ -68,6 +70,9 @@ interface EventRequestFormProps {
 export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventRequestFormProps) {
   const { toast } = useToast();
   const formRef = useRef<HTMLFormElement>(null);
+
+  const [conflictSuggestions, setConflictSuggestions] = useState<Record<string, SuggestAlternativeDatesOutput | null>>({});
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState<Record<string, boolean>>({});
 
   const initialState: FormState = { message: '', success: false };
   const [state, dispatch] = useFormState(createEventRequestAction, initialState);
@@ -115,9 +120,8 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
         submittedBy: '',
         submittedByContact: '',
       });
-      // formRef.current?.reset();
+       setConflictSuggestions({});
     } else if (state.message) {
-      // Check for form-level errors (e.g. from the action)
       if (state.errors?._errors) {
          toast({
           title: 'Error submitting form',
@@ -154,6 +158,50 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
     dispatch(formData);
   };
   
+  const handleAnalyzeDate = async (index: number) => {
+    const preference = form.getValues(`preferences.${index}`);
+    if (!preference.date || !preference.eventTypeId) {
+        toast({
+            title: 'Missing Information',
+            description: 'Please select a date and event type before analyzing.',
+            variant: 'destructive',
+        });
+        return;
+    }
+
+    setIsLoadingSuggestions(prev => ({...prev, [index]: true}));
+    setConflictSuggestions(prev => ({...prev, [index]: null}));
+
+    const eventType = eventTypes.find(et => et.id === preference.eventTypeId);
+    const nearbyEvents = allEvents.filter(e => {
+        const dayDiff = Math.abs(differenceInDays(preference.date!, new Date(e.date)));
+        return dayDiff <= 7; // Check for events within a week
+    }).map(e => ({
+        date: format(new Date(e.date), 'yyyy-MM-dd'),
+        type: eventTypes.find(et => et.id === e.eventTypeId)?.name || 'Unknown',
+        location: e.location,
+    }));
+
+    try {
+        const result = await suggestAlternativeDates({
+            eventDate: format(preference.date, 'yyyy-MM-dd'),
+            eventType: eventType?.name || 'Unknown',
+            eventLocation: preference.location,
+            otherEvents: nearbyEvents,
+        });
+        setConflictSuggestions(prev => ({...prev, [index]: result}));
+    } catch (error) {
+        console.error("AI suggestion failed:", error);
+        toast({
+            title: 'Analysis Failed',
+            description: 'Could not get conflict analysis at this time.',
+            variant: 'destructive',
+        });
+    } finally {
+        setIsLoadingSuggestions(prev => ({...prev, [index]: false}));
+    }
+  };
+
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
@@ -216,6 +264,32 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
                                         <FormField control={form.control} name={`preferences.${index}.eventTypeId`} render={({ field }) => (<FormItem><FormLabel>Event Type</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger className='bg-card'><SelectValue placeholder="Select an event type" /></SelectTrigger></FormControl><SelectContent>{eventTypes.filter(t => t.id !== 'ph').map(type => (<SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
                                         <FormField control={form.control} name={`preferences.${index}.location`} render={({ field }) => (<FormItem><FormLabel>Location / Address</FormLabel><FormControl><Input placeholder="e.g., 123 Equestrian Rd" {...field} /></FormControl><FormMessage /></FormItem>)} />
                                         <FormField control={form.control} name={`preferences.${index}.isQualifier`} render={({ field }) => (<FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-card"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>Will this be a SMZ Qualifier?</FormLabel></div></FormItem>)} />
+                                        <div className="md:col-span-2 space-y-2">
+                                            <Button type="button" onClick={() => handleAnalyzeDate(index)} disabled={isLoadingSuggestions[index]} className="w-full">
+                                                <Wand2 className="mr-2 h-4 w-4" />
+                                                {isLoadingSuggestions[index] ? 'Analyzing...' : 'Analyze Date for Conflicts'}
+                                            </Button>
+                                            {isLoadingSuggestions[index] && (
+                                                <p className="text-sm text-muted-foreground text-center">Checking for conflicts with the AI assistant...</p>
+                                            )}
+                                            {conflictSuggestions[index] && (
+                                                <Alert>
+                                                    <AlertTriangle className="h-4 w-4" />
+                                                    <AlertTitle>Conflict Analysis</AlertTitle>
+                                                    <AlertDescription>
+                                                        <p className="mb-2">{conflictSuggestions[index]?.conflictAnalysis}</p>
+                                                        <p className="font-semibold">Reasoning:</p>
+                                                        <p className="mb-2">{conflictSuggestions[index]?.reasoning}</p>
+                                                        <p className="font-semibold">Suggested Dates:</p>
+                                                        <ul className="list-disc pl-5">
+                                                            {conflictSuggestions[index]?.suggestedDates.map(date => (
+                                                                <li key={date}>{format(new Date(date), 'PPP')}</li>
+                                                            ))}
+                                                        </ul>
+                                                    </AlertDescription>
+                                                </Alert>
+                                            )}
+                                        </div>
                                     </div>
 
                                 </div>

@@ -2,7 +2,7 @@
 'use server';
 
 import { z } from 'zod';
-import { addEvent } from './data';
+import { addEvent, updateEventStatus } from './data';
 import { revalidatePath } from 'next/cache';
 
 const eventRequestSchema = z.object({
@@ -29,11 +29,27 @@ export type FormState = {
   };
 };
 
-// This function needs to be updated to handle the new form structure.
 export async function createEventRequestAction(
-  data: unknown
+  prevState: FormState,
+  data: FormData
 ): Promise<FormState> {
-    const validatedFields = eventRequestSchema.safeParse(data);
+    const dates = data.getAll('dates').map(d => new Date(d as string));
+
+    const payload = {
+        clubId: data.get('clubId'),
+        coordinatorName: data.get('coordinatorName'),
+        coordinatorContact: data.get('coordinatorContact'),
+        name: data.get('name'),
+        eventTypeId: data.get('eventTypeId'),
+        location: data.get('location'),
+        isQualifier: data.get('isQualifier') === 'on',
+        dates: dates.filter(d => !isNaN(d.getTime())),
+        notes: data.get('notes'),
+        submittedBy: data.get('submittedBy'),
+        submittedByContact: data.get('submittedByContact'),
+    }
+    
+    const validatedFields = eventRequestSchema.safeParse(payload);
     
     if (!validatedFields.success) {
         return {
@@ -43,10 +59,10 @@ export async function createEventRequestAction(
         };
     }
 
-    const { dates, clubId, name, eventTypeId, location, isQualifier, ...otherData } = validatedFields.data;
+    const { dates: validDates, clubId, name, eventTypeId, location, isQualifier, ...otherData } = validatedFields.data;
 
     try {
-        for (const date of dates) {
+        for (const date of validDates) {
             await addEvent({
                 name,
                 date,
@@ -76,6 +92,7 @@ export async function approveEventAction(eventId: string) {
     try {
         await updateEventStatus(eventId, 'approved');
         revalidatePath('/');
+        revalidatePath('/request-event');
         return { success: true, message: 'Event approved successfully' };
     } catch (error) {
         return { success: false, message: 'Failed to approve event.' };

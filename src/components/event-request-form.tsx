@@ -252,8 +252,14 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
                 <Form {...form}>
                     <form 
                         ref={formRef} 
-                        action={dispatch}
-                        onSubmit={form.handleSubmit(() => formRef.current?.requestSubmit())} 
+                        onSubmit={(evt) => {
+                          evt.preventDefault();
+                          form.handleSubmit(() => {
+                            // FormData is still required by server actions.
+                            const formData = new FormData(formRef.current!);
+                            dispatch(formData);
+                          })(evt);
+                        }}
                         className="space-y-8"
                     >
                         <Card>

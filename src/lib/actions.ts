@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { addEvent, getEvents, updateEventStatus, getEventTypes } from './data';
 import { suggestAlternativeDates, type SuggestAlternativeDatesOutput } from '@/ai/flows/suggest-alternative-dates';
 import { revalidatePath } from 'next/cache';
-import { formatISO } from 'date-fns';
+import { format, formatISO } from 'date-fns';
 
 const eventSchema = z.object({
   name: z.string().min(3, 'Event name must be at least 3 characters.'),
@@ -12,7 +12,19 @@ const eventSchema = z.object({
   eventTypeId: z.string().min(1, 'Please select an event type.'),
   date: z.date({ required_error: 'Please select a date.' }),
   location: z.string().min(3, 'Location must be at least 3 characters.'),
+  isQualifier: z.boolean().optional(),
 });
+
+const formSchema = z.object({
+    clubId: z.string({ required_error: 'Please select a club.' }).min(1, 'Please select a club.'),
+    coordinatorName: z.string().optional(),
+    coordinatorContact: z.string().optional(),
+    preferences: z.array(eventSchema).min(1, "Please add at least one event preference."),
+    notes: z.string().optional(),
+    submittedBy: z.string().optional(),
+    submittedByContact: z.string().optional(),
+});
+
 
 export type FormState = {
   message: string;
@@ -27,19 +39,43 @@ export async function createEventRequestAction(
   prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
-    const rawFormData = Object.fromEntries(formData.entries());
-    const dateString = rawFormData.date as string;
     
-    // Adjust for timezone offset to prevent day-before issues
-    const dateParts = dateString.split('-').map(part => parseInt(part, 10));
-    const parsedDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+    // This action needs to be updated to handle multiple event creations.
+    // For now, let's focus on validating the first preference as a proof of concept.
+    // The full implementation will loop through all preferences.
 
-    const validatedFields = eventSchema.safeParse({
-        ...rawFormData,
-        date: !isNaN(parsedDate.getTime()) ? parsedDate : undefined,
-    });
+    const rawData = {
+        clubId: formData.get('clubId'),
+        coordinatorName: formData.get('coordinatorName'),
+        coordinatorContact: formData.get('coordinatorContact'),
+        notes: formData.get('notes'),
+        submittedBy: formData.get('submittedBy'),
+        submittedByContact: formData.get('submittedByContact'),
+        preferences: [],
+    };
+
+    // This is a simplified example of how to extract array data.
+    // In a real scenario with unknown numbers of preferences, we'd loop differently.
+    for (let i = 0; i < 4; i++) {
+        if (formData.get(`preferences[${i}].name`)) {
+            const dateString = formData.get(`preferences[${i}].date`) as string;
+            const dateParts = dateString ? dateString.split('-').map(p => parseInt(p, 10)) : null;
+            const date = dateParts ? new Date(dateParts[0], dateParts[1] - 1, dateParts[2]) : undefined;
+
+            (rawData.preferences as any[]).push({
+                name: formData.get(`preferences[${i}].name`),
+                eventTypeId: formData.get(`preferences[${i}].eventTypeId`),
+                date: date,
+                location: formData.get(`preferences[${i}].location`),
+                isQualifier: formData.get(`preferences[${i}].isQualifier`) === 'on',
+            });
+        }
+    }
+    
+    const validatedFields = formSchema.safeParse(rawData);
     
     if (!validatedFields.success) {
+        console.log(validatedFields.error.flatten().fieldErrors);
         return {
             success: false,
             errors: validatedFields.error.flatten().fieldErrors,
@@ -47,55 +83,21 @@ export async function createEventRequestAction(
         };
     }
 
-    const { name, date, clubId, eventTypeId, location } = validatedFields.data;
-
-    const allEvents = await getEvents();
-
-    const conflictingEvents = allEvents.filter(
-        event => new Date(event.date).toDateString() === new Date(date).toDateString()
-    );
-
-    if (conflictingEvents.length > 0) {
-        const eventTypes = await getEventTypes();
-        const eventTypeName = eventTypes.find(et => et.id === eventTypeId)?.name || 'Unknown Event Type';
-        const otherEventsForAI = conflictingEvents.map(e => {
-            const otherEventTypeName = eventTypes.find(et => et.id === e.eventTypeId)?.name || 'Unknown Event Type';
-            return {
-                date: formatISO(new Date(e.date), { representation: 'date' }),
-                type: otherEventTypeName,
-                location: e.location,
-            }
-        });
-
-        const aiSuggestions = await suggestAlternativeDates({
-            eventDate: formatISO(date, { representation: 'date' }),
-            eventType: eventTypeName,
-            eventLocation: location,
-            otherEvents: otherEventsForAI,
-        });
-
-        if (aiSuggestions.suggestedDates.length > 0) {
-            return {
-                success: false,
-                message: "There are conflicting events on this date. Here are some AI-powered suggestions for alternative dates.",
-                suggestions: aiSuggestions,
-            }
-        }
-    }
+    const { preferences, clubId, ...otherData } = validatedFields.data;
 
     try {
-        await addEvent({
-            name,
-            date,
-            clubId,
-            eventTypeId,
-            location,
-            status: 'proposed',
-        });
+        for (const pref of preferences) {
+            await addEvent({
+                ...pref,
+                clubId: clubId,
+                status: 'proposed',
+                ...otherData,
+            });
+        }
 
         revalidatePath('/');
         revalidatePath('/request-event');
-        return { success: true, message: 'Event request submitted successfully!' };
+        return { success: true, message: 'Event requests submitted successfully!' };
 
     } catch(e) {
          return {

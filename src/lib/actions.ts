@@ -30,10 +30,25 @@ export type FormState = {
 };
 
 export async function createEventRequestAction(
-  data: z.infer<typeof eventRequestSchema>
+  prevState: FormState | null,
+  formData: FormData
 ): Promise<FormState> {
+    const rawData = Object.fromEntries(formData.entries());
+    const dates = formData.getAll('dates').map(d => new Date(d as string));
     
-    const validatedFields = eventRequestSchema.safeParse(data);
+    const validatedFields = eventRequestSchema.safeParse({
+      clubId: rawData.clubId,
+      coordinatorName: rawData.coordinatorName,
+      coordinatorContact: rawData.coordinatorContact,
+      name: rawData.name,
+      eventTypeId: rawData.eventTypeId,
+      location: rawData.location,
+      isQualifier: rawData.isQualifier === 'on',
+      dates: dates,
+      notes: rawData.notes,
+      submittedBy: rawData.submittedBy,
+      submittedByContact: rawData.submittedByContact,
+    });
     
     if (!validatedFields.success) {
         return {
@@ -43,10 +58,10 @@ export async function createEventRequestAction(
         };
     }
 
-    const { dates, clubId, name, eventTypeId, location, isQualifier, ...otherData } = validatedFields.data;
+    const { dates: validatedDates, clubId, name, eventTypeId, location, isQualifier, ...otherData } = validatedFields.data;
 
     try {
-        for (const date of dates) {
+        for (const date of validatedDates) {
             await addEvent({
                 name,
                 date,
@@ -66,7 +81,7 @@ export async function createEventRequestAction(
     } catch(e) {
          return {
             success: false,
-            message: 'An unexpected error occurred.',
+            message: 'An unexpected error occurred while saving to the database.',
         };
     }
 }

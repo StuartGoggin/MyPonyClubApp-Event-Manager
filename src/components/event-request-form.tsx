@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState, useMemo, useTransition } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -38,6 +38,7 @@ import { EventCalendar } from '@/components/dashboard/event-calendar';
 import { suggestAlternativeDates, type SuggestAlternativeDatesOutput } from '@/ai/flows/suggest-alternative-dates';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useRouter } from 'next/navigation';
+import { useActionState } from 'react';
 
 const eventRequestSchema = z.object({
   clubId: z.string({ required_error: 'Please select a club.' }).min(1, 'Please select a club.'),
@@ -83,11 +84,17 @@ const haversineDistance = (
   return R * c;
 };
 
+const initialState: FormState = {
+    message: '',
+    success: false,
+    errors: {},
+};
+
 export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventRequestFormProps) {
   const { toast } = useToast();
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
-  const [formState, setFormState] = useState<FormState | null>(null);
+  const [state, dispatch, isPending] = useActionState(createEventRequestAction, initialState);
+  const formRef = useRef<HTMLFormElement>(null);
   
   const [conflictSuggestions, setConflictSuggestions] = useState<Record<string, SuggestAlternativeDatesOutput | null>>({});
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState<Record<string, boolean>>({});
@@ -100,7 +107,7 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
       location: '',
       isQualifier: false,
       eventTypeId: '',
-      dates: [{ value: undefined }],
+      dates: [{ value: new Date() }],
       coordinatorName: '',
       coordinatorContact: '',
       notes: '',
@@ -110,16 +117,16 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
   });
 
   useEffect(() => {
-    if (!formState) return;
+    if (!state) return;
 
-    if (formState.success) {
+    if (state.success) {
       toast({
         title: 'Success!',
-        description: formState.message,
+        description: state.message,
       });
       router.push('/');
-    } else if (formState.errors) {
-        for (const [field, errors] of Object.entries(formState.errors)) {
+    } else if (state.errors) {
+        for (const [field, errors] of Object.entries(state.errors)) {
           if (errors) {
             form.setError(field as keyof EventRequestFormValues, {
               type: 'manual',
@@ -127,14 +134,14 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
             });
           }
         }
-    } else if (formState.message) {
+    } else if (state.message) {
       toast({
         title: 'Error',
-        description: formState.message,
+        description: state.message,
         variant: 'destructive',
       });
     }
-  }, [formState, form, toast, router]);
+  }, [state, form, toast, router]);
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -163,20 +170,6 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
       future: clubEvents.filter(event => new Date(event.date) >= today).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
     };
   }, [selectedClubId, allEvents]);
-
-
-  const onSubmit = (values: EventRequestFormValues) => {
-    startTransition(async () => {
-      // Flatten the dates array for the action
-      const actionData = {
-        ...values,
-        dates: values.dates.map(d => d.value),
-      };
-
-      const result = await createEventRequestAction(actionData);
-      setFormState(result);
-    });
-  };
   
   const handleAnalyzeDate = async (index: number) => {
     const preferenceDate = form.getValues(`dates.${index}.value`);
@@ -273,7 +266,15 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
                 <CardContent className="pt-6">
                 <Form {...form}>
                     <form
-                      onSubmit={form.handleSubmit(onSubmit)}
+                      ref={formRef}
+                      action={dispatch}
+                      onSubmit={(evt) => {
+                          form.handleSubmit(() => {
+                              // FormData is still required by server actions.
+                              const formData = new FormData(formRef.current!);
+                              dispatch(formData);
+                          })(evt);
+                      }}
                       className="space-y-8"
                     >
                         <Card>
@@ -314,6 +315,7 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
                                             onValueChange={field.onChange} 
                                             value={field.value}
                                             disabled={!selectedZoneId}
+                                            name={field.name}
                                         >
                                         <FormControl>
                                             <SelectTrigger>
@@ -344,9 +346,9 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
                              </CardHeader>
                              <CardContent className="grid md:grid-cols-2 gap-4">
                                 <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Event Name</FormLabel><FormControl><Input placeholder="e.g., Spring Dressage Gala" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={form.control} name="eventTypeId" render={({ field }) => (<FormItem><FormLabel>Event Type</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger className='bg-card'><SelectValue placeholder="Select an event type" /></SelectTrigger></FormControl><SelectContent>{eventTypes.filter(t => t.id !== 'ph').map(type => (<SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
+                                <FormField control={form.control} name="eventTypeId" render={({ field }) => (<FormItem><FormLabel>Event Type</FormLabel><Select onValueChange={field.onChange} value={field.value} name={field.name}><FormControl><SelectTrigger className='bg-card'><SelectValue placeholder="Select an event type" /></SelectTrigger></FormControl><SelectContent>{eventTypes.filter(t => t.id !== 'ph').map(type => (<SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
                                 <FormField control={form.control} name="location" render={({ field }) => (<FormItem><FormLabel>Location / Address</FormLabel><FormControl><Input placeholder="e.g., 123 Equestrian Rd" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={form.control} name="isQualifier" render={({ field }) => (<FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-card"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>Will this be a SMZ Qualifier?</FormLabel></div></FormItem>)} />
+                                <FormField control={form.control} name="isQualifier" render={({ field }) => (<FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-card"><FormControl><Checkbox name={field.name} checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>Will this be a SMZ Qualifier?</FormLabel></div></FormItem>)} />
                              </CardContent>
                         </Card>
 
@@ -396,10 +398,13 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
                                         </Alert>
                                     )}
 
+                                    {/** Hidden input to submit the date value */}
+                                    <input type="hidden" {...form.register(`dates.${index}.value`)} name="dates" value={form.watch(`dates.${index}.value`)?.toISOString() ?? ''} />
+
                                 </div>
                                 ))}
                                 {fields.length < 4 && (
-                                    <Button type="button" variant="outline" onClick={() => append({ value: undefined })}><PlusCircle className="mr-2 h-4 w-4" /> Add another date</Button>
+                                    <Button type="button" variant="outline" onClick={() => append({ value: new Date() })}><PlusCircle className="mr-2 h-4 w-4" /> Add another date</Button>
                                 )}
                                  <Controller
                                     name="dates"
@@ -420,8 +425,8 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
                             </CardContent>
                         </Card>
 
-                        <Button type="submit" disabled={isPending || form.formState.isSubmitting}>
-                        {isPending || form.formState.isSubmitting ? 'Submitting...' : 'Submit Request'}
+                        <Button type="submit" disabled={isPending}>
+                          {isPending ? 'Submitting...' : 'Submit Request'}
                         </Button>
                     </form>
                 </Form>

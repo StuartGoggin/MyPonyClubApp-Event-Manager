@@ -1,11 +1,11 @@
+
 'use client';
 
-import { useFormState } from 'react-dom';
+import { useActionState, useEffect, useRef, useState, useMemo } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { createEventRequestAction, type FormState } from '@/lib/actions';
-import { useEffect, useRef, useState, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -94,7 +94,7 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState<Record<string, boolean>>({});
 
   const initialState: FormState = { message: '', success: false };
-  const [state, dispatch] = useFormState(createEventRequestAction, initialState);
+  const [state, dispatch] = useActionState(createEventRequestAction, initialState);
 
   const form = useForm<EventRequestFormValues>({
     resolver: zodResolver(eventRequestSchema),

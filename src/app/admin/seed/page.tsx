@@ -3,10 +3,9 @@
 
 import { useState } from 'react';
 import { seedData } from '@/lib/data';
+import { callSeedData } from '@/lib/serverActions'; // Import callSeedData from the new file
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { CheckCircle, AlertTriangle } from 'lucide-react';
-
 export default function SeedPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
@@ -14,7 +13,7 @@ export default function SeedPage() {
   const handleSeed = async () => {
     setLoading(true);
     setResult(null);
-    const seedResult = await seedData();
+    const seedResult = await callSeedData();
     setResult(seedResult);
     setLoading(false);
   };

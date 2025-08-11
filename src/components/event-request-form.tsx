@@ -110,6 +110,14 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
   });
 
   const selectedClubId = form.watch('clubId');
+  const [selectedZoneId, setSelectedZoneId] = useState<string>();
+
+  const filteredClubs = useMemo(() => {
+    if (!selectedZoneId) {
+      return [];
+    }
+    return clubs.filter(club => club.zoneId === selectedZoneId);
+  }, [selectedZoneId, clubs]);
 
   const clubEvents = useMemo(() => {
     if (!selectedClubId) return { past: [], future: [] };
@@ -139,6 +147,7 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
         submittedBy: '',
         submittedByContact: '',
       });
+       setSelectedZoneId(undefined);
        setConflictSuggestions({});
     } else if (state.message) {
       if (state.errors?._errors) {
@@ -261,20 +270,47 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
                                 <CardTitle>Club Details</CardTitle>
                             </CardHeader>
                             <CardContent className="grid md:grid-cols-2 gap-4">
+                                <FormItem>
+                                    <FormLabel>Zone</FormLabel>
+                                    <Select 
+                                        value={selectedZoneId} 
+                                        onValueChange={(zoneId) => {
+                                            setSelectedZoneId(zoneId);
+                                            form.setValue('clubId', ''); // Reset club when zone changes
+                                        }}
+                                    >
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select a zone" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {zones.map(zone => (
+                                                <SelectItem key={zone.id} value={zone.id}>
+                                                    {zone.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </FormItem>
                                 <FormField
                                     control={form.control}
                                     name="clubId"
                                     render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Pony Club</FormLabel>
-                                        <Select onValueChange={field.onChange} value={field.value}>
+                                        <Select 
+                                            onValueChange={field.onChange} 
+                                            value={field.value}
+                                            disabled={!selectedZoneId}
+                                        >
                                         <FormControl>
                                             <SelectTrigger>
                                             <SelectValue placeholder="Select a club" />
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            {clubs.map(club => (
+                                            {filteredClubs.map(club => (
                                             <SelectItem key={club.id} value={club.id}>
                                                 {club.name}
                                             </SelectItem>

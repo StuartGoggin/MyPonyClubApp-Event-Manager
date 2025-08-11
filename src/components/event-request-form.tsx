@@ -37,6 +37,7 @@ import { Separator } from '@/components/ui/separator';
 import { EventCalendar } from '@/components/dashboard/event-calendar';
 import { suggestAlternativeDates, type SuggestAlternativeDatesOutput } from '@/ai/flows/suggest-alternative-dates';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useRouter } from 'next/navigation';
 
 const eventRequestSchema = z.object({
   clubId: z.string({ required_error: 'Please select a club.' }).min(1, 'Please select a club.'),
@@ -84,6 +85,7 @@ const haversineDistance = (
 
 export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventRequestFormProps) {
   const { toast } = useToast();
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   
   const [conflictSuggestions, setConflictSuggestions] = useState<Record<string, SuggestAlternativeDatesOutput | null>>({});
@@ -153,20 +155,21 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
         form.reset();
         setSelectedZoneId(undefined);
         setConflictSuggestions({});
+        router.push('/');
       } else if (result.errors) {
-        toast({
-            title: 'Error',
-            description: result.message,
-            variant: 'destructive',
-        });
         for (const [field, errors] of Object.entries(result.errors)) {
-            if (errors) {
-                form.setError(field as keyof EventRequestFormValues, {
-                    type: 'manual',
-                    message: errors.join(', '),
-                });
-            }
+          if (errors) {
+            form.setError(field as keyof EventRequestFormValues, {
+              type: 'manual',
+              message: errors.join(', '),
+            });
+          }
         }
+        toast({
+          title: 'Error Submitting Request',
+          description: "Please check the form for errors and try again.",
+          variant: 'destructive',
+        });
       } else {
          toast({
             title: 'Error',

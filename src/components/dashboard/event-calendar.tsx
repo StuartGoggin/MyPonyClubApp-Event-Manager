@@ -105,7 +105,7 @@ const CalendarGrid = ({
       <div className={cn("divide-y border-t", {"border-t-0 divide-y-0": isYearView})}>
         {weeks.map((week, weekIndex) => {
           return (
-          <div key={weekIndex} className={cn("grid divide-x", isYearView ? "grid-cols-[repeat(7,minmax(0,1fr))]" : "grid-cols-7")}>
+          <div key={weekIndex} className={cn(isYearView ? "flex divide-x" : "grid grid-cols-7 divide-x")}>
             {dayIndexMap.map(dayIdx => {
                 const day = week.find(d => getDay(d) === dayIdx)!;
                 const isSaturday = getDay(day) === 6;
@@ -122,7 +122,9 @@ const CalendarGrid = ({
                           'bg-muted/20': !isSameMonth(day, month) && (isSaturday || isSunday),
                           'bg-primary/5': isSameMonth(day, month) && (isSaturday || isSunday),
                           'relative': isCurrentDayToday,
-                          'p-1': isYearView,
+                           [isYearView ? 'p-1' : '']: true,
+                           [isYearView ? 'flex-1 basis-0' : '']: true,
+                           [isYearView && dayEvents.length > 0 ? 'flex-[2_1_0%]' : '']: true,
                         })}
                     >
                          <span
@@ -154,7 +156,7 @@ const CalendarGrid = ({
                                  event.status === 'public_holiday' ? <FerrisWheel className={cn("h-3 w-3 text-green-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
                                  <Clock className={cn("h-3 w-3 text-accent flex-shrink-0", { "h-2 w-2": isYearView })}/>}
                                 </div>
-                                <span className={cn("font-medium break-words", 
+                                <span className={cn("font-medium", 
                                     event.status === 'approved' ? 'text-primary' : 
                                     event.status === 'public_holiday' ? 'text-green-700' :
                                     'text-accent'
@@ -411,8 +413,3 @@ export function EventCalendar({
     </div>
   );
 }
-
-    
-
-    
-

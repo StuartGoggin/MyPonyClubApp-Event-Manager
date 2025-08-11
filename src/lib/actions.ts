@@ -1,3 +1,4 @@
+
 'use server';
 
 import { z } from 'zod';
@@ -8,7 +9,7 @@ import { format, formatISO, parse } from 'date-fns';
 
 const preferenceSchema = z.object({
   name: z.string().min(3, { message: 'Event name must be at least 3 characters.' }),
-  eventTypeId: z.string({ required_error: 'Please select an event type.' }),
+  eventTypeId: z.string({ required_error: 'Please select an event type.' }).min(1, 'Please select an event type.'),
   date: z.date({ required_error: 'A date is required.' }),
   location: z.string().min(3, { message: 'Location must be at least 3 characters.' }),
   isQualifier: z.boolean().default(false),
@@ -36,7 +37,6 @@ export type FormState = {
 };
 
 export async function createEventRequestAction(
-  prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
     
@@ -53,7 +53,11 @@ export async function createEventRequestAction(
                 rawPreferences[index] = {};
             }
             if (field === 'date' && typeof value === 'string') {
-                rawPreferences[index][field] = parse(value, 'yyyy-MM-dd', new Date());
+                // The date comes in as 'Wed Jul 31 2024 00:00:00 GMT+1000 (Australian Eastern Standard Time)'
+                // We need to parse it correctly. Let's assume a simpler format is sent or adjust.
+                // For now, parsing from a standard format is more robust.
+                // The date from FormData is a string. `new Date(value)` is often reliable.
+                rawPreferences[index][field] = new Date(value);
             } else if (field === 'isQualifier') {
                  rawPreferences[index][field] = value === 'on';
             } else {
@@ -75,7 +79,6 @@ export async function createEventRequestAction(
     const validatedFields = eventRequestSchema.safeParse(rawData);
     
     if (!validatedFields.success) {
-        console.log(validatedFields.error.flatten().fieldErrors);
         return {
             success: false,
             errors: validatedFields.error.flatten().fieldErrors,

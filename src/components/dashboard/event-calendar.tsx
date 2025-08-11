@@ -96,7 +96,7 @@ const CalendarGrid = ({
         {!isYearView && (
              <div className="grid grid-cols-7 text-xs text-center font-medium text-muted-foreground">
                 {dayOrder.map((day) => (
-                    <div key={day} className={cn("py-2", (day === 'Sat' || day === 'Sun') ? "w-[20%]" : "w-[12%]")}>
+                    <div key={day} className="py-2">
                         {day}
                     </div>
                 ))}
@@ -118,12 +118,12 @@ const CalendarGrid = ({
                     <div
                         key={day.toString()}
                         className={cn('flex flex-col p-1.5 h-auto min-h-24', {
-                          'bg-background/50 text-muted-foreground': !isSameMonth(day, month),
+                          'text-muted-foreground': !isSameMonth(day, month),
                           'bg-muted/20': !isSameMonth(day, month) && (isSaturday || isSunday),
                           'bg-primary/5': isSameMonth(day, month) && (isSaturday || isSunday),
                           'relative': isCurrentDayToday,
                           'col-span-1': true,
-                          'min-h-20': isYearView,
+                          'p-1 min-h-20': isYearView,
                         })}
                     >
                          <span
@@ -143,7 +143,6 @@ const CalendarGrid = ({
                                 onClick={() => onEventClick(event.id)}
                                 className={cn(
                                     "w-full text-left rounded-md text-xs leading-tight transition-colors shadow-sm",
-                                    "whitespace-normal",
                                     isYearView ? "p-1" : "p-1.5",
                                     event.status === 'approved' ? 'bg-primary/20 hover:bg-primary/30 text-primary-foreground' :
                                     event.status === 'public_holiday' ? 'bg-green-500/20 hover:bg-green-500/30' :

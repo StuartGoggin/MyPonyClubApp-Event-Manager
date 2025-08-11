@@ -93,7 +93,6 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
 
   const [conflictSuggestions, setConflictSuggestions] = useState<Record<string, SuggestAlternativeDatesOutput | null>>({});
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState<Record<string, boolean>>({});
-  const [formState, setFormState] = useState<FormState>({ message: '', success: false });
 
   const form = useForm<EventRequestFormValues>({
     resolver: zodResolver(eventRequestSchema),
@@ -135,41 +134,6 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
       future: clubEvents.filter(event => new Date(event.date) >= today).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
     };
   }, [selectedClubId, allEvents]);
-
-  useEffect(() => {
-    if (formState.success) {
-      toast({
-        title: 'Success!',
-        description: formState.message,
-      });
-      form.reset({
-        clubId: '',
-        preferences: [{ name: '', location: '', isQualifier: false, eventTypeId: '' }],
-        coordinatorName: '',
-        coordinatorContact: '',
-        notes: '',
-        submittedBy: '',
-        submittedByContact: '',
-      });
-       setSelectedZoneId(undefined);
-       setConflictSuggestions({});
-    } else if (formState.message) {
-      if (formState.errors?._errors) {
-         toast({
-          title: 'Error submitting form',
-          description: formState.errors._errors.join(', '),
-          variant: 'destructive',
-        });
-      } else {
-         toast({
-          title: 'Error',
-          description: formState.message,
-          variant: 'destructive',
-        });
-      }
-    }
-  }, [formState, toast, form]);
-
   
   const handleAnalyzeDate = async (index: number) => {
     const preference = form.getValues(`preferences.${index}`);
@@ -242,13 +206,47 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
     }
   };
   
-  const onSubmit = form.handleSubmit(async () => {
-    const formData = new FormData(formRef.current!);
+  const onSubmit = (data: EventRequestFormValues) => {
     startTransition(async () => {
-      const state = await createEventRequestAction(formState, formData);
-      setFormState(state);
+      // We need to pass a FormData object to the server action
+      const formData = new FormData(formRef.current!);
+      const state = await createEventRequestAction(formData);
+
+      if (state.success) {
+        toast({
+          title: 'Success!',
+          description: state.message,
+        });
+        form.reset({
+          clubId: '',
+          preferences: [{ name: '', location: '', isQualifier: false, eventTypeId: '' }],
+          coordinatorName: '',
+          coordinatorContact: '',
+          notes: '',
+          submittedBy: '',
+          submittedByContact: '',
+        });
+        setSelectedZoneId(undefined);
+        setConflictSuggestions({});
+      } else {
+        if (state.errors) {
+            for (const [field, errors] of Object.entries(state.errors)) {
+                if (errors) {
+                    form.setError(field as keyof EventRequestFormValues, {
+                        type: 'manual',
+                        message: errors.join(', '),
+                    });
+                }
+            }
+        }
+        toast({
+          title: 'Error',
+          description: state.message,
+          variant: 'destructive',
+        });
+      }
     });
-  });
+  };
 
 
   return (
@@ -259,7 +257,7 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
                 <Form {...form}>
                     <form
                       ref={formRef}
-                      onSubmit={onSubmit}
+                      onSubmit={form.handleSubmit(onSubmit)}
                       className="space-y-8"
                     >
                         <Card>
@@ -458,5 +456,3 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
     </div>
   );
 }
-
-    

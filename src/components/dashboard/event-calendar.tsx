@@ -106,7 +106,7 @@ const CalendarGrid = ({
   }, [events, month, isYearView]);
 
   return (
-    <div className={cn("bg-card rounded-lg border shadow-sm w-full", { "p-4": isYearView })}>
+    <div className={cn("bg-card rounded-lg border shadow-sm", { "p-4": isYearView })}>
       {isYearView && (
           <h3 className="text-lg font-semibold font-headline mb-2 text-center">{format(month, 'MMMM')}</h3>
       )}
@@ -291,7 +291,7 @@ export function EventCalendar({
     if (view === 'month') {
       setCurrentDate(subMonths(currentDate, 1));
     } else {
-      setCurrentDate(subMonths(currentDate, 12));
+      setCurrentDate(addMonths(currentDate, -12));
     }
   };
 

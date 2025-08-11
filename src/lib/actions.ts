@@ -97,7 +97,7 @@ export async function createEventRequestAction(
 
         revalidatePath('/');
         revalidatePath('/request-event');
-        return { success: true, message: 'Event requests submitted successfully!' };
+        return { success: true, message: 'Your event request has been submitted for approval. It will appear on the calendar as a pending event.' };
 
     } catch(e) {
          return {

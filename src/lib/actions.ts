@@ -6,20 +6,19 @@ import { suggestAlternativeDates, type SuggestAlternativeDatesOutput } from '@/a
 import { revalidatePath } from 'next/cache';
 import { format, formatISO } from 'date-fns';
 
-const eventSchema = z.object({
-  name: z.string().min(3, 'Event name must be at least 3 characters.'),
-  clubId: z.string().min(1, 'Please select a club.'),
-  eventTypeId: z.string().min(1, 'Please select an event type.'),
-  date: z.date({ required_error: 'Please select a date.' }),
-  location: z.string().min(3, 'Location must be at least 3 characters.'),
-  isQualifier: z.boolean().optional(),
+const preferenceSchema = z.object({
+  name: z.string().min(3, { message: 'Event name must be at least 3 characters.' }),
+  eventTypeId: z.string({ required_error: 'Please select an event type.' }),
+  date: z.date({ required_error: 'A date is required.' }),
+  location: z.string().min(3, { message: 'Location must be at least 3 characters.' }),
+  isQualifier: z.boolean().default(false),
 });
 
-const formSchema = z.object({
+const eventRequestSchema = z.object({
     clubId: z.string({ required_error: 'Please select a club.' }).min(1, 'Please select a club.'),
     coordinatorName: z.string().optional(),
     coordinatorContact: z.string().optional(),
-    preferences: z.array(eventSchema).min(1, "Please add at least one event preference."),
+    preferences: z.array(preferenceSchema).min(1, 'You must add at least one event preference.').max(4, 'You can add a maximum of 4 preferences.'),
     notes: z.string().optional(),
     submittedBy: z.string().optional(),
     submittedByContact: z.string().optional(),
@@ -72,7 +71,7 @@ export async function createEventRequestAction(
         }
     }
     
-    const validatedFields = formSchema.safeParse(rawData);
+    const validatedFields = eventRequestSchema.safeParse(rawData);
     
     if (!validatedFields.success) {
         console.log(validatedFields.error.flatten().fieldErrors);

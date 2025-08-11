@@ -40,7 +40,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 
 const preferenceSchema = z.object({
   name: z.string().min(3, { message: 'Event name must be at least 3 characters.' }),
-  eventTypeId: z.string({ required_error: 'Please select an event type.' }),
+  eventTypeId: z.string({ required_error: 'Please select an event type.' }).min(1, 'Please select an event type.'),
   date: z.date({ required_error: 'A date is required.' }),
   location: z.string().min(3, { message: 'Location must be at least 3 characters.' }),
   isQualifier: z.boolean().default(false),
@@ -95,8 +95,8 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
     const clubEvents = allEvents.filter(event => event.clubId === selectedClubId);
 
     return {
-      past: clubEvents.filter(event => new Date(event.date) < today),
-      future: clubEvents.filter(event => new Date(event.date) >= today),
+      past: clubEvents.filter(event => new Date(event.date) < today).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+      future: clubEvents.filter(event => new Date(event.date) >= today).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
     };
   }, [selectedClubId, allEvents]);
 
@@ -106,14 +106,31 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
         title: 'Success!',
         description: state.message,
       });
-      form.reset();
-      formRef.current?.reset();
-    } else if (state.message) {
-      toast({
-        title: 'Error',
-        description: state.message,
-        variant: 'destructive',
+      form.reset({
+        clubId: '',
+        preferences: [{ name: '', location: '', isQualifier: false, eventTypeId: '' }],
+        coordinatorName: '',
+        coordinatorContact: '',
+        notes: '',
+        submittedBy: '',
+        submittedByContact: '',
       });
+      // formRef.current?.reset();
+    } else if (state.message) {
+      // Check for form-level errors (e.g. from the action)
+      if (state.errors?._errors) {
+         toast({
+          title: 'Error submitting form',
+          description: state.errors._errors.join(', '),
+          variant: 'destructive',
+        });
+      } else {
+         toast({
+          title: 'Error',
+          description: state.message,
+          variant: 'destructive',
+        });
+      }
     }
   }, [state, toast, form]);
 
@@ -156,7 +173,7 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
                                     render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Pony Club</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <Select onValueChange={field.onChange} value={field.value}>
                                         <FormControl>
                                             <SelectTrigger>
                                             <SelectValue placeholder="Select a club" />
@@ -186,27 +203,30 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
                             </CardHeader>
                             <CardContent className="space-y-6">
                                 {fields.map((field, index) => (
-                                <div key={field.id} className="p-4 border rounded-lg space-y-4 relative">
-                                    <h4 className="font-semibold text-lg">Preference {index + 1}</h4>
+                                <div key={field.id} className="p-4 border rounded-lg space-y-4 relative bg-muted/20">
+                                    <div className='flex justify-between items-center'>
+                                      <h4 className="font-semibold text-lg">Preference {index + 1}</h4>
+                                      {fields.length > 1 && (
+                                          <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => remove(index)}><Trash2 className="h-4 w-4" /></Button>
+                                      )}
+                                    </div>
                                     <div className="grid md:grid-cols-2 gap-4">
                                         <FormField control={form.control} name={`preferences.${index}.name`} render={({ field }) => (<FormItem><FormLabel>Event Name</FormLabel><FormControl><Input placeholder="e.g., Spring Dressage Gala" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField control={form.control} name={`preferences.${index}.date`} render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Event Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={'outline'} className={cn('w-full pl-3 text-left font-normal', !field.value && 'text-muted-foreground' )}>{field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={date => date < new Date() || date < new Date('1900-01-01')} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
-                                        <FormField control={form.control} name={`preferences.${index}.eventTypeId`} render={({ field }) => (<FormItem><FormLabel>Event Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select an event type" /></SelectTrigger></FormControl><SelectContent>{eventTypes.filter(t => t.id !== 'ph').map(type => (<SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
+                                        <FormField control={form.control} name={`preferences.${index}.date`} render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Event Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={'outline'} className={cn('w-full pl-3 text-left font-normal bg-card', !field.value && 'text-muted-foreground' )}>{field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={date => date < new Date() || date < new Date('1900-01-01')} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
+                                        <FormField control={form.control} name={`preferences.${index}.eventTypeId`} render={({ field }) => (<FormItem><FormLabel>Event Type</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger className='bg-card'><SelectValue placeholder="Select an event type" /></SelectTrigger></FormControl><SelectContent>{eventTypes.filter(t => t.id !== 'ph').map(type => (<SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
                                         <FormField control={form.control} name={`preferences.${index}.location`} render={({ field }) => (<FormItem><FormLabel>Location / Address</FormLabel><FormControl><Input placeholder="e.g., 123 Equestrian Rd" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField control={form.control} name={`preferences.${index}.isQualifier`} render={({ field }) => (<FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>Will this be a SMZ Qualifier?</FormLabel></div></FormItem>)} />
+                                        <FormField control={form.control} name={`preferences.${index}.isQualifier`} render={({ field }) => (<FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-card"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>Will this be a SMZ Qualifier?</FormLabel></div></FormItem>)} />
                                     </div>
-                                    {fields.length > 1 && (
-                                        <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2" onClick={() => remove(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                                    )}
+
                                 </div>
                                 ))}
                                 {fields.length < 4 && (
-                                    <Button type="button" variant="outline" onClick={() => append({ name: '', location: '', isQualifier: false, eventTypeId: '' })}><PlusCircle className="mr-2 h-4 w-4" /> Add another preference</Button>
+                                    <Button type="button" variant="outline" onClick={() => append({ name: '', location: '', isQualifier: false, eventTypeId: '', date: undefined })}><PlusCircle className="mr-2 h-4 w-4" /> Add another preference</Button>
                                 )}
                                  <Controller
                                     name="preferences"
                                     control={form.control}
-                                    render={({ fieldState }) => fieldState.error ? <p className="text-sm font-medium text-destructive">{fieldState.error.message}</p> : null}
+                                    render={({ fieldState }) => fieldState.error?.message ? <p className="text-sm font-medium text-destructive">{fieldState.error.message}</p> : null}
                                 />
                             </CardContent>
                         </Card>
@@ -242,20 +262,28 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
                     ) : (
                         <div className="space-y-4">
                             <div>
-                                <h4 className="font-semibold mb-2">Future Events</h4>
+                                <h4 className="font-semibold mb-2">Future & Proposed Events</h4>
                                 {clubEvents.future.length > 0 ? (
-                                    <ul className="space-y-1 text-sm list-disc pl-4">
-                                        {clubEvents.future.map(e => <li key={e.id}><strong>{format(new Date(e.date), 'PPP')}:</strong> {e.name} ({e.status})</li>)}
-                                    </ul>
+                                     <div className="text-sm border rounded-lg">
+                                        {clubEvents.future.map((e, index) => (
+                                          <div key={e.id} className={cn("p-2", index !== clubEvents.future.length - 1 && 'border-b')}>
+                                            <strong>{format(new Date(e.date), 'do MMM yyyy')}:</strong> {e.name} <span className="text-xs capitalize p-1 rounded-md bg-muted">({e.status.replace('_', ' ')})</span>
+                                          </div>
+                                        ))}
+                                    </div>
                                 ) : <p className="text-sm text-muted-foreground">No upcoming events.</p>}
                             </div>
                             <Separator/>
                             <div>
                                 <h4 className="font-semibold mb-2">Past Events</h4>
-                                {clubEvents.past.length > 0 ? (
-                                    <ul className="space-y-1 text-sm list-disc pl-4">
-                                        {clubEvents.past.map(e => <li key={e.id}><strong>{format(new Date(e.date), 'PPP')}:</strong> {e.name} ({e.status})</li>)}
-                                    </ul>
+                                 {clubEvents.past.length > 0 ? (
+                                    <div className="text-sm border rounded-lg max-h-48 overflow-y-auto">
+                                        {clubEvents.past.map((e, index) => (
+                                          <div key={e.id} className={cn("p-2", index !== clubEvents.past.length - 1 && 'border-b')}>
+                                            <strong>{format(new Date(e.date), 'do MMM yyyy')}:</strong> {e.name} <span className="text-xs capitalize p-1 rounded-md bg-muted">({e.status})</span>
+                                          </div>
+                                        ))}
+                                    </div>
                                 ) : <p className="text-sm text-muted-foreground">No past events.</p>}
                             </div>
                         </div>

@@ -2,8 +2,9 @@
 'use server';
 
 import { z } from 'zod';
-import { addEvent, updateEventStatus } from './data';
+import { addEvent, updateEventStatus, updateZone } from './data';
 import { revalidatePath } from 'next/cache';
+import type { Zone } from './types';
 
 const eventRequestSchema = z.object({
   clubId: z.string({ required_error: 'Please select a club.' }).min(1, 'Please select a club.'),
@@ -95,6 +96,16 @@ export async function approveEventAction(eventId: string) {
         return { success: true, message: 'Event approved successfully' };
     } catch (error) {
         return { success: false, message: 'Failed to approve event.' };
+    }
+}
+
+export async function updateZoneAction(zone: Zone) {
+    try {
+        await updateZone(zone);
+        revalidatePath('/admin');
+        return { success: true, message: 'Zone updated successfully' };
+    } catch (error) {
+        return { success: false, message: 'Failed to update zone.' };
     }
 }
 

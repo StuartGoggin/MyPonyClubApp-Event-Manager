@@ -1,17 +1,98 @@
-import { Zone, Club, EventType } from './types';
+// Only import types, never server-only modules here
+import type { Zone, Club, EventType } from './types';
 
 // Mock data for client-side admin interface
 export const zonesMockClient: Zone[] = [
-  { id: 'zone-barwon', name: 'Barwon Zone' },
-  { id: 'zone-central', name: 'Central Zone' },
-  { id: 'zone-east-gippsland', name: 'East Gippsland Zone' },
-  { id: 'zone-midland', name: 'Midland Zone' },
-  { id: 'zone-north-eastern', name: 'North Eastern Zone' },
-  { id: 'zone-north-metropolitan', name: 'North Metropolitan Zone' },
-  { id: 'zone-northern', name: 'Northern Zone' },
-  { id: 'zone-southern-metropolitan', name: 'Southern Metropolitan Zone' },
-  { id: 'zone-wannon', name: 'Wannon Zone' },
-  { id: 'zone-west-gippsland', name: 'West Gippsland Zone' }
+  {
+    id: 'zone-barwon',
+    name: 'Barwon Zone',
+    secretary: { name: 'Alice Barwon', email: 'alice@barwonzone.com', mobile: '0400 111 222' },
+    eventApprovers: [
+      { name: 'John Event', email: 'john@barwonzone.com', mobile: '0400 111 223' },
+      { name: 'Mary Event', email: 'mary@barwonzone.com', mobile: '0400 111 224' }
+    ],
+    scheduleApprovers: [
+      { name: 'Steve Schedule', email: 'steve@barwonzone.com', mobile: '0400 111 225' }
+    ],
+    imageUrl: 'https://example.com/images/barwon-zone.png'
+  },
+  {
+    id: 'zone-central',
+    name: 'Central Zone',
+    secretary: { name: 'Bob Central', email: 'bob@centralzone.com', mobile: '0400 222 333' },
+    eventApprovers: [
+      { name: 'Jane Event', email: 'jane@centralzone.com', mobile: '0400 222 334' }
+    ],
+    scheduleApprovers: [
+      { name: 'Tom Schedule', email: 'tom@centralzone.com', mobile: '0400 222 335' },
+      { name: 'Lisa Schedule', email: 'lisa@centralzone.com', mobile: '0400 222 336' }
+    ],
+    imageUrl: 'https://example.com/images/central-zone.png'
+  },
+  {
+    id: 'zone-east-gippsland',
+    name: 'East Gippsland Zone',
+    secretary: { name: 'Eve Gipps', email: 'eve@eastgippsland.com', mobile: '0400 333 444' },
+    eventApprovers: [],
+    scheduleApprovers: [],
+    imageUrl: 'https://example.com/images/east-gippsland-zone.png'
+  },
+  {
+    id: 'zone-midland',
+    name: 'Midland Zone',
+    secretary: { name: 'Mia Midland', email: 'mia@midlandzone.com', mobile: '0400 444 555' },
+    eventApprovers: [],
+    scheduleApprovers: [],
+    imageUrl: 'https://example.com/images/midland-zone.png'
+  },
+  {
+    id: 'zone-north-eastern',
+    name: 'North Eastern Zone',
+    secretary: { name: 'Ned North', email: 'ned@northeasternzone.com', mobile: '0400 555 666' },
+    eventApprovers: [],
+    scheduleApprovers: [],
+    imageUrl: 'https://example.com/images/north-eastern-zone.png'
+  },
+  {
+    id: 'zone-north-metropolitan',
+    name: 'North Metropolitan Zone',
+    secretary: { name: 'Nina Metro', email: 'nina@northmetrozone.com', mobile: '0400 666 777' },
+    eventApprovers: [],
+    scheduleApprovers: [],
+    imageUrl: 'https://example.com/images/north-metropolitan-zone.png'
+  },
+  {
+    id: 'zone-northern',
+    name: 'Northern Zone',
+    secretary: { name: 'Noah North', email: 'noah@northernzone.com', mobile: '0400 777 888' },
+    eventApprovers: [],
+    scheduleApprovers: [],
+    imageUrl: 'https://example.com/images/northern-zone.png'
+  },
+  {
+    id: 'zone-southern-metropolitan',
+    name: 'Southern Metropolitan Zone',
+    secretary: { name: 'Sophie South', email: 'sophie@southmetrozone.com', mobile: '0400 888 999' },
+    eventApprovers: [],
+    scheduleApprovers: [],
+    imageUrl: 'https://example.com/images/southern-metropolitan-zone.png'
+  },
+  {
+    id: 'zone-wannon',
+    name: 'Wannon Zone',
+    secretary: { name: 'Will Wannon', email: 'will@wannonzone.com', mobile: '0400 999 000' },
+    eventApprovers: [],
+    scheduleApprovers: [],
+    imageUrl: 'https://example.com/images/wannon-zone.png'
+  },
+  {
+    id: 'zone-west-gippsland',
+    name: 'West Gippsland Zone',
+    secretary: { name: 'Wendy Gipps', email: 'wendy@westgippslandzone.com', mobile: '0400 000 111' },
+    eventApprovers: [],
+    scheduleApprovers: [],
+    imageUrl: 'https://example.com/images/west-gippsland-zone.png'
+  }
 ];
 
 export const clubsMockClient: Club[] = [

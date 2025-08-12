@@ -223,6 +223,11 @@ const getPublicHolidays = async (year: number): Promise<Event[]> => {
 
 // Data access functions
 export async function seedData() {
+    if (!adminDb) {
+        console.log('Admin DB not available - skipping seed data during build');
+        return { success: false, message: 'Admin database not available. Check Firebase configuration.' };
+    }
+    
     console.log('Seeding data...');
     const batch = adminDb.batch();
 

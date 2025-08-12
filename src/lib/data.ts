@@ -141,8 +141,7 @@ export let clubsMock: Club[] = [
     { id: 'wg2', name: 'Drouin Pony Club', zoneId: '11', latitude: -38.1333, longitude: 145.8500 },
     { id: 'wg3', name: 'Loch Pony Club', zoneId: '11', latitude: -38.3667, longitude: 145.7000 },
     { id: 'wg4', name: 'Neerim Pony Club', zoneId: '11', latitude: -37.9500, longitude: 145.9500 },
-    { id: 'wg5', name: 'Trafalgar Pony Club', zoneI
-d: '11', latitude: -38.2000, longitude: 146.1500 },
+    { id: 'wg5', name: 'Trafalgar Pony Club', zoneId: '11', latitude: -38.2000, longitude: 146.1500 },
     { id: 'wg6', name: 'Wonthaggi Pony Club', zoneId: '11', latitude: -38.6000, longitude: 145.5833 },
 
     // Western Zone
@@ -152,9 +151,9 @@ d: '11', latitude: -38.2000, longitude: 146.1500 },
     { id: 'w4', name: 'Coleraine Pony Club', zoneId: '12', latitude: -37.6000, longitude: 141.6833 },
     { id: 'w5', name: 'Hamilton Pony Club', zoneId: '12', latitude: -37.7333, longitude: 142.0167 },
     { id: 'w6', name: 'Heywood Pony Club', zoneId: '12', latitude: -38.1333, longitude: 141.6167 },
-    { id: 'w7', 'name': 'Koroit Pony Club', zoneId: '12', latitude: -38.2500, longitude: 142.3833 },
+    { id: 'w7', name: 'Koroit Pony Club', zoneId: '12', latitude: -38.2500, longitude: 142.3833 },
     { id: 'w8', name: 'Macarthur Pony Club', zoneId: '12', latitude: -38.0500, longitude: 142.0000 },
-    { id: 'w9', 'name': 'Mortlake Pony Club', zoneId: '12', latitude: -38.0833, longitude: 142.7833 },
+    { id: 'w9', name: 'Mortlake Pony Club', zoneId: '12', latitude: -38.0833, longitude: 142.7833 },
     { id: 'w10', name: 'Mount Gambier Pony Club', zoneId: '12', latitude: -37.8292, longitude: 140.7808 },
     { id: 'w11', name: 'Port Fairy Pony Club', zoneId: '12', latitude: -38.3833, longitude: 142.2333 },
     { id: 'w12', name: 'Portland Pony Club', zoneId: '12', latitude: -38.3500, longitude: 141.6000 },
@@ -330,12 +329,15 @@ export const addEvent = async (event: Omit<Event, 'id' | 'source'>) => {
     source: 'event_secretary', // Default source for new events
   };
   const eventsCollection = collection(db, 'events');
-  const docRef = await addDoc(eventsCollection, newEventData as any);
+  const docRef = await addDoc(eventsCollection, newEventData);
   return { id: docRef.id, ...event };
 };
 
-export const updateEventStatus = async (id: string, status: 'approved' | 'rejected'>) => {
+export const updateEventStatus = async (id: string, status: 'approved' | 'rejected') => {
   const eventRef = doc(db, 'events', id);
   await updateDoc(eventRef, { status });
   return { success: true };
 };
+
+
+    

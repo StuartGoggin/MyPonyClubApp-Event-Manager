@@ -1,7 +1,8 @@
+'use client';
+
 import { PropsWithChildren } from 'react';
 import { Shield, Database, Users, Calendar, MapPin, Settings, FileText } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';

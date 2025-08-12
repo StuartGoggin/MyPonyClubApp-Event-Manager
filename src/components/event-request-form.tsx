@@ -274,12 +274,24 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
                       action={formAction}
                       onSubmit={(evt) => {
                           evt.preventDefault();
-                          form.handleSubmit(() => {
-                            if (formRef.current) {
+                          form.handleSubmit(
+                            () => {
+                              // Validation succeeded, call the server action
+                              if (formRef.current) {
                                 const formData = new FormData(formRef.current);
                                 formAction(formData);
+                              }
+                            },
+                            (errors) => {
+                              // Validation failed, log errors and show a toast
+                              console.error('Form validation errors:', errors);
+                              toast({
+                                title: 'Validation Error',
+                                description: 'Please check the form for errors.',
+                                variant: 'destructive',
+                              });
                             }
-                          })(evt);
+                          )(evt);
                       }}
                       className="space-y-8"
                     >

@@ -1,6 +1,6 @@
 
-import type { Zone, Club, EventType, Event } from './types';
 import { getYear } from 'date-fns';
+import type { Zone, Club, EventType, Event } from './types';
 import { adminDb } from './firebase-admin';
 import { db } from './firebase';
 import { collection, getDocs, doc, getDoc, addDoc, updateDoc } from 'firebase/firestore/lite';
@@ -10,7 +10,7 @@ import { Timestamp, DocumentData } from 'firebase-admin/firestore';
 // In a real application, this data would be stored in and fetched from a database.
 // For this example, we use mock data stored in memory.
 
-let zonesMock: Zone[] = [
+export let zonesMock: Zone[] = [
     { id: '1', name: 'Barwon Zone' },
     { id: '2', name: 'Central Zone' },
     { id: '3', name: 'East Gippsland Zone' },
@@ -26,7 +26,7 @@ let zonesMock: Zone[] = [
     { id: '13', name: 'Wimmera Zone' },
 ];
 
-let clubsMock: Club[] = [
+export let clubsMock: Club[] = [
     // Barwon Zone
     { id: 'b1', name: 'Anglesea Pony Club', zoneId: '1', latitude: -38.4116, longitude: 144.1793 },
     { id: 'b2', name: 'Barwon Heads Pony Club', zoneId: '1', latitude: -38.2705, longitude: 144.4820 },
@@ -141,7 +141,8 @@ let clubsMock: Club[] = [
     { id: 'wg2', name: 'Drouin Pony Club', zoneId: '11', latitude: -38.1333, longitude: 145.8500 },
     { id: 'wg3', name: 'Loch Pony Club', zoneId: '11', latitude: -38.3667, longitude: 145.7000 },
     { id: 'wg4', name: 'Neerim Pony Club', zoneId: '11', latitude: -37.9500, longitude: 145.9500 },
-    { id: 'wg5', name: 'Trafalgar Pony Club', zoneId: '11', latitude: -38.2000, longitude: 146.1500 },
+    { id: 'wg5', name: 'Trafalgar Pony Club', zoneI
+d: '11', latitude: -38.2000, longitude: 146.1500 },
     { id: 'wg6', name: 'Wonthaggi Pony Club', zoneId: '11', latitude: -38.6000, longitude: 145.5833 },
 
     // Western Zone
@@ -151,7 +152,7 @@ let clubsMock: Club[] = [
     { id: 'w4', name: 'Coleraine Pony Club', zoneId: '12', latitude: -37.6000, longitude: 141.6833 },
     { id: 'w5', name: 'Hamilton Pony Club', zoneId: '12', latitude: -37.7333, longitude: 142.0167 },
     { id: 'w6', name: 'Heywood Pony Club', zoneId: '12', latitude: -38.1333, longitude: 141.6167 },
-    { id: 'w7', name: 'Koroit Pony Club', zoneId: '12', latitude: -38.2500, longitude: 142.3833 },
+    { id: 'w7', 'name': 'Koroit Pony Club', zoneId: '12', latitude: -38.2500, longitude: 142.3833 },
     { id: 'w8', name: 'Macarthur Pony Club', zoneId: '12', latitude: -38.0500, longitude: 142.0000 },
     { id: 'w9', 'name': 'Mortlake Pony Club', zoneId: '12', latitude: -38.0833, longitude: 142.7833 },
     { id: 'w10', name: 'Mount Gambier Pony Club', zoneId: '12', latitude: -37.8292, longitude: 140.7808 },
@@ -170,7 +171,7 @@ let clubsMock: Club[] = [
 ];
 
 
-let eventTypesMock: EventType[] = [
+export let eventTypesMock: EventType[] = [
   { id: '1', name: 'Rally' },
   { id: '2', name: 'Show Jumping Competition' },
   { id: '3', name: 'Dressage Competition' },
@@ -333,7 +334,7 @@ export const addEvent = async (event: Omit<Event, 'id' | 'source'>) => {
   return { id: docRef.id, ...event };
 };
 
-export const updateEventStatus = async (id: string, status: 'approved' | 'rejected') => {
+export const updateEventStatus = async (id: string, status: 'approved' | 'rejected'>) => {
   const eventRef = doc(db, 'events', id);
   await updateDoc(eventRef, { status });
   return { success: true };

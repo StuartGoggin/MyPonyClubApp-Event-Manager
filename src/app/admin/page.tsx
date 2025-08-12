@@ -1,17 +1,23 @@
-import { Suspense } from 'react';
+"use client";
+import { Suspense, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar, Users, MapPin, FileText, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 import Link from 'next/link';
 import { clubsMockClient, eventTypesMockClient, zonesMockClient } from '@/lib/admin-data';
+import ZoneEditor from '@/components/dashboard/zone-editor';
+import { updateZoneAction } from '@/lib/actions';
+import type { Zone } from '@/lib/types';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 export default function AdminDashboardPage() {
-  // Use mock data for now - in a real app, you would fetch this from the database
+  const [zoneEditorOpen, setZoneEditorOpen] = useState(false);
+  const [editingZone, setEditingZone] = useState<Zone | null>(null);
+  // Use mock data only for clubs, zones, and event types
   const clubs = clubsMockClient;
   const zones = zonesMockClient;
   const eventTypes = eventTypesMockClient;
-  
   // Mock events for demo
   const events = [
     {
@@ -20,9 +26,9 @@ export default function AdminDashboardPage() {
       date: new Date('2025-09-15'),
       clubId: 'club-melbourne',
       eventTypeId: 'event-type-rally',
-      status: 'proposed' as const,
+      status: 'proposed',
       location: 'Melbourne Pony Club Grounds',
-      source: 'zone' as const,
+      source: 'zone',
       coordinatorName: 'Jane Smith',
       coordinatorContact: 'jane@email.com',
       isQualifier: true,
@@ -34,9 +40,9 @@ export default function AdminDashboardPage() {
       date: new Date('2025-08-22'),
       clubId: 'club-geelong',
       eventTypeId: 'event-type-ode',
-      status: 'approved' as const,
+      status: 'approved',
       location: 'Geelong Pony Club',
-      source: 'zone' as const,
+      source: 'zone',
       coordinatorName: 'Bob Johnson',
       coordinatorContact: 'bob@email.com'
     },
@@ -46,9 +52,9 @@ export default function AdminDashboardPage() {
       date: new Date('2025-08-10'),
       clubId: 'club-ballarat',
       eventTypeId: 'event-type-clinic',
-      status: 'rejected' as const,
+      status: 'rejected',
       location: 'Ballarat Pony Club',
-      source: 'zone' as const,
+      source: 'zone',
       coordinatorName: 'Sarah Wilson',
       coordinatorContact: 'sarah@email.com',
       notes: 'Rejected due to conflict with existing event in the area.'
@@ -90,93 +96,78 @@ export default function AdminDashboardPage() {
         />
       </div>
 
-      {/* Recent Activity */}
+      {/* Recent Activity & Zone Editor */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
+        {/* ...existing Pending Approvals Card... */}
+        {/* ...existing System Configuration Card... */}
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-amber-500" />
-              Pending Approvals
+              <MapPin className="h-5 w-5 text-green-500" />
+              Zones Management
             </CardTitle>
             <CardDescription>
-              Events waiting for your review and approval
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {events
-                .filter(e => e.status === 'proposed')
-                .slice(0, 5)
-                .map(event => {
-                  const club = clubs.find(c => c.id === event.clubId);
-                  const eventType = eventTypes.find(et => et.id === event.eventTypeId);
-                  return (
-                    <div key={event.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                      <div className="flex-1">
-                        <div className="font-medium text-sm">{event.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {club?.name} • {eventType?.name} • {event.date.toLocaleDateString()}
-                        </div>
-                      </div>
-                      <Badge variant="outline" className="text-xs">
-                        Pending
-                      </Badge>
-                    </div>
-                  );
-                })}
-              {pendingEvents === 0 && (
-                <div className="text-center py-6 text-muted-foreground">
-                  No pending events to review
-                </div>
-              )}
-              {pendingEvents > 0 && (
-                <Button asChild variant="outline" className="w-full" size="sm">
-                  <Link href="/admin/events">View All Pending Events</Link>
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-blue-500" />
-              System Configuration
-            </CardTitle>
-            <CardDescription>
-              Current system configuration status and data management
+              Edit zone details, address, and approvers
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <ConfigItem
-                label="Zones"
-                value={`${zones.length} configured`}
-                href="/admin/zones"
-                isConfigured={zones.length > 0}
-              />
-              <ConfigItem
-                label="Clubs"
-                value={`${clubs.length} configured`}
-                href="/admin/clubs"
-                isConfigured={clubs.length > 0}
-              />
-              <ConfigItem
-                label="Event Types"
-                value={`${eventTypes.length} configured`}
-                href="/admin/event-types"
-                isConfigured={eventTypes.length > 0}
-              />
-              <ConfigItem
-                label="Database Seeding"
-                value="Configuration data ready"
-                href="/admin/seed"
-                isConfigured={zones.length > 0 && clubs.length > 0 && eventTypes.length > 0}
-              />
+              {zones.map(zone => (
+                <div key={zone.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                  <div className="flex-1">
+                    <div className="font-medium text-base text-gray-900">{zone.name}</div>
+                    <div className="text-sm text-gray-500 mt-1">
+                      {('streetAddress' in zone && zone.streetAddress) ? 
+                        (zone as any).streetAddress : 
+                        'No address configured'
+                      }
+                    </div>
+                    <div className="flex gap-2 mt-2">
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-emerald-100 text-emerald-800">
+                        {zone.eventApprovers?.length || 0} Event Approvers
+                      </span>
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-800">
+                        {zone.scheduleApprovers?.length || 0} Schedule Approvers
+                      </span>
+                    </div>
+                  </div>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={() => { 
+                      setEditingZone(zone); 
+                      setZoneEditorOpen(true); 
+                    }}
+                    className="hover:bg-blue-50 hover:border-blue-300"
+                  >
+                    <MapPin className="h-3 w-3 mr-1" />
+                    Edit Zone
+                  </Button>
+                </div>
+              ))}
+              {zones.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  <MapPin className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                  <p className="font-medium">No zones configured</p>
+                  <p className="text-sm">Add zones to organize your pony clubs</p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
+        <Dialog open={zoneEditorOpen} onOpenChange={setZoneEditorOpen}>
+          <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+            {editingZone && (
+              <ZoneEditor
+                initialZone={editingZone}
+                onSave={async zone => {
+                  await updateZoneAction(zone);
+                  setZoneEditorOpen(false);
+                }}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
@@ -200,14 +191,12 @@ function StatsCard({ title, value, icon, variant }: StatsCardProps) {
   return (
     <Card>
       <CardContent className="p-6">
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col justify-center">
             <p className="text-sm font-medium text-muted-foreground">{title}</p>
             <p className="text-2xl font-bold">{value}</p>
           </div>
-          <div className={`p-2 rounded-lg ${variantStyles[variant]}`}>
-            {icon}
-          </div>
+          <div className={`p-2 rounded-lg border ${variantStyles[variant]}`}>{icon}</div>
         </div>
       </CardContent>
     </Card>
@@ -223,13 +212,13 @@ interface ConfigItemProps {
 
 function ConfigItem({ label, value, href, isConfigured }: ConfigItemProps) {
   return (
-    <div className="flex items-center justify-between">
-      <div>
-        <div className="font-medium text-sm">{label}</div>
-        <div className="text-xs text-muted-foreground">{value}</div>
+    <div className="flex items-center justify-between gap-4 py-2">
+      <div className="flex flex-col">
+        <span className="font-medium text-sm">{label}</span>
+        <span className="text-xs text-muted-foreground">{value}</span>
       </div>
       <div className="flex items-center gap-2">
-        <Badge variant={isConfigured ? 'default' : 'outline'} className="text-xs">
+        <Badge variant={isConfigured ? 'default' : 'outline'} className="text-xs px-2 py-1">
           {isConfigured ? 'Ready' : 'Setup Required'}
         </Badge>
         <Button asChild variant="outline" size="sm">

@@ -1,10 +1,22 @@
-
 import { getYear } from 'date-fns';
 import type { Zone, Club, EventType, Event } from './types';
 import { adminDb } from './firebase-admin';
 import { db } from './firebase';
 import { collection, getDocs, doc, getDoc, addDoc, updateDoc } from 'firebase/firestore/lite';
 import { Timestamp, DocumentData } from 'firebase-admin/firestore';
+
+export const updateZone = async (zone: Zone) => {
+  const zoneRef = doc(db, 'zones', zone.id);
+  await updateDoc(zoneRef, {
+    name: zone.name,
+    streetAddress: zone.streetAddress,
+    imageUrl: zone.imageUrl,
+    secretary: zone.secretary,
+    eventApprovers: zone.eventApprovers,
+    scheduleApprovers: zone.scheduleApprovers,
+  });
+  return { success: true };
+};
 
 
 // In a real application, this data would be stored in and fetched from a database.

@@ -1,6 +1,17 @@
+export interface Approver {
+  name: string;
+  email: string;
+  mobile: string;
+}
+
 export interface Zone {
   id: string;
   name: string;
+  streetAddress?: string;
+  imageUrl?: string;
+  secretary?: Approver;
+  eventApprovers?: Approver[];
+  scheduleApprovers?: Approver[];
 }
 
 export interface Club {
@@ -9,8 +20,6 @@ export interface Club {
   zoneId: string;
   latitude?: number;
   longitude?: number;
-  
-  // Physical Address
   address?: {
     street?: string;
     suburb?: string;
@@ -18,51 +27,36 @@ export interface Club {
     state?: string;
     country?: string;
   };
-  
-  // Contact & Communication
   email?: string;
   website?: string;
-  
-  // Social Media
   socialMedia?: {
     facebook?: string;
     instagram?: string;
     twitter?: string;
     youtube?: string;
   };
-  
-  // Branding
   logoUrl?: string;
-  
-  // Additional metadata from extended structure (keeping for future use)
   contactDetails?: {
-    primaryContact?: {
+    primaryContact: {
       name: string;
       role: string;
-      email?: string;
+      email: string;
       phone?: string;
       mobile?: string;
     };
-    secretary?: {
+    secretary: {
       name: string;
-      email?: string;
+      email: string;
       phone?: string;
       mobile?: string;
-    };
-    treasurer?: {
-      name: string;
-      email?: string;
-      phone?: string;
     };
     chiefInstructor?: {
       name: string;
-      email?: string;
-      phone?: string;
+      email: string;
       mobile?: string;
       qualifications?: string[];
     };
   };
-  
   facilities?: {
     grounds?: {
       arenaCount?: number;
@@ -74,30 +68,36 @@ export interface Club {
       hasDressageArenas?: boolean;
       hasStabling?: boolean;
       stablingCapacity?: number;
+      hasClubhouse?: boolean;
+    };
+    equipment?: {
+      jumps?: number;
+      cavaletti?: number;
+      dressageLetters?: boolean;
+      firstAidKit?: boolean;
     };
     amenities?: {
       hasClubhouse?: boolean;
       hasCanteen?: boolean;
       hasToilets?: boolean;
       hasParking?: boolean;
+      hasSpectatorArea?: boolean;
       hasWaterForHorses?: boolean;
       hasElectricity?: boolean;
       hasCamping?: boolean;
       isAccessible?: boolean;
     };
   };
-  
-  operations?: {
-    establishedYear?: number;
-    membershipCapacity?: number;
-    currentMemberCount?: number;
+  activities?: {
+    disciplines?: string[];
     ageGroups?: string[];
-    activeDays?: string[];
-    seasonStart?: string;
-    seasonEnd?: string;
-    hasWaitingList?: boolean;
+    competitionLevels?: string[];
+    specialPrograms?: string[];
+    hasAdultRiding?: boolean;
+    hasLeadRein?: boolean;
+    hasBeginnerProgram?: boolean;
+    hasCompetitiveTeams?: boolean;
   };
-  
   programs?: {
     certificateLevels?: string[];
     specialPrograms?: string[];
@@ -106,42 +106,42 @@ export interface Club {
     hasBeginnerProgram?: boolean;
     hasCompetitiveTeams?: boolean;
   };
-  
-  registration?: {
-    pcaNumber?: string;
-    insuranceProvider?: string;
-    insuranceExpiry?: Date;
-    lastInspectionDate?: Date;
-    nextInspectionDue?: Date;
-    riskAssessmentCurrent?: boolean;
-  };
-  
-  administration?: {
-    yearlyMembershipFee?: number;
-    joiningFee?: number;
-    lessonFees?: {
-      casual?: number;
-      member?: number;
+  membership?: {
+    totalMembers?: number;
+    activeMembers?: number;
+    juniorMembers?: number;
+    adultMembers?: number;
+    hasWaitingList?: boolean;
+    fees?: {
+      annual?: number;
+      joining?: number;
+      insurance?: number;
     };
-    bankDetails?: {
-      accountName?: string;
-      bsb?: string;
-      accountNumber?: string;
-    };
-    abnNumber?: string;
   };
-  
+  operations?: {
+    establishedYear?: number;
+    membershipCapacity?: number;
+    currentMemberCount?: number;
+    hasWaitingList?: boolean;
+    ageGroups?: string[];
+    activeDays?: string[];
+    seasonStart?: string;
+    seasonEnd?: string;
+  };
+  events?: {
+    annualEvents?: string[];
+    hostingCapability?: boolean;
+    maxParticipants?: number;
+  };
   communication?: {
     newsletter?: boolean;
     emailList?: string;
+    notificationPreferences?: string[];
   };
-  
-  metadata?: {
-    specialFeatures?: string[];
-    restrictions?: string[];
-    notes?: string;
-    lastUpdated?: Date;
-    dataSource?: string;
+  affiliation?: {
+    pcaState?: string;
+    pcaNational?: boolean;
+    otherAffiliations?: string[];
   };
 }
 

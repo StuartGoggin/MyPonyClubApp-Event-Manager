@@ -47,7 +47,7 @@ const eventRequestSchema = z.object({
   eventTypeId: z.string({ required_error: 'Please select an event type.' }).min(1, 'Please select an event type.'),
   location: z.string().min(3, { message: 'Location must be at least 3 characters.' }),
   isQualifier: z.boolean().default(false),
-  dates: z.array(z.string()).min(1, 'You must add at least one date preference.').transform(arr => arr.map(str => new Date(str))),
+  dates: z.array(z.object({ value: z.date() })).min(1, 'You must add at least one date preference.'),
   notes: z.string().optional(),
   submittedBy: z.string().optional(),
   submittedByContact: z.string().optional(),
@@ -427,7 +427,7 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
                                  <Controller
                                     name="dates"
                                     control={form.control}
-                                    render={({ fieldState }) => fieldState.error?.message ? <p className="text-sm font-medium text-destructive">{fieldState.error.message}</p> : null}
+                                    render={({ fieldState }) => fieldState.error?.message ? <p className="text-sm font-medium text-destructive">{fieldState.error.message}</p> : <></>}
                                 />
                             </CardContent>
                         </Card>

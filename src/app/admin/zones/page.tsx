@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Trash2, MapPin, Users } from 'lucide-react';
+import { Plus, Edit, Trash2, MapPin, Users, AlertTriangle } from 'lucide-react';
 import { Zone, Club } from '@/lib/types';
 import { zonesMockClient, clubsMockClient } from '@/lib/admin-data';
 
@@ -77,6 +77,13 @@ export default function AdminZonesPage() {
     }
   };
 
+  const handleDeleteAll = async () => {
+    if (confirm('Are you sure you want to delete ALL zones and clubs? This action cannot be undone.')) {
+      setZones([]);
+      setClubs([]);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -86,10 +93,18 @@ export default function AdminZonesPage() {
             Manage zones across Victoria for organizing pony clubs
           </p>
         </div>
-        <Button onClick={handleCreate}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Zone
-        </Button>
+        <div className="flex gap-2">
+          {zones.length > 0 && (
+            <Button onClick={handleDeleteAll} variant="destructive">
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete All Data
+            </Button>
+          )}
+          <Button onClick={handleCreate}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Zone
+          </Button>
+        </div>
       </div>
 
       {/* Summary Stats */}

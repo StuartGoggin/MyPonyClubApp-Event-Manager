@@ -145,7 +145,7 @@ export default function AdminDashboardPage() {
               System Configuration
             </CardTitle>
             <CardDescription>
-              Current system configuration status
+              Current system configuration status and data management
             </CardDescription>
           </CardHeader>
           <CardContent>

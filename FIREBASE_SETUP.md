@@ -23,11 +23,13 @@ This application uses Firebase Firestore for data storage and requires a Firebas
    - **Important**: Replace all actual newlines in the `private_key` field with `\\n`
    - The JSON should be on one line
 
-### 3. Seed the Database
-Once your environment is configured, seed the database:
+### 3. Seed the Configuration Data
+Once your environment is configured, seed the database with configuration data (zones, clubs, event types):
 ```bash
 npm run seed-firestore
 ```
+
+**Note**: This only seeds configuration/reference data, not transactional data like events.
 
 ### 4. Optional: Google AI Setup
 For AI features (event date suggestions), add your Google AI API key:

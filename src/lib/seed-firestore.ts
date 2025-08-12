@@ -3,6 +3,15 @@ import { adminDb } from './firebase-admin';
 import { zonesMock, clubsMock, eventTypesMock } from './data';
 
 const seedData = async () => {
+  if (!adminDb) {
+    console.error('Firebase Admin SDK not initialized. Please check your FIREBASE_SERVICE_ACCOUNT_KEY environment variable.');
+    console.log('To fix this:');
+    console.log('1. Create a Firebase service account key in your Firebase console');
+    console.log('2. Set the FIREBASE_SERVICE_ACCOUNT_KEY environment variable with the JSON key');
+    console.log('3. Make sure the key is properly formatted (newlines should be \\n)');
+    process.exit(1);
+  }
+
   console.log('Seeding data...');
   const batch = adminDb.batch();
 

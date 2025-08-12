@@ -1,6 +1,7 @@
 // seed-firestore.ts
 import { adminDb } from './firebase-admin';
 import { zonesMock, clubsMock, eventTypesMock } from './data';
+import { Timestamp } from 'firebase-admin/firestore';
 
 const seedData = async () => {
   if (!adminDb) {

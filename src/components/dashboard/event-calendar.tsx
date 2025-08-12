@@ -22,7 +22,7 @@ import {
   addDays,
   getDaysInMonth,
 } from 'date-fns';
-import { ChevronLeft, ChevronRight, CheckCircle, Clock, Pin, Route, FerrisWheel } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckCircle, Clock, Pin, Route, FerrisWheel, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { type Event, type Club, type EventType, type Zone } from '@/lib/types';
@@ -176,24 +176,37 @@ const CalendarGrid = ({
                                 key={event.id}
                                 onClick={() => onEventClick(event.id)}
                                 className={cn(
-                                    "w-full text-left rounded-md text-xs leading-tight transition-colors shadow-sm",
+                                    "w-full text-left rounded-md text-xs leading-tight transition-colors shadow-sm border",
                                     isYearView ? "p-1" : "p-1.5",
-                                    event.status === 'approved' ? 'bg-primary/20 hover:bg-primary/30 text-primary-foreground' :
-                                    event.status === 'public_holiday' ? 'bg-green-500/20 hover:bg-green-500/30' :
-                                    'bg-accent/20 hover:bg-accent/30 text-accent-foreground'
+                                    event.status === 'approved' ? 'bg-primary/20 hover:bg-primary/30 text-primary-foreground border-primary/30' :
+                                    event.status === 'proposed' ? 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-200 border-dashed' :
+                                    event.status === 'public_holiday' ? 'bg-green-500/20 hover:bg-green-500/30 border-green-200' :
+                                    event.status === 'rejected' ? 'bg-red-50 hover:bg-red-100 text-red-900 border-red-200' :
+                                    'bg-accent/20 hover:bg-accent/30 text-accent-foreground border-accent/30'
                                 )}
                             >
                                 <div className={cn("flex items-start gap-1.5", { "gap-1": isYearView })}>
                                 <div className="flex-shrink-0 pt-0.5">
                                 {event.status === 'approved' ? <CheckCircle className={cn("h-3 w-3 text-primary flex-shrink-0", { "h-2 w-2": isYearView })}/> :
+                                 event.status === 'proposed' ? <AlertCircle className={cn("h-3 w-3 text-amber-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
                                  event.status === 'public_holiday' ? <FerrisWheel className={cn("h-3 w-3 text-green-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
+                                 event.status === 'rejected' ? <Clock className={cn("h-3 w-3 text-red-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
                                  <Clock className={cn("h-3 w-3 text-accent flex-shrink-0", { "h-2 w-2": isYearView })}/>}
                                 </div>
-                                <span className={cn("font-medium", 
-                                    event.status === 'approved' ? 'text-primary' : 
-                                    event.status === 'public_holiday' ? 'text-green-700' :
-                                    'text-accent'
+                                <div className="flex-1 min-w-0">
+                                    <span className={cn("font-medium block", 
+                                        event.status === 'approved' ? 'text-primary' : 
+                                        event.status === 'proposed' ? 'text-amber-800' :
+                                        event.status === 'public_holiday' ? 'text-green-700' :
+                                        event.status === 'rejected' ? 'text-red-700' :
+                                        'text-accent'
                                     )}>{event.name}</span>
+                                    {event.status === 'proposed' && (
+                                        <span className="text-[10px] text-amber-600 font-medium uppercase tracking-wide">
+                                            Pending Approval
+                                        </span>
+                                    )}
+                                </div>
                                 </div>
                             </button>
                             ))}

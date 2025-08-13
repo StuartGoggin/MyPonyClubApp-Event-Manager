@@ -23,8 +23,13 @@ if (serviceAccountStr) {
                     private_key: formattedPrivateKey,
                 }),
             });
+            
+            // Get Firestore instance and configure it only when first initializing
             adminDb = getFirestore();
+            adminDb.settings({ ignoreUndefinedProperties: true });
         } else {
+            // If app already exists, just get the existing Firestore instance
+            // Don't call settings() again as it can only be called once
             adminDb = getFirestore();
         }
     } catch (error: any) {

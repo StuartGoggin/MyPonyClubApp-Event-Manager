@@ -34,16 +34,25 @@ This document outlines the features and ideas for the PonyClub Events applicatio
     - **Branding**: Club logo image URL with display and error handling
     - **Geographic Coordinates**: Latitude/longitude for mapping and distance calculations
 
-- **Advanced Data Import/Export**: Comprehensive CSV import/export functionality:
-    - **Smart Import**: Preview data before import with duplicate detection
-    - **Selective Import**: Choose which new records to import while skipping existing ones
-    - **Nested Data Support**: Handle complex data structures (e.g., address.street, socialMedia.facebook)
-    - **Data Validation**: Real-time validation during import with error reporting
-    - **Export Capabilities**: Export all club data including nested properties
+- **Advanced Data Import/Export**: Comprehensive JSON export functionality:
+    - **Zones & Clubs Export**: Export complete club database with all nested properties and relationships
+    - **Events Export**: Export all events with enriched data including:
+        - Related club names, zone names, and event type names
+        - Status-based groupings (pending, approved, completed, cancelled)
+        - Type-based groupings for easy analysis
+        - Comprehensive metadata and summaries
+    - **Smart Export**: Descriptive filenames with timestamps for easy identification
+    - **Progress Tracking**: Real-time progress indicators during export operations
+
+- **Organized Admin Interface**: Restructured admin panel with grouped functionality:
+    - **Database Seeding Section**: Initialize database with comprehensive pony club data
+    - **Data Export Section**: Grouped export functions for zones/clubs and events
+    - **Database Maintenance Section**: Cleanup and purge operations
+    - **Visual Separation**: Clear card-based layout with distinct icons and descriptions
 
 - **Zone Management**: Complete zone administration with CRUD operations and data import/export
 - **Event Types Management**: Configurable event types with import/export capabilities
-- **Database Seeding**: Automated seeding of configuration data
+- **Database Seeding**: Automated seeding of configuration data from ClubZoneData.json
 
 ### User Interface & Experience
 - **Tabbed Admin Interface**: Organized data entry with tabs for Basic Info, Address, Contact, and Social & Branding
@@ -112,6 +121,35 @@ This document outlines the features and ideas for the PonyClub Events applicatio
 - **API Integration**: REST API for third-party integrations
 
 ## Recent Updates (August 2025)
+
+### Admin Interface Reorganization
+- **Renamed Admin Tab**: Changed "Database Seeding" to "Manage Data" for better clarity
+- **Grouped Functionality**: Reorganized admin interface into three distinct sections:
+    - **Database Seeding**: Initialize database with comprehensive pony club data
+    - **Data Export**: Grouped export functions for related data types
+    - **Database Maintenance**: Cleanup and purge operations
+- **Visual Enhancement**: Card-based layout with distinct icons and descriptions for each section
+
+### Events Export System
+- **Comprehensive Events Export**: New export facility for all events with related data:
+    - **Enriched Data**: Events include club names, zone names, and event type names
+    - **Smart Grouping**: Status-based and type-based groupings for analysis
+    - **Metadata Integration**: Comprehensive summaries and relationship mappings
+    - **Progress Tracking**: Real-time progress indicators during export operations
+- **Dual Export System**: Separate export functions for zones/clubs and events data
+- **Descriptive Filenames**: Auto-generated filenames with timestamps and metadata
+
+### Enhanced Server Functions
+- **getAllEvents Function**: New server-side function for comprehensive event data retrieval
+- **Timestamp Handling**: Proper Firestore timestamp conversion for Date objects
+- **Error Handling**: Robust error handling with fallback responses
+- **Type Safety**: Full TypeScript integration with Event interface
+
+### User Interface Improvements
+- **Responsive Layout**: Better layout that works on different screen sizes
+- **Progress Indicators**: Separate progress tracking for different export operations
+- **Result Feedback**: Individual success/error messages for each operation
+- **Visual Separation**: Clear distinction between different function groups
 
 ### Club Management Overhaul
 - Completely redesigned club data structure with comprehensive information capture

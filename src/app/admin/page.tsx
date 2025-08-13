@@ -1,24 +1,18 @@
-"use client";
-import { Suspense, useState } from 'react';
+import { Suspense } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar, Users, MapPin, FileText, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 import Link from 'next/link';
-import { clubsMockClient, eventTypesMockClient, zonesMockClient } from '@/lib/admin-data';
-import ZoneEditor from '@/components/dashboard/zone-editor';
-import { updateZoneAction } from '@/lib/actions';
-import type { Zone } from '@/lib/types';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { getAllZones, getAllClubs, getAllEventTypes } from '@/lib/server-data';
 
-export default function AdminDashboardPage() {
-  const [zoneEditorOpen, setZoneEditorOpen] = useState(false);
-  const [editingZone, setEditingZone] = useState<Zone | null>(null);
-  // Use mock data only for clubs, zones, and event types
-  const clubs = clubsMockClient;
-  const zones = zonesMockClient;
-  const eventTypes = eventTypesMockClient;
-  // Mock events for demo
+async function AdminDashboardContent() {
+  // Use server data instead of mock data
+  const clubs = await getAllClubs();
+  const zones = await getAllZones();
+  const eventTypes = await getAllEventTypes();
+
+  // Mock events for demo (this would eventually come from database too)
   const events = [
     {
       id: 'event-1',
@@ -49,9 +43,9 @@ export default function AdminDashboardPage() {
     {
       id: 'event-3',
       name: 'Winter Training Day',
-      date: new Date('2025-08-10'),
+      date: new Date('2025-07-10'),
       clubId: 'club-ballarat',
-      eventTypeId: 'event-type-clinic',
+      eventTypeId: 'event-type-training',
       status: 'rejected',
       location: 'Ballarat Pony Club',
       source: 'zone',
@@ -68,6 +62,14 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Admin Dashboard</h1>
+        <p className="text-muted-foreground">
+          Manage zones, clubs, events, and system configuration
+        </p>
+      </div>
+
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard
@@ -96,32 +98,56 @@ export default function AdminDashboardPage() {
         />
       </div>
 
-      {/* Recent Activity & Zone Editor */}
+      {/* System Configuration Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* ...existing Pending Approvals Card... */}
-        {/* ...existing System Configuration Card... */}
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-blue-500" />
+              System Configuration
+            </CardTitle>
+            <CardDescription>
+              Manage core system settings and data
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <ConfigItem
+              label="Zones"
+              value={`${zones.length} zones configured`}
+              href="/admin/zones"
+              isConfigured={zones.length > 0}
+            />
+            <ConfigItem
+              label="Clubs"
+              value={`${clubs.length} clubs registered`}
+              href="/admin/clubs"
+              isConfigured={clubs.length > 0}
+            />
+            <ConfigItem
+              label="Event Types"
+              value={`${eventTypes.length} event types available`}
+              href="/admin/event-types"
+              isConfigured={eventTypes.length > 0}
+            />
+          </CardContent>
+        </Card>
+
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <MapPin className="h-5 w-5 text-green-500" />
-              Zones Management
+              Zones Overview
             </CardTitle>
             <CardDescription>
-              Edit zone details, address, and approvers
+              Quick view of zone configuration
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {zones.map(zone => (
+              {zones.slice(0, 5).map(zone => (
                 <div key={zone.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
                   <div className="flex-1">
                     <div className="font-medium text-base text-gray-900">{zone.name}</div>
-                    <div className="text-sm text-gray-500 mt-1">
-                      {('streetAddress' in zone && zone.streetAddress) ? 
-                        (zone as any).streetAddress : 
-                        'No address configured'
-                      }
-                    </div>
                     <div className="flex gap-2 mt-2">
                       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-emerald-100 text-emerald-800">
                         {zone.eventApprovers?.length || 0} Event Approvers
@@ -131,17 +157,11 @@ export default function AdminDashboardPage() {
                       </span>
                     </div>
                   </div>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    onClick={() => { 
-                      setEditingZone(zone); 
-                      setZoneEditorOpen(true); 
-                    }}
-                    className="hover:bg-blue-50 hover:border-blue-300"
-                  >
-                    <MapPin className="h-3 w-3 mr-1" />
-                    Edit Zone
+                  <Button asChild size="sm" variant="outline" className="hover:bg-blue-50 hover:border-blue-300">
+                    <Link href="/admin/zones">
+                      <MapPin className="h-3 w-3 mr-1" />
+                      Manage
+                    </Link>
                   </Button>
                 </div>
               ))}
@@ -150,24 +170,21 @@ export default function AdminDashboardPage() {
                   <MapPin className="h-12 w-12 mx-auto mb-3 text-gray-300" />
                   <p className="font-medium">No zones configured</p>
                   <p className="text-sm">Add zones to organize your pony clubs</p>
+                  <Button asChild size="sm" className="mt-4">
+                    <Link href="/admin/zones">Get Started</Link>
+                  </Button>
+                </div>
+              )}
+              {zones.length > 5 && (
+                <div className="text-center pt-4 border-t">
+                  <Button asChild variant="outline" size="sm">
+                    <Link href="/admin/zones">View All {zones.length} Zones</Link>
+                  </Button>
                 </div>
               )}
             </div>
           </CardContent>
         </Card>
-        <Dialog open={zoneEditorOpen} onOpenChange={setZoneEditorOpen}>
-          <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
-            {editingZone && (
-              <ZoneEditor
-                initialZone={editingZone}
-                onSave={async zone => {
-                  await updateZoneAction(zone);
-                  setZoneEditorOpen(false);
-                }}
-              />
-            )}
-          </DialogContent>
-        </Dialog>
       </div>
     </div>
   );
@@ -226,5 +243,13 @@ function ConfigItem({ label, value, href, isConfigured }: ConfigItemProps) {
         </Button>
       </div>
     </div>
+  );
+}
+
+export default function AdminDashboardPage() {
+  return (
+    <Suspense fallback={<div className="p-6">Loading dashboard...</div>}>
+      <AdminDashboardContent />
+    </Suspense>
   );
 }

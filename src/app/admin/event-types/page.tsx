@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit, Trash2, FileText, Calendar } from 'lucide-react';
 import { EventType, Event } from '@/lib/types';
-import { eventTypesMockClient } from '@/lib/admin-data';
+import { eventTypesMock } from '@/lib/client-data';
 import { DataImportExport } from '@/components/admin/data-import-export';
 
 export default function AdminEventTypesPage() {
@@ -22,7 +22,7 @@ export default function AdminEventTypesPage() {
 
   useEffect(() => {
     // Initialize with mock data for now
-    setEventTypes(eventTypesMockClient);
+    setEventTypes(eventTypesMock);
     setEvents([]); // No events initially in admin mode
   }, []);
 

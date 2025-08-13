@@ -18,33 +18,51 @@ export interface Club {
   id: string;
   name: string;
   zoneId: string;
+  clubId?: number; // For external club IDs like from your JSON
+  
+  // Address information
+  physicalAddress?: string; // Single field for full address like "Park Lane, Bealiba VIC 3475"
+  postalAddress?: string; // Separate postal address if different
   latitude?: number;
   longitude?: number;
-  address?: {
+  address?: { // Legacy structured address - keep for backward compatibility
     street?: string;
     suburb?: string;
     postcode?: string;
     state?: string;
     country?: string;
   };
+  
+  // Contact information
   email?: string;
+  phone?: string; // Direct phone number
   website?: string;
-  socialMedia?: {
+  websiteUrl?: string; // Alternative field name for compatibility
+  
+  // Social media - simplified structure
+  socialMediaUrl?: string; // Primary social media URL like Facebook
+  socialMedia?: { // Legacy structured social media - keep for backward compatibility
     facebook?: string;
     instagram?: string;
     twitter?: string;
     youtube?: string;
   };
+  
+  // Images
   logoUrl?: string;
+  imageUrl?: string; // General club image
+  images?: string[]; // Multiple images if needed
+  
+  // Contact details
   contactDetails?: {
-    primaryContact: {
+    primaryContact?: {
       name: string;
       role: string;
       email: string;
       phone?: string;
       mobile?: string;
     };
-    secretary: {
+    secretary?: {
       name: string;
       email: string;
       phone?: string;
@@ -57,6 +75,8 @@ export interface Club {
       qualifications?: string[];
     };
   };
+  
+  // Facilities
   facilities?: {
     grounds?: {
       arenaCount?: number;
@@ -88,6 +108,8 @@ export interface Club {
       isAccessible?: boolean;
     };
   };
+  
+  // Activities and programs
   activities?: {
     disciplines?: string[];
     ageGroups?: string[];
@@ -106,6 +128,8 @@ export interface Club {
     hasBeginnerProgram?: boolean;
     hasCompetitiveTeams?: boolean;
   };
+  
+  // Membership
   membership?: {
     totalMembers?: number;
     activeMembers?: number;
@@ -118,6 +142,8 @@ export interface Club {
       insurance?: number;
     };
   };
+  
+  // Operations
   operations?: {
     establishedYear?: number;
     membershipCapacity?: number;
@@ -128,16 +154,22 @@ export interface Club {
     seasonStart?: string;
     seasonEnd?: string;
   };
+  
+  // Events
   events?: {
     annualEvents?: string[];
     hostingCapability?: boolean;
     maxParticipants?: number;
   };
+  
+  // Communication
   communication?: {
     newsletter?: boolean;
     emailList?: string;
     notificationPreferences?: string[];
   };
+  
+  // Affiliation
   affiliation?: {
     pcaState?: string;
     pcaNational?: boolean;

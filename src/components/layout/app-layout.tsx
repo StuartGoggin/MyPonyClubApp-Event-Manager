@@ -16,7 +16,7 @@ import {
   SidebarGroupContent,
   SidebarSeparator,
 } from '@/components/ui/sidebar';
-import { usePathname } from 'next/navigation';
+// import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Calendar, PlusCircle, Database, FerrisWheel, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -38,7 +38,7 @@ const PonyIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 
 export function AppLayout({ children }: PropsWithChildren) {
-  const pathname = usePathname();
+  // const pathname = usePathname(); // Temporarily disabled due to context issues
   const [eventSources, setEventSources] = useAtom(eventSourceAtom);
 
   const handleSourceChange = (source: EventSource, checked: boolean) => {
@@ -71,7 +71,6 @@ export function AppLayout({ children }: PropsWithChildren) {
             <SidebarMenuItem>
               <SidebarMenuButton
                 asChild
-                isActive={pathname === '/'}
                 tooltip="Dashboard"
               >
                 <Link href="/">
@@ -83,7 +82,6 @@ export function AppLayout({ children }: PropsWithChildren) {
             <SidebarMenuItem>
               <SidebarMenuButton
                 asChild
-                isActive={pathname === '/request-event'}
                 tooltip="Request Event"
               >
                 <Link href="/request-event">
@@ -95,7 +93,6 @@ export function AppLayout({ children }: PropsWithChildren) {
             <SidebarMenuItem>
               <SidebarMenuButton
                 asChild
-                isActive={pathname.startsWith('/admin')}
                 tooltip="Admin Dashboard"
               >
                 <Link href="/admin">

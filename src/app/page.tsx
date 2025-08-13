@@ -55,9 +55,9 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading event calendar...</p>
+        <div className="text-center enhanced-card p-8 rounded-lg">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-6"></div>
+          <p className="text-muted-foreground text-lg">Loading event calendar...</p>
         </div>
       </div>
     );
@@ -66,11 +66,11 @@ export default function DashboardPage() {
   if (error) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <p className="text-red-500 mb-4">{error}</p>
+        <div className="text-center enhanced-card p-8 rounded-lg">
+          <p className="text-red-500 mb-6 text-lg">{error}</p>
           <button 
             onClick={() => window.location.reload()} 
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+            className="premium-button px-6 py-3 rounded-md"
           >
             Retry
           </button>
@@ -80,11 +80,13 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight font-headline">Event Calendar</h1>
-        <p className="text-muted-foreground">
-          View and manage all proposed and approved events.
+    <div className="flex flex-col gap-6 p-6">
+      <div className="enhanced-card p-6 rounded-lg">
+        <h1 className="text-4xl font-bold tracking-tight font-headline bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+          Event Calendar
+        </h1>
+        <p className="text-muted-foreground text-lg mt-2">
+          View and manage all proposed and approved events across Victoria.
         </p>
       </div>
       <EventCalendar 

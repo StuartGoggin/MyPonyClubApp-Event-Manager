@@ -108,14 +108,14 @@ const CalendarGrid = ({
   }, [events, month, isYearView]);
 
   return (
-    <div className={cn("bg-card rounded-lg border shadow-sm", { "p-4": isYearView })}>
+    <div className={cn("enhanced-card rounded-lg border shadow-md", { "p-4": isYearView })}>
       {isYearView && (
-          <h3 className="text-lg font-semibold font-headline mb-2 text-center">{format(month, 'MMMM')}</h3>
+          <h3 className="text-lg font-semibold font-headline mb-2 text-center bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{format(month, 'MMMM')}</h3>
       )}
       {!isYearView && (
-           <div className="grid grid-cols-7 text-xs text-center font-medium text-muted-foreground">
+           <div className="grid grid-cols-7 text-xs text-center font-medium text-muted-foreground bg-muted/30 rounded-t-lg">
               {dayOrder.map((day) => (
-                  <div key={day} className="py-2">
+                  <div key={day} className="py-3 font-semibold">
                       {day}
                   </div>
               ))}
@@ -153,8 +153,8 @@ const CalendarGrid = ({
                         key={day.toString()}
                         className={cn('relative flex flex-col p-1.5 min-h-[6rem]', {
                           'text-muted-foreground': !isDayInCurrentMonth,
-                          'bg-muted/20': !isDayInCurrentMonth && (isSaturday || isSunday),
-                          'bg-primary/5': isDayInCurrentMonth && (isSaturday || isSunday),
+                          'calendar-weekend': !isDayInCurrentMonth && (isSaturday || isSunday),
+                          'calendar-weekday': isDayInCurrentMonth && (isSaturday || isSunday),
                           'relative': isCurrentDayToday,
                            'p-1 min-h-0': isYearView,
                            'flex-1 basis-0': isYearView,
@@ -177,13 +177,13 @@ const CalendarGrid = ({
                                 key={event.id}
                                 onClick={() => onEventClick(event.id)}
                                 className={cn(
-                                    "w-full text-left rounded-md text-xs leading-tight transition-colors shadow-sm border",
+                                    "w-full text-left rounded-md text-xs leading-tight transition-all duration-200 shadow-sm border hover:shadow-md hover:scale-105",
                                     isYearView ? "p-1" : "p-1.5",
-                                    event.status === 'approved' ? 'bg-primary/20 hover:bg-primary/30 text-primary-foreground border-primary/30' :
-                                    event.status === 'proposed' ? 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-200 border-dashed' :
-                                    event.status === 'public_holiday' ? 'bg-green-500/20 hover:bg-green-500/30 border-green-200' :
-                                    event.status === 'rejected' ? 'bg-red-50 hover:bg-red-100 text-red-900 border-red-200' :
-                                    'bg-accent/20 hover:bg-accent/30 text-accent-foreground border-accent/30'
+                                    event.status === 'approved' ? 'event-approved' :
+                                    event.status === 'proposed' ? 'event-proposed' :
+                                    event.status === 'public_holiday' ? 'event-holiday' :
+                                    event.status === 'rejected' ? 'event-rejected' :
+                                    'event-default'
                                 )}
                             >
                                 <div className={cn("flex items-start gap-1.5", { "gap-1": isYearView })}>
@@ -345,40 +345,64 @@ export function EventCalendar({
   }
 
   return (
-    <div className="bg-card rounded-lg border shadow-sm">
-      <div className="flex flex-col gap-4 p-4 border-b">
+    <div className="enhanced-card rounded-lg border shadow-lg glass-effect">
+      <div className="flex flex-col gap-4 p-4 border-b border-border/50">
         <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-                <h2 className="text-xl font-semibold font-headline">
+                <h2 className="text-xl font-semibold font-headline bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                 {view === 'month' ? format(currentDate, 'MMMM yyyy') : format(currentDate, 'yyyy')}
                 </h2>
                 <div className="flex items-center gap-2">
-                    <Button variant="outline" size="icon" onClick={prev}>
+                    <Button variant="outline" size="icon" onClick={prev} className="premium-button-outline h-8 w-8">
                         <ChevronLeft className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="icon" onClick={next}>
+                    <Button variant="outline" size="icon" onClick={next} className="premium-button-outline h-8 w-8">
                         <ChevronRight className="h-4 w-4" />
                     </Button>
                 </div>
             </div>
             <div className="flex items-center gap-2 ml-4">
-                <Button variant={view === 'month' ? 'secondary' : 'outline'} size="sm" onClick={() => setView('month')}>Month</Button>
-                <Button variant={view === 'year' ? 'secondary' : 'outline'} size="sm" onClick={() => setView('year')}>Year</Button>
+                <Button 
+                    variant={view === 'month' ? 'secondary' : 'outline'} 
+                    size="sm" 
+                    onClick={() => setView('month')}
+                    className={view === 'month' ? 'premium-button' : 'premium-button-outline'}
+                >
+                    Month
+                </Button>
+                <Button 
+                    variant={view === 'year' ? 'secondary' : 'outline'} 
+                    size="sm" 
+                    onClick={() => setView('year')}
+                    className={view === 'year' ? 'premium-button' : 'premium-button-outline'}
+                >
+                    Year
+                </Button>
             </div>
         </div>
         <div className="flex items-center gap-2">
-            <Button variant={filterMode === 'location' ? 'secondary' : 'outline'} size="sm" onClick={() => setFilterMode('location')}>
+            <Button 
+                variant={filterMode === 'location' ? 'secondary' : 'outline'} 
+                size="sm" 
+                onClick={() => setFilterMode('location')}
+                className={filterMode === 'location' ? 'premium-button' : 'premium-button-outline'}
+            >
                 <Pin className="mr-2 h-4 w-4" /> Filter by Location
             </Button>
-            <Button variant={filterMode === 'distance' ? 'secondary' : 'outline'} size="sm" onClick={() => setFilterMode('distance')}>
+            <Button 
+                variant={filterMode === 'distance' ? 'secondary' : 'outline'} 
+                size="sm" 
+                onClick={() => setFilterMode('distance')}
+                className={filterMode === 'distance' ? 'premium-button' : 'premium-button-outline'}
+            >
                 <Route className="mr-2 h-4 w-4" /> Filter by Distance
             </Button>
         </div>
-        <Separator />
+        <Separator className="bg-gradient-to-r from-transparent via-border to-transparent" />
         {filterMode === 'location' ? (
             <div className="flex items-center gap-2">
                 <Select value={selectedZoneId} onValueChange={handleZoneChange}>
-                    <SelectTrigger className="w-[180px]">
+                    <SelectTrigger className="w-[180px] enhanced-select">
                         <SelectValue placeholder="Select Zone" />
                     </SelectTrigger>
                     <SelectContent>
@@ -389,7 +413,7 @@ export function EventCalendar({
                     </SelectContent>
                 </Select>
                 <Select value={selectedClubId} onValueChange={setSelectedClubId} disabled={selectedZoneId === 'all' && filteredClubs.length === clubs.length}>
-                    <SelectTrigger className="w-[180px]">
+                    <SelectTrigger className="w-[180px] enhanced-select">
                         <SelectValue placeholder="Select Club" />
                     </SelectTrigger>
                     <SelectContent>
@@ -403,7 +427,7 @@ export function EventCalendar({
         ) : (
             <div className="flex items-center gap-2">
                  <Select value={homeClubId ?? ''} onValueChange={(val) => setHomeClubId(val === 'none' ? null : val)}>
-                    <SelectTrigger className="w-[240px]">
+                    <SelectTrigger className="w-[240px] enhanced-select">
                         <SelectValue placeholder="Select a home club" />
                     </SelectTrigger>
                     <SelectContent>
@@ -414,7 +438,7 @@ export function EventCalendar({
                     </SelectContent>
                 </Select>
                  <Select value={String(distance)} onValueChange={(val) => setDistance(Number(val))} disabled={!homeClubId}>
-                    <SelectTrigger className="w-[180px]">
+                    <SelectTrigger className="w-[180px] enhanced-select">
                         <SelectValue placeholder="Select distance" />
                     </SelectTrigger>
                     <SelectContent>

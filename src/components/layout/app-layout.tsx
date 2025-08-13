@@ -55,15 +55,17 @@ export function AppLayout({ children }: PropsWithChildren) {
 
   return (
     <SidebarProvider>
-      <Sidebar>
+      <Sidebar className="enhanced-sidebar">
         <SidebarHeader>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="shrink-0" asChild>
+            <Button variant="ghost" size="icon" className="shrink-0 premium-button-outline" asChild>
               <Link href="/">
                 <PonyIcon className="size-6 text-primary" />
               </Link>
             </Button>
-            <h1 className="text-lg font-semibold tracking-tight font-headline">PonyClub Events</h1>
+            <h1 className="text-lg font-semibold tracking-tight font-headline bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              PonyClub Events
+            </h1>
           </div>
         </SidebarHeader>
         <SidebarContent>
@@ -167,10 +169,10 @@ export function AppLayout({ children }: PropsWithChildren) {
         </SidebarContent>
       </Sidebar>
       <SidebarInset>
-        <header className="flex items-center justify-between p-4 border-b bg-card">
-          <SidebarTrigger />
+        <header className="flex items-center justify-between p-4 border-b enhanced-card glass-effect">
+          <SidebarTrigger className="premium-button-outline" />
         </header>
-        <main className="p-4 lg:p-6">{children}</main>
+        <main className="p-4 lg:p-6 bg-gradient-to-br from-background/50 to-muted/30 min-h-screen">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   );

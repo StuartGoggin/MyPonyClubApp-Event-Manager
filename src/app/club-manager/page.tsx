@@ -90,9 +90,9 @@ export default function ClubEventManagerDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading club dashboard...</p>
+        <div className="text-center enhanced-card p-8 rounded-lg">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-6"></div>
+          <p className="text-muted-foreground text-lg">Loading club dashboard...</p>
         </div>
       </div>
     );
@@ -101,11 +101,11 @@ export default function ClubEventManagerDashboard() {
   if (error) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <p className="text-destructive mb-4">{error}</p>
+        <div className="text-center enhanced-card p-8 rounded-lg">
+          <p className="text-destructive mb-6 text-lg">{error}</p>
           <button 
             onClick={fetchData}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+            className="premium-button px-6 py-3 rounded-md"
           >
             Try Again
           </button>
@@ -117,14 +117,16 @@ export default function ClubEventManagerDashboard() {
   return (
     <div className="space-y-6">
       {/* Club Selection Header */}
-      <Card>
+      <Card className="enhanced-card border-l-4 border-l-primary">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Building className="h-6 w-6" />
-            Club Event Manager
+            <Building className="h-6 w-6 text-primary" />
+            <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              Club Event Manager
+            </span>
           </CardTitle>
-          <CardDescription>
-            Submit and manage event requests for your club
+          <CardDescription className="text-base">
+            Submit and manage event requests for your club across Victoria
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -133,7 +135,7 @@ export default function ClubEventManagerDashboard() {
             <div className="space-y-2">
               <label className="text-sm font-medium">Select Club</label>
               <Select value={selectedClubId} onValueChange={setSelectedClubId}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full enhanced-select">
                   <SelectValue placeholder="Choose a club to manage..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -160,14 +162,14 @@ export default function ClubEventManagerDashboard() {
             {selectedClub && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
                 {/* Club Details */}
-                <Card>
+                <Card className="enhanced-card border-l-4 border-l-primary">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <Building className="h-4 w-4 text-muted-foreground" />
+                      <Building className="h-4 w-4 text-primary" />
                       <span className="text-sm font-medium">Club</span>
                     </div>
                     <div className="space-y-1">
-                      <div className="font-medium">{selectedClub.name}</div>
+                      <div className="font-medium text-primary">{selectedClub.name}</div>
                       <div className="text-sm text-muted-foreground flex items-center gap-1">
                         <MapPin className="h-3 w-3" />
                         {selectedZone?.name || 'Unknown Zone'}
@@ -182,7 +184,7 @@ export default function ClubEventManagerDashboard() {
                 </Card>
 
                 {/* Submitted Events */}
-                <Card>
+                <Card className="enhanced-card border-l-4 border-l-amber-400">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-2 mb-2">
                       <Clock className="h-4 w-4 text-amber-500" />
@@ -194,7 +196,7 @@ export default function ClubEventManagerDashboard() {
                 </Card>
 
                 {/* Approved Events */}
-                <Card>
+                <Card className="enhanced-card border-l-4 border-l-green-400">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-2 mb-2">
                       <CheckCircle className="h-4 w-4 text-green-500" />
@@ -206,7 +208,7 @@ export default function ClubEventManagerDashboard() {
                 </Card>
 
                 {/* Total Events */}
-                <Card>
+                <Card className="enhanced-card border-l-4 border-l-blue-400">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-2 mb-2">
                       <Calendar className="h-4 w-4 text-blue-500" />

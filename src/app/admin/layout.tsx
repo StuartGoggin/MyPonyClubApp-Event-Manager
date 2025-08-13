@@ -33,12 +33,11 @@ export default function AdminLayout({ children }: PropsWithChildren) {
               badge="System"
             />
             <AdminNavCard
-              href="/admin/events"
+              href="/manage-events"
               icon={<Calendar className="h-6 w-6" />}
-              title="Event Management"
-              description="Approve, reject, and manage event requests"
-              badge="Pending: 3"
-              badgeVariant="destructive"
+              title="Manage Events"
+              description="Review and manage event requests"
+              badge="Events"
             />
             <AdminNavCard
               href="/admin/zones"

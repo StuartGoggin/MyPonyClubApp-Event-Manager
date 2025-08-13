@@ -24,19 +24,18 @@ if (serviceAccountStr) {
                 }),
             });
             adminDb = getFirestore();
+        } else {
+            adminDb = getFirestore();
         }
     } catch (error: any) {
-        console.error('Failed to initialize Firebase Admin SDK:', error.message);
+        console.error('❌ Failed to initialize Firebase Admin SDK:', error.message);
         // Don't throw during build, just log
         if (process.env.NODE_ENV !== 'production' || process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
             throw new Error(`Failed to parse FIREBASE_SERVICE_ACCOUNT_KEY: ${error.message}`);
         }
     }
 } else {
-    // Only throw during runtime if we're not building
-    if (process.env.NODE_ENV !== 'production' || process.env.VERCEL || process.env.RUNTIME) {
-        console.warn('Firebase Admin SDK not initialized: Missing FIREBASE_SERVICE_ACCOUNT_KEY');
-    }
+    console.warn('⚠️ Firebase Admin SDK not initialized: Missing FIREBASE_SERVICE_ACCOUNT_KEY');
 }
 
 // Export adminDb - will be null during build time if no credentials

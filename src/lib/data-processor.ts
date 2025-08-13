@@ -26,13 +26,51 @@ export interface ClubJsonData {
  */
 export class DataProcessor {
   /**
-   * Convert zone name to a consistent zone ID
+   * Remove undefined and null values from an object (Firestore doesn't accept undefined)
+   */
+  static cleanUndefinedValues<T extends Record<string, any>>(obj: T): T {
+    const cleaned = {} as T;
+    
+    for (const [key, value] of Object.entries(obj)) {
+      if (value !== undefined && value !== null) {
+        // For nested objects, recursively clean them too
+        if (typeof value === 'object' && !Array.isArray(value)) {
+          const cleanedNested = this.cleanUndefinedValues(value);
+          if (Object.keys(cleanedNested).length > 0) {
+            cleaned[key as keyof T] = cleanedNested;
+          }
+        } else {
+          cleaned[key as keyof T] = value;
+        }
+      }
+    }
+    
+    return cleaned;
+  }
+
+  /**
+   * Convert zone name to a consistent zone ID (matching the base seed data)
    */
   static generateZoneId(zoneName: string): string {
-    return 'zone-' + zoneName
-      .toLowerCase()
-      .replace(/\s+/g, '-')
-      .replace(/[^a-z0-9-]/g, '');
+    // Map zone names to the same IDs used in the base seed data
+    const zoneMap: Record<string, string> = {
+      'Barwon Zone': '1',
+      'Central Zone': '2', 
+      'East Gippsland Zone': '3',
+      'Gippsland Zone': '4',
+      'Midland Zone': '5',
+      'North Eastern Zone': '6',
+      'North Metropolitan Zone': '7',
+      'Northern Zone': '8',
+      'Port Phillip Zone': '9',
+      'South Metropolitan Zone': '10',
+      'West Gippsland Zone': '11',
+      'Western Zone': '12',
+      'Wimmera Zone': '13'
+    };
+
+    // Return the mapped ID if it exists, otherwise generate a fallback ID
+    return zoneMap[zoneName] || `zone-${zoneName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`;
   }
 
   /**
@@ -41,18 +79,20 @@ export class DataProcessor {
   static transformZoneData(zoneData: ZoneData): Omit<Zone, 'id'> & { id: string } {
     const zoneId = this.generateZoneId(zoneData.zone_name);
     
-    return {
+    const baseZone = {
       id: zoneId,
       name: zoneData.zone_name,
       secretary: {
         name: `${zoneData.zone_name} Secretary`,
-        email: `secretary@${zoneId.replace('zone-', '')}zone.com`,
+        email: `secretary@${zoneData.zone_name.toLowerCase().replace(/\s+/g, '')}zone.com`,
         mobile: '0400 000 000'
       },
       eventApprovers: [],
       scheduleApprovers: [],
       imageUrl: `https://example.com/images/${zoneId}.png`
     };
+
+    return this.cleanUndefinedValues(baseZone);
   }
 
   /**
@@ -69,24 +109,27 @@ export class DataProcessor {
       .replace(/\s+/g, '-')
       .replace(/[^a-z0-9-]/g, '')}`;
 
-    return {
+    const baseClub = {
       id: clubId,
       name: clubData.club_name,
       zoneId: zoneId,
       clubId: clubData.club_id,
-      physicalAddress: clubData.physical_address || undefined,
-      postalAddress: clubData.postal_address || undefined,
-      email: clubData.email || undefined,
-      phone: clubData.phone || undefined,
-      website: clubData.website_url || undefined,
-      websiteUrl: clubData.website_url || undefined,
-      socialMediaUrl: clubData.social_media_url || undefined,
+      physicalAddress: clubData.physical_address,
+      postalAddress: clubData.postal_address,
+      email: clubData.email,
+      phone: clubData.phone,
+      website: clubData.website_url,
+      websiteUrl: clubData.website_url,
+      socialMediaUrl: clubData.social_media_url,
       // Set up social media structure for backward compatibility
       socialMedia: clubData.social_media_url ? {
         facebook: clubData.social_media_url.includes('facebook') ? clubData.social_media_url : undefined,
         instagram: clubData.social_media_url.includes('instagram') ? clubData.social_media_url : undefined,
       } : undefined
     };
+
+    // Clean undefined/null values before returning
+    return this.cleanUndefinedValues(baseClub);
   }
 
   /**

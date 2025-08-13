@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
+import { Timestamp } from 'firebase-admin/firestore';
 import { Event } from '@/lib/types';
 
 export async function GET(request: NextRequest) {
@@ -50,10 +51,29 @@ export async function GET(request: NextRequest) {
 
     snapshot.forEach((doc: any) => {
       const data = doc.data();
+      
+      // Handle date conversion with error handling
+      let eventDate: Date;
+      try {
+        if (data.date && typeof data.date.toDate === 'function') {
+          eventDate = data.date.toDate();
+        } else if (data.date instanceof Date) {
+          eventDate = data.date;
+        } else if (typeof data.date === 'string') {
+          eventDate = new Date(data.date);
+        } else {
+          console.warn(`Invalid date format for event ${doc.id}:`, data.date);
+          eventDate = new Date(); // Fallback to current date
+        }
+      } catch (error) {
+        console.error(`Error converting date for event ${doc.id}:`, error);
+        eventDate = new Date(); // Fallback to current date
+      }
+      
       events.push({
         id: doc.id,
         name: data.name,
-        date: data.date.toDate(), // Convert Firestore timestamp to Date
+        date: eventDate,
         clubId: data.clubId,
         eventTypeId: data.eventTypeId,
         status: data.status,
@@ -89,12 +109,21 @@ export async function POST(request: NextRequest) {
 
     const eventData = await request.json();
     
-    // Add timestamps
+    // Convert date string to Firestore Timestamp
+    const eventDate = new Date(eventData.date);
+    if (isNaN(eventDate.getTime())) {
+      return NextResponse.json(
+        { error: 'Invalid date provided' },
+        { status: 400 }
+      );
+    }
+    
+    // Add timestamps using Firestore Timestamp
     const newEvent = {
       ...eventData,
-      date: new Date(eventData.date),
-      createdAt: new Date(),
-      updatedAt: new Date()
+      date: Timestamp.fromDate(eventDate),
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now()
     };
 
     const docRef = await adminDb.collection('events').add(newEvent);

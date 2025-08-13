@@ -25,7 +25,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, PlusCircle, Trash2, History, Wand2, AlertTriangle } from 'lucide-react';
+import { CalendarIcon, PlusCircle, Trash2, History, Wand2, AlertTriangle, CheckCircle } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { format, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -92,6 +92,7 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
   const { toast } = useToast();
   const router = useRouter();
   const [state, formAction] = useFormState(createEventRequestAction, initialState);
+  const [showSuccess, setShowSuccess] = useState(false);
   
   const [conflictSuggestions, setConflictSuggestions] = useState<Record<string, SuggestAlternativeDatesOutput | null>>({});
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState<Record<string, boolean>>({});
@@ -100,6 +101,26 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  // Handle form submission success
+  useEffect(() => {
+    if (state.success) {
+      setShowSuccess(true);
+      // Reset form after successful submission
+      form.reset();
+      // Show success toast
+      toast({
+        title: 'Event Request Submitted!',
+        description: 'Your event request has been submitted successfully and is awaiting approval.',
+        variant: 'default',
+      });
+      // Auto-hide success message after 5 seconds
+      const timer = setTimeout(() => {
+        setShowSuccess(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [state.success, form, toast]);
   
   const form = useForm<EventRequestFormValues>({
     resolver: zodResolver(eventRequestSchema),
@@ -265,6 +286,48 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
   
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        {/* Success Confirmation Modal */}
+        {showSuccess && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <Card className="mx-4 max-w-md w-full">
+              <CardHeader className="text-center">
+                <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                  <CheckCircle className="w-6 h-6 text-green-600" />
+                </div>
+                <CardTitle className="text-green-600">Event Request Submitted!</CardTitle>
+                <CardDescription>
+                  Your event request has been successfully submitted for approval
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="text-center space-y-4">
+                <div className="text-sm text-muted-foreground">
+                  <p className="mb-2">✓ Event data has been saved</p>
+                  <p className="mb-2">✓ Zone managers have been notified</p>
+                  <p>✓ You will receive updates on the approval status</p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button 
+                    onClick={() => setShowSuccess(false)}
+                    className="flex-1"
+                  >
+                    Submit Another Event
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setShowSuccess(false);
+                      router.push('/');
+                    }}
+                    className="flex-1"
+                  >
+                    View Calendar
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         <div className="lg:col-span-2">
             <Card>
                 <CardContent className="pt-6">

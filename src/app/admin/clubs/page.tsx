@@ -830,7 +830,7 @@ export default function AdminClubsPage() {
                 />
                 {deleteConfirmText && deleteConfirmText !== clubToDelete.name && (
                   <p className="text-sm text-red-600">
-                    Club name does not match. Please type exactly: "{clubToDelete.name}"
+                    Club name does not match. Please type exactly: &ldquo;{clubToDelete.name}&rdquo;
                   </p>
                 )}
               </div>

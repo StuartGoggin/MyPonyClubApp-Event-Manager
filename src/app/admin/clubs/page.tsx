@@ -11,15 +11,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Plus, Edit, Trash2, Users, MapPin, Globe, Mail, Image } from 'lucide-react';
+import { Plus, Edit, Trash2, Users, MapPin, Globe, Mail, Image, Loader2 } from 'lucide-react';
 import { Zone, Club } from '@/lib/types';
-import { zonesMock, clubsMock } from '@/lib/client-data';
-import { DataImportExport } from '@/components/admin/data-import-export';
 import { validateClubData, ValidationErrors, formatAddress } from '@/lib/validation';
 
 export default function AdminClubsPage() {
   const [zones, setZones] = useState<Zone[]>([]);
   const [clubs, setClubs] = useState<Club[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingClub, setEditingClub] = useState<Club | null>(null);
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
@@ -48,10 +48,35 @@ export default function AdminClubsPage() {
   });
 
   useEffect(() => {
-    // Initialize with mock data for now
-    setZones(zonesMock);
-    setClubs(clubsMock);
+    fetchData();
   }, []);
+
+  const fetchData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // Fetch zones and clubs from Firestore
+      const [zonesResponse, clubsResponse] = await Promise.all([
+        fetch('/api/zones'),
+        fetch('/api/clubs')
+      ]);
+
+      if (!zonesResponse.ok || !clubsResponse.ok) {
+        throw new Error('Failed to fetch data');
+      }
+
+      const zonesData = await zonesResponse.json();
+      const clubsData = await clubsResponse.json();
+
+      setZones(zonesData);
+      setClubs(clubsData);
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      setError('Failed to load club data. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const resetFormData = () => ({
     name: '', 
@@ -200,47 +225,47 @@ export default function AdminClubsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Club Management</h1>
-          <p className="text-muted-foreground">
-            Manage pony clubs and their zone assignments
-          </p>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-2">
-          <DataImportExport
-            data={clubs}
-            entityName="Clubs"
-            filename="pony-club-clubs"
-            columns={[
-              { key: 'name', label: 'Club Name', required: true },
-              { key: 'zoneId', label: 'Zone ID', required: true },
-              { key: 'email', label: 'Email' },
-              { key: 'website', label: 'Website' },
-              { key: 'address.street', label: 'Street Address' },
-              { key: 'address.suburb', label: 'Suburb' },
-              { key: 'address.postcode', label: 'Postcode' },
-              { key: 'address.state', label: 'State' },
-              { key: 'address.country', label: 'Country' },
-              { key: 'socialMedia.facebook', label: 'Facebook' },
-              { key: 'socialMedia.instagram', label: 'Instagram' },
-              { key: 'socialMedia.twitter', label: 'Twitter' },
-              { key: 'socialMedia.youtube', label: 'YouTube' },
-              { key: 'logoUrl', label: 'Logo URL' },
-              { key: 'latitude', label: 'Latitude' },
-              { key: 'longitude', label: 'Longitude' }
-            ]}
-            onImport={(newClubs) => setClubs(prev => [...prev, ...newClubs])}
-            compareFunction={(existing, imported) => 
-              existing.name === imported.name && existing.zoneId === imported.zoneId
-            }
-          />
-          <Button onClick={handleCreate} disabled={zones.length === 0} size="sm">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Club
-          </Button>
-        </div>
-      </div>
+      {loading && (
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <p>Loading club data...</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription>
+            {error}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="ml-2" 
+              onClick={fetchData}
+            >
+              Retry
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {!loading && !error && (
+        <>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">Club Management</h1>
+              <p className="text-muted-foreground">
+                Manage pony clubs and their zone assignments
+              </p>
+            </div>
+            <Button onClick={handleCreate} disabled={zones.length === 0}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Club
+            </Button>
+          </div>
 
       {zones.length === 0 && (
         <Card className="border-amber-200 bg-amber-50">
@@ -724,6 +749,8 @@ export default function AdminClubsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+        </>
+      )}
     </div>
   );
 }

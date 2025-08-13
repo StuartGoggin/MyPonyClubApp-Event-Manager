@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, Edit, Trash2, FileText, Calendar } from 'lucide-react';
 import { EventType, Event } from '@/lib/types';
 import { eventTypesMockClient } from '@/lib/admin-data';
+import { DataImportExport } from '@/components/admin/data-import-export';
 
 export default function AdminEventTypesPage() {
   const [eventTypes, setEventTypes] = useState<EventType[]>([]);
@@ -111,10 +112,22 @@ export default function AdminEventTypesPage() {
             Configure the types of events that can be requested
           </p>
         </div>
-        <Button onClick={handleCreate}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Event Type
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <DataImportExport
+            data={eventTypes}
+            entityName="Event Types"
+            filename="pony-club-event-types"
+            columns={[
+              { key: 'name', label: 'Event Type Name', required: true }
+            ]}
+            onImport={(newEventTypes) => setEventTypes(prev => [...prev, ...newEventTypes])}
+            compareFunction={(existing, imported) => existing.name === imported.name}
+          />
+          <Button onClick={handleCreate} size="sm">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Event Type
+          </Button>
+        </div>
       </div>
 
       {/* Summary Stats */}

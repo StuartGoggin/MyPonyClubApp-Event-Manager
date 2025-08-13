@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/sidebar';
 // import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Calendar, PlusCircle, Database, FerrisWheel, Shield, Settings } from 'lucide-react';
+import { Calendar, PlusCircle, Database, FerrisWheel, Shield, Settings, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -109,6 +109,17 @@ export function AppLayout({ children }: PropsWithChildren) {
                 <Link href="/admin">
                   <Shield />
                   <span>Admin</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                tooltip="Zone Manager"
+              >
+                <Link href="/zone-manager">
+                  <MapPin />
+                  <span>Zone Manager</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

@@ -12,7 +12,7 @@ import { CheckCircle, XCircle, Clock, Calendar, MapPin, User, Phone, FileText, A
 import { Event, Club, EventType, Zone, EventStatus } from '@/lib/types';
 import { clubsMock, eventTypesMock, zonesMock } from '@/lib/client-data';
 
-export default function AdminEventsPage() {
+export default function ManageEventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [clubs, setClubs] = useState<Club[]>([]);
   const [eventTypes, setEventTypes] = useState<EventType[]>([]);
@@ -105,9 +105,9 @@ export default function AdminEventsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Event Management</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Manage my Events</h1>
         <p className="text-muted-foreground">
-          Review and manage event requests from clubs
+          Review, approve, and manage event requests from your zone's clubs
         </p>
       </div>
 

@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/sidebar';
 // import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Calendar, PlusCircle, Database, FerrisWheel, Shield } from 'lucide-react';
+import { Calendar, PlusCircle, Database, FerrisWheel, Shield, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -87,6 +87,17 @@ export function AppLayout({ children }: PropsWithChildren) {
                 <Link href="/request-event">
                   <PlusCircle />
                   <span>Request Event</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                tooltip="Manage my Events"
+              >
+                <Link href="/manage-events">
+                  <Settings />
+                  <span>Manage my Events</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

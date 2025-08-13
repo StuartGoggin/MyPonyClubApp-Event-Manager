@@ -299,35 +299,7 @@ export async function callSeedData() {
     const batch = adminDb.batch();
     let seededItems = [];
 
-    // Check and seed Zones
-    console.log('📍 Checking zones collection...');
-    const zonesSnapshot = await adminDb.collection('zones').limit(1).get();
-    if (zonesSnapshot.empty) {
-      console.log(`🌟 Seeding ${zonesSeedData.length} base zones...`);
-      zonesSeedData.forEach(zone => {
-        const zoneRef = adminDb.collection('zones').doc(zone.id);
-        batch.set(zoneRef, zone);
-      });
-      seededItems.push(`${zonesSeedData.length} base zones`);
-    } else {
-      console.log('✅ Base zones already exist, skipping...');
-    }
-
-    // Check and seed Clubs
-    console.log('🏇 Checking clubs collection...');
-    const clubsSnapshot = await adminDb.collection('clubs').limit(1).get();
-    if (clubsSnapshot.empty) {
-      console.log(`🌟 Seeding ${clubsSeedData.length} base clubs...`);
-      clubsSeedData.forEach(club => {
-        const clubRef = adminDb.collection('clubs').doc(club.id);
-        batch.set(clubRef, club);
-      });
-      seededItems.push(`${clubsSeedData.length} base clubs`);
-    } else {
-      console.log('✅ Base clubs already exist, skipping...');
-    }
-
-    // Check and seed Event Types
+    // Check and seed Event Types first (they don't conflict with ClubZoneData)
     console.log('📅 Checking event types collection...');
     const eventTypesSnapshot = await adminDb.collection('eventTypes').limit(1).get();
     if (eventTypesSnapshot.empty) {
@@ -341,14 +313,14 @@ export async function callSeedData() {
       console.log('✅ Event types already exist, skipping...');
     }
 
-    // Commit the basic seeding batch first
+    // Commit the event types first
     if (seededItems.length > 0) {
-      console.log('💾 Committing basic seed data to Firestore...');
+      console.log('💾 Committing event types to Firestore...');
       await batch.commit();
-      console.log('✅ Basic seed data committed successfully!');
+      console.log('✅ Event types committed successfully!');
     }
 
-    // Now load comprehensive ClubZoneData.json
+    // Now load comprehensive ClubZoneData.json (this will handle zones and clubs with correct IDs)
     console.log('📂 Loading comprehensive ClubZoneData.json...');
     try {
       // Load the ClubZoneData file from the root directory
@@ -442,6 +414,81 @@ export async function loadFromClubZoneData(zonesData: ZoneData[]) {
         processing: { totalZones: 0, totalClubs: 0, validClubs: 0, invalidClubs: 0 }
       },
       errors: [error instanceof Error ? error.message : 'Unknown error']
+    };
+  }
+}
+
+/**
+ * Purge all config data from the database (zones, clubs, club pictures)
+ */
+export async function purgeConfigData() {
+  if (!adminDb) {
+    return { 
+      success: false, 
+      message: 'Firebase Admin SDK not initialized. Please check your FIREBASE_SERVICE_ACCOUNT_KEY environment variable.' 
+    };
+  }
+
+  try {
+    console.log('🔥 Starting config data purge...');
+
+    const results = {
+      zones: { deleted: 0, errors: [] as string[] },
+      clubs: { deleted: 0, errors: [] as string[] },
+      clubPictures: { deleted: 0, errors: [] as string[] }
+    };
+
+    // Purge Zones
+    const zonesSnapshot = await adminDb.collection('zones').get();
+    if (!zonesSnapshot.empty) {
+      const zoneBatch = adminDb.batch();
+      zonesSnapshot.docs.forEach((doc: any) => {
+        zoneBatch.delete(doc.ref);
+      });
+      await zoneBatch.commit();
+      results.zones.deleted = zonesSnapshot.docs.length;
+    }
+
+    // Purge Clubs
+    const clubsSnapshot = await adminDb.collection('clubs').get();
+    if (!clubsSnapshot.empty) {
+      const clubBatch = adminDb.batch();
+      clubsSnapshot.docs.forEach((doc: any) => {
+        clubBatch.delete(doc.ref);
+      });
+      await clubBatch.commit();
+      results.clubs.deleted = clubsSnapshot.docs.length;
+    }
+
+    // Purge Club Pictures
+    const picturesSnapshot = await adminDb.collection('clubPictures').get();
+    if (!picturesSnapshot.empty) {
+      const picturesBatch = adminDb.batch();
+      picturesSnapshot.docs.forEach((doc: any) => {
+        picturesBatch.delete(doc.ref);
+      });
+      await picturesBatch.commit();
+      results.clubPictures.deleted = picturesSnapshot.docs.length;
+    }
+
+    const totalDeleted = results.zones.deleted + results.clubs.deleted + results.clubPictures.deleted;
+
+    console.log(`🎉 Config data purge completed! Deleted ${totalDeleted} items total.`);
+
+    return {
+      success: true,
+      message: `Config data purge completed successfully. Deleted ${totalDeleted} items total.`,
+      results: {
+        summary: { totalDeleted, totalErrors: 0 },
+        details: results
+      }
+    };
+
+  } catch (error) {
+    console.error('❌ Error purging config data:', error);
+    return { 
+      success: false, 
+      message: `Failed to purge config data: ${error instanceof Error ? error.message : 'Unknown error'}` 
     };
   }
 }

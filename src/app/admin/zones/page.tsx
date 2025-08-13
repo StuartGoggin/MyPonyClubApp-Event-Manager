@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, Edit, Trash2, MapPin, Users, AlertTriangle } from 'lucide-react';
 import { Zone, Club } from '@/lib/types';
 import { zonesMockClient, clubsMockClient } from '@/lib/admin-data';
+import { DataImportExport } from '@/components/admin/data-import-export';
 
 export default function AdminZonesPage() {
   const [zones, setZones] = useState<Zone[]>([]);
@@ -93,14 +94,24 @@ export default function AdminZonesPage() {
             Manage zones across Victoria for organizing pony clubs
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
+          <DataImportExport
+            data={zones}
+            entityName="Zones"
+            filename="pony-club-zones"
+            columns={[
+              { key: 'name', label: 'Zone Name', required: true }
+            ]}
+            onImport={(newZones) => setZones(prev => [...prev, ...newZones])}
+            compareFunction={(existing, imported) => existing.name === imported.name}
+          />
           {zones.length > 0 && (
-            <Button onClick={handleDeleteAll} variant="destructive">
+            <Button onClick={handleDeleteAll} variant="destructive" size="sm">
               <Trash2 className="h-4 w-4 mr-2" />
               Delete All Data
             </Button>
           )}
-          <Button onClick={handleCreate}>
+          <Button onClick={handleCreate} size="sm">
             <Plus className="h-4 w-4 mr-2" />
             Add Zone
           </Button>

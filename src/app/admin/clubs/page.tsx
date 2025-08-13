@@ -9,20 +9,42 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Trash2, Users, MapPin } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Plus, Edit, Trash2, Users, MapPin, Globe, Mail, Image } from 'lucide-react';
 import { Zone, Club } from '@/lib/types';
 import { zonesMockClient, clubsMockClient } from '@/lib/admin-data';
+import { DataImportExport } from '@/components/admin/data-import-export';
+import { validateClubData, ValidationErrors, formatAddress } from '@/lib/validation';
 
 export default function AdminClubsPage() {
   const [zones, setZones] = useState<Zone[]>([]);
   const [clubs, setClubs] = useState<Club[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingClub, setEditingClub] = useState<Club | null>(null);
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
   const [formData, setFormData] = useState({ 
+    // Basic Info
     name: '', 
     zoneId: '', 
     latitude: '', 
-    longitude: '' 
+    longitude: '',
+    // Address
+    street: '',
+    suburb: '',
+    postcode: '',
+    state: 'VIC',
+    country: 'Australia',
+    // Contact & Communication
+    email: '',
+    website: '',
+    // Social Media
+    facebook: '',
+    instagram: '',
+    twitter: '',
+    youtube: '',
+    // Branding
+    logoUrl: ''
   });
 
   useEffect(() => {
@@ -30,6 +52,25 @@ export default function AdminClubsPage() {
     setZones(zonesMockClient);
     setClubs(clubsMockClient);
   }, []);
+
+  const resetFormData = () => ({
+    name: '', 
+    zoneId: '', 
+    latitude: '', 
+    longitude: '',
+    street: '',
+    suburb: '',
+    postcode: '',
+    state: 'VIC',
+    country: 'Australia',
+    email: '',
+    website: '',
+    facebook: '',
+    instagram: '',
+    twitter: '',
+    youtube: '',
+    logoUrl: ''
+  });
 
   const getZoneName = (zoneId: string) => {
     return zones.find(zone => zone.id === zoneId)?.name || 'Unknown Zone';
@@ -41,7 +82,8 @@ export default function AdminClubsPage() {
 
   const handleCreate = () => {
     setEditingClub(null);
-    setFormData({ name: '', zoneId: '', latitude: '', longitude: '' });
+    setFormData(resetFormData());
+    setValidationErrors({});
     setIsDialogOpen(true);
   };
 
@@ -51,20 +93,81 @@ export default function AdminClubsPage() {
       name: club.name,
       zoneId: club.zoneId,
       latitude: club.latitude?.toString() || '',
-      longitude: club.longitude?.toString() || ''
+      longitude: club.longitude?.toString() || '',
+      street: club.address?.street || '',
+      suburb: club.address?.suburb || '',
+      postcode: club.address?.postcode || '',
+      state: club.address?.state || 'VIC',
+      country: club.address?.country || 'Australia',
+      email: club.email || '',
+      website: club.website || '',
+      facebook: club.socialMedia?.facebook || '',
+      instagram: club.socialMedia?.instagram || '',
+      twitter: club.socialMedia?.twitter || '',
+      youtube: club.socialMedia?.youtube || '',
+      logoUrl: club.logoUrl || ''
     });
+    setValidationErrors({});
     setIsDialogOpen(true);
   };
 
   const handleSave = async () => {
     if (!formData.name.trim() || !formData.zoneId) return;
 
+    // Validate form data
+    const validationData = {
+      email: formData.email,
+      website: formData.website,
+      logoUrl: formData.logoUrl,
+      socialMedia: {
+        facebook: formData.facebook,
+        instagram: formData.instagram,
+        twitter: formData.twitter,
+        youtube: formData.youtube,
+      },
+      address: {
+        postcode: formData.postcode
+      }
+    };
+
+    const errors = validateClubData(validationData);
+    setValidationErrors(errors);
+
+    // Don't save if there are validation errors
+    if (Object.keys(errors).length > 0) {
+      return;
+    }
+
     const clubData: Omit<Club, 'id'> = {
       name: formData.name.trim(),
       zoneId: formData.zoneId,
       latitude: formData.latitude ? parseFloat(formData.latitude) : undefined,
       longitude: formData.longitude ? parseFloat(formData.longitude) : undefined,
+      address: {
+        street: formData.street || undefined,
+        suburb: formData.suburb || undefined,
+        postcode: formData.postcode || undefined,
+        state: formData.state || undefined,
+        country: formData.country || undefined,
+      },
+      email: formData.email || undefined,
+      website: formData.website || undefined,
+      socialMedia: {
+        facebook: formData.facebook || undefined,
+        instagram: formData.instagram || undefined,
+        twitter: formData.twitter || undefined,
+        youtube: formData.youtube || undefined,
+      },
+      logoUrl: formData.logoUrl || undefined,
     };
+
+    // Clean up empty objects
+    if (clubData.address && !Object.values(clubData.address).some(v => v)) {
+      delete clubData.address;
+    }
+    if (clubData.socialMedia && !Object.values(clubData.socialMedia).some(v => v)) {
+      delete clubData.socialMedia;
+    }
 
     if (editingClub) {
       // Update existing club
@@ -84,7 +187,8 @@ export default function AdminClubsPage() {
 
     setIsDialogOpen(false);
     setEditingClub(null);
-    setFormData({ name: '', zoneId: '', latitude: '', longitude: '' });
+    setFormData(resetFormData());
+    setValidationErrors({});
   };
 
   const handleDelete = async (club: Club) => {
@@ -103,10 +207,39 @@ export default function AdminClubsPage() {
             Manage pony clubs and their zone assignments
           </p>
         </div>
-        <Button onClick={handleCreate} disabled={zones.length === 0}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Club
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <DataImportExport
+            data={clubs}
+            entityName="Clubs"
+            filename="pony-club-clubs"
+            columns={[
+              { key: 'name', label: 'Club Name', required: true },
+              { key: 'zoneId', label: 'Zone ID', required: true },
+              { key: 'email', label: 'Email' },
+              { key: 'website', label: 'Website' },
+              { key: 'address.street', label: 'Street Address' },
+              { key: 'address.suburb', label: 'Suburb' },
+              { key: 'address.postcode', label: 'Postcode' },
+              { key: 'address.state', label: 'State' },
+              { key: 'address.country', label: 'Country' },
+              { key: 'socialMedia.facebook', label: 'Facebook' },
+              { key: 'socialMedia.instagram', label: 'Instagram' },
+              { key: 'socialMedia.twitter', label: 'Twitter' },
+              { key: 'socialMedia.youtube', label: 'YouTube' },
+              { key: 'logoUrl', label: 'Logo URL' },
+              { key: 'latitude', label: 'Latitude' },
+              { key: 'longitude', label: 'Longitude' }
+            ]}
+            onImport={(newClubs) => setClubs(prev => [...prev, ...newClubs])}
+            compareFunction={(existing, imported) => 
+              existing.name === imported.name && existing.zoneId === imported.zoneId
+            }
+          />
+          <Button onClick={handleCreate} disabled={zones.length === 0} size="sm">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Club
+          </Button>
+        </div>
       </div>
 
       {zones.length === 0 && (
@@ -187,6 +320,8 @@ export default function AdminClubsPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Club Name</TableHead>
+                      <TableHead>Contact</TableHead>
+                      <TableHead>Address</TableHead>
                       <TableHead>Coordinates</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
@@ -195,7 +330,75 @@ export default function AdminClubsPage() {
                   <TableBody>
                     {zoneClubs.map(club => (
                       <TableRow key={club.id}>
-                        <TableCell className="font-medium">{club.name}</TableCell>
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-2">
+                            {club.logoUrl && (
+                              <img 
+                                src={club.logoUrl} 
+                                alt={`${club.name} logo`}
+                                className="w-8 h-8 rounded object-cover"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display = 'none';
+                                }}
+                              />
+                            )}
+                            <div>
+                              <div>{club.name}</div>
+                              {club.website && (
+                                <a 
+                                  href={club.website} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-blue-600 hover:underline flex items-center gap-1"
+                                >
+                                  <Globe className="h-3 w-3" />
+                                  Website
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            {club.email && (
+                              <div className="flex items-center gap-1 text-sm">
+                                <Mail className="h-3 w-3 text-muted-foreground" />
+                                <a href={`mailto:${club.email}`} className="text-blue-600 hover:underline">
+                                  {club.email}
+                                </a>
+                              </div>
+                            )}
+                            <div className="flex gap-1">
+                              {club.socialMedia?.facebook && (
+                                <a href={club.socialMedia.facebook} target="_blank" rel="noopener noreferrer">
+                                  <Badge variant="outline" className="text-xs">FB</Badge>
+                                </a>
+                              )}
+                              {club.socialMedia?.instagram && (
+                                <a href={club.socialMedia.instagram} target="_blank" rel="noopener noreferrer">
+                                  <Badge variant="outline" className="text-xs">IG</Badge>
+                                </a>
+                              )}
+                              {club.socialMedia?.twitter && (
+                                <a href={club.socialMedia.twitter} target="_blank" rel="noopener noreferrer">
+                                  <Badge variant="outline" className="text-xs">X</Badge>
+                                </a>
+                              )}
+                              {club.socialMedia?.youtube && (
+                                <a href={club.socialMedia.youtube} target="_blank" rel="noopener noreferrer">
+                                  <Badge variant="outline" className="text-xs">YT</Badge>
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {club.address && (
+                            <div className="text-sm">
+                              {formatAddress(club.address)}
+                            </div>
+                          )}
+                        </TableCell>
                         <TableCell>
                           {club.latitude && club.longitude ? (
                             <Badge variant="outline" className="text-xs">
@@ -206,8 +409,14 @@ export default function AdminClubsPage() {
                           )}
                         </TableCell>
                         <TableCell>
-                          <Badge variant={club.latitude && club.longitude ? 'default' : 'secondary'}>
-                            {club.latitude && club.longitude ? 'Complete' : 'Basic'}
+                          <Badge 
+                            variant={
+                              club.email && club.address ? 'default' :
+                              club.latitude && club.longitude ? 'secondary' : 'outline'
+                            }
+                          >
+                            {club.email && club.address ? 'Complete' : 
+                             club.latitude && club.longitude ? 'Basic' : 'Minimal'}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
@@ -244,7 +453,7 @@ export default function AdminClubsPage() {
 
       {/* Add/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingClub ? 'Edit Club' : 'Add New Club'}
@@ -256,61 +465,260 @@ export default function AdminClubsPage() {
               }
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="name">Club Name</Label>
-              <Input
-                id="name"
-                placeholder="e.g., Melbourne Pony Club"
-                value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              />
-            </div>
-            <div>
-              <Label htmlFor="zone">Zone</Label>
-              <Select value={formData.zoneId} onValueChange={(value) => setFormData(prev => ({ ...prev, zoneId: value }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a zone" />
-                </SelectTrigger>
-                <SelectContent>
-                  {zones.map(zone => (
-                    <SelectItem key={zone.id} value={zone.id}>
-                      {zone.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
+
+          <Tabs defaultValue="basic" className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="basic">Basic Info</TabsTrigger>
+              <TabsTrigger value="address">Address</TabsTrigger>
+              <TabsTrigger value="contact">Contact</TabsTrigger>
+              <TabsTrigger value="social">Social & Branding</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="basic" className="space-y-4 mt-4">
               <div>
-                <Label htmlFor="latitude">Latitude (optional)</Label>
+                <Label htmlFor="name">Club Name *</Label>
                 <Input
-                  id="latitude"
-                  type="number"
-                  step="any"
-                  placeholder="-37.8136"
-                  value={formData.latitude}
-                  onChange={(e) => setFormData(prev => ({ ...prev, latitude: e.target.value }))}
+                  id="name"
+                  placeholder="e.g., Melbourne Pony Club"
+                  value={formData.name}
+                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                 />
               </div>
               <div>
-                <Label htmlFor="longitude">Longitude (optional)</Label>
+                <Label htmlFor="zone">Zone *</Label>
+                <Select value={formData.zoneId} onValueChange={(value) => setFormData(prev => ({ ...prev, zoneId: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a zone" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {zones.map(zone => (
+                      <SelectItem key={zone.id} value={zone.id}>
+                        {zone.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="latitude">Latitude (optional)</Label>
+                  <Input
+                    id="latitude"
+                    type="number"
+                    step="any"
+                    placeholder="-37.8136"
+                    value={formData.latitude}
+                    onChange={(e) => setFormData(prev => ({ ...prev, latitude: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="longitude">Longitude (optional)</Label>
+                  <Input
+                    id="longitude"
+                    type="number"
+                    step="any"
+                    placeholder="144.9631"
+                    value={formData.longitude}
+                    onChange={(e) => setFormData(prev => ({ ...prev, longitude: e.target.value }))}
+                  />
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="address" className="space-y-4 mt-4">
+              <div>
+                <Label htmlFor="street">Street Address</Label>
                 <Input
-                  id="longitude"
-                  type="number"
-                  step="any"
-                  placeholder="144.9631"
-                  value={formData.longitude}
-                  onChange={(e) => setFormData(prev => ({ ...prev, longitude: e.target.value }))}
+                  id="street"
+                  placeholder="e.g., 123 Horse Lane"
+                  value={formData.street}
+                  onChange={(e) => setFormData(prev => ({ ...prev, street: e.target.value }))}
                 />
               </div>
-            </div>
-          </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="suburb">Suburb</Label>
+                  <Input
+                    id="suburb"
+                    placeholder="e.g., Bundoora"
+                    value={formData.suburb}
+                    onChange={(e) => setFormData(prev => ({ ...prev, suburb: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="postcode">Postcode</Label>
+                  <Input
+                    id="postcode"
+                    placeholder="e.g., 3083"
+                    value={formData.postcode}
+                    onChange={(e) => setFormData(prev => ({ ...prev, postcode: e.target.value }))}
+                  />
+                  {validationErrors.postcode && (
+                    <p className="text-sm text-red-500 mt-1">{validationErrors.postcode}</p>
+                  )}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="state">State</Label>
+                  <Select value={formData.state} onValueChange={(value) => setFormData(prev => ({ ...prev, state: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select state" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="VIC">Victoria</SelectItem>
+                      <SelectItem value="NSW">New South Wales</SelectItem>
+                      <SelectItem value="QLD">Queensland</SelectItem>
+                      <SelectItem value="SA">South Australia</SelectItem>
+                      <SelectItem value="WA">Western Australia</SelectItem>
+                      <SelectItem value="TAS">Tasmania</SelectItem>
+                      <SelectItem value="NT">Northern Territory</SelectItem>
+                      <SelectItem value="ACT">Australian Capital Territory</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="country">Country</Label>
+                  <Input
+                    id="country"
+                    placeholder="e.g., Australia"
+                    value={formData.country}
+                    onChange={(e) => setFormData(prev => ({ ...prev, country: e.target.value }))}
+                  />
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="contact" className="space-y-4 mt-4">
+              <div>
+                <Label htmlFor="email">Club Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="e.g., info@melbourneponyclub.com.au"
+                    value={formData.email}
+                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                    className="pl-10"
+                  />
+                </div>
+                {validationErrors.email && (
+                  <p className="text-sm text-red-500 mt-1">{validationErrors.email}</p>
+                )}
+              </div>
+              <div>
+                <Label htmlFor="website">Website</Label>
+                <div className="relative">
+                  <Globe className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="website"
+                    type="url"
+                    placeholder="e.g., https://www.melbourneponyclub.com.au"
+                    value={formData.website}
+                    onChange={(e) => setFormData(prev => ({ ...prev, website: e.target.value }))}
+                    className="pl-10"
+                  />
+                </div>
+                {validationErrors.website && (
+                  <p className="text-sm text-red-500 mt-1">{validationErrors.website}</p>
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="social" className="space-y-4 mt-4">
+              <div>
+                <Label htmlFor="logoUrl">Club Logo URL</Label>
+                <div className="relative">
+                  <Image className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="logoUrl"
+                    type="url"
+                    placeholder="e.g., https://example.com/logo.png"
+                    value={formData.logoUrl}
+                    onChange={(e) => setFormData(prev => ({ ...prev, logoUrl: e.target.value }))}
+                    className="pl-10"
+                  />
+                </div>
+                {validationErrors.logoUrl && (
+                  <p className="text-sm text-red-500 mt-1">{validationErrors.logoUrl}</p>
+                )}
+              </div>
+              
+              <div className="space-y-3">
+                <Label>Social Media Links</Label>
+                
+                <div>
+                  <Label htmlFor="facebook" className="text-sm">Facebook</Label>
+                  <Input
+                    id="facebook"
+                    placeholder="e.g., https://facebook.com/melbourneponyclub"
+                    value={formData.facebook}
+                    onChange={(e) => setFormData(prev => ({ ...prev, facebook: e.target.value }))}
+                  />
+                  {validationErrors.facebook && (
+                    <p className="text-sm text-red-500 mt-1">{validationErrors.facebook}</p>
+                  )}
+                </div>
+                
+                <div>
+                  <Label htmlFor="instagram" className="text-sm">Instagram</Label>
+                  <Input
+                    id="instagram"
+                    placeholder="e.g., https://instagram.com/melbourneponyclub"
+                    value={formData.instagram}
+                    onChange={(e) => setFormData(prev => ({ ...prev, instagram: e.target.value }))}
+                  />
+                  {validationErrors.instagram && (
+                    <p className="text-sm text-red-500 mt-1">{validationErrors.instagram}</p>
+                  )}
+                </div>
+                
+                <div>
+                  <Label htmlFor="twitter" className="text-sm">Twitter</Label>
+                  <Input
+                    id="twitter"
+                    placeholder="e.g., https://twitter.com/melbourneponyclub"
+                    value={formData.twitter}
+                    onChange={(e) => setFormData(prev => ({ ...prev, twitter: e.target.value }))}
+                  />
+                  {validationErrors.twitter && (
+                    <p className="text-sm text-red-500 mt-1">{validationErrors.twitter}</p>
+                  )}
+                </div>
+                
+                <div>
+                  <Label htmlFor="youtube" className="text-sm">YouTube</Label>
+                  <Input
+                    id="youtube"
+                    placeholder="e.g., https://youtube.com/@melbourneponyclub"
+                    value={formData.youtube}
+                    onChange={(e) => setFormData(prev => ({ ...prev, youtube: e.target.value }))}
+                  />
+                  {validationErrors.youtube && (
+                    <p className="text-sm text-red-500 mt-1">{validationErrors.youtube}</p>
+                  )}
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+
+          {Object.keys(validationErrors).length > 0 && (
+            <Alert variant="destructive" className="mt-4">
+              <AlertDescription>
+                Please fix the validation errors above before saving.
+              </AlertDescription>
+            </Alert>
+          )}
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={!formData.name.trim() || !formData.zoneId}>
+            <Button 
+              onClick={handleSave} 
+              disabled={!formData.name.trim() || !formData.zoneId || Object.keys(validationErrors).length > 0}
+            >
               {editingClub ? 'Update Club' : 'Create Club'}
             </Button>
           </DialogFooter>

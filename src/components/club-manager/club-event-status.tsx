@@ -4,9 +4,6 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
@@ -14,8 +11,6 @@ import {
   CheckCircle, 
   XCircle, 
   Clock, 
-  Search,
-  Filter,
   Download,
   Eye,
   Edit3,
@@ -77,9 +72,6 @@ export function ClubEventStatus({
   eventTypes, 
   onEventUpdate 
 }: ClubEventStatusProps) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [typeFilter, setTypeFilter] = useState<string>('all');
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
 
@@ -97,24 +89,12 @@ export function ClubEventStatus({
     return eventTypes.find(type => type.id === eventTypeId)?.name || 'Unknown Type';
   };
 
-  // Filter events based on search and filters
-  const filteredEvents = events.filter(event => {
-    const matchesSearch = event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         getEventTypeName(event.eventTypeId).toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         event.location?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'all' || event.status === statusFilter;
-    const matchesType = typeFilter === 'all' || event.eventTypeId === typeFilter;
-
-    return matchesSearch && matchesStatus && matchesType;
-  });
-
-  // Group events by status for tabs
+  // Group events by status for tabs (no filtering needed for club level)
   const eventsByStatus = {
-    submitted: filteredEvents.filter(event => event.status === 'proposed'),
-    approved: filteredEvents.filter(event => event.status === 'approved'),
-    rejected: filteredEvents.filter(event => event.status === 'rejected'),
-    all: filteredEvents
+    submitted: events.filter(event => event.status === 'proposed'),
+    approved: events.filter(event => event.status === 'approved'),
+    rejected: events.filter(event => event.status === 'rejected'),
+    all: events
   };
 
   const getStatusBadge = (status: string) => {
@@ -261,93 +241,29 @@ export function ClubEventStatus({
 
   return (
     <div className="space-y-6">
-      {/* Filters and Search */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Filter Events
-          </CardTitle>
-          <CardDescription>
-            Search and filter your submitted events
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="search">Search</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="search"
-                  placeholder="Search events..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Status</Label>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="proposed">Submitted</SelectItem>
-                  <SelectItem value="approved">Approved</SelectItem>
-                  <SelectItem value="rejected">Rejected</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Event Type</Label>
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  {eventTypes.map(type => (
-                    <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Actions</Label>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => exportEvents()}
-                  className="flex-1"
-                >
-                  <Download className="h-4 w-4 mr-1" />
-                  Export
-                </Button>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Events by Status Tabs */}
-      <Card>
+      <Card className="enhanced-card">
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            <span>Event Status Tracking</span>
+            <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              Event Status Tracking
+            </span>
             <div className="flex gap-2">
-              <Badge variant="outline">
-                {filteredEvents.length} event{filteredEvents.length !== 1 ? 's' : ''}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => exportEvents()}
+                className="premium-button-outline"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export All
+              </Button>
+              <Badge variant="outline" className="badge-enhanced">
+                {events.length} event{events.length !== 1 ? 's' : ''}
               </Badge>
             </div>
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-base">
             Track the status of all events submitted by {clubName}
           </CardDescription>
         </CardHeader>
@@ -381,14 +297,6 @@ export function ClubEventStatus({
                       Events waiting for zone approval
                     </p>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => exportEvents('proposed')}
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Export Submitted
-                  </Button>
                 </div>
                 <EventTable events={eventsByStatus.submitted} />
               </div>
@@ -403,14 +311,6 @@ export function ClubEventStatus({
                       Events approved for the calendar
                     </p>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => exportEvents('approved')}
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Export Approved
-                  </Button>
                 </div>
                 <EventTable events={eventsByStatus.approved} />
               </div>
@@ -425,14 +325,6 @@ export function ClubEventStatus({
                       Events that were not approved
                     </p>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => exportEvents('rejected')}
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Export Rejected
-                  </Button>
                 </div>
                 <EventTable events={eventsByStatus.rejected} />
               </div>
@@ -447,14 +339,6 @@ export function ClubEventStatus({
                       Complete history of event submissions
                     </p>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => exportEvents('all')}
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Export All
-                  </Button>
                 </div>
                 <EventTable events={eventsByStatus.all} />
               </div>

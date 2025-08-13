@@ -1,5 +1,5 @@
 import { adminDb } from './firebase-admin';
-import type { Zone, Club, EventType } from './types';
+import type { Zone, Club, EventType, Event } from './types';
 import type { QueryDocumentSnapshot, DocumentData } from 'firebase-admin/firestore';
 
 // Server-side functions for fetching data from Firestore
@@ -68,6 +68,34 @@ export async function getAllEventTypes(): Promise<EventType[]> {
     return eventTypes;
   } catch (error) {
     console.error('Error fetching event types:', error);
+    return [];
+  }
+}
+
+export async function getAllEvents(): Promise<Event[]> {
+  try {
+    if (!adminDb) {
+      console.warn('Firebase Admin not initialized, returning empty events array');
+      return [];
+    }
+    
+    const eventsSnapshot = await adminDb.collection('events').get();
+    const events: Event[] = [];
+    
+    eventsSnapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
+      if (doc.exists) {
+        const data = doc.data();
+        // Convert Firestore timestamp to Date if needed
+        if (data.date && typeof data.date.toDate === 'function') {
+          data.date = data.date.toDate();
+        }
+        events.push({ id: doc.id, ...data } as Event);
+      }
+    });
+    
+    return events;
+  } catch (error) {
+    console.error('Error fetching events:', error);
     return [];
   }
 }

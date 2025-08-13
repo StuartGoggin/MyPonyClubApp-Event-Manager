@@ -33,15 +33,29 @@ export class DataProcessor {
     
     for (const [key, value] of Object.entries(obj)) {
       if (value !== undefined && value !== null) {
-        // For nested objects, recursively clean them too
-        if (typeof value === 'object' && !Array.isArray(value)) {
-          const cleanedNested = this.cleanUndefinedValues(value);
-          if (Object.keys(cleanedNested).length > 0) {
-            cleaned[key as keyof T] = cleanedNested;
+        // For arrays, filter out undefined/null items and recursively clean objects
+        if (Array.isArray(value)) {
+          const cleanedArray = value
+            .filter(item => item !== undefined && item !== null)
+            .map(item => typeof item === 'object' ? this.cleanUndefinedValues(item) : item);
+          if (cleanedArray.length > 0) {
+            cleaned[key as keyof T] = cleanedArray as T[keyof T];
           }
-        } else {
+        }
+        // For nested objects, recursively clean them too
+        else if (typeof value === 'object') {
+          const cleanedNested = this.cleanUndefinedValues(value);
+          // Only include the nested object if it has at least one defined property
+          if (Object.keys(cleanedNested).length > 0) {
+            cleaned[key as keyof T] = cleanedNested as T[keyof T];
+          }
+        }
+        // For primitive values, include them directly
+        else {
           cleaned[key as keyof T] = value;
         }
+      } else {
+        // Skip undefined and null values
       }
     }
     
@@ -247,29 +261,43 @@ export class DataProcessor {
         if (existingClub.exists) {
           // Merge new data with existing, preserving detailed information
           const existingData = existingClub.data();
-          const updatedClub = {
-            ...existingData, // Preserve existing detailed data
-            ...club, // Override with new data
-            // Preserve complex structures if they exist
-            contactDetails: existingData?.contactDetails || club.contactDetails,
-            facilities: existingData?.facilities || club.facilities,
-            operations: existingData?.operations || club.operations,
-            // Update basic info from JSON
-            name: club.name,
-            physicalAddress: club.physicalAddress || existingData?.physicalAddress,
-            postalAddress: club.postalAddress || existingData?.postalAddress,
-            email: club.email || existingData?.email,
-            phone: club.phone || existingData?.phone,
-            website: club.website || existingData?.website,
-            websiteUrl: club.websiteUrl || existingData?.websiteUrl,
-            socialMediaUrl: club.socialMediaUrl || existingData?.socialMediaUrl
-          };
           
-          await clubRef.set(updatedClub, { merge: true });
+          // Create updated club object carefully, avoiding undefined spread
+          const updatedClub: any = { ...existingData };
+          
+          // Update basic info from JSON (only if not undefined)
+          if (club.name !== undefined) updatedClub.name = club.name;
+          if (club.physicalAddress !== undefined) updatedClub.physicalAddress = club.physicalAddress;
+          if (club.postalAddress !== undefined) updatedClub.postalAddress = club.postalAddress;
+          if (club.email !== undefined) updatedClub.email = club.email;
+          if (club.phone !== undefined) updatedClub.phone = club.phone;
+          if (club.website !== undefined) updatedClub.website = club.website;
+          if (club.websiteUrl !== undefined) updatedClub.websiteUrl = club.websiteUrl;
+          if (club.socialMediaUrl !== undefined) updatedClub.socialMediaUrl = club.socialMediaUrl;
+          if (club.socialMedia !== undefined) updatedClub.socialMedia = club.socialMedia;
+
+          // Only preserve complex structures if they exist in existing data
+          if (existingData?.contactDetails) {
+            updatedClub.contactDetails = existingData.contactDetails;
+          }
+          if (existingData?.facilities) {
+            updatedClub.facilities = existingData.facilities;
+          }
+          if (existingData?.operations) {
+            updatedClub.operations = existingData.operations;
+          }
+          
+          // Clean undefined values before saving to Firestore
+          const cleanedClub = this.cleanUndefinedValues(updatedClub);
+          
+          await clubRef.set(cleanedClub, { merge: true });
           updated++;
           console.log(`✅ Updated club: ${club.name}`);
         } else {
-          await clubRef.set(club);
+          // Clean undefined values for new clubs too
+          const cleanedClub = this.cleanUndefinedValues(club);
+          
+          await clubRef.set(cleanedClub);
           created++;
           console.log(`🆕 Created club: ${club.name}`);
         }

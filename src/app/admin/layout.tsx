@@ -28,7 +28,7 @@ export default function AdminLayout({ children }: PropsWithChildren) {
             <AdminNavCard
               href="/admin/seed"
               icon={<Database className="h-6 w-6" />}
-              title="Database Seeding"
+              title="Manage Data"
               description="Initialize zones, clubs, and event types"
               badge="System"
             />

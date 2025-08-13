@@ -39,6 +39,7 @@ interface EventCalendarProps {
   eventTypes: EventType[];
   zones: Zone[];
   today: Date;
+  bypassSourceFiltering?: boolean; // New prop to bypass event source filtering
 }
 
 const haversineDistance = (
@@ -228,6 +229,7 @@ export function EventCalendar({
   eventTypes,
   zones,
   today,
+  bypassSourceFiltering = false,
 }: EventCalendarProps) {
   const router = useRouter();
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -251,12 +253,15 @@ export function EventCalendar({
   }, [selectedZoneId, clubs]);
 
   const sourceFilteredEvents = useMemo(() => {
+    // If bypassSourceFiltering is true, return all events (used in club manager)
+    if (bypassSourceFiltering) return events;
     if (eventSources.length === 0) return events;
     return events.filter(event => eventSources.includes(event.source));
-  }, [events, eventSources]);
+  }, [events, eventSources, bypassSourceFiltering]);
 
   const filteredEvents = useMemo(() => {
-    const eventsFromSource = events.filter(event => eventSources.includes(event.source));
+    // Use sourceFilteredEvents instead of filtering again
+    const eventsFromSource = bypassSourceFiltering ? events : events.filter(event => eventSources.includes(event.source));
 
     if (filterMode === 'distance' && homeClubId) {
         const homeClub = clubs.find(c => c.id === homeClubId);
@@ -287,7 +292,7 @@ export function EventCalendar({
       }
       return true;
     });
-  }, [events, clubs, eventSources, filterMode, homeClubId, distance, selectedZoneId, selectedClubId]);
+  }, [events, clubs, eventSources, filterMode, homeClubId, distance, selectedZoneId, selectedClubId, bypassSourceFiltering]);
 
   const handleZoneChange = (zoneId: string) => {
     setSelectedZoneId(zoneId);
@@ -317,6 +322,7 @@ export function EventCalendar({
 
   const selectedEvent = events.find(e => e.id === selectedEventId);
   const selectedClub = clubs.find(c => c.id === selectedEvent?.clubId);
+  const selectedZone = zones.find(z => z.id === selectedClub?.zoneId);
   const selectedEventType = eventTypes.find(et => et.id === selectedEvent?.eventTypeId);
 
   const getNearbyEvents = (event: Event) => {
@@ -329,10 +335,6 @@ export function EventCalendar({
         return dayDiff <= 2;
     });
   };
-  
-  const handleEventApproved = () => {
-    router.refresh();
-  }
 
   const yearMonths = Array.from({ length: 12 }, (_, i) => {
     return setYear(startOfYear(new Date()), getYear(currentDate));
@@ -445,9 +447,9 @@ export function EventCalendar({
         onOpenChange={setDialogOpen}
         event={selectedEvent || null}
         club={selectedClub}
+        zone={selectedZone}
         eventType={selectedEventType}
         nearbyEvents={selectedEvent ? getNearbyEvents(selectedEvent) : []}
-        onEventApproved={handleEventApproved}
       />
     </div>
   );

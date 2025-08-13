@@ -11,13 +11,40 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { CheckCircle, XCircle, Clock, Calendar, MapPin, User, FileText, AlertTriangle } from 'lucide-react';
 import { Event, Club, EventType } from '@/lib/types';
 
-// Utility function to format dates
-const formatDate = (date: Date) => {
-  return new Intl.DateTimeFormat('en-AU', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric'
-  }).format(date);
+// Utility function to format dates with validation
+const formatDate = (date: Date | string | any) => {
+  try {
+    // Handle various date formats that might come from the database
+    let validDate: Date;
+    
+    if (date instanceof Date) {
+      validDate = date;
+    } else if (typeof date === 'string') {
+      validDate = new Date(date);
+    } else if (date && typeof date === 'object' && date.toDate) {
+      // Firestore timestamp
+      validDate = date.toDate();
+    } else if (date && typeof date === 'object' && date.seconds) {
+      // Firestore timestamp with seconds
+      validDate = new Date(date.seconds * 1000);
+    } else {
+      throw new Error('Invalid date format');
+    }
+    
+    // Check if the date is valid
+    if (isNaN(validDate.getTime())) {
+      throw new Error('Invalid date value');
+    }
+    
+    return new Intl.DateTimeFormat('en-AU', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    }).format(validDate);
+  } catch (error) {
+    console.error('Error formatting date:', error, 'Original date:', date);
+    return 'Invalid Date';
+  }
 };
 
 interface ZoneEventApprovalProps {

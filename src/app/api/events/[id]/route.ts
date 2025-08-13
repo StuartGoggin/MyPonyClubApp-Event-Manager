@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
+import { Timestamp } from 'firebase-admin/firestore';
 
 export async function PATCH(
   request: NextRequest,
@@ -23,22 +24,35 @@ export async function PATCH(
       );
     }
 
+    // Handle date conversion if provided
+    const processedUpdateData = { ...updateData };
+    if (updateData.date) {
+      const eventDate = new Date(updateData.date);
+      if (isNaN(eventDate.getTime())) {
+        return NextResponse.json(
+          { error: 'Invalid date provided' },
+          { status: 400 }
+        );
+      }
+      processedUpdateData.date = Timestamp.fromDate(eventDate);
+    }
+
     // Add timestamp for the update
     const eventUpdate = {
-      ...updateData,
-      updatedAt: new Date()
+      ...processedUpdateData,
+      updatedAt: Timestamp.now()
     };
 
     await adminDb.collection('events').doc(eventId).update(eventUpdate);
     
     return NextResponse.json({ 
       success: true,
-      message: 'Event status updated successfully'
+      message: 'Event updated successfully'
     });
   } catch (error) {
-    console.error('Error updating event status:', error);
+    console.error('Error updating event:', error);
     return NextResponse.json(
-      { error: 'Failed to update event status' },
+      { error: 'Failed to update event' },
       { status: 500 }
     );
   }

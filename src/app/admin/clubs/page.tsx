@@ -21,6 +21,10 @@ export default function AdminClubsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [clubToDelete, setClubToDelete] = useState<Club | null>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
   const [editingClub, setEditingClub] = useState<Club | null>(null);
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
   const [formData, setFormData] = useState({ 
@@ -217,10 +221,37 @@ export default function AdminClubsPage() {
   };
 
   const handleDelete = async (club: Club) => {
-    // In a real app, you'd check if the club has any events first
-    if (confirm(`Are you sure you want to delete "${club.name}"?`)) {
-      setClubs(prev => prev.filter(c => c.id !== club.id));
+    setClubToDelete(club);
+    setDeleteConfirmText('');
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!clubToDelete || deleteConfirmText !== clubToDelete.name) {
+      return;
     }
+
+    setIsDeleting(true);
+    try {
+      // In a real app, you'd make an API call to delete from Firestore
+      // and also check if the club has any associated events
+      setClubs(prev => prev.filter(c => c.id !== clubToDelete.id));
+      
+      setIsDeleteDialogOpen(false);
+      setClubToDelete(null);
+      setDeleteConfirmText('');
+    } catch (error) {
+      console.error('Error deleting club:', error);
+      // Handle error appropriately
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const cancelDelete = () => {
+    setIsDeleteDialogOpen(false);
+    setClubToDelete(null);
+    setDeleteConfirmText('');
   };
 
   return (
@@ -450,13 +481,15 @@ export default function AdminClubsPage() {
                               variant="outline"
                               size="sm"
                               onClick={() => handleEdit(club)}
+                              title="Edit club details"
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
                             <Button
-                              variant="outline"
+                              variant="destructive"
                               size="sm"
                               onClick={() => handleDelete(club)}
+                              title="Delete club (requires confirmation)"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -745,6 +778,95 @@ export default function AdminClubsPage() {
               disabled={!formData.name.trim() || !formData.zoneId || Object.keys(validationErrors).length > 0}
             >
               {editingClub ? 'Update Club' : 'Create Club'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <Trash2 className="h-5 w-5" />
+              Delete Club
+            </DialogTitle>
+            <DialogDescription>
+              This action cannot be undone. This will permanently delete the club and all associated data.
+            </DialogDescription>
+          </DialogHeader>
+
+          {clubToDelete && (
+            <div className="space-y-4">
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                <div className="flex items-center gap-2 text-red-800">
+                  <MapPin className="h-4 w-4" />
+                  <span className="font-medium">{clubToDelete.name}</span>
+                </div>
+                <div className="text-sm text-red-700 mt-1">
+                  Zone: {getZoneName(clubToDelete.zoneId)}
+                </div>
+                {clubToDelete.email && (
+                  <div className="text-sm text-red-700">
+                    Contact: {clubToDelete.email}
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="deleteConfirm" className="text-sm font-medium">
+                  To confirm deletion, type the club name exactly as shown above:
+                </Label>
+                <Input
+                  id="deleteConfirm"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder={`Type "${clubToDelete.name}" to confirm`}
+                  className={`${
+                    deleteConfirmText && deleteConfirmText !== clubToDelete.name 
+                      ? 'border-red-300 focus:border-red-500' 
+                      : ''
+                  }`}
+                />
+                {deleteConfirmText && deleteConfirmText !== clubToDelete.name && (
+                  <p className="text-sm text-red-600">
+                    Club name does not match. Please type exactly: "{clubToDelete.name}"
+                  </p>
+                )}
+              </div>
+
+              <Alert variant="destructive">
+                <AlertDescription className="text-sm">
+                  <strong>Warning:</strong> In a production environment, you should also check if this club has any associated events before allowing deletion.
+                </AlertDescription>
+              </Alert>
+            </div>
+          )}
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={cancelDelete}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={!clubToDelete || deleteConfirmText !== clubToDelete.name || isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Club
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

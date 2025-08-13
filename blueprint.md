@@ -50,6 +50,21 @@ This document outlines the features and ideas for the PonyClub Events applicatio
     - **Database Maintenance Section**: Cleanup and purge operations
     - **Visual Separation**: Clear card-based layout with distinct icons and descriptions
 
+- **Dedicated Club Management**: Focused club administration interface:
+    - **CRUD Operations**: Create, read, update, and delete clubs with comprehensive form validation
+    - **Safe Delete System**: Multi-layered protection against accidental club deletion:
+        - **Confirmation Dialog**: Requires opening a dedicated delete confirmation dialog
+        - **Name Verification**: User must type the exact club name to enable deletion
+        - **Visual Warnings**: Red styling, warning icons, and clear messaging throughout
+        - **Loading Protection**: Prevents multiple submissions during deletion process
+        - **Context Display**: Shows club details (name, zone, contact) before deletion
+        - **Production Safeguards**: Includes warnings about checking for associated events
+    - **Zone-based Organization**: Clubs grouped and displayed by their assigned zones
+    - **Real-time Data Loading**: Fetches live data from Firestore with loading states and error handling
+    - **Summary Statistics**: Dashboard showing total clubs, clubs with coordinates, and active zones
+    - **Rich Club Profiles**: Detailed club information including contact, address, social media, and branding
+    - **Separated Concerns**: Import/export functionality moved to dedicated "Manage Data" section
+
 - **Zone Management**: Complete zone administration with CRUD operations and data import/export
 - **Event Types Management**: Configurable event types with import/export capabilities
 - **Database Seeding**: Automated seeding of configuration data from ClubZoneData.json
@@ -65,6 +80,10 @@ This document outlines the features and ideas for the PonyClub Events applicatio
     - Smart status indicators (Complete/Basic/Minimal)
 - **Responsive Design**: Mobile-friendly interface that works across all device sizes
 - **Visual Icons**: Intuitive icons for different data types and actions
+- **Loading States**: Comprehensive loading indicators and error handling for data fetching
+- **Separation of Concerns**: Clear functional boundaries between different admin sections:
+    - **Club Management**: Focus on individual club CRUD operations and viewing
+    - **Manage Data**: Centralized location for bulk operations (import, export, seeding, maintenance)
 
 ### AI & Intelligence
 - **AI-Powered Date Suggestions**: Using Google's Genkit for intelligent event scheduling:
@@ -150,6 +169,26 @@ This document outlines the features and ideas for the PonyClub Events applicatio
 - **Progress Indicators**: Separate progress tracking for different export operations
 - **Result Feedback**: Individual success/error messages for each operation
 - **Visual Separation**: Clear distinction between different function groups
+- **Enhanced Security UX**: Implemented safety-first approach for destructive operations:
+    - **Destructive Button Styling**: Delete buttons use red "destructive" variant for clear visual warning
+    - **Confirmation Dialogs**: Replace simple browser confirms with rich, informative dialogs
+    - **Step-by-step Guidance**: Clear instructions and validation feedback for dangerous operations
+    - **Tooltips and Context**: Helpful tooltips and contextual information for all actions
+
+### Club Management Redesign
+- **Real-time Data Integration**: Connected to Firestore with live data fetching and loading states
+- **Focused User Interface**: Removed import/export functionality to focus on core CRUD operations
+- **Enhanced Data Display**: Zone-based organization with comprehensive club information
+- **Summary Dashboard**: Real-time statistics showing total clubs, clubs with coordinates, and active zones
+- **Error Handling**: Robust error handling with retry functionality for data loading failures
+- **API Integration**: Created dedicated API endpoints (/api/zones, /api/clubs) for data fetching
+- **Separation of Concerns**: Moved bulk operations to "Manage Data" section for cleaner interface
+- **Safe Delete Implementation**: Multi-step confirmation system to prevent accidental club deletion:
+    - **Name Confirmation Required**: Users must type exact club name to enable deletion
+    - **Visual Warning System**: Red styling, warning icons, and clear danger messaging
+    - **Context Information**: Shows club details and zone assignment before deletion
+    - **Production Safeguards**: Includes warnings about checking for associated events
+    - **Loading States**: Prevents multiple deletion attempts with proper loading indicators
 
 ### Club Management Overhaul
 - Completely redesigned club data structure with comprehensive information capture

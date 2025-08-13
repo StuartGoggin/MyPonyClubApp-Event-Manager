@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Plus, Edit, Trash2, Users, MapPin, Globe, Mail, Image } from 'lucide-react';
 import { Zone, Club } from '@/lib/types';
-import { zonesMockClient, clubsMockClient } from '@/lib/admin-data';
+import { zonesMock, clubsMock } from '@/lib/client-data';
 import { DataImportExport } from '@/components/admin/data-import-export';
 import { validateClubData, ValidationErrors, formatAddress } from '@/lib/validation';
 
@@ -49,8 +49,8 @@ export default function AdminClubsPage() {
 
   useEffect(() => {
     // Initialize with mock data for now
-    setZones(zonesMockClient);
-    setClubs(clubsMockClient);
+    setZones(zonesMock);
+    setClubs(clubsMock);
   }, []);
 
   const resetFormData = () => ({

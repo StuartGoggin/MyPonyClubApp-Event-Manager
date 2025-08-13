@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { CheckCircle, XCircle, Clock, Calendar, MapPin, User, Phone, FileText, AlertTriangle } from 'lucide-react';
 import { Event, Club, EventType, Zone, EventStatus } from '@/lib/types';
-import { clubsMockClient, eventTypesMockClient, zonesMockClient } from '@/lib/admin-data';
+import { clubsMock, eventTypesMock, zonesMock } from '@/lib/client-data';
 
 export default function AdminEventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
@@ -54,9 +54,9 @@ export default function AdminEventsPage() {
     ];
     
     setEvents(mockEvents);
-    setClubs(clubsMockClient);
-    setEventTypes(eventTypesMockClient);
-    setZones(zonesMockClient);
+    setClubs(clubsMock);
+    setEventTypes(eventTypesMock);
+    setZones(zonesMock);
   }, []);
 
   const handleAction = (event: Event, action: 'approve' | 'reject') => {

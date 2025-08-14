@@ -26,20 +26,19 @@ export default function DashboardPage() {
           fetch('/api/event-types', { cache: 'no-store' })
         ]);
 
-        const [zonesData, clubsData, eventsData, eventTypesData] = await Promise.all([
-          zonesResponse.json(),
-          clubsResponse.json(),
-          eventsResponse.json(),
-          eventTypesResponse.json()
-        ]);
+        // Handle responses with error checking
+        const zonesData = zonesResponse.ok ? await zonesResponse.json() : { zones: [] };
+        const clubsData = clubsResponse.ok ? await clubsResponse.json() : { clubs: [] };
+        const eventsData = eventsResponse.ok ? await eventsResponse.json() : { events: [] };
+        const eventTypesData = eventTypesResponse.ok ? await eventTypesResponse.json() : { eventTypes: [] };
 
         console.log('Main dashboard API responses:', { zonesData, clubsData, eventsData, eventTypesData });
 
-        // Extract arrays from API responses
-        setZones(zonesData.zones || zonesData || []);
-        setClubs(clubsData.clubs || clubsData || []);
-        setEvents(eventsData.events || eventsData || []);
-        setEventTypes(eventTypesData.eventTypes || eventTypesData || []);
+        // Extract arrays from API responses, ensuring they are always arrays
+        setZones(Array.isArray(zonesData.zones) ? zonesData.zones : Array.isArray(zonesData) ? zonesData : []);
+        setClubs(Array.isArray(clubsData.clubs) ? clubsData.clubs : Array.isArray(clubsData) ? clubsData : []);
+        setEvents(Array.isArray(eventsData.events) ? eventsData.events : Array.isArray(eventsData) ? eventsData : []);
+        setEventTypes(Array.isArray(eventTypesData.eventTypes) ? eventTypesData.eventTypes : Array.isArray(eventTypesData) ? eventTypesData : []);
 
       } catch (err) {
         console.error('Error fetching dashboard data:', err);

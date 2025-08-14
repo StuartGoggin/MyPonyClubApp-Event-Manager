@@ -96,6 +96,7 @@ const CalendarGrid = ({
 
   const activeDaysOfMonth = useMemo(() => {
     if (!isYearView) return new Set();
+    if (!Array.isArray(events)) return new Set();
 
     const activeDays = new Set<number>();
     const monthEvents = events.filter(event => isSameMonth(new Date(event.date), month));
@@ -135,7 +136,7 @@ const CalendarGrid = ({
                 const isSunday = getDay(day) === 0;
                 const isCurrentDayToday = isSameDay(day, today);
 
-                const dayEvents = events.filter(event => isSameDay(new Date(event.date), day));
+                const dayEvents = Array.isArray(events) ? events.filter(event => isSameDay(new Date(event.date), day)) : [];
                 const isDayActiveInMonth = activeDaysOfMonth.has(dayIdx);
                 const isDayInCurrentMonth = isSameMonth(day, month);
 
@@ -253,6 +254,9 @@ export function EventCalendar({
   }, [selectedZoneId, clubs]);
 
   const sourceFilteredEvents = useMemo(() => {
+    // Ensure events is an array
+    if (!Array.isArray(events)) return [];
+    
     // If bypassSourceFiltering is true, return all events (used in club manager)
     if (bypassSourceFiltering) return events;
     if (eventSources.length === 0) return events;
@@ -260,8 +264,9 @@ export function EventCalendar({
   }, [events, eventSources, bypassSourceFiltering]);
 
   const filteredEvents = useMemo(() => {
-    // Use sourceFilteredEvents instead of filtering again
-    const eventsFromSource = bypassSourceFiltering ? events : events.filter(event => eventSources.includes(event.source));
+    // Use sourceFilteredEvents consistently and ensure it's an array
+    const eventsFromSource = sourceFilteredEvents;
+    if (!Array.isArray(eventsFromSource)) return [];
 
     if (filterMode === 'distance' && homeClubId) {
         const homeClub = clubs.find(c => c.id === homeClubId);
@@ -292,7 +297,7 @@ export function EventCalendar({
       }
       return true;
     });
-  }, [events, clubs, eventSources, filterMode, homeClubId, distance, selectedZoneId, selectedClubId, bypassSourceFiltering]);
+  }, [sourceFilteredEvents, clubs, filterMode, homeClubId, distance, selectedZoneId, selectedClubId]);
 
   const handleZoneChange = (zoneId: string) => {
     setSelectedZoneId(zoneId);
@@ -326,7 +331,7 @@ export function EventCalendar({
   const selectedEventType = eventTypes.find(et => et.id === selectedEvent?.eventTypeId);
 
   const getNearbyEvents = (event: Event) => {
-    if (!event || event.status === 'public_holiday') return [];
+    if (!event || event.status === 'public_holiday' || !Array.isArray(events)) return [];
     const eventDate = new Date(event.date);
     return events.filter(e => {
         if (e.id === event.id) return false;

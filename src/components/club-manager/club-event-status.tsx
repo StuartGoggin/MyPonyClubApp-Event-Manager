@@ -5,13 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Calendar, 
   CheckCircle, 
   XCircle, 
   Clock, 
-  Download,
   Eye,
   Edit3,
   AlertCircle
@@ -89,7 +87,7 @@ export function ClubEventStatus({
     return eventTypes.find(type => type.id === eventTypeId)?.name || 'Unknown Type';
   };
 
-  // Group events by status for tabs (no filtering needed for club level)
+  // Group events by status for summary badges
   const eventsByStatus = {
     submitted: events.filter(event => event.status === 'proposed'),
     approved: events.filter(event => event.status === 'approved'),
@@ -100,250 +98,185 @@ export function ClubEventStatus({
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'proposed':
-        return <Badge variant="outline" className="text-amber-600 border-amber-600">Submitted</Badge>;
+        return (
+          <Badge className="bg-gradient-to-r from-amber-100 to-amber-200 text-amber-800 border-amber-300 shadow-sm">
+            <Clock className="h-3 w-3 mr-1" />
+            Submitted
+          </Badge>
+        );
       case 'approved':
-        return <Badge variant="default" className="bg-green-600">Approved</Badge>;
+        return (
+          <Badge className="bg-gradient-to-r from-green-100 to-green-200 text-green-800 border-green-300 shadow-sm">
+            <CheckCircle className="h-3 w-3 mr-1" />
+            Approved
+          </Badge>
+        );
       case 'rejected':
-        return <Badge variant="destructive">Rejected</Badge>;
+        return (
+          <Badge className="bg-gradient-to-r from-red-100 to-red-200 text-red-800 border-red-300 shadow-sm">
+            <XCircle className="h-3 w-3 mr-1" />
+            Rejected
+          </Badge>
+        );
       case 'public_holiday':
-        return <Badge variant="secondary">Public Holiday</Badge>;
+        return (
+          <Badge className="bg-gradient-to-r from-purple-100 to-purple-200 text-purple-800 border-purple-300 shadow-sm">
+            Public Holiday
+          </Badge>
+        );
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return (
+          <Badge variant="outline" className="shadow-sm">
+            {status}
+          </Badge>
+        );
     }
   };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'proposed':
-        return <Clock className="h-4 w-4 text-amber-500" />;
-      case 'approved':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'rejected':
-        return <XCircle className="h-4 w-4 text-red-500" />;
-      default:
-        return <AlertCircle className="h-4 w-4 text-gray-500" />;
-    }
-  };
-
-  const exportEvents = async (status?: string) => {
-    try {
-      const params = new URLSearchParams({ clubId });
-      if (status && status !== 'all') params.append('status', status);
-      
-      const response = await fetch(`/api/admin/export-events?${params}`);
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${clubName}_events_${status || 'all'}_${new Date().toISOString().split('T')[0]}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-      }
-    } catch (error) {
-      console.error('Error exporting events:', error);
-    }
-  };
-
-  const EventTable = ({ events, showActions = false }: { events: Event[], showActions?: boolean }) => (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Event Details</TableHead>
-          <TableHead>Date</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Submitted By</TableHead>
-          <TableHead className="text-right">Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {events.length === 0 ? (
-          <TableRow>
-            <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-              No events found
-            </TableCell>
-          </TableRow>
-        ) : (
-          events.map(event => {
-            const canEdit = event.status === 'proposed' || event.status === 'approved' || event.status === 'rejected';
-            
-            return (
-              <TableRow key={event.id}>
-                <TableCell>
-                  <div>
-                    <div className="font-medium">{event.name}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {getEventTypeName(event.eventTypeId)}
-                    </div>
-                    {event.isQualifier && (
-                      <Badge variant="secondary" className="mt-1">Qualifier</Badge>
-                    )}
-                    {event.location && (
-                      <div className="text-sm text-muted-foreground mt-1">
-                        📍 {event.location}
-                      </div>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    {formatDate(event.date)}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    {getStatusIcon(event.status)}
-                    {getStatusBadge(event.status)}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  {event.coordinatorName && (
-                    <div>
-                      <div className="font-medium">{event.coordinatorName}</div>
-                      {event.coordinatorContact && (
-                        <div className="text-sm text-muted-foreground">{event.coordinatorContact}</div>
-                      )}
-                    </div>
-                  )}
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
-                    {canEdit && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleEditEvent(event)}
-                        className="flex items-center gap-1"
-                      >
-                        <Edit3 className="h-4 w-4" />
-                        Edit
-                      </Button>
-                    )}
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => {/* TODO: View event details */}}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            );
-          })
-        )}
-      </TableBody>
-    </Table>
-  );
 
   return (
     <div className="space-y-6">
-      {/* Events by Status Tabs */}
-      <Card className="enhanced-card">
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Event Status Tracking
-            </span>
+      {/* Main Events Table */}
+      <Card className="enhanced-card border-l-4 border-l-primary shadow-lg">
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-2xl bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                Event Status Overview
+              </CardTitle>
+              <CardDescription className="text-base mt-2">
+                All events submitted by {clubName} - {events.length} total event{events.length !== 1 ? 's' : ''}
+              </CardDescription>
+            </div>
             <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => exportEvents()}
-                className="premium-button-outline"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Export All
-              </Button>
-              <Badge variant="outline" className="badge-enhanced">
-                {events.length} event{events.length !== 1 ? 's' : ''}
+              <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 px-3 py-1">
+                <Clock className="h-3 w-3 mr-1" />
+                {eventsByStatus.submitted.length} Pending
+              </Badge>
+              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 px-3 py-1">
+                <CheckCircle className="h-3 w-3 mr-1" />
+                {eventsByStatus.approved.length} Approved
+              </Badge>
+              <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 px-3 py-1">
+                <XCircle className="h-3 w-3 mr-1" />
+                {eventsByStatus.rejected.length} Rejected
               </Badge>
             </div>
-          </CardTitle>
-          <CardDescription className="text-base">
-            Track the status of all events submitted by {clubName}
-          </CardDescription>
+          </div>
+          <div className="h-1 w-32 bg-gradient-to-r from-primary to-accent rounded-full mt-4"></div>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="submitted" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="submitted" className="flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                Submitted ({eventsByStatus.submitted.length})
-              </TabsTrigger>
-              <TabsTrigger value="approved" className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4" />
-                Approved ({eventsByStatus.approved.length})
-              </TabsTrigger>
-              <TabsTrigger value="rejected" className="flex items-center gap-2">
-                <XCircle className="h-4 w-4" />
-                Rejected ({eventsByStatus.rejected.length})
-              </TabsTrigger>
-              <TabsTrigger value="all" className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                All ({eventsByStatus.all.length})
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="submitted" className="mt-6">
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h3 className="text-lg font-medium">Submitted Events</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Events waiting for zone approval
-                    </p>
-                  </div>
-                </div>
-                <EventTable events={eventsByStatus.submitted} />
+          {events.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center">
+                <Calendar className="h-12 w-12 text-slate-400" />
               </div>
-            </TabsContent>
-
-            <TabsContent value="approved" className="mt-6">
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h3 className="text-lg font-medium">Approved Events</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Events approved for the calendar
-                    </p>
-                  </div>
-                </div>
-                <EventTable events={eventsByStatus.approved} />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="rejected" className="mt-6">
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h3 className="text-lg font-medium">Rejected Events</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Events that were not approved
-                    </p>
-                  </div>
-                </div>
-                <EventTable events={eventsByStatus.rejected} />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="all" className="mt-6">
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h3 className="text-lg font-medium">All Events</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Complete history of event submissions
-                    </p>
-                  </div>
-                </div>
-                <EventTable events={eventsByStatus.all} />
-              </div>
-            </TabsContent>
-          </Tabs>
+              <h3 className="text-xl font-semibold text-slate-600 mb-2">No Events Yet</h3>
+              <p className="text-slate-500 max-w-sm mx-auto">
+                You haven't submitted any events yet. Use the "Submit Event" tab to create your first event request.
+              </p>
+            </div>
+          ) : (
+            <div className="rounded-lg border border-slate-200 overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gradient-to-r from-slate-50 to-slate-100 hover:from-slate-100 hover:to-slate-150">
+                    <TableHead className="font-semibold text-slate-700">Event Details</TableHead>
+                    <TableHead className="font-semibold text-slate-700">Date</TableHead>
+                    <TableHead className="font-semibold text-slate-700">Status</TableHead>
+                    <TableHead className="font-semibold text-slate-700">Coordinator</TableHead>
+                    <TableHead className="text-right font-semibold text-slate-700">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {events.map((event, index) => {
+                    const canEdit = event.status === 'proposed' || event.status === 'approved' || event.status === 'rejected';
+                    const isEven = index % 2 === 0;
+                    
+                    return (
+                      <TableRow 
+                        key={event.id} 
+                        className={`transition-all duration-200 hover:bg-slate-50 hover:shadow-sm ${
+                          isEven ? 'bg-white' : 'bg-slate-25'
+                        }`}
+                      >
+                        <TableCell className="py-4">
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-semibold text-slate-900">{event.name}</h4>
+                              {event.isQualifier && (
+                                <Badge variant="secondary" className="bg-purple-100 text-purple-700 border-purple-200 text-xs">
+                                  Qualifier
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-4 text-sm text-slate-600">
+                              <span className="bg-slate-100 px-2 py-1 rounded-md font-medium">
+                                {getEventTypeName(event.eventTypeId)}
+                              </span>
+                              {event.location && (
+                                <span className="flex items-center gap-1">
+                                  <span>📍</span>
+                                  {event.location}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-4">
+                          <div className="flex items-center gap-2 text-slate-700">
+                            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                              <Calendar className="h-4 w-4 text-blue-600" />
+                            </div>
+                            <span className="font-medium">{formatDate(event.date)}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-4">
+                          <div className="flex items-center gap-3">
+                            {getStatusBadge(event.status)}
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-4">
+                          {event.coordinatorName ? (
+                            <div className="space-y-1">
+                              <div className="font-medium text-slate-900">{event.coordinatorName}</div>
+                              {event.coordinatorContact && (
+                                <div className="text-sm text-slate-500">{event.coordinatorContact}</div>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-slate-400 italic">Not specified</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right py-4">
+                          <div className="flex justify-end gap-2">
+                            {canEdit && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleEditEvent(event)}
+                                className="premium-button-outline hover:scale-105 transition-transform"
+                              >
+                                <Edit3 className="h-4 w-4 mr-1" />
+                                Edit
+                              </Button>
+                            )}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {/* TODO: View event details */}}
+                              className="hover:bg-slate-100 hover:scale-105 transition-all"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
 

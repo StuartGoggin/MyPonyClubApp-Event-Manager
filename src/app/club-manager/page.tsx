@@ -5,9 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Calendar, CheckCircle, Clock, Users, Building, PlusCircle } from 'lucide-react';
+import { MapPin, CheckCircle, Clock, Users, Building, PlusCircle, Activity } from 'lucide-react';
 import { Zone, Club, Event, EventType } from '@/lib/types';
-import { EventCalendar } from '@/components/dashboard/event-calendar';
 import { ClubEventSubmission } from '@/components/club-manager/club-event-submission';
 import { ClubEventStatus } from '@/components/club-manager/club-event-status';
 
@@ -211,7 +210,7 @@ export default function ClubEventManagerDashboard() {
                 <Card className="enhanced-card border-l-4 border-l-blue-400">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <Calendar className="h-4 w-4 text-blue-500" />
+                      <Activity className="h-4 w-4 text-blue-500" />
                       <span className="text-sm font-medium">Total Events</span>
                     </div>
                     <div className="text-2xl font-bold text-blue-600">{totalEvents}</div>
@@ -230,42 +229,17 @@ export default function ClubEventManagerDashboard() {
       {selectedClub && (
         <Card>
           <CardContent className="p-6">
-            <Tabs defaultValue="calendar" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="calendar" className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
-                  Club Calendar
+            <Tabs defaultValue="status" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="status" className="flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  Event Status ({totalEvents})
                 </TabsTrigger>
                 <TabsTrigger value="submit" className="flex items-center gap-2">
                   <PlusCircle className="h-4 w-4" />
                   Submit Event
                 </TabsTrigger>
-                <TabsTrigger value="status" className="flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
-                  Event Status ({totalEvents})
-                </TabsTrigger>
               </TabsList>
-
-              <TabsContent value="calendar" className="mt-6">
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h3 className="text-lg font-medium">Club Event Calendar</h3>
-                      <p className="text-sm text-muted-foreground">
-                        View all events for {selectedClub.name}
-                      </p>
-                    </div>
-                  </div>
-                  <EventCalendar 
-                    events={clubEvents} 
-                    clubs={clubs} 
-                    eventTypes={eventTypes}
-                    zones={zones}
-                    today={new Date()}
-                    bypassSourceFiltering={true}
-                  />
-                </div>
-              </TabsContent>
 
               <TabsContent value="submit" className="mt-6">
                 <ClubEventSubmission

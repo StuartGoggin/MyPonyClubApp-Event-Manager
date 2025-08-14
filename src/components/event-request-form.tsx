@@ -119,23 +119,6 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
     setIsClient(true);
   }, []);
 
-  const form = useForm<EventRequestFormValues>({
-    resolver: zodResolver(eventRequestSchema),
-    defaultValues: {
-      clubId: '',
-      name: '',
-      location: '',
-      isQualifier: false,
-      eventTypeId: '',
-      dates: [{ value: new Date() }],
-      coordinatorName: '',
-      coordinatorContact: '',
-      notes: '',
-      submittedBy: '',
-      submittedByContact: '',
-    },
-  });
-
   // Handle form submission success
   useEffect(() => {
     if (state.success) {

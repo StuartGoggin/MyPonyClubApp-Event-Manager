@@ -120,16 +120,18 @@ export default function ZoneManagerDashboard() {
   return (
     <div className="space-y-6">
       {/* Header with Zone Selection */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between enhanced-card p-6 rounded-lg">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Zone Manager Dashboard</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            Zone Manager Dashboard
+          </h1>
+          <p className="text-muted-foreground text-lg">
             Manage events and clubs within your authorized zones
           </p>
         </div>
         <div className="w-64">
           <Select value={selectedZoneId} onValueChange={setSelectedZoneId}>
-            <SelectTrigger>
+            <SelectTrigger className="enhanced-select">
               <SelectValue placeholder="Select a zone" />
             </SelectTrigger>
             <SelectContent>
@@ -153,7 +155,7 @@ export default function ZoneManagerDashboard() {
         <>
           {/* Zone Overview Stats */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card>
+            <Card className="enhanced-card border-l-4 border-l-amber-400">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -164,7 +166,7 @@ export default function ZoneManagerDashboard() {
                 </div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="enhanced-card border-l-4 border-l-green-400">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -175,7 +177,7 @@ export default function ZoneManagerDashboard() {
                 </div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="enhanced-card border-l-4 border-l-blue-400">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -186,7 +188,7 @@ export default function ZoneManagerDashboard() {
                 </div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="enhanced-card border-l-4 border-l-purple-400">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>

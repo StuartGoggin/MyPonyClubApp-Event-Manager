@@ -107,7 +107,7 @@ export default function ManageEventsPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Manage my Events</h1>
         <p className="text-muted-foreground">
-          Review, approve, and manage event requests from your zone's clubs
+          Review, approve, and manage event requests from your zone&apos;s clubs
         </p>
       </div>
 

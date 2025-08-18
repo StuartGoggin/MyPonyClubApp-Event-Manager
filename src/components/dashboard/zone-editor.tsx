@@ -84,30 +84,34 @@ export default function ZoneEditor({ initialZone, onSave }: ZoneEditorProps) {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">Edit Zone</h2>
-        <p className="text-xl text-gray-600">{zone.name}</p>
-        <div className="h-1 w-24 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mt-4"></div>
+      <div className="mb-8 enhanced-card p-6 rounded-lg">
+        <h2 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-2">
+          Edit Zone
+        </h2>
+        <p className="text-xl text-muted-foreground">{zone.name}</p>
+        <div className="h-1 w-24 bg-gradient-to-r from-primary to-accent rounded-full mt-4"></div>
       </div>
       
       <div className="space-y-8">
         {/* Address Section */}
-        <Card className="border-l-4 border-l-blue-500 shadow-sm hover:shadow-md transition-shadow">
+        <Card className="enhanced-card border-l-4 border-l-primary shadow-lg">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-blue-500" />
-              Zone Address
+              <MapPin className="h-5 w-5 text-primary" />
+              <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                Zone Address
+              </span>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <label className="block text-sm font-medium text-gray-700">Street Address</label>
+              <label className="block text-sm font-medium text-foreground">Street Address</label>
               <Input
                 value={zone.streetAddress}
                 onChange={e => setZone({ ...zone, streetAddress: e.target.value })}
                 placeholder="123 Main St, Suburb, State, Postcode"
                 className={cn(
-                  "transition-all duration-200 text-base",
+                  "enhanced-select transition-all duration-200 text-base",
                   addressValid 
                     ? 'border-green-300 focus:border-green-500 focus:ring-green-200' 
                     : 'border-red-300 focus:border-red-500 focus:ring-red-200'
@@ -130,11 +134,13 @@ export default function ZoneEditor({ initialZone, onSave }: ZoneEditorProps) {
         </Card>
 
         {/* Event Approvers Section */}
-        <Card className="border-l-4 border-l-emerald-500 shadow-sm hover:shadow-md transition-shadow">
+        <Card className="enhanced-card border-l-4 border-l-emerald-500 shadow-lg">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg flex items-center gap-2">
               <User className="h-5 w-5 text-emerald-500" />
-              Zone Calendar Event Approvers
+              <span className="bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
+                Zone Calendar Event Approvers
+              </span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -159,11 +165,11 @@ export default function ZoneEditor({ initialZone, onSave }: ZoneEditorProps) {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline" onClick={() => editApprover('eventApprovers', index)} className="hover:bg-emerald-50">
+                      <Button size="sm" variant="outline" onClick={() => editApprover('eventApprovers', index)} className="premium-button-outline hover:bg-emerald-50">
                         <Edit className="h-3 w-3 mr-1" />
                         Edit
                       </Button>
-                      <Button size="sm" variant="destructive" onClick={() => removeApprover('eventApprovers', index)}>
+                      <Button size="sm" variant="destructive" onClick={() => removeApprover('eventApprovers', index)} className="hover:shadow-md">
                         <Trash2 className="h-3 w-3 mr-1" />
                         Delete
                       </Button>
@@ -181,7 +187,7 @@ export default function ZoneEditor({ initialZone, onSave }: ZoneEditorProps) {
               <Button 
                 onClick={() => addApprover('eventApprovers')} 
                 variant="outline" 
-                className="w-full border-dashed border-2 h-14 hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 transition-colors"
+                className="premium-button-outline w-full border-dashed border-2 h-14 hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 transition-all duration-200"
               >
                 <Plus className="h-5 w-5 mr-2" />
                 Add Event Approver
@@ -191,11 +197,13 @@ export default function ZoneEditor({ initialZone, onSave }: ZoneEditorProps) {
         </Card>
 
         {/* Schedule Approvers Section */}
-        <Card className="border-l-4 border-l-purple-500 shadow-sm hover:shadow-md transition-shadow">
+        <Card className="enhanced-card border-l-4 border-l-purple-500 shadow-lg">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg flex items-center gap-2">
               <User className="h-5 w-5 text-purple-500" />
-              Zone Schedule Approvers
+              <span className="bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                Zone Schedule Approvers
+              </span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -220,11 +228,11 @@ export default function ZoneEditor({ initialZone, onSave }: ZoneEditorProps) {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline" onClick={() => editApprover('scheduleApprovers', index)} className="hover:bg-purple-50">
+                      <Button size="sm" variant="outline" onClick={() => editApprover('scheduleApprovers', index)} className="premium-button-outline hover:bg-purple-50">
                         <Edit className="h-3 w-3 mr-1" />
                         Edit
                       </Button>
-                      <Button size="sm" variant="destructive" onClick={() => removeApprover('scheduleApprovers', index)}>
+                      <Button size="sm" variant="destructive" onClick={() => removeApprover('scheduleApprovers', index)} className="hover:shadow-md">
                         <Trash2 className="h-3 w-3 mr-1" />
                         Delete
                       </Button>
@@ -242,7 +250,7 @@ export default function ZoneEditor({ initialZone, onSave }: ZoneEditorProps) {
               <Button 
                 onClick={() => addApprover('scheduleApprovers')} 
                 variant="outline" 
-                className="w-full border-dashed border-2 h-14 hover:bg-purple-50 hover:border-purple-300 hover:text-purple-700 transition-colors"
+                className="premium-button-outline w-full border-dashed border-2 h-14 hover:bg-purple-50 hover:border-purple-300 hover:text-purple-700 transition-all duration-200"
               >
                 <Plus className="h-5 w-5 mr-2" />
                 Add Schedule Approver
@@ -253,14 +261,14 @@ export default function ZoneEditor({ initialZone, onSave }: ZoneEditorProps) {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex justify-end gap-4 mt-12 pt-8 border-t border-gray-200">
-        <Button variant="outline" onClick={() => window.history.back()} className="px-8 py-2 text-base">
+      <div className="flex justify-end gap-4 mt-12 pt-8 border-t border-border">
+        <Button variant="outline" onClick={() => window.history.back()} className="premium-button-outline px-8 py-2 text-base">
           Cancel
         </Button>
         <Button 
           onClick={handleSave} 
           disabled={!isValid}
-          className="px-8 py-2 text-base bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="premium-button px-8 py-2 text-base disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <CheckCircle className="h-4 w-4 mr-2" />
           Save Zone
@@ -269,31 +277,31 @@ export default function ZoneEditor({ initialZone, onSave }: ZoneEditorProps) {
 
       {/* Approver Dialog */}
       <Dialog open={approverDialogOpen} onOpenChange={setApproverDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md glass-effect">
           <DialogHeader>
-            <DialogTitle className="text-xl">
+            <DialogTitle className="text-xl bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               {editingApproverIndex !== null ? 'Edit' : 'Add'} Approver
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Full Name</label>
+              <label className="block text-sm font-medium text-foreground">Full Name</label>
               <Input
                 value={approverForm.name}
                 onChange={e => setApproverForm({ ...approverForm, name: e.target.value })}
                 placeholder="John Smith"
-                className="text-base"
+                className="enhanced-select text-base"
               />
             </div>
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Mobile Number</label>
+              <label className="block text-sm font-medium text-foreground">Mobile Number</label>
               <Input
                 value={approverForm.mobile}
                 onChange={e => setApproverForm({ ...approverForm, mobile: e.target.value })}
                 placeholder="+61400123456 or 0400123456"
                 type="tel"
                 className={cn(
-                  "text-base transition-all duration-200",
+                  "enhanced-select text-base transition-all duration-200",
                   /^\+?\d{8,15}$/.test(approverForm.mobile) 
                     ? 'border-green-300 focus:border-green-500' 
                     : 'border-red-300 focus:border-red-500'
@@ -301,14 +309,14 @@ export default function ZoneEditor({ initialZone, onSave }: ZoneEditorProps) {
               />
             </div>
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Email Address</label>
+              <label className="block text-sm font-medium text-foreground">Email Address</label>
               <Input
                 value={approverForm.email}
                 onChange={e => setApproverForm({ ...approverForm, email: e.target.value })}
                 placeholder="john@example.com"
                 type="email"
                 className={cn(
-                  "text-base transition-all duration-200",
+                  "enhanced-select text-base transition-all duration-200",
                   /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(approverForm.email) 
                     ? 'border-green-300 focus:border-green-500' 
                     : 'border-red-300 focus:border-red-500'
@@ -323,13 +331,13 @@ export default function ZoneEditor({ initialZone, onSave }: ZoneEditorProps) {
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setApproverDialogOpen(false)} className="px-6">
+            <Button variant="outline" onClick={() => setApproverDialogOpen(false)} className="premium-button-outline px-6">
               Cancel
             </Button>
             <Button
               onClick={handleSaveApprover}
               disabled={!approverValid}
-              className="px-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+              className="premium-button px-6"
             >
               <CheckCircle className="h-4 w-4 mr-2" />
               Save Approver

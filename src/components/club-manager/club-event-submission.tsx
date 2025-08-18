@@ -106,12 +106,12 @@ export function ClubEventSubmission({
     return (
       <div className="space-y-6">
         {/* Success Confirmation Card */}
-        <Card className="border-green-200 bg-green-50">
+        <Card className="enhanced-card border-green-200 bg-green-50 glass-effect">
           <CardContent className="p-12 text-center">
             <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-6">
               <CheckCircle className="h-8 w-8 text-green-600" />
             </div>
-            <h3 className="text-xl font-semibold text-green-800 mb-3">
+            <h3 className="text-xl font-semibold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-3">
               Event Successfully Submitted!
             </h3>
             <p className="text-green-700 mb-6 max-w-md mx-auto">
@@ -160,11 +160,13 @@ export function ClubEventSubmission({
         </Card>
 
         {/* Process Timeline */}
-        <Card>
+        <Card className="enhanced-card">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <History className="h-5 w-5" />
-              Submission Timeline
+              <History className="h-5 w-5 text-primary" />
+              <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                Submission Timeline
+              </span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -199,11 +201,13 @@ export function ClubEventSubmission({
 
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="enhanced-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <PlusCircle className="h-5 w-5" />
-            Submit New Event Request
+            <PlusCircle className="h-5 w-5 text-primary" />
+            <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              Submit New Event Request
+            </span>
           </CardTitle>
           <CardDescription>
             Submit an event request for {clubName} to {zoneName} for approval
@@ -220,6 +224,7 @@ export function ClubEventSubmission({
                   value={formData.name}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                   placeholder="Enter event name..."
+                  className="enhanced-select"
                   required
                 />
               </div>
@@ -231,7 +236,7 @@ export function ClubEventSubmission({
                   value={formData.eventTypeId} 
                   onValueChange={(value) => setFormData(prev => ({ ...prev, eventTypeId: value }))}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="enhanced-select">
                     <SelectValue placeholder="Select event type..." />
                   </SelectTrigger>
                   <SelectContent>

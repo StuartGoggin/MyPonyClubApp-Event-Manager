@@ -151,9 +151,31 @@
     @apply bg-gradient-to-r from-red-50 to-rose-50 border-red-200 text-red-900 shadow-red-100/50;
   }
   
+  .event-holiday {
+    @apply bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 text-green-900 shadow-green-100/50;
+  }
+  
+  .event-default {
+    @apply bg-gradient-to-r from-muted/50 to-muted/70 border-border text-muted-foreground shadow-muted/20;
+  }
+  
   /* Enhanced sidebar styling */
+  .enhanced-sidebar {
+    @apply bg-gradient-to-b from-slate-50 to-slate-100/95 backdrop-blur-md border-r-2 border-slate-200/50 shadow-lg;
+  }
+  
   .sidebar-enhanced {
-    @apply bg-gradient-to-b from-sidebar-background to-sidebar-background/95 backdrop-blur-md border-r-2 border-sidebar-border/50;
+    @apply bg-gradient-to-b from-slate-50 to-slate-100/95 backdrop-blur-md border-r-2 border-slate-200/50 shadow-lg;
+  }
+  
+  /* Enhanced form styling */
+  .enhanced-select {
+    @apply bg-gradient-to-br from-background to-background/95 border-2 border-border/50 rounded-lg shadow-sm shadow-black/5 focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all duration-200;
+  }
+  
+  /* Premium button styles */
+  .premium-button-outline {
+    @apply border-2 border-primary/20 bg-gradient-to-r from-background/50 to-muted/30 hover:from-primary/5 hover:to-primary/10 hover:border-primary/40 transition-all duration-200 hover:shadow-md hover:shadow-primary/20;
   }
   
   /* Improved form styling */

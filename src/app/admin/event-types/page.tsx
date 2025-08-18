@@ -259,7 +259,7 @@ export default function AdminEventTypesPage() {
               {eventTypes.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                    No event types configured yet. Click "Add Event Type" or use the quick start options above.
+                    No event types configured yet. Click &ldquo;Add Event Type&rdquo; or use the quick start options above.
                   </TableCell>
                 </TableRow>
               )}

@@ -55,15 +55,15 @@ export function AppLayout({ children }: PropsWithChildren) {
 
   return (
     <SidebarProvider>
-      <Sidebar className="enhanced-sidebar">
-        <SidebarHeader>
+      <Sidebar className="border-r border-border/40 bg-background">
+        <SidebarHeader className="p-4 border-b border-border/40">
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="shrink-0 premium-button-outline" asChild>
+            <Button variant="ghost" size="icon" className="shrink-0 bg-primary/10 hover:bg-primary/20 transition-colors" asChild>
               <Link href="/">
                 <PonyIcon className="size-6 text-primary" />
               </Link>
             </Button>
-            <h1 className="text-lg font-semibold tracking-tight font-headline bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            <h1 className="text-lg font-semibold tracking-tight">
               PonyClub Events
             </h1>
           </div>
@@ -74,6 +74,7 @@ export function AppLayout({ children }: PropsWithChildren) {
               <SidebarMenuButton
                 asChild
                 tooltip="Dashboard"
+                className="hover:bg-primary/10 hover:text-primary transition-colors"
               >
                 <Link href="/">
                   <Calendar />
@@ -85,6 +86,7 @@ export function AppLayout({ children }: PropsWithChildren) {
               <SidebarMenuButton
                 asChild
                 tooltip="Request Event"
+                className="hover:bg-primary/10 hover:text-primary transition-colors"
               >
                 <Link href="/request-event">
                   <PlusCircle />
@@ -96,6 +98,7 @@ export function AppLayout({ children }: PropsWithChildren) {
               <SidebarMenuButton
                 asChild
                 tooltip="Manage my Events"
+                className="hover:bg-primary/10 hover:text-primary transition-colors"
               >
                 <Link href="/manage-events">
                   <Settings />
@@ -107,6 +110,7 @@ export function AppLayout({ children }: PropsWithChildren) {
               <SidebarMenuButton
                 asChild
                 tooltip="Admin Dashboard"
+                className="hover:bg-primary/10 hover:text-primary transition-colors"
               >
                 <Link href="/admin">
                   <Shield />
@@ -118,6 +122,7 @@ export function AppLayout({ children }: PropsWithChildren) {
               <SidebarMenuButton
                 asChild
                 tooltip="Zone Manager"
+                className="hover:bg-primary/10 hover:text-primary transition-colors"
               >
                 <Link href="/zone-manager">
                   <MapPin />
@@ -129,6 +134,7 @@ export function AppLayout({ children }: PropsWithChildren) {
               <SidebarMenuButton
                 asChild
                 tooltip="Club Event Manager"
+                className="hover:bg-primary/10 hover:text-primary transition-colors"
               >
                 <Link href="/club-manager">
                   <Building />
@@ -139,14 +145,14 @@ export function AppLayout({ children }: PropsWithChildren) {
           </SidebarMenu>
           <SidebarSeparator />
            <SidebarGroup>
-              <SidebarGroupLabel className="flex items-center gap-2">
-                <Database />
+              <SidebarGroupLabel className="flex items-center gap-2 text-muted-foreground font-medium">
+                <Database className="text-primary" />
                 <span>Event Sources</span>
               </SidebarGroupLabel>
               <SidebarGroupContent>
                 <div className="flex flex-col gap-3 px-2 py-1">
                     <div className="flex items-center space-x-2">
-                        <Checkbox id="pca" onCheckedChange={(checked) => handleSourceChange('pca', !!checked)} checked={eventSources.includes('pca')}/>
+                        <Checkbox id="pca" onCheckedChange={(checked) => handleSourceChange('pca', !!checked)} checked={eventSources.includes('pca')} />
                         <Label htmlFor="pca" className="text-sm font-medium leading-none">PCA Event Calendar</Label>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -169,10 +175,15 @@ export function AppLayout({ children }: PropsWithChildren) {
         </SidebarContent>
       </Sidebar>
       <SidebarInset>
-        <header className="flex items-center justify-between p-4 border-b enhanced-card glass-effect">
-          <SidebarTrigger className="premium-button-outline" />
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger className="-ml-1" />
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-semibold">Pony Club Event Manager</h2>
+          </div>
         </header>
-        <main className="p-4 lg:p-6 bg-gradient-to-br from-background/50 to-muted/30 min-h-screen">{children}</main>
+        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+          {children}
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );

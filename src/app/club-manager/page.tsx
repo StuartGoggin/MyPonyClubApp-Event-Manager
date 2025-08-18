@@ -115,40 +115,55 @@ export default function ClubEventManagerDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Club Selection Header */}
-      <Card className="enhanced-card border-l-4 border-l-primary">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building className="h-6 w-6 text-primary" />
-            <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Club Event Manager
-            </span>
-          </CardTitle>
-          <CardDescription className="text-base">
-            Submit and manage event requests for your club across Victoria
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+      {/* Glass Club Selection Header */}
+      <div className="relative overflow-hidden rounded-2xl border border-border/40 bg-gradient-to-br from-background via-background/95 to-primary/5 shadow-2xl backdrop-blur-sm">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-emerald-500/5"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-primary/10 to-transparent rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-accent/10 to-transparent rounded-full blur-3xl"></div>
+        
+        <div className="relative p-6">
+          <div className="flex items-center gap-4 mb-6">
+            <div className="relative flex-shrink-0">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent rounded-2xl opacity-20 blur-lg animate-pulse"></div>
+              <div className="relative rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 p-4 border-2 border-primary/40 backdrop-blur-sm">
+                <Building className="h-8 w-8 text-primary drop-shadow-lg" />
+              </div>
+            </div>
+            <div>
+              <h1 className="text-3xl xl:text-4xl font-bold bg-gradient-to-r from-primary via-purple-600 to-accent bg-clip-text text-transparent">
+                Club Event Manager
+              </h1>
+              <p className="text-muted-foreground text-lg mt-2">
+                Submit and manage event requests for your club across Victoria
+              </p>
+            </div>
+          </div>
+          
           <div className="space-y-4">
             {/* Club Selector */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Select Club</label>
+              <label className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Select Club</label>
               <Select value={selectedClubId} onValueChange={setSelectedClubId}>
-                <SelectTrigger className="w-full enhanced-select">
+                <SelectTrigger className="relative h-12 w-full border-primary/30 bg-background/90 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:border-primary/50">
                   <SelectValue placeholder="Choose a club to manage..." />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="rounded-xl border-primary/20 bg-background/95 backdrop-blur-md">
                   {clubs
                     .filter(club => authorizedClubs.includes(club.id))
                     .map(club => {
                       const zone = zones.find(z => z.id === club.zoneId);
                       return (
-                        <SelectItem key={club.id} value={club.id}>
-                          <div className="flex flex-col">
-                            <span className="font-medium">{club.name}</span>
-                            <span className="text-sm text-muted-foreground">
-                              {zone?.name || 'Unknown Zone'}
-                            </span>
+                        <SelectItem key={club.id} value={club.id} className="rounded-lg hover:bg-primary/10">
+                          <div className="flex items-center gap-3">
+                            <div className="rounded-md bg-primary/20 p-1.5">
+                              <Building className="h-3 w-3 text-primary" />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-medium">{club.name}</span>
+                              <span className="text-sm text-muted-foreground">
+                                {zone?.name || 'Unknown Zone'}
+                              </span>
+                            </div>
                           </div>
                         </SelectItem>
                       );
@@ -161,14 +176,17 @@ export default function ClubEventManagerDashboard() {
             {selectedClub && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
                 {/* Club Details */}
-                <Card className="enhanced-card border-l-4 border-l-primary">
-                  <CardContent className="p-4">
+                <div className="relative overflow-hidden rounded-xl border border-border/40 bg-gradient-to-br from-background via-background/95 to-primary/5 shadow-lg backdrop-blur-sm hover:shadow-xl transition-all duration-300">
+                  <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-blue/5"></div>
+                  <div className="relative p-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <Building className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-medium">Club</span>
+                      <div className="rounded-lg bg-primary/20 p-1.5 border border-primary/30">
+                        <Building className="h-4 w-4 text-primary" />
+                      </div>
+                      <span className="text-sm font-bold uppercase tracking-wide">Club</span>
                     </div>
                     <div className="space-y-1">
-                      <div className="font-medium text-primary">{selectedClub.name}</div>
+                      <div className="font-bold text-primary">{selectedClub.name}</div>
                       <div className="text-sm text-muted-foreground flex items-center gap-1">
                         <MapPin className="h-3 w-3" />
                         {selectedZone?.name || 'Unknown Zone'}
@@ -179,51 +197,60 @@ export default function ClubEventManagerDashboard() {
                         </div>
                       )}
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
 
                 {/* Submitted Events */}
-                <Card className="enhanced-card border-l-4 border-l-amber-400">
-                  <CardContent className="p-4">
+                <div className="relative overflow-hidden rounded-xl border border-border/40 bg-gradient-to-br from-background via-background/95 to-amber/5 shadow-lg backdrop-blur-sm hover:shadow-xl transition-all duration-300">
+                  <div className="absolute inset-0 bg-gradient-to-r from-amber/5 to-orange/5"></div>
+                  <div className="relative p-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <Clock className="h-4 w-4 text-amber-500" />
-                      <span className="text-sm font-medium">Submitted</span>
+                      <div className="rounded-lg bg-amber-100 dark:bg-amber-900/50 p-1.5 border border-amber-200 dark:border-amber-700">
+                        <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                      </div>
+                      <span className="text-sm font-bold uppercase tracking-wide">Submitted</span>
                     </div>
-                    <div className="text-2xl font-bold text-amber-600">{submittedEvents}</div>
+                    <div className="text-2xl font-black text-amber-600">{submittedEvents}</div>
                     <div className="text-sm text-muted-foreground">Awaiting approval</div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
 
                 {/* Approved Events */}
-                <Card className="enhanced-card border-l-4 border-l-green-400">
-                  <CardContent className="p-4">
+                <div className="relative overflow-hidden rounded-xl border border-border/40 bg-gradient-to-br from-background via-background/95 to-emerald/5 shadow-lg backdrop-blur-sm hover:shadow-xl transition-all duration-300">
+                  <div className="absolute inset-0 bg-gradient-to-r from-emerald/5 to-green/5"></div>
+                  <div className="relative p-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      <span className="text-sm font-medium">Approved</span>
+                      <div className="rounded-lg bg-emerald-100 dark:bg-emerald-900/50 p-1.5 border border-emerald-200 dark:border-emerald-700">
+                        <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                      </div>
+                      <span className="text-sm font-bold uppercase tracking-wide">Approved</span>
                     </div>
-                    <div className="text-2xl font-bold text-green-600">{approvedEvents}</div>
+                    <div className="text-2xl font-black text-emerald-600">{approvedEvents}</div>
                     <div className="text-sm text-muted-foreground">Events confirmed</div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
 
                 {/* Total Events */}
-                <Card className="enhanced-card border-l-4 border-l-blue-400">
-                  <CardContent className="p-4">
+                <div className="relative overflow-hidden rounded-xl border border-border/40 bg-gradient-to-br from-background via-background/95 to-blue/5 shadow-lg backdrop-blur-sm hover:shadow-xl transition-all duration-300">
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue/5 to-cyan/5"></div>
+                  <div className="relative p-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <Activity className="h-4 w-4 text-blue-500" />
-                      <span className="text-sm font-medium">Total Events</span>
+                      <div className="rounded-lg bg-blue-100 dark:bg-blue-900/50 p-1.5 border border-blue-200 dark:border-blue-700">
+                        <Activity className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <span className="text-sm font-bold uppercase tracking-wide">Total Events</span>
                     </div>
-                    <div className="text-2xl font-bold text-blue-600">{totalEvents}</div>
+                    <div className="text-2xl font-black text-blue-600">{totalEvents}</div>
                     <div className="text-sm text-muted-foreground">
                       {rejectedEvents > 0 && `(${rejectedEvents} rejected)`}
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               </div>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Main Content Tabs */}
       {selectedClub && (

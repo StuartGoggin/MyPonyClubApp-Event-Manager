@@ -8,8 +8,6 @@ import { Badge } from '@/components/ui/badge';
 import { MapPin, Calendar, CheckCircle, Clock, Users, Building } from 'lucide-react';
 import { Zone, Club, Event, EventType } from '@/lib/types';
 import { EventCalendar } from '@/components/dashboard/event-calendar';
-import { ZoneEventApproval } from '@/components/zone-manager/zone-event-approval';
-import { ZoneEventManagement } from '@/components/zone-manager/zone-event-management';
 
 export default function ZoneManagerDashboard() {
   const [zones, setZones] = useState<Zone[]>([]);
@@ -119,119 +117,138 @@ export default function ZoneManagerDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Header with Zone Selection */}
-      <div className="flex items-center justify-between enhanced-card p-6 rounded-lg">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-            Zone Manager Dashboard
-          </h1>
-          <p className="text-muted-foreground text-lg">
-            Manage events and clubs within your authorized zones
-          </p>
-        </div>
-        <div className="w-64">
-          <Select value={selectedZoneId} onValueChange={setSelectedZoneId}>
-            <SelectTrigger className="enhanced-select">
-              <SelectValue placeholder="Select a zone" />
-            </SelectTrigger>
-            <SelectContent>
-              {zones
-                .filter(zone => authorizedZones.includes(zone.id))
-                .map(zone => (
-                  <SelectItem key={zone.id} value={zone.id}>
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4" />
-                      {zone.name}
-                    </div>
-                  </SelectItem>
-                ))
-              }
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
       {selectedZone && (
         <>
-          {/* Zone Overview Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card className="enhanced-card border-l-4 border-l-amber-400">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Pending Events</p>
-                    <p className="text-2xl font-bold text-amber-600">{pendingEvents}</p>
+          {/* Awesome Compact Zone Management Panel */}
+          <div className="relative overflow-hidden rounded-2xl border border-border/40 bg-gradient-to-br from-background via-background/95 to-primary/5 shadow-2xl backdrop-blur-sm">
+            {/* Animated Background Elements */}
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-emerald-500/5"></div>
+            <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-primary/10 to-transparent rounded-full blur-3xl"></div>
+            <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-accent/10 to-transparent rounded-full blur-3xl"></div>
+            
+            <div className="relative p-6">
+              <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 xl:gap-6 items-center">
+                
+                {/* Zone Identity - 3 columns */}
+                <div className="xl:col-span-3 flex items-center gap-4">
+                  <div className="relative flex-shrink-0">
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent rounded-2xl opacity-20 blur-lg animate-pulse"></div>
+                    <div className="relative rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 p-4 border-2 border-primary/40 backdrop-blur-sm">
+                      <MapPin className="h-8 w-8 text-primary drop-shadow-lg" />
+                    </div>
                   </div>
-                  <Clock className="h-8 w-8 text-amber-500" />
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="enhanced-card border-l-4 border-l-green-400">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Approved Events</p>
-                    <p className="text-2xl font-bold text-green-600">{approvedEvents}</p>
+                    <h1 className="text-xl font-bold bg-gradient-to-r from-primary via-purple-600 to-accent bg-clip-text text-transparent">
+                      Zone Manager
+                    </h1>
+                    <div className="space-y-1">
+                      <p className="text-2xl font-black text-foreground">{selectedZone.name}</p>
+                      <p className="text-xs text-muted-foreground font-medium">Management and event oversight</p>
+                    </div>
                   </div>
-                  <CheckCircle className="h-8 w-8 text-green-500" />
                 </div>
-              </CardContent>
-            </Card>
-            <Card className="enhanced-card border-l-4 border-l-blue-400">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Total Clubs</p>
-                    <p className="text-2xl font-bold text-blue-600">{totalClubs}</p>
-                  </div>
-                  <Building className="h-8 w-8 text-blue-500" />
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="enhanced-card border-l-4 border-l-purple-400">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Active Clubs</p>
-                    <p className="text-2xl font-bold text-purple-600">{activeClubs}</p>
-                  </div>
-                  <Users className="h-8 w-8 text-purple-500" />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
 
-          {/* Zone Info Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MapPin className="h-5 w-5" />
-                {selectedZone.name}
-              </CardTitle>
-              <CardDescription>
-                Zone management and event oversight
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                <div>
-                  <p className="font-medium text-muted-foreground">Zone Secretary</p>
-                  <p>{selectedZone.secretary?.name || 'Not assigned'}</p>
-                  {selectedZone.secretary?.email && (
-                    <p className="text-blue-600">{selectedZone.secretary.email}</p>
-                  )}
+                {/* Stats Dashboard - 3 columns */}
+                <div className="xl:col-span-3 grid grid-cols-4 gap-2 xl:gap-3">
+                  <div className="group relative">
+                    <div className="absolute inset-0 bg-gradient-to-br from-orange-400 to-red-500 rounded-xl opacity-15 blur-sm group-hover:opacity-25 transition-all duration-300"></div>
+                    <div className="relative bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950/60 dark:to-red-950/60 rounded-xl p-2 xl:p-3 text-center border border-orange-200/60 dark:border-orange-800/60 backdrop-blur-sm group-hover:scale-105 group-hover:shadow-lg transition-all duration-300">
+                      <div className="text-xl xl:text-2xl font-black text-orange-600 dark:text-orange-400">{pendingEvents}</div>
+                      <div className="text-[9px] xl:text-[10px] font-bold text-orange-700 dark:text-orange-300 uppercase tracking-wider">Pending</div>
+                    </div>
+                  </div>
+                  
+                  <div className="group relative">
+                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 to-green-500 rounded-xl opacity-15 blur-sm group-hover:opacity-25 transition-all duration-300"></div>
+                    <div className="relative bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-950/60 dark:to-green-950/60 rounded-xl p-2 xl:p-3 text-center border border-emerald-200/60 dark:border-emerald-800/60 backdrop-blur-sm group-hover:scale-105 group-hover:shadow-lg transition-all duration-300">
+                      <div className="text-xl xl:text-2xl font-black text-emerald-600 dark:text-emerald-400">{approvedEvents}</div>
+                      <div className="text-[9px] xl:text-[10px] font-bold text-emerald-700 dark:text-emerald-300 uppercase tracking-wider">Approved</div>
+                    </div>
+                  </div>
+                  
+                  <div className="group relative">
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-cyan-500 rounded-xl opacity-15 blur-sm group-hover:opacity-25 transition-all duration-300"></div>
+                    <div className="relative bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/60 dark:to-cyan-950/60 rounded-xl p-2 xl:p-3 text-center border border-blue-200/60 dark:border-blue-800/60 backdrop-blur-sm group-hover:scale-105 group-hover:shadow-lg transition-all duration-300">
+                      <div className="text-xl xl:text-2xl font-black text-blue-600 dark:text-blue-400">{totalClubs}</div>
+                      <div className="text-[9px] xl:text-[10px] font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wider">Clubs</div>
+                    </div>
+                  </div>
+                  
+                  <div className="group relative">
+                    <div className="absolute inset-0 bg-gradient-to-br from-purple-400 to-violet-500 rounded-xl opacity-15 blur-sm group-hover:opacity-25 transition-all duration-300"></div>
+                    <div className="relative bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-950/60 dark:to-violet-950/60 rounded-xl p-2 xl:p-3 text-center border border-purple-200/60 dark:border-purple-800/60 backdrop-blur-sm group-hover:scale-105 group-hover:shadow-lg transition-all duration-300">
+                      <div className="text-xl xl:text-2xl font-black text-purple-600 dark:text-purple-400">{activeClubs}</div>
+                      <div className="text-[9px] xl:text-[10px] font-bold text-purple-700 dark:text-purple-300 uppercase tracking-wider">Active</div>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-medium text-muted-foreground">Event Approvers</p>
-                  <p>{selectedZone.eventApprovers?.length || 0} assigned</p>
+
+                {/* Management Info - 4 columns */}
+                <div className="xl:col-span-4 flex items-center gap-3">
+                  {/* Secretary Card */}
+                  <div className="group relative flex-1">
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-xl opacity-10 blur-sm group-hover:opacity-20 transition-all duration-300"></div>
+                    <div className="relative flex items-center gap-3 p-3 rounded-xl bg-gradient-to-br from-blue-50/80 to-indigo-50/60 dark:from-blue-950/40 dark:to-indigo-950/30 border border-blue-200/40 dark:border-blue-800/40 backdrop-blur-sm group-hover:shadow-md transition-all duration-300">
+                      <div className="rounded-xl bg-blue-100 dark:bg-blue-900 p-2 border border-blue-200 dark:border-blue-700">
+                        <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[10px] font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wider">Secretary</p>
+                        <p className="text-sm font-bold text-foreground truncate">{selectedZone.secretary?.name || 'Not assigned'}</p>
+                        {selectedZone.secretary?.email && (
+                          <p className="text-xs text-blue-600 dark:text-blue-400 truncate">{selectedZone.secretary.email}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Approvers Card */}
+                  <div className="group relative flex-1">
+                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 to-green-500 rounded-xl opacity-10 blur-sm group-hover:opacity-20 transition-all duration-300"></div>
+                    <div className="relative flex items-center gap-3 p-3 rounded-xl bg-gradient-to-br from-emerald-50/80 to-green-50/60 dark:from-emerald-950/40 dark:to-green-950/30 border border-emerald-200/40 dark:border-emerald-800/40 backdrop-blur-sm group-hover:shadow-md transition-all duration-300">
+                      <div className="rounded-xl bg-emerald-100 dark:bg-emerald-900 p-2 border border-emerald-200 dark:border-emerald-700">
+                        <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 uppercase tracking-wider">Approvers</p>
+                        <p className="text-sm font-bold text-foreground">{selectedZone.eventApprovers?.length || 0} assigned</p>
+                        <p className="text-xs text-muted-foreground">
+                          {selectedZone.eventApprovers?.length === 0 ? 'None set' : 'Active'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-medium text-muted-foreground">Clubs in Zone</p>
-                  <p>{totalClubs} clubs</p>
+
+                {/* Zone Selector - 2 columns */}
+                <div className="xl:col-span-2">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent rounded-xl opacity-5"></div>
+                    <Select value={selectedZoneId} onValueChange={setSelectedZoneId}>
+                      <SelectTrigger className="relative h-12 w-full border-primary/30 bg-background/90 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:border-primary/50">
+                        <SelectValue placeholder="Select zone" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl border-primary/20 bg-background/95 backdrop-blur-md">
+                        {zones
+                          .filter(zone => authorizedZones.includes(zone.id))
+                          .map(zone => (
+                            <SelectItem key={zone.id} value={zone.id} className="rounded-lg hover:bg-primary/10">
+                              <div className="flex items-center gap-3">
+                                <div className="rounded-md bg-primary/20 p-1.5">
+                                  <MapPin className="h-3 w-3 text-primary" />
+                                </div>
+                                <span className="font-medium">{zone.name}</span>
+                              </div>
+                            </SelectItem>
+                          ))
+                        }
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Main Dashboard Tabs */}
           <Tabs defaultValue="calendar" className="space-y-4">
@@ -276,25 +293,31 @@ export default function ZoneManagerDashboard() {
             </TabsContent>
 
             <TabsContent value="approvals" className="space-y-4">
-              <ZoneEventApproval 
-                zoneId={selectedZoneId}
-                zoneName={selectedZone.name}
-                events={zoneEvents}
-                clubs={zoneClubs}
-                eventTypes={eventTypes}
-                onEventUpdate={fetchData}
-              />
+              <Card>
+                <CardHeader>
+                  <CardTitle>Event Approvals</CardTitle>
+                  <CardDescription>
+                    Manage event approvals for {selectedZone.name}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">Event approval functionality coming soon...</p>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="manage" className="space-y-4">
-              <ZoneEventManagement 
-                zoneId={selectedZoneId}
-                zoneName={selectedZone.name}
-                events={zoneEvents}
-                clubs={zoneClubs}
-                eventTypes={eventTypes}
-                onEventUpdate={fetchData}
-              />
+              <Card>
+                <CardHeader>
+                  <CardTitle>Event Management</CardTitle>
+                  <CardDescription>
+                    Manage events for {selectedZone.name}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">Event management functionality coming soon...</p>
+                </CardContent>
+              </Card>
             </TabsContent>
           </Tabs>
         </>

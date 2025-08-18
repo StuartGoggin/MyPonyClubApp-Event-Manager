@@ -1,12 +1,13 @@
-import { adminDb } from './firebase-admin';
+import { adminDb, isDatabaseConnected, getDatabaseErrorMessage } from './firebase-admin';
 import type { Zone, Club, EventType, Event } from './types';
 import type { QueryDocumentSnapshot, DocumentData } from 'firebase-admin/firestore';
 
 // Server-side functions for fetching data from Firestore
 export async function getAllZones(): Promise<Zone[]> {
   try {
-    if (!adminDb) {
-      console.warn('Firebase Admin not initialized, returning empty zones array');
+    if (!adminDb || !isDatabaseConnected()) {
+      const errorMessage = getDatabaseErrorMessage();
+      console.warn('⚠️ getAllZones: Database connection issue -', errorMessage);
       return [];
     }
     
@@ -20,16 +21,22 @@ export async function getAllZones(): Promise<Zone[]> {
     });
     
     return zones;
-  } catch (error) {
-    console.error('Error fetching zones:', error);
+  } catch (error: any) {
+    // Check if it's a database connection error
+    if (error.code === 14 || error.message?.includes('ETIMEDOUT') || error.message?.includes('UNAVAILABLE')) {
+      console.warn('⚠️ getAllZones: Database connection timeout or unavailable');
+    } else {
+      console.error('Error fetching zones:', error);
+    }
     return [];
   }
 }
 
 export async function getAllClubs(): Promise<Club[]> {
   try {
-    if (!adminDb) {
-      console.warn('Firebase Admin not initialized, returning empty clubs array');
+    if (!adminDb || !isDatabaseConnected()) {
+      const errorMessage = getDatabaseErrorMessage();
+      console.warn('⚠️ getAllClubs: Database connection issue -', errorMessage);
       return [];
     }
     
@@ -43,8 +50,13 @@ export async function getAllClubs(): Promise<Club[]> {
     });
     
     return clubs;
-  } catch (error) {
-    console.error('Error fetching clubs:', error);
+  } catch (error: any) {
+    // Check if it's a database connection error
+    if (error.code === 14 || error.message?.includes('ETIMEDOUT') || error.message?.includes('UNAVAILABLE')) {
+      console.warn('⚠️ getAllClubs: Database connection timeout or unavailable');
+    } else {
+      console.error('Error fetching clubs:', error);
+    }
     return [];
   }
 }

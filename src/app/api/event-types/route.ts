@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase-admin';
+import { adminDb, isDatabaseConnected, getDatabaseErrorMessage } from '@/lib/firebase-admin';
 import { EventType } from '@/lib/types';
 
 export async function GET() {
   try {
-    if (!adminDb) {
+    if (!adminDb || !isDatabaseConnected()) {
+      const errorMessage = getDatabaseErrorMessage() || 'Database connection not available';
+      console.warn('⚠️ Event Types API: Database connection issue -', errorMessage);
       return NextResponse.json(
-        { error: 'Database not available' },
+        { 
+          error: 'Database connection unavailable', 
+          message: errorMessage,
+          eventTypes: [] 
+        },
         { status: 503 }
       );
     }
@@ -23,10 +29,24 @@ export async function GET() {
     });
 
     return NextResponse.json({ eventTypes });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching event types:', error);
+    
+    // Check if it's a database connection error
+    if (error.code === 14 || error.message?.includes('ETIMEDOUT') || error.message?.includes('UNAVAILABLE')) {
+      console.warn('⚠️ Event Types API: Database connection timeout or unavailable');
+      return NextResponse.json(
+        { 
+          error: 'Database connection timeout', 
+          message: 'Unable to connect to the database. Please check your network connection and try again.',
+          eventTypes: [] 
+        },
+        { status: 503 }
+      );
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to fetch event types' },
+      { error: 'Failed to fetch event types', eventTypes: [] },
       { status: 500 }
     );
   }

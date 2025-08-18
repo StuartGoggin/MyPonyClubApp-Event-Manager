@@ -5,8 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Calendar, Users, MapPin, FileText, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 import Link from 'next/link';
 import { getAllZones, getAllClubs, getAllEventTypes } from '@/lib/server-data';
+import { getDatabaseErrorMessage, isDatabaseConnected } from '@/lib/firebase-admin';
 
 async function AdminDashboardContent() {
+  // Check database connection
+  const isDatabaseAvailable = isDatabaseConnected();
+  const databaseErrorMessage = getDatabaseErrorMessage();
+  
   // Use server data instead of mock data
   const clubs = await getAllClubs();
   const zones = await getAllZones();
@@ -69,6 +74,23 @@ async function AdminDashboardContent() {
           Manage zones, clubs, events, and system configuration
         </p>
       </div>
+
+      {/* Database Warning */}
+      {!isDatabaseAvailable && databaseErrorMessage && (
+        <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+            <div>
+              <h3 className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                Database Connection Issue
+              </h3>
+              <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                {databaseErrorMessage} Data shown below may be incomplete or cached.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

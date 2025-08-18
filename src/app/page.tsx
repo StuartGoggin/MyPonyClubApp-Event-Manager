@@ -11,6 +11,7 @@ export default function DashboardPage() {
   const [zones, setZones] = useState<Zone[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [databaseWarning, setDatabaseWarning] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -31,6 +32,27 @@ export default function DashboardPage() {
         const clubsData = clubsResponse.ok ? await clubsResponse.json() : { clubs: [] };
         const eventsData = eventsResponse.ok ? await eventsResponse.json() : { events: [] };
         const eventTypesData = eventTypesResponse.ok ? await eventTypesResponse.json() : { eventTypes: [] };
+
+        // Check for database warnings
+        let warnings: string[] = [];
+        if (!eventsResponse.ok && eventsData.message) {
+          warnings.push(`Events: ${eventsData.message}`);
+        }
+        if (!eventTypesResponse.ok && eventTypesData.message) {
+          warnings.push(`Event Types: ${eventTypesData.message}`);
+        }
+        if (!zonesResponse.ok && zonesData.message) {
+          warnings.push(`Zones: ${zonesData.message}`);
+        }
+        if (!clubsResponse.ok && clubsData.message) {
+          warnings.push(`Clubs: ${clubsData.message}`);
+        }
+        
+        if (warnings.length > 0) {
+          setDatabaseWarning(`Database connection issues detected: ${warnings.join('; ')}`);
+        } else {
+          setDatabaseWarning(null);
+        }
 
         console.log('Main dashboard API responses:', { zonesData, clubsData, eventsData, eventTypesData });
 
@@ -88,6 +110,27 @@ export default function DashboardPage() {
           View and manage all proposed and approved events across Victoria.
         </p>
       </div>
+      
+      {databaseWarning && (
+        <div className="enhanced-card p-4 rounded-lg border-l-4 border-amber-500 bg-amber-50 dark:bg-amber-950/20">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-amber-500" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.19-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                Database Connection Warning
+              </h3>
+              <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                {databaseWarning}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <EventCalendar 
         events={events} 
         clubs={clubs} 

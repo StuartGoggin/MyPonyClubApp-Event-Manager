@@ -151,3 +151,40 @@ export async function getClubById(id: string): Promise<Club | null> {
     return null;
   }
 }
+
+export async function updateClub(id: string, clubData: Partial<Club>): Promise<Club | null> {
+  try {
+    if (!adminDb) {
+      console.warn('Firebase Admin not initialized');
+      return null;
+    }
+    
+    // Remove the id from the data if it exists to avoid overwriting it
+    const { id: _, ...dataToUpdate } = clubData as Club;
+    
+    await adminDb.collection('clubs').doc(id).update(dataToUpdate);
+    
+    // Return the updated club
+    return await getClubById(id);
+  } catch (error) {
+    console.error('Error updating club:', error);
+    return null;
+  }
+}
+
+export async function createClub(clubData: Omit<Club, 'id'>): Promise<Club | null> {
+  try {
+    if (!adminDb) {
+      console.warn('Firebase Admin not initialized');
+      return null;
+    }
+    
+    const docRef = await adminDb.collection('clubs').add(clubData);
+    
+    // Return the created club with its new ID
+    return { id: docRef.id, ...clubData };
+  } catch (error) {
+    console.error('Error creating club:', error);
+    return null;
+  }
+}

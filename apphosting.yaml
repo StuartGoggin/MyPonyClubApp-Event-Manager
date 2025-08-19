@@ -11,3 +11,5 @@ env:
     value: production
   - variable: FIREBASE_SERVICE_ACCOUNT_KEY
     secret: FIREBASE_SERVICE_ACCOUNT_KEY
+    
+# Updated to trigger redeploy

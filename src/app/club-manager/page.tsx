@@ -129,77 +129,58 @@ export default function ClubEventManagerDashboard() {
                 <Building className="h-8 w-8 text-primary drop-shadow-lg" />
               </div>
             </div>
-            <div>
-              <h1 className="text-3xl xl:text-4xl font-bold bg-gradient-to-r from-primary via-purple-600 to-accent bg-clip-text text-transparent">
+            <div className="flex-1">
+              <h1 className="text-2xl xl:text-3xl font-bold bg-gradient-to-r from-primary via-purple-600 to-accent bg-clip-text text-transparent">
                 Club Event Manager
               </h1>
-              <p className="text-muted-foreground text-lg mt-2">
-                Submit and manage event requests for your club across Victoria
-              </p>
+              <div className="flex items-center gap-4 mt-2">
+                {/* Integrated Club Selector with Large Display */}
+                <div className="flex-1">
+                  <Select value={selectedClubId} onValueChange={setSelectedClubId}>
+                    <SelectTrigger className="relative h-14 border-primary/30 bg-background/90 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:border-primary/50">
+                      <SelectValue>
+                        <div className="text-left">
+                          <div className="text-2xl xl:text-3xl font-black text-foreground">
+                            {selectedClub?.name || 'Select Club'}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {selectedZone?.name ? `${selectedZone.name} • Submit and manage event requests` : 'Submit and manage event requests for your club across Victoria'}
+                          </div>
+                        </div>
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl border-primary/20 bg-background/95 backdrop-blur-md">
+                      {clubs
+                        .filter(club => authorizedClubs.includes(club.id))
+                        .map(club => {
+                          const zone = zones.find(z => z.id === club.zoneId);
+                          return (
+                            <SelectItem key={club.id} value={club.id} className="rounded-lg hover:bg-primary/10 py-3">
+                              <div className="flex items-center gap-3">
+                                <div className="rounded-md bg-primary/20 p-1.5">
+                                  <Building className="h-3 w-3 text-primary" />
+                                </div>
+                                <div>
+                                  <div className="font-bold text-base">{club.name}</div>
+                                  <div className="text-sm text-muted-foreground">
+                                    {zone?.name || 'Unknown Zone'}
+                                  </div>
+                                </div>
+                              </div>
+                            </SelectItem>
+                          );
+                        })}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
           </div>
           
           <div className="space-y-4">
-            {/* Club Selector */}
-            <div className="space-y-2">
-              <label className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Select Club</label>
-              <Select value={selectedClubId} onValueChange={setSelectedClubId}>
-                <SelectTrigger className="relative h-12 w-full border-primary/30 bg-background/90 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:border-primary/50">
-                  <SelectValue placeholder="Choose a club to manage..." />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl border-primary/20 bg-background/95 backdrop-blur-md">
-                  {clubs
-                    .filter(club => authorizedClubs.includes(club.id))
-                    .map(club => {
-                      const zone = zones.find(z => z.id === club.zoneId);
-                      return (
-                        <SelectItem key={club.id} value={club.id} className="rounded-lg hover:bg-primary/10">
-                          <div className="flex items-center gap-3">
-                            <div className="rounded-md bg-primary/20 p-1.5">
-                              <Building className="h-3 w-3 text-primary" />
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="font-medium">{club.name}</span>
-                              <span className="text-sm text-muted-foreground">
-                                {zone?.name || 'Unknown Zone'}
-                              </span>
-                            </div>
-                          </div>
-                        </SelectItem>
-                      );
-                    })}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Club Information Display */}
+            {/* Club Statistics Grid */}
             {selectedClub && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-                {/* Club Details */}
-                <div className="relative overflow-hidden rounded-xl border border-border/40 bg-gradient-to-br from-background via-background/95 to-primary/5 shadow-lg backdrop-blur-sm hover:shadow-xl transition-all duration-300">
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-blue/5"></div>
-                  <div className="relative p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="rounded-lg bg-primary/20 p-1.5 border border-primary/30">
-                        <Building className="h-4 w-4 text-primary" />
-                      </div>
-                      <span className="text-sm font-bold uppercase tracking-wide">Club</span>
-                    </div>
-                    <div className="space-y-1">
-                      <div className="font-bold text-primary">{selectedClub.name}</div>
-                      <div className="text-sm text-muted-foreground flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        {selectedZone?.name || 'Unknown Zone'}
-                      </div>
-                      {selectedClub.email && (
-                        <div className="text-sm text-muted-foreground">
-                          📧 {selectedClub.email}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Submitted Events */}
                 <div className="relative overflow-hidden rounded-xl border border-border/40 bg-gradient-to-br from-background via-background/95 to-amber/5 shadow-lg backdrop-blur-sm hover:shadow-xl transition-all duration-300">
                   <div className="absolute inset-0 bg-gradient-to-r from-amber/5 to-orange/5"></div>
@@ -243,6 +224,23 @@ export default function ClubEventManagerDashboard() {
                     <div className="text-2xl font-black text-blue-600">{totalEvents}</div>
                     <div className="text-sm text-muted-foreground">
                       {rejectedEvents > 0 && `(${rejectedEvents} rejected)`}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Club Details */}
+                <div className="relative overflow-hidden rounded-xl border border-border/40 bg-gradient-to-br from-background via-background/95 to-purple/5 shadow-lg backdrop-blur-sm hover:shadow-xl transition-all duration-300">
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple/5 to-violet/5"></div>
+                  <div className="relative p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="rounded-lg bg-purple-100 dark:bg-purple-900/50 p-1.5 border border-purple-200 dark:border-purple-700">
+                        <MapPin className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                      </div>
+                      <span className="text-sm font-bold uppercase tracking-wide">Zone</span>
+                    </div>
+                    <div className="text-lg font-black text-purple-600">{selectedZone?.name || 'Unknown'}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {selectedClub?.email ? selectedClub.email : 'Contact info'}
                     </div>
                   </div>
                 </div>

@@ -152,6 +152,7 @@ export default function ClubEventManagerDashboard() {
                     <SelectContent className="rounded-xl border-primary/20 bg-background/95 backdrop-blur-md">
                       {clubs
                         .filter(club => authorizedClubs.includes(club.id))
+                        .sort((a, b) => a.name.localeCompare(b.name))
                         .map(club => {
                           const zone = zones.find(z => z.id === club.zoneId);
                           return (
@@ -180,7 +181,7 @@ export default function ClubEventManagerDashboard() {
           <div className="space-y-4">
             {/* Club Statistics Grid */}
             {selectedClub && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {/* Submitted Events */}
                 <div className="relative overflow-hidden rounded-xl border border-border/40 bg-gradient-to-br from-background via-background/95 to-amber/5 shadow-lg backdrop-blur-sm hover:shadow-xl transition-all duration-300">
                   <div className="absolute inset-0 bg-gradient-to-r from-amber/5 to-orange/5"></div>
@@ -224,23 +225,6 @@ export default function ClubEventManagerDashboard() {
                     <div className="text-2xl font-black text-blue-600">{totalEvents}</div>
                     <div className="text-sm text-muted-foreground">
                       {rejectedEvents > 0 && `(${rejectedEvents} rejected)`}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Club Details */}
-                <div className="relative overflow-hidden rounded-xl border border-border/40 bg-gradient-to-br from-background via-background/95 to-purple/5 shadow-lg backdrop-blur-sm hover:shadow-xl transition-all duration-300">
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple/5 to-violet/5"></div>
-                  <div className="relative p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="rounded-lg bg-purple-100 dark:bg-purple-900/50 p-1.5 border border-purple-200 dark:border-purple-700">
-                        <MapPin className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                      </div>
-                      <span className="text-sm font-bold uppercase tracking-wide">Zone</span>
-                    </div>
-                    <div className="text-lg font-black text-purple-600">{selectedZone?.name || 'Unknown'}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {selectedClub?.email ? selectedClub.email : 'Contact info'}
                     </div>
                   </div>
                 </div>

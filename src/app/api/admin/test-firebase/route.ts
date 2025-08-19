@@ -3,19 +3,42 @@ import { adminDb } from '@/lib/firebase-admin';
 
 export async function GET() {
   try {
+    // Enhanced debugging information
+    const envVar = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+    console.log('FIREBASE_SERVICE_ACCOUNT_KEY exists:', !!envVar);
+    console.log('NODE_ENV:', process.env.NODE_ENV);
+    console.log('Key length:', envVar?.length || 0);
+    
+    // Try to parse the JSON to see if it's valid
+    let parseResult = null;
+    let parseError = null;
+    if (envVar) {
+      try {
+        const parsed = JSON.parse(envVar);
+        parseResult = {
+          hasProjectId: !!parsed.project_id,
+          projectId: parsed.project_id,
+          hasPrivateKey: !!parsed.private_key,
+          privateKeyLength: parsed.private_key?.length || 0,
+          hasClientEmail: !!parsed.client_email,
+          keyType: parsed.type
+        };
+      } catch (error: any) {
+        parseError = error.message;
+      }
+    }
+    
     // Check if adminDb is initialized
     if (!adminDb) {
-      console.log('adminDb is null');
-      console.log('FIREBASE_SERVICE_ACCOUNT_KEY exists:', !!process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
-      console.log('NODE_ENV:', process.env.NODE_ENV);
-      
       return NextResponse.json({ 
         success: false, 
         message: 'Firebase Admin SDK not initialized. Please check your FIREBASE_SERVICE_ACCOUNT_KEY environment variable.',
         debug: {
-          hasEnvVar: !!process.env.FIREBASE_SERVICE_ACCOUNT_KEY,
+          hasEnvVar: !!envVar,
           nodeEnv: process.env.NODE_ENV,
-          envKeyLength: process.env.FIREBASE_SERVICE_ACCOUNT_KEY?.length || 0
+          envKeyLength: envVar?.length || 0,
+          parseResult,
+          parseError
         }
       });
     }

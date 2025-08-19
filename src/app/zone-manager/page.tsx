@@ -8,6 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { MapPin, Calendar, CheckCircle, Clock, Users, Building } from 'lucide-react';
 import { Zone, Club, Event, EventType } from '@/lib/types';
 import { EventCalendar } from '@/components/dashboard/event-calendar';
+import { ZoneEventApproval } from '@/components/zone-manager/zone-event-approval';
+import { ZoneEventManagement } from '@/components/zone-manager/zone-event-management';
 
 export default function ZoneManagerDashboard() {
   const [zones, setZones] = useState<Zone[]>([]);
@@ -293,31 +295,25 @@ export default function ZoneManagerDashboard() {
             </TabsContent>
 
             <TabsContent value="approvals" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Event Approvals</CardTitle>
-                  <CardDescription>
-                    Manage event approvals for {selectedZone.name}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">Event approval functionality coming soon...</p>
-                </CardContent>
-              </Card>
+              <ZoneEventApproval
+                zoneId={selectedZoneId}
+                zoneName={selectedZone.name}
+                events={zoneEvents}
+                clubs={zoneClubs}
+                eventTypes={eventTypes}
+                onEventUpdate={fetchData}
+              />
             </TabsContent>
 
             <TabsContent value="manage" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Event Management</CardTitle>
-                  <CardDescription>
-                    Manage events for {selectedZone.name}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">Event management functionality coming soon...</p>
-                </CardContent>
-              </Card>
+              <ZoneEventManagement
+                zoneId={selectedZoneId}
+                zoneName={selectedZone.name}
+                events={zoneEvents}
+                clubs={zoneClubs}
+                eventTypes={eventTypes}
+                onEventUpdate={fetchData}
+              />
             </TabsContent>
           </Tabs>
         </>

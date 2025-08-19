@@ -16,21 +16,14 @@ const nextConfig = {
       config.externals.push('firebase-admin');
     }
 
-    return config;
-  },
-};
-
-module.exports = nextConfig;
-
-// next.config.js
-module.exports = {
-  // ...existing config...
-  webpack: (config) => {
     config.experiments = {
       ...config.experiments,
       asyncWebAssembly: true,
       // If you need syncWebAssembly, add: syncWebAssembly: true
     };
+    
     return config;
   },
 };
+
+module.exports = nextConfig;

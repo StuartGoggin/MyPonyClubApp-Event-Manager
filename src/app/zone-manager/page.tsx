@@ -135,44 +135,53 @@ export default function ZoneManagerDashboard() {
                     <MapPin className="h-8 w-8 text-primary drop-shadow-lg" />
                   </div>
                 </div>
-                <div>
-                  <h1 className="text-3xl xl:text-4xl font-bold bg-gradient-to-r from-primary via-purple-600 to-accent bg-clip-text text-transparent">
+                <div className="flex-1">
+                  <h1 className="text-2xl xl:text-3xl font-bold bg-gradient-to-r from-primary via-purple-600 to-accent bg-clip-text text-transparent">
                     Zone Manager
                   </h1>
-                  <p className="text-muted-foreground text-lg mt-2">
-                    Management and event oversight for {selectedZone.name}
-                  </p>
+                  <div className="flex items-center gap-4 mt-2">
+                    {/* Integrated Zone Selector with Large Display */}
+                    <div className="flex-1">
+                      <Select value={selectedZoneId} onValueChange={setSelectedZoneId}>
+                        <SelectTrigger className="relative h-14 border-primary/30 bg-background/90 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:border-primary/50">
+                          <SelectValue>
+                            <div className="text-left">
+                              <div className="text-2xl xl:text-3xl font-black text-foreground">
+                                {selectedZone?.name || 'Select Zone'}
+                              </div>
+                              <div className="text-sm text-muted-foreground">
+                                Management and event oversight
+                              </div>
+                            </div>
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent className="rounded-xl border-primary/20 bg-background/95 backdrop-blur-md">
+                          {zones
+                            .filter(zone => authorizedZones.includes(zone.id))
+                            .map(zone => (
+                              <SelectItem key={zone.id} value={zone.id} className="rounded-lg hover:bg-primary/10 py-3">
+                                <div className="flex items-center gap-3">
+                                  <div className="rounded-md bg-primary/20 p-1.5">
+                                    <MapPin className="h-3 w-3 text-primary" />
+                                  </div>
+                                  <div>
+                                    <div className="font-bold text-base">{zone.name}</div>
+                                    <div className="text-sm text-muted-foreground">Zone Management</div>
+                                  </div>
+                                </div>
+                              </SelectItem>
+                            ))
+                          }
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
                 </div>
               </div>
               
               <div className="space-y-4">
-                {/* Zone Selector */}
-                <div className="space-y-2">
-                  <label className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Select Zone</label>
-                  <Select value={selectedZoneId} onValueChange={setSelectedZoneId}>
-                    <SelectTrigger className="relative h-12 w-full border-primary/30 bg-background/90 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:border-primary/50">
-                      <SelectValue placeholder="Choose a zone to manage..." />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl border-primary/20 bg-background/95 backdrop-blur-md">
-                      {zones
-                        .filter(zone => authorizedZones.includes(zone.id))
-                        .map(zone => (
-                          <SelectItem key={zone.id} value={zone.id} className="rounded-lg hover:bg-primary/10">
-                            <div className="flex items-center gap-3">
-                              <div className="rounded-md bg-primary/20 p-1.5">
-                                <MapPin className="h-3 w-3 text-primary" />
-                              </div>
-                              <span className="font-medium">{zone.name}</span>
-                            </div>
-                          </SelectItem>
-                        ))
-                      }
-                    </SelectContent>
-                  </Select>
-                </div>
-
                 {/* Zone Statistics Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   {/* Pending Events */}
                   <div className="relative overflow-hidden rounded-xl border border-border/40 bg-gradient-to-br from-background via-background/95 to-amber/5 shadow-lg backdrop-blur-sm hover:shadow-xl transition-all duration-300">
                     <div className="absolute inset-0 bg-gradient-to-r from-amber/5 to-orange/5"></div>

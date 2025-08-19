@@ -46,13 +46,16 @@ if (serviceAccountStr) {
         console.error('❌ Failed to initialize Firebase Admin SDK:', error.message);
         console.error('❌ Full error:', error);
         dbConnectionStatus = 'error';
-        // Don't throw during build, just log
-        if (process.env.NODE_ENV !== 'production' || process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+        // Only throw in development or when we're supposed to have credentials
+        if (process.env.NODE_ENV === 'development') {
             throw new Error(`Failed to parse FIREBASE_SERVICE_ACCOUNT_KEY: ${error.message}`);
         }
+        // In production, just log the error and continue
+        console.log('⚠️ Continuing without Firebase Admin SDK in production build environment');
     }
 } else {
-    console.warn('⚠️ Firebase Admin SDK not initialized: Missing FIREBASE_SERVICE_ACCOUNT_KEY');
+    console.log('⚠️ Firebase Admin SDK not initialized: Missing FIREBASE_SERVICE_ACCOUNT_KEY');
+    console.log('ℹ️  This is expected during build time or when credentials are not configured');
     dbConnectionStatus = 'disconnected';
 }
 

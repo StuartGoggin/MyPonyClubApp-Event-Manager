@@ -39,6 +39,33 @@ For AI features (event date suggestions), add your Google AI API key:
    GOOGLE_GENAI_API_KEY=your-api-key-here
    ```
 
+### 5. Optional: Google Maps Setup
+For the Club Geolocation feature (Admin Tools), set up Google Maps API:
+
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Enable the following APIs:
+   - **Maps JavaScript API** (for map display)
+   - **Places API** (for location search)
+   - **Geocoding API** (for address conversion)
+
+4. Create API credentials:
+   - Go to **APIs & Services** → **Credentials**
+   - Click **Create Credentials** → **API Key**
+   - Create two API keys:
+     - **Server-side key**: Restrict to server IP addresses
+     - **Client-side key**: Restrict to your domain(s)
+
+5. Add the keys to `.env.local`:
+   ```
+   # Server-side API key (for geolocation API calls)
+   GOOGLE_MAPS_API_KEY=your_server_side_key_here
+   # Client-side API key (for frontend map display)
+   NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_client_side_key_here
+   ```
+
+**Note**: Without Google Maps API keys, the geolocation feature will show placeholder content but won't break the application.
+
 ## Troubleshooting
 
 ### Firebase Service Account Issues

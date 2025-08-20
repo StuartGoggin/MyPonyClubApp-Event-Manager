@@ -7,11 +7,13 @@ This document outlines the features and ideas for the PonyClub Events applicatio
 ### Club Geolocation Feature Implementation 🗺️ (Latest)
 - **Comprehensive Club Geolocation Admin Tool**: Revolutionary admin feature for finding and setting club geographic coordinates using Google Maps integration:
     - **Flexible Scope Processing**: Support for processing all zones (172+ clubs), single zone, or individual clubs
-    - **Intelligent Search Algorithm**: Smart search queries with confidence scoring:
-        - Primary search: `"[Club Name] Pony Club Victoria Australia"`
-        - Address enhancement using existing club address data
-        - Fallback strategies for difficult-to-find locations
-        - Confidence scoring based on name similarity, location relevance, and place types
+    - **Enhanced Multi-Strategy Search Algorithm**: Intelligent search with comprehensive fallback strategies:
+        - **Primary Search**: `"[Club Name] Pony Club Victoria Australia"` with exact club name matching
+        - **Simplified Fallbacks**: Progressively simpler queries (partial names, keywords, location-only)
+        - **Address Enhancement**: Integration of existing club address data for improved accuracy
+        - **Geographic Constraints**: Victoria, Australia bounds to ensure relevant results
+        - **Confidence Scoring**: Advanced scoring based on name similarity, location relevance, and place types
+        - **Strategic Fallbacks**: Multiple search approaches for difficult-to-find locations
     - **Interactive Google Maps Integration**: Full Google Maps JavaScript API implementation:
         - **Real-time Map Display**: Interactive maps with draggable markers for precise positioning
         - **Address Validation**: Reverse geocoding for accurate address formatting
@@ -23,6 +25,12 @@ This document outlines the features and ideas for the PonyClub Events applicatio
         - **Modal Review Interface**: Full-screen location review with editable fields
         - **Accept/Skip Decisions**: Manual confirmation required for each location
         - **Results Tracking**: Comprehensive status tracking (accepted, skipped, not found)
+    - **Comprehensive Debugging & Logging**: Production-ready debugging capabilities:
+        - **Detailed API Logging**: Complete search strategy attempts and API responses
+        - **Error Classification**: Categorized error types (API errors, no results, invalid coordinates)
+        - **Search Strategy Tracking**: Visibility into which search approach succeeded
+        - **Performance Monitoring**: Request timing and API quota tracking
+        - **Debug Console**: Real-time logging for troubleshooting geolocation issues
     - **Database Integration**: Automatic persistence to Firestore:
         - Updates club documents with latitude, longitude, and physicalAddress
         - Timestamp tracking for geolocation updates
@@ -30,9 +38,11 @@ This document outlines the features and ideas for the PonyClub Events applicatio
     - **Production-Ready Architecture**: Complete technical implementation:
         - **GoogleMapComponent**: Reusable React component with TypeScript support
         - **API Routes**: `/api/admin/geolocate-club` and `/api/admin/update-club-location`
+        - **Debug Endpoints**: `/api/admin/debug-env` for environment troubleshooting
         - **Environment Variables**: Support for separate server/client Google Maps API keys
+        - **Firebase Secrets Management**: Secure API key configuration for production
         - **Graceful Fallbacks**: Works even without API keys configured
-        - **Error Handling**: Comprehensive error management and user feedback
+        - **Comprehensive Error Handling**: Advanced error management and user feedback
 
 - **Admin Tools Section**: New dedicated admin tools area in main dashboard:
     - **Purple Glass Theme**: Beautiful glass morphism design matching existing admin interface

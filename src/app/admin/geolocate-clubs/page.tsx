@@ -81,6 +81,9 @@ export default function GeolocateClubsPage() {
   // Start geolocation process
   const startGeolocation = async () => {
     const filteredClubs = getFilteredClubs();
+    console.log(`🚀 Starting geolocation for ${filteredClubs.length} clubs`);
+    console.log('📋 Clubs to process:', filteredClubs.map(c => c.name));
+    
     setTotalCount(filteredClubs.length);
     setProcessedCount(0);
     setResults([]);
@@ -88,37 +91,59 @@ export default function GeolocateClubsPage() {
     setIsPaused(false);
 
     for (let i = 0; i < filteredClubs.length; i++) {
-      if (isPaused) break;
+      if (isPaused) {
+        console.log('⏸️ Processing paused by user');
+        break;
+      }
       
       const club = filteredClubs[i];
+      console.log(`\n🏇 Processing club ${i + 1}/${filteredClubs.length}: ${club.name} (ID: ${club.id})`);
+      console.log(`📍 Existing address: ${club.physicalAddress || club.address?.street || 'None'}`);
+      
       setCurrentClub(club);
       
       try {
+        console.log('📡 Calling geolocation API...');
+        
         // Call geolocation API
+        const requestBody = { 
+          clubId: club.id,
+          clubName: club.name,
+          existingAddress: club.physicalAddress || club.address?.street
+        };
+        console.log('📤 Request body:', requestBody);
+        
         const response = await fetch('/api/admin/geolocate-club', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            clubId: club.id,
-            clubName: club.name,
-            existingAddress: club.physicalAddress || club.address?.street
-          })
+          body: JSON.stringify(requestBody)
         });
+
+        console.log(`📥 API Response status: ${response.status}`);
 
         if (response.ok) {
           const result: GeolocationResult = await response.json();
+          console.log('✅ API Response data:', result);
           setCurrentResult(result);
           
           if (result.status === 'found') {
+            console.log(`🎯 Found location for ${club.name}:`, {
+              lat: result.latitude,
+              lng: result.longitude,
+              address: result.formattedAddress || result.address
+            });
+            
             setEditableAddress(result.formattedAddress || result.address || '');
             setEditableLatitude(result.latitude?.toString() || '');
             setEditableLongitude(result.longitude?.toString() || '');
             setShowMapModal(true);
             
             // Wait for user decision
+            console.log('⏳ Waiting for user decision...');
             await new Promise(resolve => {
               const checkDecision = () => {
                 if (currentResult?.status === 'accepted' || currentResult?.status === 'skipped') {
+                  console.log(`👤 User decision: ${currentResult.status}`);
                   resolve(true);
                 } else {
                   setTimeout(checkDecision, 100);
@@ -128,12 +153,25 @@ export default function GeolocateClubsPage() {
             });
           } else {
             // Auto-skip if not found
+            console.log(`⏭️ Auto-skipping ${club.name} - Status: ${result.status}`);
             const skippedResult = { ...result, status: 'skipped' as const };
             setResults(prev => [...prev, skippedResult]);
           }
+        } else {
+          console.error(`❌ API request failed: ${response.status} ${response.statusText}`);
+          const responseText = await response.text();
+          console.error('❌ Response body:', responseText);
+          
+          const errorResult: GeolocationResult = {
+            clubId: club.id,
+            clubName: club.name,
+            searchQuery: club.name,
+            status: 'not_found'
+          };
+          setResults(prev => [...prev, errorResult]);
         }
       } catch (error) {
-        console.error('Geolocation error for club:', club.name, error);
+        console.error(`💥 Geolocation error for club: ${club.name}`, error);
         const errorResult: GeolocationResult = {
           clubId: club.id,
           clubName: club.name,
@@ -144,8 +182,11 @@ export default function GeolocateClubsPage() {
       }
       
       setProcessedCount(i + 1);
+      console.log(`✅ Completed processing ${club.name} (${i + 1}/${filteredClubs.length})`);
     }
 
+    console.log('🏁 Geolocation processing completed');
+    console.log('📊 Final results:', results);
     setIsProcessing(false);
     setCurrentClub(null);
     setCurrentResult(null);
@@ -281,10 +322,45 @@ export default function GeolocateClubsPage() {
 
           <div className="flex gap-2">
             {!isProcessing ? (
-              <Button onClick={startGeolocation} disabled={getFilteredClubs().length === 0}>
-                <Play className="h-4 w-4 mr-2" />
-                Start Geolocation ({getFilteredClubs().length} clubs)
-              </Button>
+              <>
+                <Button onClick={startGeolocation} disabled={getFilteredClubs().length === 0}>
+                  <Play className="h-4 w-4 mr-2" />
+                  Start Geolocation ({getFilteredClubs().length} clubs)
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={async () => {
+                    console.log('🔧 Testing API connection...');
+                    try {
+                      const response = await fetch('/api/admin/debug-env');
+                      const envInfo = await response.json();
+                      console.log('🔧 Environment info:', envInfo);
+                      
+                      // Test with a sample club
+                      const testClub = clubs[0];
+                      if (testClub) {
+                        console.log('🧪 Testing geolocation API with sample club:', testClub.name);
+                        const testResponse = await fetch('/api/admin/geolocate-club', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            clubId: testClub.id,
+                            clubName: testClub.name,
+                            existingAddress: testClub.physicalAddress || testClub.address?.street
+                          })
+                        });
+                        console.log('🧪 Test response status:', testResponse.status);
+                        const testResult = await testResponse.json();
+                        console.log('🧪 Test response data:', testResult);
+                      }
+                    } catch (error) {
+                      console.error('🔧 Debug test failed:', error);
+                    }
+                  }}
+                >
+                  🔧 Test API
+                </Button>
+              </>
             ) : (
               <div className="flex gap-2">
                 <Button variant="outline" onClick={togglePause}>

@@ -23,10 +23,13 @@ export async function POST(request: NextRequest) {
   try {
     const { clubId, clubName, existingAddress }: GeolocationRequest = await request.json();
 
+    console.log(`🗺️ Geolocation request for: ${clubName} (ID: ${clubId})`);
+    console.log(`📍 Existing address: ${existingAddress || 'None'}`);
+
     // Check if Google Maps API key is available
     const googleMapsApiKey = process.env.GOOGLE_MAPS_API_KEY;
     if (!googleMapsApiKey) {
-      console.warn('Google Maps API key not configured');
+      console.error('❌ Google Maps API key not configured');
       return NextResponse.json({
         clubId,
         clubName,
@@ -35,6 +38,8 @@ export async function POST(request: NextRequest) {
         error: 'Google Maps API key not configured'
       } as GeolocationResult);
     }
+
+    console.log('✅ Google Maps API key is configured');
 
     // Try multiple search strategies in order of preference
     const searchStrategies = [];
@@ -77,34 +82,65 @@ export async function POST(request: NextRequest) {
     }
 
     // Try each strategy until we find results
+    console.log(`🔍 Prepared ${searchStrategies.length} search strategies:`);
+    searchStrategies.forEach((strategy, index) => {
+      console.log(`  ${index + 1}. ${strategy.description}: "${strategy.query}"`);
+    });
+
     for (const strategy of searchStrategies) {
-      console.log(`Trying strategy: ${strategy.description} - "${strategy.query}"`);
+      console.log(`🔄 Trying strategy: ${strategy.description} - "${strategy.query}"`);
       
       const placesUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(strategy.query)}&key=${googleMapsApiKey}`;
       
-      const placesResponse = await fetch(placesUrl);
-      const placesData = await placesResponse.json();
+      try {
+        const placesResponse = await fetch(placesUrl);
+        console.log(`📡 API Response status: ${placesResponse.status}`);
+        
+        if (!placesResponse.ok) {
+          console.error(`❌ API request failed: ${placesResponse.status} ${placesResponse.statusText}`);
+          continue;
+        }
+        const placesData = await placesResponse.json();
+        console.log(`📋 API Response:`, {
+          status: placesData.status,
+          resultCount: placesData.results?.length || 0,
+          errorMessage: placesData.error_message
+        });
 
-      if (placesData.status === 'OK' && placesData.results && placesData.results.length > 0) {
-        console.log(`Success with strategy: ${strategy.description}`);
-        return NextResponse.json(processPlaceResult(clubId, clubName, strategy.query, placesData.results[0]));
-      } else {
-        console.log(`No results for strategy: ${strategy.description}`);
+        if (placesData.status === 'OK' && placesData.results && placesData.results.length > 0) {
+          console.log(`✅ Success with strategy: ${strategy.description}`);
+          console.log(`🏆 Found result:`, {
+            name: placesData.results[0].name,
+            address: placesData.results[0].formatted_address,
+            types: placesData.results[0].types
+          });
+          return NextResponse.json(processPlaceResult(clubId, clubName, strategy.query, placesData.results[0]));
+        } else {
+          console.log(`❌ No results for strategy: ${strategy.description}`);
+          if (placesData.status !== 'OK') {
+            console.error(`🚫 API error: ${placesData.status} - ${placesData.error_message || 'Unknown error'}`);
+          }
+        }
+      } catch (fetchError) {
+        console.error(`🔥 Fetch error for strategy ${strategy.description}:`, fetchError);
+        continue;
       }
     }
     
     // If all strategies failed
+    console.log(`💔 All ${searchStrategies.length} search strategies failed for ${clubName}`);
     return NextResponse.json({
       clubId,
       clubName,
       searchQuery: searchStrategies[0]?.query || clubName,
-      status: 'not_found'
+      status: 'not_found',
+      error: 'No location found with any search strategy'
     } as GeolocationResult);
 
   } catch (error) {
-    console.error('Geolocation API error:', error);
+    console.error(`🚨 Geolocation API error for ${request.url}:`, error);
     return NextResponse.json(
-      { error: 'Failed to geolocate club' },
+      { error: 'Failed to geolocate club', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

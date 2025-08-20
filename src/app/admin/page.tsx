@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, Users, MapPin, FileText, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+import { Calendar, Users, MapPin, FileText, AlertTriangle, CheckCircle, Clock, Map } from 'lucide-react';
 import Link from 'next/link';
 import { getAllZones, getAllClubs, getAllEventTypes } from '@/lib/server-data';
 import { getDatabaseErrorMessage, isDatabaseConnected } from '@/lib/firebase-admin';
@@ -245,6 +245,38 @@ async function AdminDashboardContent() {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Admin Tools Section */}
+      <div className="relative overflow-hidden rounded-2xl border border-border/40 bg-gradient-to-br from-background via-background/95 to-purple/5 shadow-xl backdrop-blur-sm hover:shadow-2xl transition-all duration-300">
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-pink-500/5"></div>
+        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-purple/10 to-transparent rounded-full blur-2xl"></div>
+        
+        <div className="relative p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="rounded-xl bg-purple-100 dark:bg-purple-900/50 p-3 border border-purple-200 dark:border-purple-700">
+              <Map className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-foreground">Admin Tools</h3>
+              <p className="text-sm text-muted-foreground">Advanced tools for data management and system maintenance</p>
+            </div>
+          </div>
+          <div className="space-y-4">
+            <ConfigItem
+              label="Club Geolocation"
+              value="Use Google Maps to find and set club locations"
+              href="/admin/geolocate-clubs"
+              isConfigured={true}
+            />
+            <ConfigItem
+              label="Database Seed"
+              value="Initialize the database with sample data"
+              href="/admin/seed"
+              isConfigured={true}
+            />
           </div>
         </div>
       </div>

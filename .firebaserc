@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "ponyclub-events"
-  }
+    "default": "ponyclub-events",
+    "staging": "ponyclub-events"
+  },
+  "targets": {},
+  "etags": {}
 }

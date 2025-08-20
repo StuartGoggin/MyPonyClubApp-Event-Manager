@@ -31,7 +31,7 @@ export default function GeolocateClubsPage() {
   const [clubs, setClubs] = useState<Club[]>([]);
   const [zones, setZones] = useState<Zone[]>([]);
   const [selectedZone, setSelectedZone] = useState<string>('all');
-  const [selectedClub, setSelectedClub] = useState<string>('');
+  const [selectedClub, setSelectedClub] = useState<string>('all-clubs');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [currentClub, setCurrentClub] = useState<Club | null>(null);
@@ -69,7 +69,7 @@ export default function GeolocateClubsPage() {
 
   // Get filtered clubs based on selection
   const getFilteredClubs = () => {
-    if (selectedClub) {
+    if (selectedClub && selectedClub !== 'all-clubs') {
       return clubs.filter(club => club.id === selectedClub);
     }
     if (selectedZone === 'all') {
@@ -266,7 +266,7 @@ export default function GeolocateClubsPage() {
                   <SelectValue placeholder="Select a specific club or leave blank for all" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All clubs in selected zone</SelectItem>
+                  <SelectItem value="all-clubs">All clubs in selected zone</SelectItem>
                   {getFilteredClubs()
                     .sort((a, b) => a.name.localeCompare(b.name))
                     .map(club => (

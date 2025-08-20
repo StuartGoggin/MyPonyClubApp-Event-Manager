@@ -36,58 +36,70 @@ export async function POST(request: NextRequest) {
       } as GeolocationResult);
     }
 
-    // Construct search query
-    let searchQuery = clubName;
+    // Try multiple search strategies in order of preference
+    const searchStrategies = [];
     
-    // Add "Pony Club" if not already in the name
+    // Strategy 1: If we have an existing address, try it alone first
+    if (existingAddress && existingAddress.trim()) {
+      searchStrategies.push({
+        query: existingAddress.trim(),
+        description: 'existing address only'
+      });
+    }
+    
+    // Strategy 2: Club name with location context
+    let baseClubQuery = clubName;
     if (!clubName.toLowerCase().includes('pony club')) {
-      searchQuery += ' Pony Club';
+      baseClubQuery += ' Pony Club';
     }
+    searchStrategies.push({
+      query: `${baseClubQuery} Victoria Australia`,
+      description: 'club name with location'
+    });
     
-    // Add location context for Victoria, Australia
-    searchQuery += ' Victoria Australia';
+    // Strategy 3: Just the club name
+    searchStrategies.push({
+      query: baseClubQuery,
+      description: 'club name only'
+    });
     
-    // If we have an existing address, try that first
-    if (existingAddress) {
-      searchQuery = `${existingAddress} ${clubName} Pony Club Victoria Australia`;
-    }
-
-    console.log(`Searching for: ${searchQuery}`);
-
-    // Call Google Places API (Text Search)
-    const placesUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(searchQuery)}&key=${googleMapsApiKey}`;
-    
-    const placesResponse = await fetch(placesUrl);
-    const placesData = await placesResponse.json();
-
-    if (placesData.status !== 'OK' || !placesData.results || placesData.results.length === 0) {
-      console.log(`No results found for: ${searchQuery}`);
-      
-      // Try a simpler search without existing address
-      if (existingAddress) {
-        const simpleQuery = `${clubName} Pony Club Victoria Australia`;
-        console.log(`Trying simpler search: ${simpleQuery}`);
-        
-        const simpleUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(simpleQuery)}&key=${googleMapsApiKey}`;
-        const simpleResponse = await fetch(simpleUrl);
-        const simpleData = await simpleResponse.json();
-        
-        if (simpleData.status === 'OK' && simpleData.results && simpleData.results.length > 0) {
-          return NextResponse.json(processPlaceResult(clubId, clubName, simpleQuery, simpleData.results[0]));
-        }
+    // Strategy 4: If we have address, try address + club name (simplified)
+    if (existingAddress && existingAddress.trim()) {
+      // Extract just the street address part (before any club name repetition)
+      const addressParts = existingAddress.split(',');
+      const streetAddress = addressParts[0]?.trim();
+      if (streetAddress) {
+        searchStrategies.push({
+          query: `${streetAddress}, Victoria Australia`,
+          description: 'street address with location'
+        });
       }
-      
-      return NextResponse.json({
-        clubId,
-        clubName,
-        searchQuery,
-        status: 'not_found'
-      } as GeolocationResult);
     }
 
-    // Process the first result
-    const place = placesData.results[0];
-    return NextResponse.json(processPlaceResult(clubId, clubName, searchQuery, place));
+    // Try each strategy until we find results
+    for (const strategy of searchStrategies) {
+      console.log(`Trying strategy: ${strategy.description} - "${strategy.query}"`);
+      
+      const placesUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(strategy.query)}&key=${googleMapsApiKey}`;
+      
+      const placesResponse = await fetch(placesUrl);
+      const placesData = await placesResponse.json();
+
+      if (placesData.status === 'OK' && placesData.results && placesData.results.length > 0) {
+        console.log(`Success with strategy: ${strategy.description}`);
+        return NextResponse.json(processPlaceResult(clubId, clubName, strategy.query, placesData.results[0]));
+      } else {
+        console.log(`No results for strategy: ${strategy.description}`);
+      }
+    }
+    
+    // If all strategies failed
+    return NextResponse.json({
+      clubId,
+      clubName,
+      searchQuery: searchStrategies[0]?.query || clubName,
+      status: 'not_found'
+    } as GeolocationResult);
 
   } catch (error) {
     console.error('Geolocation API error:', error);

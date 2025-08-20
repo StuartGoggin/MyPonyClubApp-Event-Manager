@@ -127,6 +127,52 @@ export async function POST(request: NextRequest) {
       }
     }
     
+    // If Places API failed but we have an address, try Geocoding API as final fallback
+    if (existingAddress && existingAddress.trim()) {
+      console.log(`🗺️ Trying Geocoding API fallback with existing address: "${existingAddress}"`);
+      
+      const geocodingUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(existingAddress)}&region=au&key=${googleMapsApiKey}`;
+      
+      try {
+        const geocodingResponse = await fetch(geocodingUrl);
+        console.log(`📍 Geocoding API Response status: ${geocodingResponse.status}`);
+        
+        if (geocodingResponse.ok) {
+          const geocodingData = await geocodingResponse.json();
+          console.log(`📍 Geocoding API Response:`, {
+            status: geocodingData.status,
+            resultCount: geocodingData.results?.length || 0,
+            errorMessage: geocodingData.error_message
+          });
+
+          if (geocodingData.status === 'OK' && geocodingData.results && geocodingData.results.length > 0) {
+            const result = geocodingData.results[0];
+            const location = result.geometry?.location;
+            
+            if (location && location.lat && location.lng) {
+              console.log(`🎯 Geocoding success! Found coordinates: ${location.lat}, ${location.lng}`);
+              
+              return NextResponse.json({
+                clubId,
+                clubName,
+                searchQuery: `Geocoding: ${existingAddress}`,
+                latitude: location.lat,
+                longitude: location.lng,
+                address: existingAddress,
+                formattedAddress: result.formatted_address || existingAddress,
+                confidence: 0.8, // High confidence for geocoding with existing address
+                status: 'found'
+              } as GeolocationResult);
+            }
+          } else if (geocodingData.status !== 'OK') {
+            console.error(`🚫 Geocoding API error: ${geocodingData.status} - ${geocodingData.error_message || 'Unknown error'}`);
+          }
+        }
+      } catch (geocodingError) {
+        console.error(`🔥 Geocoding API fetch error:`, geocodingError);
+      }
+    }
+    
     // If all strategies failed
     console.log(`💔 All ${searchStrategies.length} search strategies failed for ${clubName}`);
     return NextResponse.json({

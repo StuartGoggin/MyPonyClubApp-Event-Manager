@@ -25,6 +25,7 @@ interface GeolocationResult {
   placeId?: string;
   confidence?: number;
   status: 'pending' | 'found' | 'not_found' | 'accepted' | 'skipped';
+  error?: string;
 }
 
 export default function GeolocateClubsPage() {
@@ -123,7 +124,12 @@ export default function GeolocateClubsPage() {
 
         if (response.ok) {
           const result: GeolocationResult = await response.json();
-          console.log('✅ API Response data:', result);
+          console.log('✅ API Response data:', JSON.stringify(result, null, 2));
+          console.log('🔍 Response status:', result.status);
+          console.log('🔍 Search query used:', result.searchQuery);
+          if (result.error) {
+            console.log('❌ Error in response:', result.error);
+          }
           setCurrentResult(result);
           
           if (result.status === 'found') {

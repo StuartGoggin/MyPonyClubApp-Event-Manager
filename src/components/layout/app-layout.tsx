@@ -73,12 +73,12 @@ export function AppLayout({ children }: PropsWithChildren) {
             <SidebarMenuItem>
               <SidebarMenuButton
                 asChild
-                tooltip="Dashboard"
+                tooltip="View Calendar"
                 className="hover:bg-primary/10 hover:text-primary transition-colors"
               >
                 <Link href="/">
                   <Calendar />
-                  <span>Dashboard</span>
+                  <span>View Calendar</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

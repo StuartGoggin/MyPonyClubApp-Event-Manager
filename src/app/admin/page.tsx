@@ -272,6 +272,12 @@ async function AdminDashboardContent() {
               isConfigured={true}
             />
             <ConfigItem
+              label="API Endpoints"
+              value="Manage and monitor all application endpoints"
+              href="/admin/api-endpoints"
+              isConfigured={true}
+            />
+            <ConfigItem
               label="Database Seed"
               value="Initialize the database with sample data"
               href="/admin/seed"

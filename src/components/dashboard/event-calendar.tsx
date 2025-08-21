@@ -70,15 +70,22 @@ const CalendarGrid = ({
   onEventClick,
   isYearView = false,
   today,
+  clubs,
 }: {
   month: Date;
   events: Event[];
   onEventClick: (eventId: string) => void;
   isYearView?: boolean;
   today: Date;
+  clubs: Club[];
 }) => {
   const start = startOfWeek(startOfMonth(month), { weekStartsOn });
   const end = endOfWeek(endOfMonth(month), { weekStartsOn });
+  
+  // Helper function to get club name from clubId
+  const getClubName = (clubId: string) => {
+    return clubs.find(club => club.id === clubId)?.name || 'Unknown Club';
+  };
   
   const weeks: Date[][] = [];
   let day = start;
@@ -179,7 +186,7 @@ const CalendarGrid = ({
                                 onClick={() => onEventClick(event.id)}
                                 className={cn(
                                     "w-full text-left rounded-md text-xs leading-tight transition-all duration-200 shadow-sm border hover:shadow-md hover:scale-105",
-                                    isYearView ? "p-1" : "p-1.5",
+                                    isYearView ? "p-1" : "p-2",
                                     event.status === 'approved' ? 'event-approved' :
                                     event.status === 'proposed' ? 'event-proposed' :
                                     event.status === 'public_holiday' ? 'event-holiday' :
@@ -195,19 +202,52 @@ const CalendarGrid = ({
                                  event.status === 'rejected' ? <Clock className={cn("h-3 w-3 text-red-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
                                  <Clock className={cn("h-3 w-3 text-accent flex-shrink-0", { "h-2 w-2": isYearView })}/>}
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <span className={cn("font-medium block", 
+                                <div className="flex-1 min-w-0 space-y-0.5">
+                                    <div className={cn("font-medium leading-tight", 
+                                        isYearView ? "text-[10px]" : "text-xs",
                                         event.status === 'approved' ? 'text-primary' : 
                                         event.status === 'proposed' ? 'text-amber-800' :
                                         event.status === 'public_holiday' ? 'text-green-700' :
                                         event.status === 'rejected' ? 'text-red-700' :
                                         'text-accent'
-                                    )}>{event.name}</span>
-                                    {event.status === 'proposed' && (
-                                        <span className="text-[10px] text-amber-600 font-medium uppercase tracking-wide">
-                                            Pending Approval
-                                        </span>
+                                    )}>{event.name}</div>
+                                    {event.source !== 'public_holiday' && (
+                                        <div className={cn("text-muted-foreground font-medium leading-tight",
+                                            isYearView ? "text-[8px]" : "text-[9px]"
+                                        )}>
+                                            {getClubName(event.clubId)}
+                                        </div>
                                     )}
+                                    <div className="flex">
+                                        {event.status === 'proposed' && (
+                                            <span className={cn("inline-flex items-center rounded-full font-medium bg-amber-100 text-amber-700 border border-amber-200",
+                                                isYearView ? "px-1 py-0.5 text-[7px]" : "px-1.5 py-0.5 text-[8px]"
+                                            )}>
+                                                Pending
+                                            </span>
+                                        )}
+                                        {event.status === 'approved' && (
+                                            <span className={cn("inline-flex items-center rounded-full font-medium bg-green-100 text-green-700 border border-green-200",
+                                                isYearView ? "px-1 py-0.5 text-[7px]" : "px-1.5 py-0.5 text-[8px]"
+                                            )}>
+                                                Approved
+                                            </span>
+                                        )}
+                                        {event.status === 'rejected' && (
+                                            <span className={cn("inline-flex items-center rounded-full font-medium bg-red-100 text-red-700 border border-red-200",
+                                                isYearView ? "px-1 py-0.5 text-[7px]" : "px-1.5 py-0.5 text-[8px]"
+                                            )}>
+                                                Rejected
+                                            </span>
+                                        )}
+                                        {event.status === 'public_holiday' && (
+                                            <span className={cn("inline-flex items-center rounded-full font-medium bg-green-100 text-green-700 border border-green-200",
+                                                isYearView ? "px-1 py-0.5 text-[7px]" : "px-1.5 py-0.5 text-[8px]"
+                                            )}>
+                                                Holiday
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
                                 </div>
                             </button>
@@ -245,6 +285,11 @@ export function EventCalendar({
   const [selectedClubId, setSelectedClubId] = useState<string>('all');
   const [homeClubId, setHomeClubId] = useState<string | null>(null);
   const [distance, setDistance] = useState<number>(50);
+
+  // Helper function to get club name from clubId
+  const getClubName = (clubId: string) => {
+    return clubs.find(club => club.id === clubId)?.name || 'Unknown Club';
+  };
 
   const filteredClubs = useMemo(() => {
     if (selectedZoneId === 'all') {
@@ -459,14 +504,14 @@ export function EventCalendar({
       
       {view === 'month' && (
         <div className='p-4'>
-            <CalendarGrid month={currentDate} events={filteredEvents} onEventClick={handleEventClick} today={today}/>
+            <CalendarGrid month={currentDate} events={filteredEvents} onEventClick={handleEventClick} today={today} clubs={clubs}/>
         </div>
       )}
       
       {view === 'year' && (
         <div className="p-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {yearMonths.map(month => (
-                <CalendarGrid key={month.toString()} month={month} events={filteredEvents} onEventClick={handleEventClick} isYearView={true} today={today} />
+                <CalendarGrid key={month.toString()} month={month} events={filteredEvents} onEventClick={handleEventClick} isYearView={true} today={today} clubs={clubs} />
             ))}
         </div>
       )}

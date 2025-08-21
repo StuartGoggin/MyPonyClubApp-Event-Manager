@@ -386,7 +386,7 @@ export const ENDPOINTS: APIEndpointDefinition[] = [
     description: 'Get initial seed data for application setup',
     enabled: true,
     requiresAuth: false,
-    icon: 'Seedling',
+    icon: 'Sprout',
     example: 'GET /api/seed'
   }
 ];

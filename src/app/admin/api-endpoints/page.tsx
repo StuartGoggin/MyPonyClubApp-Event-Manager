@@ -27,7 +27,7 @@ import {
   CheckCircle,
   RefreshCw,
   Trash2,
-  Seedling
+  Sprout
 } from "lucide-react";
 import { ENDPOINTS, APIEndpointDefinition } from '@/lib/api-registry';
 
@@ -45,7 +45,7 @@ const iconMap = {
   CheckCircle,
   RefreshCw,
   Trash2,
-  Seedling
+  Sprout
 };
 
 export default function APIEndpointsPage() {

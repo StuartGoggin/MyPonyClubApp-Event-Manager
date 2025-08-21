@@ -8,6 +8,91 @@
 			"group": "build",
 			"isBackground": true,
 			"problemMatcher": []
+		},
+		{
+			"label": "🚀 Deploy to Production",
+			"type": "shell",
+			"command": ".\\deploy.ps1",
+			"args": [
+				"-Message",
+				"Manual deployment from VS Code"
+			],
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": true,
+				"panel": "new"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "🧹 Clean Build",
+			"type": "shell",
+			"command": "Remove-Item",
+			"args": [
+				"-Recurse",
+				"-Force",
+				".next",
+				"-ErrorAction",
+				"SilentlyContinue"
+			],
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "🔨 Build Production",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"build"
+			],
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "📤 Quick Deploy",
+			"dependsOrder": "sequence",
+			"dependsOn": [
+				"🧹 Clean Build",
+				"🔨 Build Production",
+				"📤 Git Push"
+			],
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": true,
+				"panel": "new"
+			}
+		},
+		{
+			"label": "📤 Git Push",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"push",
+				"origin",
+				"main"
+			],
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			}
 		}
 	]
 }

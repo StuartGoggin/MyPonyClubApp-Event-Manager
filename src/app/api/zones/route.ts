@@ -4,7 +4,7 @@ import { getAllZones } from '@/lib/server-data';
 export async function GET() {
   try {
     const zones = await getAllZones();
-    return NextResponse.json(zones);
+    return NextResponse.json({ zones });
   } catch (error: any) {
     console.error('Error fetching zones:', error);
     

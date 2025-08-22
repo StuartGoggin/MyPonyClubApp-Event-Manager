@@ -16,15 +16,45 @@ export default function CompactCalendarPage() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
+        setError(null);
+        
+        console.log('🔄 Fetching embed calendar data...');
+        
         const [zonesRes, clubsRes, eventsRes, eventTypesRes] = await Promise.all([
-          fetch('/api/zones'),
-          fetch('/api/clubs'),
-          fetch('/api/events'),
-          fetch('/api/event-types')
+          fetch('/api/zones').catch(err => {
+            console.error('❌ Zones fetch failed:', err);
+            throw new Error(`Zones API failed: ${err.message}`);
+          }),
+          fetch('/api/clubs').catch(err => {
+            console.error('❌ Clubs fetch failed:', err);
+            throw new Error(`Clubs API failed: ${err.message}`);
+          }),
+          fetch('/api/events').catch(err => {
+            console.error('❌ Events fetch failed:', err);
+            throw new Error(`Events API failed: ${err.message}`);
+          }),
+          fetch('/api/event-types').catch(err => {
+            console.error('❌ Event types fetch failed:', err);
+            throw new Error(`Event types API failed: ${err.message}`);
+          })
         ]);
 
+        console.log('📡 API responses:', {
+          zones: zonesRes.status,
+          clubs: clubsRes.status,
+          events: eventsRes.status,
+          eventTypes: eventTypesRes.status
+        });
+
         if (!zonesRes.ok || !clubsRes.ok || !eventsRes.ok || !eventTypesRes.ok) {
-          throw new Error('Failed to fetch data');
+          const errorDetails = {
+            zones: zonesRes.ok ? 'OK' : `${zonesRes.status} ${zonesRes.statusText}`,
+            clubs: clubsRes.ok ? 'OK' : `${clubsRes.status} ${clubsRes.statusText}`,
+            events: eventsRes.ok ? 'OK' : `${eventsRes.status} ${eventsRes.statusText}`,
+            eventTypes: eventTypesRes.ok ? 'OK' : `${eventTypesRes.status} ${eventTypesRes.statusText}`
+          };
+          console.error('❌ API response errors:', errorDetails);
+          throw new Error(`API Error: ${JSON.stringify(errorDetails)}`);
         }
 
         const [zonesData, clubsData, eventsData, eventTypesData] = await Promise.all([
@@ -34,13 +64,21 @@ export default function CompactCalendarPage() {
           eventTypesRes.json()
         ]);
 
-        setZones(zonesData);
-        setClubs(clubsData);
-        setEvents(eventsData);
-        setEventTypes(eventTypesData);
-      } catch (err) {
-        console.error('Error fetching calendar data:', err);
-        setError('Failed to load calendar data. Please try again.');
+        console.log('✅ Data loaded successfully:', {
+          zones: Array.isArray(zonesData) ? zonesData.length : (zonesData.zones || []).length,
+          clubs: Array.isArray(clubsData) ? clubsData.length : (clubsData.clubs || []).length,
+          events: Array.isArray(eventsData) ? eventsData.length : (eventsData.events || []).length,
+          eventTypes: Array.isArray(eventTypesData) ? eventTypesData.length : (eventTypesData.eventTypes || []).length
+        });
+
+        // Handle both array responses and object responses with nested arrays
+        setZones(Array.isArray(zonesData) ? zonesData : (zonesData.zones || []));
+        setClubs(Array.isArray(clubsData) ? clubsData : (clubsData.clubs || []));
+        setEvents(Array.isArray(eventsData) ? eventsData : (eventsData.events || []));
+        setEventTypes(Array.isArray(eventTypesData) ? eventTypesData : (eventTypesData.eventTypes || []));
+      } catch (err: any) {
+        console.error('💥 Error fetching calendar data:', err);
+        setError(`Failed to load calendar data: ${err.message}`);
       } finally {
         setIsLoading(false);
       }

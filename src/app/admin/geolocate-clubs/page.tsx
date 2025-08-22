@@ -58,8 +58,8 @@ export default function GeolocateClubsPage() {
         if (clubsRes.ok && zonesRes.ok) {
           const clubsData = await clubsRes.json();
           const zonesData = await zonesRes.json();
-          setClubs(clubsData);
-          setZones(zonesData);
+          setClubs(Array.isArray(clubsData) ? clubsData : (clubsData.clubs || []));
+          setZones(Array.isArray(zonesData) ? zonesData : (zonesData.zones || []));
         }
       } catch (error) {
         console.error('Error loading data:', error);

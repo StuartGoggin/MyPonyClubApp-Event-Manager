@@ -1,3 +1,5 @@
+import '@/app/globals.css';
+
 export default function EmbedLayout({
   children,
 }: {
@@ -11,6 +13,8 @@ export default function EmbedLayout({
         <title>Pony Club Events Calendar</title>
         <meta name="description" content="View upcoming pony club events across all Victorian zones" />
         <meta name="robots" content="noindex, nofollow" />
+        {/* Allow embedding in iframes */}
+        <meta httpEquiv="Content-Security-Policy" content="frame-ancestors *;" />
       </head>
       <body>
         {children}

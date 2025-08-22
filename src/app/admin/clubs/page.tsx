@@ -73,8 +73,8 @@ export default function AdminClubsPage() {
       const zonesData = await zonesResponse.json();
       const clubsData = await clubsResponse.json();
 
-      setZones(zonesData);
-      setClubs(clubsData);
+      setZones(Array.isArray(zonesData) ? zonesData : (zonesData.zones || []));
+      setClubs(Array.isArray(clubsData) ? clubsData : (clubsData.clubs || []));
     } catch (err) {
       console.error('Error fetching data:', err);
       setError('Failed to load club data. Please try again.');

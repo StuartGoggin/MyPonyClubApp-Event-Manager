@@ -5,7 +5,7 @@ import type { Club } from '@/lib/types';
 export async function GET() {
   try {
     const clubs = await getAllClubs();
-    return NextResponse.json(clubs);
+    return NextResponse.json({ clubs });
   } catch (error: any) {
     console.error('Error fetching clubs:', error);
     

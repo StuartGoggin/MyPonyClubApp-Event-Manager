@@ -34,10 +34,11 @@ export default function EmbedCalendarPage() {
           eventTypesRes.json()
         ]);
 
-        setZones(zonesData);
-        setClubs(clubsData);
-        setEvents(eventsData);
-        setEventTypes(eventTypesData);
+        // Handle both array responses and object responses with nested arrays
+        setZones(Array.isArray(zonesData) ? zonesData : (zonesData.zones || []));
+        setClubs(Array.isArray(clubsData) ? clubsData : (clubsData.clubs || []));
+        setEvents(Array.isArray(eventsData) ? eventsData : (eventsData.events || []));
+        setEventTypes(Array.isArray(eventTypesData) ? eventTypesData : (eventTypesData.eventTypes || []));
       } catch (err) {
         console.error('Error fetching calendar data:', err);
         setError('Failed to load calendar data. Please try again.');

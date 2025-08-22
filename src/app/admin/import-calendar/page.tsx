@@ -39,7 +39,8 @@ import {
   Undo2,
   Settings,
   Plus,
-  FileImage
+  FileImage,
+  FileX
 } from "lucide-react";
 import { format, addDays, eachDayOfInterval, parseISO, isValid } from 'date-fns';
 
@@ -98,7 +99,7 @@ export default function ImportCalendarPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [importing, setImporting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [parseMethod, setParseMethod] = useState<'csv' | 'excel' | 'text' | 'pdf'>('csv');
+  const [parseMethod, setParseMethod] = useState<'csv' | 'excel' | 'text' | 'pdf' | 'docx'>('csv');
   const [previewData, setPreviewData] = useState<string[][]>([]);
   const [processedEvents, setProcessedEvents] = useState<ImportedEvent[]>([]);
   const [importResults, setImportResults] = useState<any>(null);
@@ -130,6 +131,7 @@ export default function ImportCalendarPage() {
 
   // File upload handler
   const handleFileUpload = useCallback(async (file: File) => {
+    console.log('File upload started:', file.name, file.type, file.size);
     setSelectedFile(file);
     setIsProcessing(true);
     setUploadProgress(0);
@@ -150,24 +152,35 @@ export default function ImportCalendarPage() {
       let parsedData: string[][] = [];
       
       if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
+        console.log('Processing as CSV file');
         parsedData = await parseCSVFile(file);
         setParseMethod('csv');
       } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+        console.log('Processing as Excel file');
         parsedData = await parseExcelFile(file);
         setParseMethod('excel');
       } else if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+        console.log('Processing as PDF file');
         parsedData = await parsePDFFile(file);
         setParseMethod('pdf');
+      } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || 
+                 file.name.endsWith('.docx') || file.name.endsWith('.doc')) {
+        console.log('Processing as DOCX file');
+        parsedData = await parseDocxFile(file);
+        setParseMethod('docx');
       } else {
+        console.log('Processing as text file');
         // Try text parsing for other formats
         parsedData = await parseTextFile(file);
         setParseMethod('text');
       }
 
+      console.log('File parsed successfully, data rows:', parsedData.length);
       setPreviewData(parsedData);
       setUploadProgress(100);
       
       // Auto-process after a brief delay
+      console.log('Starting processImportData in 500ms');
       setTimeout(() => {
         processImportData(parsedData);
       }, 500);
@@ -207,12 +220,14 @@ export default function ImportCalendarPage() {
   };
 
   const parsePDFFile = async (file: File): Promise<string[][]> => {
+    console.log('Starting PDF parsing for file:', file.name, 'Size:', file.size);
     try {
       // For PDF parsing, we'll use a client-side PDF.js approach
       // This is a simplified implementation - in production you might want to use a library like pdf-parse
       
       // Read file as array buffer
       const arrayBuffer = await file.arrayBuffer();
+      console.log('PDF arrayBuffer length:', arrayBuffer.byteLength);
       
       // Convert to base64 for processing
       const uint8Array = new Uint8Array(arrayBuffer);
@@ -224,13 +239,19 @@ export default function ImportCalendarPage() {
       // Note: This is a basic implementation. For better PDF parsing, 
       // you would typically use pdf-parse or PDF.js library
       const extractedText = await extractTextFromPDF(arrayBuffer);
+      console.log('Extracted text length:', extractedText.length);
+      console.log('First 200 chars:', extractedText.substring(0, 200));
       
       if (!extractedText) {
         throw new Error('Could not extract text from PDF');
       }
 
       // Process extracted text into structured data
-      return parseExtractedPDFText(extractedText);
+      const parsedData = parseExtractedPDFText(extractedText);
+      console.log('Parsed PDF data rows:', parsedData.length);
+      console.log('First few rows:', parsedData.slice(0, 3));
+      
+      return parsedData;
       
     } catch (error) {
       console.error('PDF parsing error:', error);
@@ -352,8 +373,310 @@ Note: PDF text extraction is limited. Please verify the imported data.`;
     return data;
   };
 
+  const parseDocxFile = async (file: File): Promise<string[][]> => {
+    console.log('Starting DOCX parsing for file:', file.name, 'Size:', file.size);
+    try {
+      // Read file as array buffer
+      const arrayBuffer = await file.arrayBuffer();
+      console.log('DOCX arrayBuffer length:', arrayBuffer.byteLength);
+      
+      // Extract text from DOCX using basic ZIP parsing
+      const extractedText = await extractTextFromDocx(arrayBuffer);
+      console.log('Extracted DOCX text length:', extractedText.length);
+      console.log('First 500 chars:', extractedText.substring(0, 500));
+      
+      if (!extractedText) {
+        throw new Error('Could not extract text from DOCX');
+      }
+
+      // Process extracted text into structured data for Pony Club calendar format
+      const parsedData = parseDocxCalendarText(extractedText);
+      console.log('Parsed DOCX data rows:', parsedData.length);
+      console.log('First few rows:', parsedData.slice(0, 3));
+      
+      return parsedData;
+      
+    } catch (error) {
+      console.error('DOCX parsing error:', error);
+      // Fallback: return a template structure
+      return [
+        ['Event Name', 'Start Date', 'End Date', 'Club', 'Location', 'Type'],
+        ['DOCX Import Failed - Manual Review Required', '2025-01-01', '2025-01-01', 'Unknown Club', 'Unknown Location', 'Rally']
+      ];
+    }
+  };
+
+  // Extract text from DOCX file using basic ZIP/XML parsing
+  const extractTextFromDocx = async (arrayBuffer: ArrayBuffer): Promise<string> => {
+    try {
+      // DOCX files are ZIP archives containing XML files
+      // We'll use a simple approach to extract text from document.xml
+      
+      const uint8Array = new Uint8Array(arrayBuffer);
+      
+      // Look for document.xml content within the ZIP structure
+      // This is a simplified approach - in production you'd use a proper DOCX library
+      let docXmlStart = -1;
+      let docXmlEnd = -1;
+      
+      // Convert to string for searching
+      const binaryString = Array.from(uint8Array)
+        .map(byte => String.fromCharCode(byte))
+        .join('');
+      
+      // Look for XML content patterns
+      const xmlStart = binaryString.indexOf('<?xml');
+      const documentStart = binaryString.indexOf('<w:document');
+      const documentEnd = binaryString.indexOf('</w:document>');
+      
+      if (documentStart > -1 && documentEnd > -1) {
+        const xmlContent = binaryString.substring(documentStart, documentEnd + 13);
+        
+        // Extract text from XML by removing tags
+        let text = xmlContent
+          .replace(/<[^>]*>/g, ' ') // Remove XML tags
+          .replace(/\s+/g, ' ') // Normalize whitespace
+          .trim();
+        
+        // If still no readable text, try alternative extraction
+        if (text.length < 50) {
+          text = extractFallbackText(binaryString);
+        }
+        
+        return text;
+      }
+      
+      // Fallback text extraction
+      return extractFallbackText(binaryString);
+      
+    } catch (error) {
+      console.error('DOCX text extraction failed:', error);
+      return 'DOCX text extraction failed. Please convert to CSV or text format.';
+    }
+  };
+
+  // Fallback text extraction for DOCX
+  const extractFallbackText = (binaryString: string): string => {
+    // Look for readable text patterns in the binary data
+    const lines: string[] = [];
+    let currentLine = '';
+    
+    for (let i = 0; i < binaryString.length; i++) {
+      const char = binaryString[i];
+      const charCode = char.charCodeAt(0);
+      
+      // Include printable ASCII characters
+      if (charCode >= 32 && charCode <= 126) {
+        currentLine += char;
+      } else if (currentLine.length > 10) {
+        // End of line - save if meaningful
+        const cleanLine = currentLine.trim();
+        if (cleanLine.length > 5 && /[a-zA-Z]/.test(cleanLine)) {
+          lines.push(cleanLine);
+        }
+        currentLine = '';
+      }
+    }
+    
+    // Add final line if meaningful
+    if (currentLine.length > 10) {
+      const cleanLine = currentLine.trim();
+      if (cleanLine.length > 5 && /[a-zA-Z]/.test(cleanLine)) {
+        lines.push(cleanLine);
+      }
+    }
+    
+    return lines.join('\n');
+  };
+
+  // Parse DOCX calendar text specifically for Pony Club format
+  const parseDocxCalendarText = (text: string): string[][] => {
+    const lines = text.split('\n').filter(line => line.trim().length > 3);
+    const data: string[][] = [];
+    
+    // Add headers
+    data.push(['Event Name', 'Start Date', 'End Date', 'Club', 'Zone', 'State', 'Type']);
+    
+    // Pony Club calendar patterns to look for
+    const monthPatterns = [
+      /January|February|March|April|May|June|July|August|September|October|November|December/i
+    ];
+    
+    const datePatterns = [
+      /(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/g, // DD/MM/YYYY or DD-MM-YYYY
+      /(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{4})/ig, // DD MMM YYYY
+      /(\d{1,2})\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{4})/ig
+    ];
+    
+    const eventTypePatterns = [
+      /rally/i,
+      /competition/i,
+      /championship/i,
+      /clinic/i,
+      /camp/i,
+      /training/i,
+      /meeting/i,
+      /show/i
+    ];
+    
+    let currentMonth = '';
+    let currentYear = '2025';
+    
+    lines.forEach(line => {
+      const cleanLine = line.trim();
+      
+      // Skip very short lines or obvious headers
+      if (cleanLine.length < 5 || 
+          cleanLine.toLowerCase().includes('calendar') ||
+          cleanLine.toLowerCase().includes('pony club')) {
+        return;
+      }
+      
+      // Check for month headers
+      for (const monthPattern of monthPatterns) {
+        if (monthPattern.test(cleanLine) && cleanLine.length < 50) {
+          currentMonth = cleanLine;
+          return;
+        }
+      }
+      
+      // Look for date patterns in the line
+      let hasDate = false;
+      let extractedDate = '';
+      
+      for (const datePattern of datePatterns) {
+        const matches = [...cleanLine.matchAll(datePattern)];
+        if (matches.length > 0) {
+          hasDate = true;
+          const match = matches[0];
+          
+          if (match.length === 4) { // DD/MM/YYYY format
+            const day = match[1].padStart(2, '0');
+            const month = match[2].padStart(2, '0');
+            const year = match[3];
+            extractedDate = `${year}-${month}-${day}`;
+          } else if (match.length === 4 && typeof match[2] === 'string') { // DD MMM YYYY format
+            const day = match[1].padStart(2, '0');
+            const monthName = match[2];
+            const year = match[3];
+            const monthNum = getMonthNumber(monthName);
+            extractedDate = `${year}-${monthNum.padStart(2, '0')}-${day}`;
+          }
+          break;
+        }
+      }
+      
+      // If we found a date, try to extract event information
+      if (hasDate || currentMonth) {
+        // Extract event name (text before the date or significant text)
+        let eventName = cleanLine;
+        
+        // Remove date patterns from event name
+        for (const datePattern of datePatterns) {
+          eventName = eventName.replace(datePattern, '').trim();
+        }
+        
+        // Clean up event name
+        eventName = eventName
+          .replace(/^\W+/, '') // Remove leading non-word chars
+          .replace(/\W+$/, '') // Remove trailing non-word chars
+          .trim();
+        
+        if (eventName.length < 3) {
+          eventName = 'Calendar Event';
+        }
+        
+        // Try to identify event type
+        let eventType = 'Rally';
+        for (const typePattern of eventTypePatterns) {
+          if (typePattern.test(cleanLine)) {
+            eventType = cleanLine.match(typePattern)?.[0] || 'Rally';
+            break;
+          }
+        }
+        
+        // Try to extract club/zone information
+        const words = cleanLine.split(/\s+/);
+        let club = 'Unknown Club';
+        let zone = '';
+        let state = '';
+        
+        // Look for common club name patterns
+        const clubPatterns = ['Pony Club', 'PC', 'Club'];
+        for (let i = 0; i < words.length - 1; i++) {
+          if (clubPatterns.some(pattern => words[i + 1]?.toLowerCase().includes(pattern.toLowerCase()))) {
+            club = `${words[i]} ${words[i + 1]}`;
+            break;
+          }
+        }
+        
+        // Use extracted date or create one from current month
+        if (!extractedDate && currentMonth) {
+          // Try to extract day from the line
+          const dayMatch = cleanLine.match(/\b(\d{1,2})\b/);
+          if (dayMatch) {
+            const day = dayMatch[1].padStart(2, '0');
+            const monthNum = getMonthNumber(currentMonth);
+            extractedDate = `${currentYear}-${monthNum.padStart(2, '0')}-${day}`;
+          }
+        }
+        
+        if (extractedDate || currentMonth) {
+          data.push([
+            eventName,
+            extractedDate || `${currentYear}-01-01`,
+            extractedDate || `${currentYear}-01-01`,
+            club,
+            zone,
+            state,
+            eventType
+          ]);
+        }
+      }
+    });
+    
+    // If no events found, add a placeholder
+    if (data.length <= 1) {
+      data.push([
+        'DOCX Import - Manual Review Required',
+        '2025-01-01',
+        '2025-01-01',
+        'Please Review Content',
+        'Unknown Zone',
+        'Unknown State',
+        'Rally'
+      ]);
+    }
+    
+    return data;
+  };
+
+  // Helper function to convert month name to number
+  const getMonthNumber = (monthName: string): string => {
+    const months = {
+      'jan': '01', 'january': '01',
+      'feb': '02', 'february': '02',
+      'mar': '03', 'march': '03',
+      'apr': '04', 'april': '04',
+      'may': '05',
+      'jun': '06', 'june': '06',
+      'jul': '07', 'july': '07',
+      'aug': '08', 'august': '08',
+      'sep': '09', 'september': '09',
+      'oct': '10', 'october': '10',
+      'nov': '11', 'november': '11',
+      'dec': '12', 'december': '12'
+    };
+    
+    const key = monthName.toLowerCase().substring(0, 3);
+    return months[key as keyof typeof months] || '01';
+  };
+
   // Process imported data into events
   const processImportData = async (data: string[][]) => {
+    console.log('processImportData called with data rows:', data.length);
+    console.log('First few rows:', data.slice(0, 3));
+    
     if (data.length < 2) {
       alert('File must contain at least a header row and one data row.');
       return;
@@ -366,6 +689,7 @@ Note: PDF text extraction is limited. Please verify the imported data.`;
 
     // Auto-detect column mappings
     const columnMappings = detectColumnMappings(headers);
+    console.log('Column mappings detected:', columnMappings);
 
     rows.forEach((row, index) => {
       if (row.length < 2) return; // Skip empty rows
@@ -386,18 +710,37 @@ Note: PDF text extraction is limited. Please verify the imported data.`;
       }
     });
 
-    // Create new batch
-    const batch: ImportBatch = {
-      id: `batch_${Date.now()}`,
-      name: `Import from ${selectedFile?.name} - ${format(new Date(), 'PPpp')}`,
-      createdAt: new Date(),
-      status: 'reviewing',
-      events: events,
-      summary: calculateBatchSummary(events)
-    };
+    console.log('Processed events count:', events.length);
+    console.log('Moving to step 3 (review)');
+    
+    // Create processed events and move to review step
+    setProcessedEvents(events);
+    setStep(3);
 
-    setCurrentBatch(batch);
-    setCurrentStep('review');
+    // Create batch for API tracking
+    try {
+      const batchResponse = await fetch('/api/admin/import-batches', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'create',
+          batchData: {
+            fileName: selectedFile?.name || 'unknown',
+            fileSize: selectedFile?.size || 0,
+            events: events,
+            summary: calculateBatchSummary(events)
+          }
+        })
+      });
+
+      const batchResult = await batchResponse.json();
+      if (batchResult.success) {
+        setCurrentBatchId(batchResult.batchId);
+      }
+    } catch (error) {
+      console.error('Error creating batch:', error);
+      // Continue anyway - batch creation is not critical for the review step
+    }
   };
 
   // Column mapping detection
@@ -765,7 +1108,7 @@ Note: PDF text extraction is limited. Please verify the imported data.`;
                 </>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mt-6">
                 <Card>
                   <CardContent className="p-4 text-center">
                     <FileSpreadsheet className="h-8 w-8 text-green-600 mx-auto mb-2" />
@@ -792,6 +1135,13 @@ Note: PDF text extraction is limited. Please verify the imported data.`;
                     <FileImage className="h-8 w-8 text-red-600 mx-auto mb-2" />
                     <h4 className="font-medium">PDF Format</h4>
                     <p className="text-sm text-gray-600">PDF documents with text extraction</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <FileX className="h-8 w-8 text-orange-600 mx-auto mb-2" />
+                    <h4 className="font-medium">DOCX Format</h4>
+                    <p className="text-sm text-gray-600">Word documents with calendar data</p>
                   </CardContent>
                 </Card>
               </div>

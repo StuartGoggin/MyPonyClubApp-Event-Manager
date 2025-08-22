@@ -2,6 +2,94 @@
 
 This document outlines the features and ideas for the PonyClub Events application.
 
+## Recent Updates (August 22, 2025)
+
+### Embeddable Calendar System 🌐 (Latest)
+- **Complete Embed Infrastructure**: Revolutionary system for embedding calendar views in external websites:
+    - **Full Calendar Embed** (`/embed/calendar`): Complete calendar view optimized for iframe embedding
+    - **Compact Calendar Embed** (`/embed/calendar/compact`): Streamlined view for smaller spaces (400px+ width)
+    - **Clean Embed Layout**: Dedicated layout without app navigation, optimized for external embedding
+    - **CORS-Ready**: Proper headers and iframe support for cross-domain embedding
+    - **Responsive Design**: Adapts to different iframe sizes and container constraints
+
+- **Embed API Endpoint** (`/api/embed/calendar`): Comprehensive data API for external integrations:
+    - **Multiple Format Support**: JSON and iCal export formats for calendar integration
+    - **Advanced Filtering**: Zone filtering, upcoming events filter, result limiting
+    - **Google Calendar Compatible**: iCal format with proper event formatting and timezone support
+    - **Production-Ready**: CORS headers, error handling, and comprehensive parameter validation
+    - **Parameter Support**: `format`, `upcoming`, `limit`, `zone` for flexible data retrieval
+
+- **Google Sites Integration Ready**: Purpose-built for Google Sites iframe embedding:
+    - **Optimized Dimensions**: Tested dimensions for Google Sites gadget embedding
+    - **Minimal Dependencies**: Lightweight embed pages with essential functionality only
+    - **Error Handling**: Graceful fallbacks for network issues and data loading problems
+    - **Visual Polish**: Clean, professional appearance suitable for public websites
+
+### API Endpoints Management System 🔧 (Latest)
+- **Comprehensive API Registry**: Centralized system for managing all application endpoints:
+    - **25+ Endpoint Definitions**: Complete catalog of public, admin, embed, and data endpoints
+    - **Detailed Metadata**: Each endpoint includes path, method, category, description, parameters, examples
+    - **Dynamic Icon System**: Visual icons for different endpoint types and categories
+    - **Searchable Registry**: Full-text search across endpoint names, descriptions, and paths
+
+- **Admin API Management Interface** (`/admin/api-endpoints`): Professional endpoint management dashboard:
+    - **Real-time Enable/Disable**: Toggle switches to enable/disable individual endpoints
+    - **Visual Status Indicators**: Clear visual feedback for active/inactive endpoints
+    - **Category Filtering**: Filter endpoints by type (public, admin, embed, data)
+    - **Statistics Dashboard**: Overview cards showing total, active, and categorized endpoint counts
+    - **Copy-to-Clipboard**: Quick copying of endpoint URLs and examples
+    - **Parameter Documentation**: Detailed parameter descriptions with required/optional indicators
+
+- **Maintainable Architecture**: Designed for long-term maintainability:
+    - **Single Source of Truth**: All endpoint definitions in `/lib/api-registry.ts`
+    - **Auto-Update Instructions**: Clear documentation for adding new endpoints
+    - **Type Safety**: Full TypeScript interfaces for endpoint definitions
+    - **Consistent Response Formats**: Standardized API response patterns across all endpoints
+
+- **Enhanced Admin Navigation**: Added API Endpoints management to admin tools:
+    - **Professional Interface**: Glass morphism design matching existing admin aesthetic
+    - **Method Badges**: Color-coded HTTP method indicators (GET, POST, PUT, DELETE)
+    - **Authentication Indicators**: Clear badges for endpoints requiring authentication
+    - **Base URL Display**: Dynamic base URL detection for different environments
+
+### API Response Standardization 🔄 (Latest)
+- **Consistent Response Format**: Standardized all API endpoints to return uniform object structures:
+    - **Zones API**: Now returns `{ zones: [...] }` instead of raw array
+    - **Clubs API**: Now returns `{ clubs: [...] }` instead of raw array
+    - **Events API**: Consistent `{ events: [...] }` format for all responses
+    - **Event Types API**: Consistent `{ eventTypes: [...] }` format
+
+- **Robust Frontend Handling**: Enhanced frontend to handle both legacy and new API formats:
+    - **Backward Compatibility**: Graceful handling of both array and object responses
+    - **Error Resilience**: Proper fallbacks when APIs return error objects instead of arrays
+    - **Enhanced Logging**: Detailed console logging for debugging API response issues
+    - **Type Guards**: Runtime type checking to prevent "events.find is not a function" errors
+
+- **Production Error Resolution**: Fixed critical embed calendar browser console errors:
+    - **Root Cause**: Inconsistent API response formats causing frontend array method failures
+    - **Comprehensive Fix**: Updated all affected components with defensive programming
+    - **Testing Validation**: Local and production testing confirmed error resolution
+
+### Production Deployment Status 🚀
+
+#### Live Application
+- **Production URL**: `https://myponyclubapp-events--ponyclub-events.asia-east1.hosted.app`
+- **Deployment Platform**: Firebase App Hosting with GitHub integration
+- **Auto-Deployment**: Continuous deployment from main branch
+- **Database**: Fully populated with 10 zones and 172+ clubs
+
+#### Available Embed Endpoints
+- **Full Calendar**: `https://myponyclubapp-events--ponyclub-events.asia-east1.hosted.app/embed/calendar`
+- **Compact Calendar**: `https://myponyclubapp-events--ponyclub-events.asia-east1.hosted.app/embed/calendar/compact`
+- **Calendar API**: `https://myponyclubapp-events--ponyclub-events.asia-east1.hosted.app/api/embed/calendar`
+
+#### Production Features
+- **Complete Database Connectivity**: Resolved Firebase Admin SDK initialization issues
+- **Cross-browser Compatibility**: Confirmed working across Edge, Chrome, and modern browsers
+- **Error Resolution**: Fixed embed calendar console errors with API standardization
+- **Professional Admin Interface**: Full API endpoint management system
+- **Real-time Data**: Live Firestore integration with comprehensive error handling
+
 ## Recent Updates (August 19, 2025)
 
 ### Club Geolocation Feature Implementation 🗺️ (Latest)
@@ -114,6 +202,13 @@ This document outlines the features and ideas for the PonyClub Events applicatio
 ## Implemented Features
 
 ### Calendar & Event Management
+- **Embeddable Calendar System**: Revolutionary external website integration:
+  - **Full Calendar Embed**: Complete calendar view optimized for iframe embedding in external websites
+  - **Compact Calendar Embed**: Streamlined view for smaller embedding spaces (400px+ width)
+  - **iCal Export API**: Google Calendar compatible iCal format for calendar integration
+  - **JSON Data API**: Structured data access for custom integrations
+  - **CORS-Ready Infrastructure**: Proper cross-domain headers for embedding in any website
+  - **Google Sites Integration**: Purpose-built for Google Sites gadget embedding
 - **Calendar Weekend Highlighting**: Saturdays and Sundays are visually highlighted in the calendar view to make them more prominent.
 - **Calendar Year View**: A "Year" button has been added to the calendar to provide a full year-long overview of events.
 - **Content-Aware Year View**: In the year view, calendar columns dynamically resize. Days with events become wider to fit the content, while empty days remain narrow, creating a more readable and compact layout. This behavior is consistent across all weeks of a given month.
@@ -135,6 +230,16 @@ This document outlines the features and ideas for the PonyClub Events applicatio
     - Zone Calendars
 
 ### Admin & Data Management
+- **API Endpoints Management**: Professional endpoint administration system:
+  - **Comprehensive Endpoint Registry**: Centralized catalog of 25+ application endpoints
+  - **Visual Management Dashboard**: Professional interface with enable/disable toggles for each endpoint
+  - **Category-Based Organization**: Endpoints grouped by type (public, admin, embed, data)
+  - **Real-time Statistics**: Dashboard showing total, active, and categorized endpoint counts
+  - **Search and Filtering**: Full-text search across endpoint names, descriptions, and paths
+  - **Documentation Integration**: Parameter documentation with examples and required field indicators
+  - **Copy-to-Clipboard**: Quick copying of endpoint URLs, examples, and base URLs
+  - **Maintainable Architecture**: Single source of truth system for easy endpoint additions
+
 - **Comprehensive Club Management**: Enhanced club administration with detailed information capture:
     - **Physical Address**: Complete address with validation (street, suburb, postcode, state, country)
     - **Geographic Coordinates**: Latitude/longitude with Google Maps integration for precise positioning
@@ -245,12 +350,33 @@ This document outlines the features and ideas for the PonyClub Events applicatio
 - **Date Management**: Robust Firestore timestamp handling with multiple format support
 
 ### API Endpoints Structure
-- **Events API** (`/api/events`): GET, POST with filtering capabilities (zone, club, status)
-- **Event Management** (`/api/events/[id]`): PATCH, DELETE for event lifecycle
-- **Event Status** (`/api/events/[id]/status`): PATCH for approval/rejection workflow
-- **Zones API** (`/api/zones`): GET, POST for zone management
-- **Clubs API** (`/api/clubs`): GET, POST for club management
-- **Event Types API** (`/api/event-types`): GET, POST for event type configuration
+- **Public APIs**: Core data access endpoints with consistent response formats
+  - **Events API** (`/api/events`): GET, POST with filtering capabilities (zone, club, status, upcoming)
+  - **Zones API** (`/api/zones`): GET returning `{ zones: [...] }` format
+  - **Clubs API** (`/api/clubs`): GET returning `{ clubs: [...] }` format with optional zone filtering
+  - **Event Types API** (`/api/event-types`): GET returning `{ eventTypes: [...] }` format
+
+- **Embed APIs**: Specialized endpoints for external website integration
+  - **Embed Calendar Data** (`/api/embed/calendar`): GET with JSON/iCal export, zone filtering, upcoming filter
+  - **Embed Calendar View** (`/embed/calendar`): Full calendar iframe view
+  - **Embed Calendar Compact** (`/embed/calendar/compact`): Compact calendar iframe view
+
+- **Admin APIs**: Administrative functions with authentication requirements
+  - **Geolocation APIs**: Club coordinate management (`/api/admin/geolocate-club`, `/api/admin/update-club-location`)
+  - **Data Export APIs**: Comprehensive export functionality (`/api/admin/export-data`, `/api/admin/export-events`)
+  - **Import/Export APIs**: Bulk data operations for zones, clubs, and event types
+  - **Database Management**: Seeding, cleanup, and maintenance operations
+  - **Debug APIs**: Environment checking and troubleshooting endpoints
+
+- **Event Management APIs**: Complete event lifecycle management
+  - **Individual Events** (`/api/events/[id]`): PATCH, DELETE for event updates
+  - **Event Status** (`/api/events/[id]/status`): PATCH for approval/rejection workflow
+  - **Bulk Operations**: Multi-event management capabilities
+
+- **API Registry System**: Centralized endpoint management
+  - **Registry Definition** (`/lib/api-registry.ts`): Central source of truth for all endpoints
+  - **Management Interface** (`/admin/api-endpoints`): Visual endpoint management dashboard
+  - **25+ Documented Endpoints**: Complete catalog with metadata, parameters, and examples
 
 ### Implemented Workflows
 
@@ -295,9 +421,20 @@ This document outlines the features and ideas for the PonyClub Events applicatio
 
 ## Future Ideas
 
+### Enhanced External Integration
+- **Advanced Embed Widgets**: Enhanced embeddable components for external websites:
+  - **Event List Widget**: Compact event listings for sidebar embedding
+  - **Club Finder Widget**: Interactive club search and discovery widget
+  - **Event Registration Widget**: Direct event registration through embedded forms
+  - **Custom Branding**: Customizable colors and styling for different websites
+- **WordPress Plugin**: Native WordPress plugin for seamless integration
+- **API Developer Portal**: Comprehensive API documentation and developer tools
+- **Webhook System**: Real-time notifications for external systems
+- **SSO Integration**: Single sign-on for seamless user experience across platforms
+
 ### Enhanced Features
-- **Interactive Map Dashboard**: Full map view showing all clubs with event overlays and filters
-- **Location-Based Event Discovery**: Find events near specific locations or within distance radius
+- **Interactive Map Dashboard**: ✅ **COMPLETED** - Full map view showing all clubs with event overlays and filters
+- **Location-Based Event Discovery**: ✅ **COMPLETED** - Find events near specific locations or within distance radius
 - **Travel Planning Tools**: Calculate distances and travel times between clubs for event planning
 - **Geographic Analytics**: Data visualization showing event distribution across zones and regions
 - **Mobile Location Services**: GPS-based club finder and event navigation for mobile users

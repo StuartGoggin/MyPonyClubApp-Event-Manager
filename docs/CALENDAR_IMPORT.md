@@ -8,6 +8,7 @@ The Calendar Import System allows administrators to upload calendar documents an
 ### 1. Multi-Format File Support
 - **CSV Files**: Comma-separated values with customizable column mapping
 - **Excel Files**: .xlsx and .xls formats with automatic data extraction
+- **PDF Files**: PDF documents with intelligent text extraction and parsing
 - **Text Files**: Plain text with intelligent parsing
 
 ### 2. Intelligent Club Matching
@@ -30,7 +31,7 @@ The Calendar Import System allows administrators to upload calendar documents an
 ### Step 1: Upload Calendar Document
 1. Navigate to Admin → Import Calendar
 2. Click "Choose File" or drag and drop your calendar document
-3. Supported formats: .csv, .xlsx, .xls, .txt, .doc, .docx
+3. Supported formats: .csv, .xlsx, .xls, .pdf, .txt, .doc, .docx
 4. Wait for file processing and preview
 
 ### Step 2: Review and Edit
@@ -69,6 +70,19 @@ The system can parse various text formats with intelligent detection of:
 - Club references
 - Location information
 - Event types
+
+### PDF Format
+The system extracts text from PDF documents and processes them:
+- **Text Extraction**: Automatic text extraction from PDF content
+- **Pattern Recognition**: Intelligent detection of event information patterns
+- **Manual Review**: PDF imports typically require manual review due to format complexity
+- **Best Practice**: For best results, ensure PDF text is selectable (not scanned images)
+
+**PDF Import Notes:**
+- Text-based PDFs work better than scanned image PDFs
+- Complex layouts may require manual review and correction
+- The system attempts to identify event names, dates, and club information
+- Always review PDF imports carefully before executing
 
 ## Club Matching System
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { PropsWithChildren } from 'react';
-import { Shield, Database, Users, Calendar, MapPin, Settings, FileText } from 'lucide-react';
+import { Shield, Database, Users, Calendar, MapPin, Settings, FileText, Upload } from 'lucide-react';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -59,6 +59,14 @@ export default function AdminLayout({ children }: PropsWithChildren) {
               title="Event Types"
               description="Configure available event types"
               badge="Config"
+            />
+            <AdminNavCard
+              href="/admin/import-calendar"
+              icon={<Upload className="h-6 w-6" />}
+              title="Import Calendar"
+              description="Upload and import calendar events"
+              badge="Import"
+              badgeVariant="default"
             />
             <AdminNavCard
               href="/admin/settings"

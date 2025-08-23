@@ -87,10 +87,9 @@ async function executeImportBatch(batchId: string) {
     // Import each event
     for (const event of batchData?.events || []) {
       if (event.status === 'matched' && event.validationErrors.length === 0) {
-        const eventData = {
+        const eventData: any = {
           name: event.name,
           date: Timestamp.fromDate(event.startDate),
-          clubId: event.clubId,
           eventTypeId: event.eventTypeId || 'default-type',
           location: event.location || '',
           notes: event.notes || '',
@@ -103,6 +102,13 @@ async function executeImportBatch(batchId: string) {
           createdAt: Timestamp.now(),
           updatedAt: Timestamp.now()
         };
+
+        // Add club or zone association
+        if (event.clubId) {
+          eventData.clubId = event.clubId;
+        } else if (event.zoneId) {
+          eventData.zoneId = event.zoneId;
+        }
 
         const eventDoc = await adminDb.collection('events').add(eventData);
         importedEventIds.push(eventDoc.id);

@@ -51,8 +51,11 @@ interface ImportedEvent {
   name: string;
   startDate: Date;
   endDate: Date;
-  clubName: string;
+  // Event can be associated with either a club OR a zone
+  clubName?: string;      // For club-specific events
   clubId?: string;
+  zoneName?: string;      // For zone-wide events  
+  zoneId?: string;
   eventType: string;
   eventTypeId?: string;
   location?: string;
@@ -64,6 +67,7 @@ interface ImportedEvent {
   matchConfidence?: number;
   validationErrors: string[];
   splitEvents?: ImportedEvent[]; // For multi-day events
+  originalIndex?: number; // For editing purposes
 }
 
 interface ImportBatch {
@@ -89,6 +93,13 @@ interface ClubMatchSuggestion {
   reason: string;
 }
 
+interface ZoneMatchSuggestion {
+  zoneId: string;
+  zoneName: string;
+  confidence: number;
+  reason: string;
+}
+
 export default function ImportCalendarPage() {
   const [step, setStep] = useState(1); // 1: Upload, 2: Process, 3: Review, 4: Complete
   const [currentStep, setCurrentStep] = useState<'upload' | 'review' | 'import' | 'complete'>('upload');
@@ -106,6 +117,9 @@ export default function ImportCalendarPage() {
   const [clubs, setClubs] = useState<any[]>([]);
   const [eventTypes, setEventTypes] = useState<any[]>([]);
   const [zones, setZones] = useState<any[]>([]);
+  const [editingEvent, setEditingEvent] = useState<ImportedEvent | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [showAllEvents, setShowAllEvents] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load reference data
@@ -196,12 +210,24 @@ export default function ImportCalendarPage() {
   // File parsing functions
   const parseCSVFile = async (file: File): Promise<string[][]> => {
     const text = await file.text();
+    console.log('CSV file text length:', text.length);
+    console.log('First 500 characters:', text.substring(0, 500));
+    
     const lines = text.split('\n').filter(line => line.trim());
-    return lines.map(line => {
+    console.log('Total lines after filtering:', lines.length);
+    console.log('Last few lines:', lines.slice(-5));
+    
+    const parsedRows = lines.map((line, index) => {
       // Simple CSV parsing - could be enhanced with proper CSV library
       const cells = line.split(',').map(cell => cell.trim().replace(/^"|"$/g, ''));
+      if (index < 5 || index >= lines.length - 5) {
+        console.log(`Row ${index}:`, cells);
+      }
       return cells;
     });
+    
+    console.log('Total parsed rows:', parsedRows.length);
+    return parsedRows;
   };
 
   const parseExcelFile = async (file: File): Promise<string[][]> => {
@@ -677,36 +703,63 @@ Note: PDF text extraction is limited. Please verify the imported data.`;
     console.log('processImportData called with data rows:', data.length);
     console.log('First few rows:', data.slice(0, 3));
     
-    if (data.length < 2) {
-      alert('File must contain at least a header row and one data row.');
+    if (data.length < 1) {
+      alert('File must contain at least one data row.');
       return;
     }
 
     await loadReferenceData();
 
-    const [headers, ...rows] = data;
+    // Auto-detect column mappings from first row
+    const firstRow = data[0];
+    const columnMappings = detectColumnMappings(firstRow);
+    console.log('Column mappings detected:', columnMappings);
+    
+    // Check if first row looks like data (no proper headers)
+    const firstColumnLooksLikeDate = firstRow[0] && /\d+(st|nd|rd|th)?\s*(january|february|march|april|may|june|july|august|september|october|november|december)/i.test(firstRow[0]);
+    const hasProperHeaders = firstRow.some(h => 
+      h.toLowerCase().includes('event') || 
+      h.toLowerCase().includes('name') || 
+      h.toLowerCase().includes('date') ||
+      h.toLowerCase().includes('club')
+    );
+    
+    let rows: string[][];
+    if (firstColumnLooksLikeDate && !hasProperHeaders) {
+      console.log('First row appears to be data, not headers - processing all rows');
+      rows = data; // Process all rows including the first one
+    } else {
+      console.log('First row appears to be headers - skipping first row');
+      const [headers, ...dataRows] = data;
+      rows = dataRows;
+    }
+    
+    console.log('Processing', rows.length, 'data rows');
     const events: ImportedEvent[] = [];
 
-    // Auto-detect column mappings
-    const columnMappings = detectColumnMappings(headers);
-    console.log('Column mappings detected:', columnMappings);
-
     rows.forEach((row, index) => {
-      if (row.length < 2) return; // Skip empty rows
+      if (row.length < 2) {
+        console.log(`Skipping row ${index + 1} (length ${row.length}):`, row);
+        return; // Skip empty rows
+      }
 
       try {
+        console.log(`Processing row ${index + 1}:`, row);
         const eventData = mapRowToEvent(row, columnMappings, index);
+        console.log(`Mapped event data for row ${index + 1}:`, eventData.name, eventData.startDate);
         
         // Handle multi-day events
         if (eventData.startDate && eventData.endDate && 
             eventData.startDate.getTime() !== eventData.endDate.getTime()) {
           const splitEvents = createSplitEvents(eventData);
           events.push(...splitEvents);
+          console.log(`Added ${splitEvents.length} split events for row ${index + 1}`);
         } else {
           events.push(eventData);
+          console.log(`Added single event for row ${index + 1}`);
         }
       } catch (error) {
-        console.error(`Error processing row ${index + 1}:`, error);
+        console.error(`Error processing row ${index + 1}:`, error, 'Row data:', row);
       }
     });
 
@@ -747,6 +800,33 @@ Note: PDF text extraction is limited. Please verify the imported data.`;
   const detectColumnMappings = (headers: string[]) => {
     const mappings: Record<string, number> = {};
     
+    console.log('Detecting column mappings for headers:', headers);
+    
+    // Check if this looks like a data row rather than headers
+    // (if first column looks like a date and headers don't contain expected keywords)
+    const firstColumnLooksLikeDate = headers[0] && /\d+(st|nd|rd|th)?\s*(january|february|march|april|may|june|july|august|september|october|november|december)/i.test(headers[0]);
+    const hasProperHeaders = headers.some(h => 
+      h.toLowerCase().includes('event') || 
+      h.toLowerCase().includes('name') || 
+      h.toLowerCase().includes('date') ||
+      h.toLowerCase().includes('club')
+    );
+    
+    if (firstColumnLooksLikeDate && !hasProperHeaders) {
+      console.log('Detected data row as headers - using positional mapping for Pony Club format');
+      // Assume Pony Club format: Date, Qualifier, Club, Event Name, Location
+      mappings.startDate = 0;  // Date column
+      mappings.type = 1;       // Qualifier column (optional)
+      mappings.club = 2;       // Club column
+      mappings.name = 3;       // Event Name column
+      mappings.location = 4;   // Location column (optional)
+      mappings.endDate = 0;    // Use same as start date
+      
+      console.log('Applied Pony Club positional mapping:', mappings);
+      return mappings;
+    }
+    
+    // Standard header-based detection
     headers.forEach((header, index) => {
       const lower = header.toLowerCase();
       if (lower.includes('event') || lower.includes('name') || lower.includes('title')) {
@@ -757,6 +837,8 @@ Note: PDF text extraction is limited. Please verify the imported data.`;
         mappings.endDate = index;
       } else if (lower.includes('club')) {
         mappings.club = index;
+      } else if (lower.includes('zone')) {
+        mappings.zone = index;
       } else if (lower.includes('location') || lower.includes('venue')) {
         mappings.location = index;
       } else if (lower.includes('type') || lower.includes('category')) {
@@ -768,6 +850,7 @@ Note: PDF text extraction is limited. Please verify the imported data.`;
       }
     });
 
+    console.log('Standard header-based mapping:', mappings);
     return mappings;
   };
 
@@ -777,6 +860,7 @@ Note: PDF text extraction is limited. Please verify the imported data.`;
     const startDateStr = row[mappings.startDate] || '';
     const endDateStr = row[mappings.endDate] || startDateStr;
     const clubName = row[mappings.club] || '';
+    const zoneName = row[mappings.zone] || '';
     
     const startDate = parseDate(startDateStr);
     const endDate = parseDate(endDateStr);
@@ -784,10 +868,21 @@ Note: PDF text extraction is limited. Please verify the imported data.`;
     const validationErrors: string[] = [];
     if (!name.trim()) validationErrors.push('Event name is required');
     if (!startDate) validationErrors.push('Valid start date is required');
-    if (!clubName.trim()) validationErrors.push('Club name is required');
+    if (!clubName.trim() && !zoneName.trim()) {
+      validationErrors.push('Either club name or zone name is required');
+    }
 
-    // Try to match club
-    const clubMatch = findBestClubMatch(clubName);
+    // Try to match club or zone
+    let clubMatch = null;
+    let zoneMatch = null;
+    
+    if (clubName.trim()) {
+      clubMatch = findBestClubMatch(clubName);
+    }
+    
+    if (zoneName.trim()) {
+      zoneMatch = findBestZoneMatch(zoneName);
+    }
     
     const event: ImportedEvent = {
       id: `import_${Date.now()}_${index}`,
@@ -795,14 +890,16 @@ Note: PDF text extraction is limited. Please verify the imported data.`;
       name: name.trim(),
       startDate: startDate || new Date(),
       endDate: endDate || startDate || new Date(),
-      clubName: clubName.trim(),
+      clubName: clubName.trim() || undefined,
       clubId: clubMatch?.clubId,
+      zoneName: zoneName.trim() || undefined,
+      zoneId: zoneMatch?.zoneId,
       eventType: row[mappings.type] || 'Rally',
       location: row[mappings.location] || '',
       notes: row[mappings.notes] || '',
       coordinatorName: row[mappings.coordinator] || '',
-      status: clubMatch ? 'matched' : 'unmatched',
-      matchConfidence: clubMatch?.confidence || 0,
+      status: (clubMatch || zoneMatch) ? 'matched' : 'unmatched',
+      matchConfidence: clubMatch?.confidence || zoneMatch?.confidence || 0,
       validationErrors
     };
 
@@ -813,8 +910,58 @@ Note: PDF text extraction is limited. Please verify the imported data.`;
   const parseDate = (dateStr: string): Date | null => {
     if (!dateStr) return null;
     
+    console.log('Parsing date string:', dateStr);
+    
     // Try different date formats
     const formats = [
+      // Handle formats like "6thFebruary", "20th February", "22nd February"
+      () => {
+        // Remove ordinal suffixes (st, nd, rd, th) and normalize spacing
+        const cleanStr = dateStr.replace(/(\d+)(st|nd|rd|th)\s*/gi, '$1 ').trim();
+        console.log('Cleaned date string:', cleanStr);
+        
+        // Split into day and month
+        const parts = cleanStr.split(/\s+/);
+        if (parts.length >= 2) {
+          const day = parseInt(parts[0]);
+          const monthStr = parts[1].toLowerCase();
+          
+          // Month mapping
+          const months: { [key: string]: number } = {
+            'january': 0, 'jan': 0,
+            'february': 1, 'feb': 1,
+            'march': 2, 'mar': 2,
+            'april': 3, 'apr': 3,
+            'may': 4,
+            'june': 5, 'jun': 5,
+            'july': 6, 'jul': 6,
+            'august': 7, 'aug': 7,
+            'september': 8, 'sep': 8, 'sept': 8,
+            'october': 9, 'oct': 9,
+            'november': 10, 'nov': 10,
+            'december': 11, 'dec': 11
+          };
+          
+          const month = months[monthStr];
+          if (month !== undefined && day >= 1 && day <= 31) {
+            // Use 2025 as the default year (current calendar year)
+            const date = new Date(2025, month, day);
+            console.log(`Parsed date: ${day} ${monthStr} -> ${date.toDateString()}`);
+            return date;
+          }
+        }
+        return null;
+      },
+      // Handle ranges like "10th March -Mon Labour Day" - extract first date
+      () => {
+        const rangeMatch = dateStr.match(/^([^-]+)/);
+        if (rangeMatch) {
+          const firstDateStr = rangeMatch[1].trim();
+          // Recursively parse the first date
+          return parseDate(firstDateStr);
+        }
+        return null;
+      },
       // ISO formats
       () => parseISO(dateStr),
       // DD/MM/YYYY
@@ -893,6 +1040,48 @@ Note: PDF text extraction is limited. Please verify the imported data.`;
     return bestScore > 30 ? bestMatch : null;
   };
 
+  // Zone matching with fuzzy search
+  const findBestZoneMatch = (zoneName: string): ZoneMatchSuggestion | null => {
+    if (!zoneName || zones.length === 0) return null;
+
+    const normalizedInput = zoneName.toLowerCase().replace(/[^\w\s]/g, '');
+    let bestMatch: ZoneMatchSuggestion | null = null;
+    let bestScore = 0;
+
+    zones.forEach(zone => {
+      const normalizedZone = zone.name.toLowerCase().replace(/[^\w\s]/g, '');
+      
+      // Exact match
+      if (normalizedZone === normalizedInput) {
+        return { zoneId: zone.id, zoneName: zone.name, confidence: 100, reason: 'Exact match' };
+      }
+
+      // Contains match
+      if (normalizedZone.includes(normalizedInput) || normalizedInput.includes(normalizedZone)) {
+        const score = Math.max(normalizedInput.length / normalizedZone.length, normalizedZone.length / normalizedInput.length) * 80;
+        if (score > bestScore) {
+          bestScore = score;
+          bestMatch = { zoneId: zone.id, zoneName: zone.name, confidence: score, reason: 'Contains match' };
+        }
+      }
+
+      // Word match
+      const inputWords = normalizedInput.split(/\s+/);
+      const zoneWords = normalizedZone.split(/\s+/);
+      const matchingWords = inputWords.filter((word: string) => zoneWords.some((zoneWord: string) => zoneWord.includes(word) || word.includes(zoneWord)));
+      
+      if (matchingWords.length > 0) {
+        const score = (matchingWords.length / Math.max(inputWords.length, zoneWords.length)) * 60;
+        if (score > bestScore) {
+          bestScore = score;
+          bestMatch = { zoneId: zone.id, zoneName: zone.name, confidence: score, reason: `${matchingWords.length} word matches` };
+        }
+      }
+    });
+
+    return bestScore > 30 ? bestMatch : null;
+  };
+
   // Create split events for multi-day events
   const createSplitEvents = (event: ImportedEvent): ImportedEvent[] => {
     const days = eachDayOfInterval({ start: event.startDate, end: event.endDate });
@@ -928,6 +1117,49 @@ Note: PDF text extraction is limited. Please verify the imported data.`;
   const deleteEvent = (index: number) => {
     const updatedEvents = processedEvents.filter((_: any, i: number) => i !== index);
     setProcessedEvents(updatedEvents);
+  };
+
+  const openEditDialog = (event: ImportedEvent, index: number) => {
+    setEditingEvent({ ...event, originalIndex: index });
+    setEditDialogOpen(true);
+  };
+
+  const saveEditedEvent = (updatedEvent: ImportedEvent) => {
+    const index = updatedEvent.originalIndex;
+    if (index !== undefined) {
+      const updatedEvents = [...processedEvents];
+      
+      // Re-validate club/zone match
+      let clubMatch = null;
+      let zoneMatch = null;
+      
+      if (updatedEvent.clubName) {
+        clubMatch = findBestClubMatch(updatedEvent.clubName);
+        updatedEvent.clubId = clubMatch?.clubId;
+      }
+      
+      if (updatedEvent.zoneName) {
+        zoneMatch = findBestZoneMatch(updatedEvent.zoneName);
+        updatedEvent.zoneId = zoneMatch?.zoneId;
+      }
+      
+      updatedEvent.status = (clubMatch || zoneMatch) ? 'matched' : 'unmatched';
+      updatedEvent.matchConfidence = clubMatch?.confidence || zoneMatch?.confidence || 0;
+      
+      // Update validation errors
+      const validationErrors: string[] = [];
+      if (!updatedEvent.name.trim()) validationErrors.push('Event name is required');
+      if (!updatedEvent.startDate) validationErrors.push('Valid start date is required');
+      if (!updatedEvent.clubName?.trim() && !updatedEvent.zoneName?.trim()) {
+        validationErrors.push('Either club name or zone name is required');
+      }
+      updatedEvent.validationErrors = validationErrors;
+      
+      updatedEvents[index] = updatedEvent;
+      setProcessedEvents(updatedEvents);
+    }
+    setEditDialogOpen(false);
+    setEditingEvent(null);
   };
 
   // Import execution functions
@@ -1211,25 +1443,74 @@ Note: PDF text extraction is limited. Please verify the imported data.`;
                         <TableRow>
                           <TableHead>Event Name</TableHead>
                           <TableHead>Date</TableHead>
-                          <TableHead>Club</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Club/Zone</TableHead>
+                          <TableHead>Location</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead>Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {processedEvents.slice(0, 20).map((event: any, index: number) => (
+                        {(showAllEvents ? processedEvents : processedEvents.slice(0, 20)).map((event: any, index: number) => (
                           <TableRow key={event.id}>
-                            <TableCell className="font-medium">{event.name}</TableCell>
-                            <TableCell>{format(event.startDate, 'PPP')}</TableCell>
+                            <TableCell className="font-medium">
+                              <div>
+                                {event.name}
+                                {event.validationErrors?.length > 0 && (
+                                  <div className="text-xs text-red-600 mt-1">
+                                    {event.validationErrors.length} error(s)
+                                  </div>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div>
+                                {format(event.startDate, 'PPP')}
+                                {event.endDate && event.startDate.getTime() !== event.endDate.getTime() && (
+                                  <div className="text-xs text-gray-600">
+                                    to {format(event.endDate, 'PPP')}
+                                  </div>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="text-xs">
+                                {event.eventType}
+                              </Badge>
+                              {event.isQualifier && (
+                                <Badge variant="secondary" className="text-xs ml-1">
+                                  Qualifier
+                                </Badge>
+                              )}
+                            </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
-                                {event.clubName}
+                                <div>
+                                  {event.clubName && (
+                                    <div className="flex items-center gap-1">
+                                      <Badge variant="outline" className="text-xs">Club</Badge>
+                                      {event.clubName}
+                                    </div>
+                                  )}
+                                  {event.zoneName && (
+                                    <div className="flex items-center gap-1">
+                                      <Badge variant="secondary" className="text-xs">Zone</Badge>
+                                      {event.zoneName}
+                                    </div>
+                                  )}
+                                  {!event.clubName && !event.zoneName && (
+                                    <span className="text-gray-500">No club/zone</span>
+                                  )}
+                                </div>
                                 {event.status === 'matched' && (
                                   <Badge variant="secondary" className="text-xs">
                                     {Math.round(event.matchConfidence || 0)}% match
                                   </Badge>
                                 )}
                               </div>
+                            </TableCell>
+                            <TableCell className="text-sm text-gray-600">
+                              {event.location || '-'}
                             </TableCell>
                             <TableCell>
                               <Badge variant={
@@ -1242,7 +1523,7 @@ Note: PDF text extraction is limited. Please verify the imported data.`;
                             </TableCell>
                             <TableCell>
                               <div className="flex gap-1">
-                                <Button size="sm" variant="ghost" onClick={() => {/* TODO: Open edit dialog */}}>
+                                <Button size="sm" variant="ghost" onClick={() => openEditDialog(event, index)}>
                                   <Edit3 className="h-3 w-3" />
                                 </Button>
                                 <Button size="sm" variant="ghost" onClick={() => deleteEvent(index)}>
@@ -1255,9 +1536,264 @@ Note: PDF text extraction is limited. Please verify the imported data.`;
                       </TableBody>
                     </Table>
                   </div>
+
+                  {/* Show All/Pagination Controls */}
+                  {processedEvents.length > 20 && (
+                    <div className="flex justify-center mt-4">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setShowAllEvents(!showAllEvents)}
+                      >
+                        {showAllEvents ? 
+                          `Show First 20 Events` : 
+                          `Show All ${processedEvents.length} Events`
+                        }
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
           )}
+
+          {/* Edit Event Dialog */}
+          <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Edit Event</DialogTitle>
+                <DialogDescription>
+                  Update the event details and validate the data before import.
+                </DialogDescription>
+              </DialogHeader>
+              
+              {editingEvent && (
+                <div className="space-y-4">
+                  {/* Event Name */}
+                  <div className="space-y-2">
+                    <Label htmlFor="event-name">Event Name *</Label>
+                    <Input
+                      id="event-name"
+                      value={editingEvent.name}
+                      onChange={(e) => setEditingEvent({...editingEvent, name: e.target.value})}
+                      placeholder="Enter event name"
+                    />
+                  </div>
+
+                  {/* Event Type */}
+                  <div className="space-y-2">
+                    <Label htmlFor="event-type">Event Type</Label>
+                    <Select
+                      value={editingEvent.eventType}
+                      onValueChange={(value) => setEditingEvent({...editingEvent, eventType: value})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select event type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {eventTypes.map((type) => (
+                          <SelectItem key={type.id} value={type.name}>
+                            {type.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Start Date */}
+                  <div className="space-y-2">
+                    <Label htmlFor="start-date">Start Date *</Label>
+                    <Input
+                      id="start-date"
+                      type="date"
+                      value={editingEvent.startDate ? editingEvent.startDate.toISOString().split('T')[0] : ''}
+                      onChange={(e) => {
+                        const date = e.target.value ? new Date(e.target.value) : new Date();
+                        setEditingEvent({...editingEvent, startDate: date, endDate: editingEvent.endDate || date});
+                      }}
+                    />
+                  </div>
+
+                  {/* End Date */}
+                  <div className="space-y-2">
+                    <Label htmlFor="end-date">End Date</Label>
+                    <Input
+                      id="end-date"
+                      type="date"
+                      value={editingEvent.endDate ? editingEvent.endDate.toISOString().split('T')[0] : ''}
+                      onChange={(e) => {
+                        const date = e.target.value ? new Date(e.target.value) : editingEvent.startDate;
+                        setEditingEvent({...editingEvent, endDate: date});
+                      }}
+                    />
+                  </div>
+
+                  {/* Club/Zone Selection */}
+                  <div className="space-y-2">
+                    <Label htmlFor="organization">Club/Zone *</Label>
+                    <Select
+                      value={editingEvent.clubId || editingEvent.zoneId || editingEvent.clubName || editingEvent.zoneName || ''}
+                      onValueChange={(value) => {
+                        // Check if it's a club
+                        const selectedClub = clubs.find(club => club.id === value || club.name === value);
+                        if (selectedClub) {
+                          setEditingEvent({
+                            ...editingEvent, 
+                            clubName: selectedClub.name,
+                            clubId: selectedClub.id,
+                            // Clear zone selection
+                            zoneName: undefined,
+                            zoneId: undefined
+                          });
+                          return;
+                        }
+
+                        // Check if it's a zone
+                        const selectedZone = zones.find(zone => zone.id === value || zone.name === value);
+                        if (selectedZone) {
+                          setEditingEvent({
+                            ...editingEvent, 
+                            zoneName: selectedZone.name,
+                            zoneId: selectedZone.id,
+                            // Clear club selection
+                            clubName: undefined,
+                            clubId: undefined
+                          });
+                          return;
+                        }
+
+                        // If neither found, treat as manual entry for club
+                        setEditingEvent({
+                          ...editingEvent, 
+                          clubName: value, 
+                          clubId: undefined,
+                          zoneName: undefined,
+                          zoneId: undefined
+                        });
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select club or zone" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {/* Current selection */}
+                        {(editingEvent.clubName || editingEvent.zoneName) && (
+                          <SelectItem value={editingEvent.clubName || editingEvent.zoneName || ''}>
+                            {editingEvent.clubName 
+                              ? `${editingEvent.clubName} (Club - Current)` 
+                              : `${editingEvent.zoneName} (Zone - Current)`}
+                          </SelectItem>
+                        )}
+                        
+                        {/* Zones Section */}
+                        <div className="px-2 py-1 text-xs font-semibold text-muted-foreground bg-muted">ZONES</div>
+                        {zones
+                          .filter(zone => zone.name !== editingEvent.zoneName)
+                          .sort((a, b) => a.name.localeCompare(b.name))
+                          .map((zone) => (
+                          <SelectItem key={`zone-${zone.id}`} value={zone.id}>
+                            <span className="font-medium">{zone.name}</span> <span className="text-sm text-muted-foreground">(Zone)</span>
+                          </SelectItem>
+                        ))}
+                        
+                        {/* Clubs Section */}
+                        <div className="px-2 py-1 text-xs font-semibold text-muted-foreground bg-muted mt-1">CLUBS</div>
+                        {clubs
+                          .filter(club => club.name !== editingEvent.clubName)
+                          .sort((a, b) => a.name.localeCompare(b.name))
+                          .map((club) => (
+                          <SelectItem key={`club-${club.id}`} value={club.id}>
+                            <span className="font-medium">{club.name}</span> <span className="text-sm text-muted-foreground">({club.zone?.name || 'No Zone'})</span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      placeholder="Or type club/zone name manually"
+                      value={editingEvent.clubName || editingEvent.zoneName || ''}
+                      onChange={(e) => setEditingEvent({
+                        ...editingEvent, 
+                        clubName: e.target.value, 
+                        clubId: undefined,
+                        zoneName: undefined,
+                        zoneId: undefined
+                      })}
+                      className="mt-1"
+                    />
+                    <p className="text-xs text-gray-600">
+                      Select either a club or a zone. Zone events are for zone-wide activities.
+                    </p>
+                  </div>
+
+                  {/* Location */}
+                  <div className="space-y-2">
+                    <Label htmlFor="location">Location</Label>
+                    <Input
+                      id="location"
+                      value={editingEvent.location || ''}
+                      onChange={(e) => setEditingEvent({...editingEvent, location: e.target.value})}
+                      placeholder="Enter event location"
+                    />
+                  </div>
+
+                  {/* Coordinator */}
+                  <div className="space-y-2">
+                    <Label htmlFor="coordinator">Coordinator</Label>
+                    <Input
+                      id="coordinator"
+                      value={editingEvent.coordinatorName || ''}
+                      onChange={(e) => setEditingEvent({...editingEvent, coordinatorName: e.target.value})}
+                      placeholder="Enter coordinator name"
+                    />
+                  </div>
+
+                  {/* Notes */}
+                  <div className="space-y-2">
+                    <Label htmlFor="notes">Notes</Label>
+                    <Textarea
+                      id="notes"
+                      value={editingEvent.notes || ''}
+                      onChange={(e) => setEditingEvent({...editingEvent, notes: e.target.value})}
+                      placeholder="Enter additional notes"
+                      rows={3}
+                    />
+                  </div>
+
+                  {/* Qualifier Flag */}
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="qualifier"
+                      checked={editingEvent.isQualifier || false}
+                      onCheckedChange={(checked) => setEditingEvent({...editingEvent, isQualifier: checked === true})}
+                    />
+                    <Label htmlFor="qualifier">This is a qualifier event</Label>
+                  </div>
+
+                  {/* Validation Errors */}
+                  {editingEvent.validationErrors && editingEvent.validationErrors.length > 0 && (
+                    <Alert>
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertDescription>
+                        <strong>Validation Issues:</strong>
+                        <ul className="list-disc list-inside mt-2">
+                          {editingEvent.validationErrors.map((error, index) => (
+                            <li key={index}>{error}</li>
+                          ))}
+                        </ul>
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </div>
+              )}
+
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={() => editingEvent && saveEditedEvent(editingEvent)}>
+                  Save Changes
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
           {/* Step 4: Import Complete */}
           {step === 4 && importResults && (

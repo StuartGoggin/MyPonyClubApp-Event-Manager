@@ -186,10 +186,12 @@ export type EventStatus = 'proposed' | 'approved' | 'rejected' | 'public_holiday
 export type EventSource = 'pca' | 'event_secretary' | 'zone' | 'public_holiday';
 
 export interface Event {
-  id:string;
+  id: string;
   name: string;
   date: Date;
-  clubId: string;
+  // Event can be associated with either a club OR a zone
+  clubId?: string;        // For club-specific events
+  zoneId?: string;        // For zone-wide events
   eventTypeId: string;
   status: EventStatus;
   location: string;

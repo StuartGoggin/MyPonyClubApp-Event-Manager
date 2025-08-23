@@ -1,10 +1,47 @@
 # PonyClub Events Blueprint
 
 This document outlines the features and ideas for the PonyClub Events application.
-
 ## Recent Updates (August 22, 2025)
 
-### Embeddable Calendar System 🌐 (Latest)
+### Enhanced Calendar Import System 📅 (Latest)
+- **Advanced Date Parsing**: Revolutionary date parsing system for Pony Club calendar imports:
+    - **Smart Format Recognition**: Intelligent parsing of Australian Pony Club date formats:
+        - **Ordinal Dates**: `"6thFebruary"`, `"20th February"`, `"22nd February"` → Correctly parsed dates
+        - **Suffix Handling**: Automatic removal of ordinal suffixes (st, nd, rd, th)
+        - **Space Normalization**: Handles varying spacing between day and month
+        - **Range Processing**: Extracts first date from ranges like `"10th March -Mon Labour Day"`
+        - **Multiple Fallbacks**: Comprehensive fallback system for various date formats
+    - **Month Recognition System**: Complete month name mapping with abbreviations:
+        - **Full Names**: January, February, March... December
+        - **Common Abbreviations**: Jan, Feb, Mar... Dec  
+        - **Case Insensitive**: Works with any capitalization
+        - **Calendar Year Logic**: Defaults to 2025 for current calendar imports
+    - **Debugging & Logging**: Production-ready debugging capabilities:
+        - **Step-by-step Parsing**: Console logging of each parsing attempt
+        - **Success Tracking**: Clear indication of which format successfully parsed
+        - **Error Resilience**: Graceful handling of unparseable dates
+        - **Validation Checks**: Date validity verification using date-fns library
+
+- **Multi-Format Import System**: Comprehensive document import capabilities:
+    - **5 File Format Support**: CSV, Excel (.xlsx/.xls), PDF, DOCX/DOC, and text files
+    - **Format-Specific Parsers**: Tailored parsing algorithms for each file type:
+        - **CSV Parser**: Enhanced comma-separated value processing with quote handling
+        - **PDF Parser**: Text extraction with pattern recognition for calendar layouts
+        - **DOCX Parser**: ZIP/XML extraction with sophisticated text processing
+        - **Excel Parser**: Spreadsheet data extraction (placeholder for xlsx library)
+        - **Text Parser**: Tab and delimiter-separated text file processing
+    - **Intelligent File Detection**: Automatic format recognition by MIME type and extension
+    - **User-Friendly Interface**: Professional 5-column format card layout with distinct icons
+
+- **Production Import Workflow**: Complete 4-step import process:
+    - **Step 1**: File upload with format detection and validation
+    - **Step 2**: Data processing with real-time parsing feedback
+    - **Step 3**: Review interface with club matching and validation
+    - **Step 4**: Batch execution with rollback capabilities
+    - **Error Handling**: Comprehensive error management at each step
+    - **Progress Tracking**: Real-time progress indicators and status updates
+
+### Embeddable Calendar System 🌐
 - **Complete Embed Infrastructure**: Revolutionary system for embedding calendar views in external websites:
     - **Full Calendar Embed** (`/embed/calendar`): Complete calendar view optimized for iframe embedding
     - **Compact Calendar Embed** (`/embed/calendar/compact`): Streamlined view for smaller spaces (400px+ width)

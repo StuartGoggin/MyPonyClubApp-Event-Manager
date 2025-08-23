@@ -1,7 +1,32 @@
 # MyPonyClubApp Event Manager
 Event Management System for Pony Club Zones
 
-A Next.js application for managing pony club events, including event requests, calendar management, and zone coordination.
+A comprehensive Next.js application for managing pony club events, featuring advanced calendar imports, multi-format document processing, embeddable calendars, and zone coordination.
+
+## ✨ Latest Features (August 2025)
+
+### 📅 Advanced Calendar Import System
+- **Multi-Format Support**: Import calendars from CSV, Excel, PDF, DOCX, and text files
+- **Smart Date Parsing**: Intelligent recognition of Pony Club date formats like "6thFebruary", "20th February"
+- **Batch Processing**: Professional 4-step import workflow with review and rollback capabilities
+- **Club Matching**: Intelligent club name matching with suggestions and validation
+
+### 🌐 Embeddable Calendar System
+- **Full Calendar Embed**: Complete calendar view for external websites (`/embed/calendar`)
+- **Compact Calendar**: Streamlined view for smaller spaces (`/embed/calendar/compact`)
+- **Calendar API**: JSON and iCal export endpoints for external integrations
+- **Google Sites Ready**: Optimized for iframe embedding in Google Sites
+
+### 🗺️ Club Geolocation
+- **Google Maps Integration**: Interactive location setting for all 172+ clubs
+- **Batch Processing**: Zone-wide or individual club geolocation
+- **Smart Search**: Multi-strategy search with fallbacks for accurate positioning
+- **Manual Override**: Click-and-drag interface for precise location adjustment
+
+### 🔧 API Management
+- **25+ Endpoint Registry**: Comprehensive API endpoint management system
+- **Admin Dashboard**: Real-time enable/disable controls for all endpoints
+- **Documentation**: Detailed parameter and usage documentation
 
 ## 🚀 Quick Start
 

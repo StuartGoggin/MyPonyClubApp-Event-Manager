@@ -41,12 +41,12 @@ export async function GET(request: NextRequest) {
     // Enrich events with related data
     const enrichedEvents = events.map(event => ({
       ...event,
-      clubName: clubsMap[event.clubId]?.name || 'Unknown Club',
-      zoneName: clubsMap[event.clubId] ? zonesMap[clubsMap[event.clubId].zoneId]?.name || 'Unknown Zone' : 'Unknown Zone',
-      eventTypeName: eventTypesMap[event.eventTypeId]?.name || 'Unknown Event Type',
-      club: clubsMap[event.clubId] || null,
-      zone: clubsMap[event.clubId] ? zonesMap[clubsMap[event.clubId].zoneId] || null : null,
-      eventType: eventTypesMap[event.eventTypeId] || null
+      clubName: event.clubId ? clubsMap[event.clubId]?.name || 'Unknown Club' : 'Unknown Club',
+      zoneName: event.clubId && clubsMap[event.clubId] ? zonesMap[clubsMap[event.clubId].zoneId]?.name || 'Unknown Zone' : 'Unknown Zone',
+      eventTypeName: event.eventTypeId ? eventTypesMap[event.eventTypeId]?.name || 'Unknown Event Type' : 'Unknown Event Type',
+      club: event.clubId ? clubsMap[event.clubId] || null : null,
+      zone: event.clubId && clubsMap[event.clubId] ? zonesMap[clubsMap[event.clubId].zoneId] || null : null,
+      eventType: event.eventTypeId ? eventTypesMap[event.eventTypeId] || null : null
     }));
 
     // Group events by status for summary

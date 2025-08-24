@@ -88,15 +88,18 @@ export default function ManageEventsPage() {
     return events.filter(event => event.status === status);
   };
 
-  const getClubName = (clubId: string) => {
+  const getClubName = (clubId: string | undefined) => {
+    if (!clubId) return 'Unknown Club';
     return clubs.find(club => club.id === clubId)?.name || 'Unknown Club';
   };
 
-  const getEventTypeName = (eventTypeId: string) => {
+  const getEventTypeName = (eventTypeId: string | undefined) => {
+    if (!eventTypeId) return 'Unknown Type';
     return eventTypes.find(type => type.id === eventTypeId)?.name || 'Unknown Type';
   };
 
-  const getZoneName = (clubId: string) => {
+  const getZoneName = (clubId: string | undefined) => {
+    if (!clubId) return 'Unknown Zone';
     const club = clubs.find(c => c.id === clubId);
     if (!club) return 'Unknown Zone';
     return zones.find(zone => zone.id === club.zoneId)?.name || 'Unknown Zone';

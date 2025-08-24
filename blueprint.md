@@ -1,6 +1,39 @@
 # PonyClub Events Blueprint
 
 This document outlines the features and ideas for the PonyClub Events application.
+
+## Recent Updates (August 24, 2025)
+
+### Enhanced Admin Dashboard Organization 🎛️ (Latest)
+- **Restructured Admin Layout**: Reorganized admin dashboard with improved logical flow:
+    - **System Configuration** (First Section): Core system setup including zones, clubs, and event types
+    - **Data Management** (Second Section): Event management, calendar operations, and API endpoints
+    - **Database Seeding** (Third Section): Data initialization and testing tools
+    - **Improved Navigation**: Better grouped sections for intuitive admin workflow
+
+- **Enhanced API Endpoints Management**: Comprehensive upgrade to endpoint management interface:
+    - **Visual Category Grouping**: Color-coded sections for different endpoint types:
+        - **Application Pages** (Purple theme): All app pages with clear page indicators
+        - **Public APIs** (Green theme): Publicly accessible endpoints
+        - **Admin APIs** (Blue theme): Admin-restricted endpoints
+        - **Embed APIs** (Orange theme): External embedding functionality
+        - **Data APIs** (Gray theme): Core data management endpoints
+    - **Enhanced Visual Design**: Category headers with counts, themed sections, compact card layouts
+    - **Base URL Selector**: Dynamic environment switching (localhost, staging, production)
+    - **Improved UX**: Smaller cards, better spacing, clear page vs API distinction
+    - **Comprehensive Registry**: Extended API registry to include all application pages
+
+- **Fixed Data Display Issues**: Resolved admin dashboard count accuracy problems:
+    - **Event Types Count Fix**: Corrected display showing accurate counts (13 instead of 7)
+    - **API Response Parsing**: Enhanced handling of new API response format `{eventTypes: []}`
+    - **Error Prevention**: Added safety checks and loading states to prevent TypeErrors
+    - **Consistent Data Flow**: Improved server actions and client-side data handling
+
+- **Database Seeding Enhancement**: Added comprehensive database initialization section:
+    - **Centralized Seeding**: All data seeding tools grouped in dedicated section
+    - **Clear Purpose**: Separated from operational data management for better UX
+    - **Professional Layout**: Consistent with overall admin dashboard design
+
 ## Recent Updates (August 22, 2025)
 
 ### Enhanced Calendar Import System 📅 (Latest)

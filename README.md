@@ -5,6 +5,13 @@ A comprehensive Next.js application for managing pony club events, featuring adv
 
 ## ✨ Latest Features (August 2025)
 
+### 🎛️ Enhanced Admin Dashboard (Latest)
+- **Reorganized Admin Interface**: Restructured dashboard with logical section grouping
+- **Visual Category Grouping**: Color-coded API endpoint management with themed sections
+- **Comprehensive Page Registry**: All application pages included in endpoint management
+- **Base URL Switching**: Dynamic environment selection for testing and development
+- **Data Accuracy Fixes**: Resolved count display issues and API response parsing
+
 ### 📅 Advanced Calendar Import System
 - **Multi-Format Support**: Import calendars from CSV, Excel, PDF, DOCX, and text files
 - **Smart Date Parsing**: Intelligent recognition of Pony Club date formats like "6thFebruary", "20th February"
@@ -25,8 +32,11 @@ A comprehensive Next.js application for managing pony club events, featuring adv
 
 ### 🔧 API Management
 - **25+ Endpoint Registry**: Comprehensive API endpoint management system
+- **Visual Category Grouping**: Color-coded sections (Pages, Public APIs, Admin APIs, Embed APIs, Data APIs)
 - **Admin Dashboard**: Real-time enable/disable controls for all endpoints
+- **Base URL Selector**: Dynamic environment switching for testing
 - **Documentation**: Detailed parameter and usage documentation
+- **Page Integration**: Application pages included alongside API endpoints
 
 ## 🚀 Quick Start
 

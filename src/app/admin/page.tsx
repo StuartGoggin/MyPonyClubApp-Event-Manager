@@ -121,7 +121,7 @@ async function AdminDashboardContent() {
       )}
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <StatsCard
           title="Pending Events"
           value={pendingEvents}
@@ -146,107 +146,12 @@ async function AdminDashboardContent() {
           icon={<MapPin className="h-4 w-4" />}
           variant="default"
         />
-      </div>
-
-      {/* Data Management Section */}
-      <div className="space-y-4">
-        <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-          <Database className="h-5 w-5 text-emerald-600" />
-          Data Management
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {/* Import Calendar */}
-          <div className="relative overflow-hidden rounded-2xl border border-emerald-200/50 bg-gradient-to-br from-emerald-50/80 via-emerald-50/60 to-green-50/40 dark:from-emerald-950/40 dark:via-emerald-950/30 dark:to-green-950/20 shadow-xl backdrop-blur-sm hover:shadow-2xl transition-all duration-300 hover:scale-105">
-            <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/5 to-green-400/5"></div>
-            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-emerald-400/10 to-transparent rounded-full blur-2xl"></div>
-            
-            <div className="relative p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="rounded-xl bg-emerald-100 dark:bg-emerald-900/50 p-3 border border-emerald-200 dark:border-emerald-700">
-                  <Upload className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-foreground">Import Calendar</h3>
-                  <p className="text-sm text-muted-foreground">Upload CSV calendar data</p>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <p className="text-xs text-emerald-700 dark:text-emerald-300">
-                  Import events from CSV files with automatic club and zone matching
-                </p>
-                <Button asChild className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
-                  <Link href="/admin/import-calendar">
-                    <Upload className="h-4 w-4 mr-2" />
-                    Import Events
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Events Management */}
-          <div className="relative overflow-hidden rounded-2xl border border-blue-200/50 bg-gradient-to-br from-blue-50/80 via-blue-50/60 to-cyan-50/40 dark:from-blue-950/40 dark:via-blue-950/30 dark:to-cyan-950/20 shadow-xl backdrop-blur-sm hover:shadow-2xl transition-all duration-300 hover:scale-105">
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-400/5 to-cyan-400/5"></div>
-            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-blue-400/10 to-transparent rounded-full blur-2xl"></div>
-            
-            <div className="relative p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="rounded-xl bg-blue-100 dark:bg-blue-900/50 p-3 border border-blue-200 dark:border-blue-700">
-                  <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-foreground">Events</h3>
-                  <p className="text-sm text-muted-foreground">Manage event calendar</p>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div className="flex gap-2">
-                  <Badge variant="outline" className="text-xs">
-                    {pendingEvents} Pending
-                  </Badge>
-                  <Badge variant="outline" className="text-xs">
-                    {approvedEvents} Approved
-                  </Badge>
-                </div>
-                <Button asChild variant="outline" className="w-full">
-                  <Link href="/admin/events">
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Manage Events
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Database Seed */}
-          <div className="relative overflow-hidden rounded-2xl border border-purple-200/50 bg-gradient-to-br from-purple-50/80 via-purple-50/60 to-pink-50/40 dark:from-purple-950/40 dark:via-purple-950/30 dark:to-pink-950/20 shadow-xl backdrop-blur-sm hover:shadow-2xl transition-all duration-300 hover:scale-105">
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-400/5 to-pink-400/5"></div>
-            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-purple-400/10 to-transparent rounded-full blur-2xl"></div>
-            
-            <div className="relative p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="rounded-xl bg-purple-100 dark:bg-purple-900/50 p-3 border border-purple-200 dark:border-purple-700">
-                  <Database className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-foreground">Database Seed</h3>
-                  <p className="text-sm text-muted-foreground">Initialize sample data</p>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <p className="text-xs text-purple-700 dark:text-purple-300">
-                  Populate database with sample zones, clubs, and event types
-                </p>
-                <Button asChild variant="outline" className="w-full">
-                  <Link href="/admin/seed">
-                    <Database className="h-4 w-4 mr-2" />
-                    Seed Database
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <StatsCard
+          title="Event Types"
+          value={eventTypes.length}
+          icon={<FileText className="h-4 w-4" />}
+          variant="default"
+        />
       </div>
 
       {/* System Configuration Section */}
@@ -337,6 +242,116 @@ async function AdminDashboardContent() {
                   <Link href="/admin/event-types">
                     <FileText className="h-4 w-4 mr-2" />
                     Manage Types
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Data Management Section */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+          <Calendar className="h-5 w-5 text-blue-600" />
+          Data Management
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Events Management */}
+          <div className="relative overflow-hidden rounded-2xl border border-blue-200/50 bg-gradient-to-br from-blue-50/80 via-blue-50/60 to-cyan-50/40 dark:from-blue-950/40 dark:via-blue-950/30 dark:to-cyan-950/20 shadow-xl backdrop-blur-sm hover:shadow-2xl transition-all duration-300 hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-400/5 to-cyan-400/5"></div>
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-blue-400/10 to-transparent rounded-full blur-2xl"></div>
+            
+            <div className="relative p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="rounded-xl bg-blue-100 dark:bg-blue-900/50 p-3 border border-blue-200 dark:border-blue-700">
+                  <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">Events</h3>
+                  <p className="text-sm text-muted-foreground">Manage event calendar</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <Badge variant="outline" className="text-xs">
+                    {pendingEvents} Pending
+                  </Badge>
+                  <Badge variant="outline" className="text-xs">
+                    {approvedEvents} Approved
+                  </Badge>
+                </div>
+                <Button asChild variant="outline" className="w-full">
+                  <Link href="/admin/events">
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Manage Events
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Database Seeding Section */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+          <Database className="h-5 w-5 text-emerald-600" />
+          Database Seeding
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Import Calendar */}
+          <div className="relative overflow-hidden rounded-2xl border border-emerald-200/50 bg-gradient-to-br from-emerald-50/80 via-emerald-50/60 to-green-50/40 dark:from-emerald-950/40 dark:via-emerald-950/30 dark:to-green-950/20 shadow-xl backdrop-blur-sm hover:shadow-2xl transition-all duration-300 hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/5 to-green-400/5"></div>
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-emerald-400/10 to-transparent rounded-full blur-2xl"></div>
+            
+            <div className="relative p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="rounded-xl bg-emerald-100 dark:bg-emerald-900/50 p-3 border border-emerald-200 dark:border-emerald-700">
+                  <Upload className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">Import Calendar</h3>
+                  <p className="text-sm text-muted-foreground">Upload CSV calendar data</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs text-emerald-700 dark:text-emerald-300">
+                  Import events from CSV files with automatic club and zone matching
+                </p>
+                <Button asChild className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
+                  <Link href="/admin/import-calendar">
+                    <Upload className="h-4 w-4 mr-2" />
+                    Import Events
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Database Seed */}
+          <div className="relative overflow-hidden rounded-2xl border border-purple-200/50 bg-gradient-to-br from-purple-50/80 via-purple-50/60 to-pink-50/40 dark:from-purple-950/40 dark:via-purple-950/30 dark:to-pink-950/20 shadow-xl backdrop-blur-sm hover:shadow-2xl transition-all duration-300 hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-400/5 to-pink-400/5"></div>
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-purple-400/10 to-transparent rounded-full blur-2xl"></div>
+            
+            <div className="relative p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="rounded-xl bg-purple-100 dark:bg-purple-900/50 p-3 border border-purple-200 dark:border-purple-700">
+                  <Database className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">Database Seed</h3>
+                  <p className="text-sm text-muted-foreground">Initialize sample data</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs text-purple-700 dark:text-purple-300">
+                  Populate database with sample zones, clubs, and event types
+                </p>
+                <Button asChild variant="outline" className="w-full">
+                  <Link href="/admin/seed">
+                    <Database className="h-4 w-4 mr-2" />
+                    Seed Database
                   </Link>
                 </Button>
               </div>

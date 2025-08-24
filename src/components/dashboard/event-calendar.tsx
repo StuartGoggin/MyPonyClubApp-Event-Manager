@@ -83,7 +83,8 @@ const CalendarGrid = ({
   const end = endOfWeek(endOfMonth(month), { weekStartsOn });
   
   // Helper function to get club name from clubId
-  const getClubName = (clubId: string) => {
+  const getClubName = (clubId: string | undefined) => {
+    if (!clubId) return 'Unknown Club';
     return clubs.find(club => club.id === clubId)?.name || 'Unknown Club';
   };
   
@@ -287,7 +288,8 @@ export function EventCalendar({
   const [distance, setDistance] = useState<number>(50);
 
   // Helper function to get club name from clubId
-  const getClubName = (clubId: string) => {
+  const getClubName = (clubId: string | undefined) => {
+    if (!clubId) return 'Unknown Club';
     return clubs.find(club => club.id === clubId)?.name || 'Unknown Club';
   };
 

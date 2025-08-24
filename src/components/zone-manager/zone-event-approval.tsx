@@ -76,11 +76,13 @@ export function ZoneEventApproval({
     ['approved', 'rejected'].includes(event.status)
   ).slice(0, 5); // Show last 5 processed events
 
-  const getClubName = (clubId: string) => {
+  const getClubName = (clubId: string | undefined) => {
+    if (!clubId) return 'Unknown Club';
     return clubs.find(club => club.id === clubId)?.name || 'Unknown Club';
   };
 
-  const getEventTypeName = (eventTypeId: string) => {
+  const getEventTypeName = (eventTypeId: string | undefined) => {
+    if (!eventTypeId) return 'Unknown Type';
     return eventTypes.find(type => type.id === eventTypeId)?.name || 'Unknown Type';
   };
 

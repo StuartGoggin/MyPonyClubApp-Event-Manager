@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       if (selectedZone) {
         const zoneClubs = clubs.filter(c => c.zoneId === selectedZone.id);
         const zoneClubIds = zoneClubs.map(c => c.id);
-        filteredEvents = filteredEvents.filter(event => zoneClubIds.includes(event.clubId));
+        filteredEvents = filteredEvents.filter(event => event.clubId && zoneClubIds.includes(event.clubId));
       }
     }
     

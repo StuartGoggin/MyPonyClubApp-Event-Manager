@@ -16,14 +16,54 @@ import { DataImportExport } from '@/components/admin/data-import-export';
 export default function AdminEventTypesPage() {
   const [eventTypes, setEventTypes] = useState<EventType[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingEventType, setEditingEventType] = useState<EventType | null>(null);
   const [formData, setFormData] = useState({ name: '' });
 
   useEffect(() => {
-    // Initialize with mock data for now
-    setEventTypes(eventTypesMock);
-    setEvents([]); // No events initially in admin mode
+    // Load event types and events from the API
+    const loadData = async () => {
+      setIsLoading(true);
+      try {
+        // Load event types
+        const eventTypesResponse = await fetch('/api/event-types');
+        if (eventTypesResponse.ok) {
+          const eventTypesData = await eventTypesResponse.json();
+          // Check if the response has an eventTypes property or is an array
+          const eventTypesArray = Array.isArray(eventTypesData) 
+            ? eventTypesData 
+            : eventTypesData.eventTypes || [];
+          setEventTypes(eventTypesArray);
+        } else {
+          // Fallback to mock data if API fails
+          setEventTypes(eventTypesMock);
+        }
+
+        // Load events to get proper counts
+        const eventsResponse = await fetch('/api/events');
+        if (eventsResponse.ok) {
+          const eventsData = await eventsResponse.json();
+          // Check if the response has an events property or is an array
+          const eventsArray = Array.isArray(eventsData) 
+            ? eventsData 
+            : eventsData.events || [];
+          setEvents(eventsArray);
+        } else {
+          // If events API fails, keep empty array
+          setEvents([]);
+        }
+      } catch (error) {
+        console.error('Error loading data:', error);
+        // Fallback to mock data
+        setEventTypes(eventTypesMock);
+        setEvents([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
   }, []);
 
   const getEventCountForType = (eventTypeId: string) => {
@@ -219,19 +259,26 @@ export default function AdminEventTypesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {eventTypes.map(eventType => {
-                const eventCount = getEventCountForType(eventType.id);
-                return (
-                  <TableRow key={eventType.id}>
-                    <TableCell className="font-medium">{eventType.name}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">
-                        {eventCount} event{eventCount !== 1 ? 's' : ''}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={eventCount > 0 ? 'default' : 'outline'}>
-                        {eventCount > 0 ? 'In Use' : 'Available'}
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-6">
+                    Loading event types...
+                  </TableCell>
+                </TableRow>
+              ) : Array.isArray(eventTypes) && eventTypes.length > 0 ? (
+                eventTypes.map(eventType => {
+                  const eventCount = getEventCountForType(eventType.id);
+                  return (
+                    <TableRow key={eventType.id}>
+                      <TableCell className="font-medium">{eventType.name}</TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">
+                          {eventCount} event{eventCount !== 1 ? 's' : ''}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={eventCount > 0 ? 'default' : 'outline'}>
+                          {eventCount > 0 ? 'In Use' : 'Available'}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
@@ -255,8 +302,8 @@ export default function AdminEventTypesPage() {
                     </TableCell>
                   </TableRow>
                 );
-              })}
-              {eventTypes.length === 0 && (
+                })
+              ) : (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
                     No event types configured yet. Click &ldquo;Add Event Type&rdquo; or use the quick start options above.

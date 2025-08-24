@@ -14,7 +14,7 @@ export interface APIEndpointDefinition {
   id: string;
   path: string;
   method: 'GET' | 'POST' | 'PUT' | 'DELETE';
-  category: 'public' | 'admin' | 'embed' | 'data';
+  category: 'public' | 'admin' | 'embed' | 'data' | 'pages';
   name: string;
   description: string;
   enabled: boolean;
@@ -28,6 +28,7 @@ export interface APIEndpointDefinition {
   }>;
   example?: string;
   icon: string; // Icon name from lucide-react
+  isPage?: boolean; // New field to distinguish pages from API endpoints
 }
 
 export const ENDPOINTS: APIEndpointDefinition[] = [
@@ -388,6 +389,188 @@ export const ENDPOINTS: APIEndpointDefinition[] = [
     requiresAuth: false,
     icon: 'Sprout',
     example: 'GET /api/seed'
+  },
+
+  // Application Pages
+  {
+    id: 'home-page',
+    path: '/',
+    method: 'GET',
+    category: 'pages',
+    name: 'Home Dashboard',
+    description: 'Main application dashboard and event calendar',
+    enabled: true,
+    requiresAuth: false,
+    icon: 'Calendar',
+    isPage: true
+  },
+  {
+    id: 'request-event-page',
+    path: '/request-event',
+    method: 'GET',
+    category: 'pages',
+    name: 'Request Event',
+    description: 'Submit new event requests to zone coordinators',
+    enabled: true,
+    requiresAuth: false,
+    icon: 'Plus',
+    isPage: true
+  },
+  {
+    id: 'zone-manager-page',
+    path: '/zone-manager',
+    method: 'GET',
+    category: 'pages',
+    name: 'Zone Manager',
+    description: 'Zone coordinator dashboard for managing events',
+    enabled: true,
+    requiresAuth: true,
+    icon: 'MapPin',
+    isPage: true
+  },
+  {
+    id: 'club-manager-page',
+    path: '/club-manager',
+    method: 'GET',
+    category: 'pages',
+    name: 'Club Manager',
+    description: 'Club coordinator dashboard for managing club events',
+    enabled: true,
+    requiresAuth: true,
+    icon: 'Users',
+    isPage: true
+  },
+  {
+    id: 'manage-events-page',
+    path: '/manage-events',
+    method: 'GET',
+    category: 'pages',
+    name: 'Manage Events',
+    description: 'General event management interface',
+    enabled: true,
+    requiresAuth: true,
+    icon: 'Calendar',
+    isPage: true
+  },
+  {
+    id: 'admin-dashboard-page',
+    path: '/admin',
+    method: 'GET',
+    category: 'admin',
+    name: 'Admin Dashboard',
+    description: 'System administration and configuration dashboard',
+    enabled: true,
+    requiresAuth: true,
+    icon: 'Settings',
+    isPage: true
+  },
+  {
+    id: 'admin-zones-page',
+    path: '/admin/zones',
+    method: 'GET',
+    category: 'admin',
+    name: 'Manage Zones',
+    description: 'Configure and manage pony club zones',
+    enabled: true,
+    requiresAuth: true,
+    icon: 'MapPin',
+    isPage: true
+  },
+  {
+    id: 'admin-clubs-page',
+    path: '/admin/clubs',
+    method: 'GET',
+    category: 'admin',
+    name: 'Manage Clubs',
+    description: 'Configure and manage pony clubs',
+    enabled: true,
+    requiresAuth: true,
+    icon: 'Users',
+    isPage: true
+  },
+  {
+    id: 'admin-event-types-page',
+    path: '/admin/event-types',
+    method: 'GET',
+    category: 'admin',
+    name: 'Manage Event Types',
+    description: 'Configure available event types and categories',
+    enabled: true,
+    requiresAuth: true,
+    icon: 'FileText',
+    isPage: true
+  },
+  {
+    id: 'admin-api-endpoints-page',
+    path: '/admin/api-endpoints',
+    method: 'GET',
+    category: 'admin',
+    name: 'API Endpoints',
+    description: 'Monitor and manage all application endpoints',
+    enabled: true,
+    requiresAuth: true,
+    icon: 'Globe',
+    isPage: true
+  },
+  {
+    id: 'admin-import-calendar-page',
+    path: '/admin/import-calendar',
+    method: 'GET',
+    category: 'admin',
+    name: 'Import Calendar',
+    description: 'Import events from CSV files',
+    enabled: true,
+    requiresAuth: true,
+    icon: 'Upload',
+    isPage: true
+  },
+  {
+    id: 'admin-seed-page',
+    path: '/admin/seed',
+    method: 'GET',
+    category: 'admin',
+    name: 'Database Seed',
+    description: 'Initialize database with sample data',
+    enabled: true,
+    requiresAuth: true,
+    icon: 'Sprout',
+    isPage: true
+  },
+  {
+    id: 'admin-geolocate-clubs-page',
+    path: '/admin/geolocate-clubs',
+    method: 'GET',
+    category: 'admin',
+    name: 'Geolocate Clubs',
+    description: 'Set GPS coordinates for clubs using Google Maps',
+    enabled: true,
+    requiresAuth: true,
+    icon: 'MapPin',
+    isPage: true
+  },
+  {
+    id: 'embed-calendar-page',
+    path: '/embed/calendar',
+    method: 'GET',
+    category: 'embed',
+    name: 'Embed Calendar',
+    description: 'Embeddable calendar widget for external websites',
+    enabled: true,
+    requiresAuth: false,
+    icon: 'Calendar',
+    isPage: true
+  },
+  {
+    id: 'embed-calendar-compact-page',
+    path: '/embed/calendar/compact',
+    method: 'GET',
+    category: 'embed',
+    name: 'Compact Calendar',
+    description: 'Compact embeddable calendar widget',
+    enabled: true,
+    requiresAuth: false,
+    icon: 'Calendar',
+    isPage: true
   }
 ];
 

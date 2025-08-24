@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, Users, MapPin, FileText, AlertTriangle, CheckCircle, Clock, Map } from 'lucide-react';
+import { Calendar, Users, MapPin, FileText, AlertTriangle, CheckCircle, Clock, Map, ExternalLink, Database, Upload, Settings, Globe } from 'lucide-react';
 import Link from 'next/link';
 import { getAllZones, getAllClubs, getAllEventTypes } from '@/lib/server-data';
 import { getDatabaseErrorMessage, isDatabaseConnected } from '@/lib/firebase-admin';
@@ -148,141 +148,295 @@ async function AdminDashboardContent() {
         />
       </div>
 
-      {/* System Configuration Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="relative overflow-hidden rounded-2xl border border-border/40 bg-gradient-to-br from-background via-background/95 to-blue/5 shadow-xl backdrop-blur-sm hover:shadow-2xl transition-all duration-300">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-indigo-500/5"></div>
-          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-blue/10 to-transparent rounded-full blur-2xl"></div>
-          
-          <div className="relative p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="rounded-xl bg-blue-100 dark:bg-blue-900/50 p-3 border border-blue-200 dark:border-blue-700">
-                <FileText className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+      {/* Data Management Section */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+          <Database className="h-5 w-5 text-emerald-600" />
+          Data Management
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Import Calendar */}
+          <div className="relative overflow-hidden rounded-2xl border border-emerald-200/50 bg-gradient-to-br from-emerald-50/80 via-emerald-50/60 to-green-50/40 dark:from-emerald-950/40 dark:via-emerald-950/30 dark:to-green-950/20 shadow-xl backdrop-blur-sm hover:shadow-2xl transition-all duration-300 hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/5 to-green-400/5"></div>
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-emerald-400/10 to-transparent rounded-full blur-2xl"></div>
+            
+            <div className="relative p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="rounded-xl bg-emerald-100 dark:bg-emerald-900/50 p-3 border border-emerald-200 dark:border-emerald-700">
+                  <Upload className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">Import Calendar</h3>
+                  <p className="text-sm text-muted-foreground">Upload CSV calendar data</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-lg font-bold text-foreground">System Configuration</h3>
-                <p className="text-sm text-muted-foreground">Manage core system settings and data</p>
+              <div className="space-y-2">
+                <p className="text-xs text-emerald-700 dark:text-emerald-300">
+                  Import events from CSV files with automatic club and zone matching
+                </p>
+                <Button asChild className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
+                  <Link href="/admin/import-calendar">
+                    <Upload className="h-4 w-4 mr-2" />
+                    Import Events
+                  </Link>
+                </Button>
               </div>
-            </div>
-            <div className="space-y-4">
-              <ConfigItem
-                label="Zones"
-                value={`${zones.length} zones configured`}
-                href="/admin/zones"
-                isConfigured={zones.length > 0}
-              />
-              <ConfigItem
-                label="Clubs"
-                value={`${clubs.length} clubs registered`}
-                href="/admin/clubs"
-                isConfigured={clubs.length > 0}
-              />
-              <ConfigItem
-                label="Event Types"
-                value={`${eventTypes.length} event types available`}
-                href="/admin/event-types"
-                isConfigured={eventTypes.length > 0}
-              />
             </div>
           </div>
-        </div>
 
-        <div className="relative overflow-hidden rounded-2xl border border-border/40 bg-gradient-to-br from-background via-background/95 to-emerald/5 shadow-xl backdrop-blur-sm hover:shadow-2xl transition-all duration-300">
-          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 to-green-500/5"></div>
-          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-emerald/10 to-transparent rounded-full blur-2xl"></div>
-          
-          <div className="relative p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="rounded-xl bg-emerald-100 dark:bg-emerald-900/50 p-3 border border-emerald-200 dark:border-emerald-700">
-                <MapPin className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+          {/* Events Management */}
+          <div className="relative overflow-hidden rounded-2xl border border-blue-200/50 bg-gradient-to-br from-blue-50/80 via-blue-50/60 to-cyan-50/40 dark:from-blue-950/40 dark:via-blue-950/30 dark:to-cyan-950/20 shadow-xl backdrop-blur-sm hover:shadow-2xl transition-all duration-300 hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-400/5 to-cyan-400/5"></div>
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-blue-400/10 to-transparent rounded-full blur-2xl"></div>
+            
+            <div className="relative p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="rounded-xl bg-blue-100 dark:bg-blue-900/50 p-3 border border-blue-200 dark:border-blue-700">
+                  <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">Events</h3>
+                  <p className="text-sm text-muted-foreground">Manage event calendar</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-lg font-bold text-foreground">Zones Overview</h3>
-                <p className="text-sm text-muted-foreground">Quick view of zone configuration</p>
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <Badge variant="outline" className="text-xs">
+                    {pendingEvents} Pending
+                  </Badge>
+                  <Badge variant="outline" className="text-xs">
+                    {approvedEvents} Approved
+                  </Badge>
+                </div>
+                <Button asChild variant="outline" className="w-full">
+                  <Link href="/admin/events">
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Manage Events
+                  </Link>
+                </Button>
               </div>
             </div>
-            <div className="space-y-4">
-              {zones.slice(0, 5).map(zone => (
-                <div key={zone.id} className="relative overflow-hidden rounded-xl border border-border/30 bg-gradient-to-r from-background/80 to-background/60 backdrop-blur-sm p-4 hover:shadow-md transition-all duration-300 hover:scale-[1.02]">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="font-medium text-base text-foreground">{zone.name}</div>
-                      <div className="flex gap-2 mt-2">
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-700">
-                          {zone.eventApprovers?.length || 0} Event Approvers
-                        </span>
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-200 border border-purple-200 dark:border-purple-700">
-                          {zone.scheduleApprovers?.length || 0} Schedule Approvers
-                        </span>
-                      </div>
-                    </div>
-                    <Button asChild size="sm" variant="outline" className="relative bg-background/80 backdrop-blur-sm hover:bg-blue-50 hover:border-blue-300 transition-all duration-300">
-                      <Link href="/admin/zones">
-                        <MapPin className="h-3 w-3 mr-1" />
-                        Manage
-                      </Link>
-                    </Button>
-                  </div>
+          </div>
+
+          {/* Database Seed */}
+          <div className="relative overflow-hidden rounded-2xl border border-purple-200/50 bg-gradient-to-br from-purple-50/80 via-purple-50/60 to-pink-50/40 dark:from-purple-950/40 dark:via-purple-950/30 dark:to-pink-950/20 shadow-xl backdrop-blur-sm hover:shadow-2xl transition-all duration-300 hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-400/5 to-pink-400/5"></div>
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-purple-400/10 to-transparent rounded-full blur-2xl"></div>
+            
+            <div className="relative p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="rounded-xl bg-purple-100 dark:bg-purple-900/50 p-3 border border-purple-200 dark:border-purple-700">
+                  <Database className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                 </div>
-              ))}
-              {zones.length === 0 && (
-                <div className="text-center py-8 text-muted-foreground">
-                  <div className="rounded-2xl bg-muted/20 p-4 mb-4 inline-block">
-                    <MapPin className="h-12 w-12 mx-auto text-muted-foreground/50" />
-                  </div>
-                  <p className="font-medium">No zones configured</p>
-                  <p className="text-sm">Add zones to organize your pony clubs</p>
-                  <Button asChild size="sm" className="mt-4 bg-gradient-to-r from-primary/20 to-accent/20 border border-primary/40 backdrop-blur-sm">
-                    <Link href="/admin/zones">Get Started</Link>
-                  </Button>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">Database Seed</h3>
+                  <p className="text-sm text-muted-foreground">Initialize sample data</p>
                 </div>
-              )}
-              {zones.length > 5 && (
-                <div className="text-center pt-4 border-t border-border/30">
-                  <Button asChild variant="outline" size="sm" className="bg-background/80 backdrop-blur-sm">
-                    <Link href="/admin/zones">View All {zones.length} Zones</Link>
-                  </Button>
-                </div>
-              )}
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs text-purple-700 dark:text-purple-300">
+                  Populate database with sample zones, clubs, and event types
+                </p>
+                <Button asChild variant="outline" className="w-full">
+                  <Link href="/admin/seed">
+                    <Database className="h-4 w-4 mr-2" />
+                    Seed Database
+                  </Link>
+                </Button>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Admin Tools Section */}
-      <div className="relative overflow-hidden rounded-2xl border border-border/40 bg-gradient-to-br from-background via-background/95 to-purple/5 shadow-xl backdrop-blur-sm hover:shadow-2xl transition-all duration-300">
-        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-pink-500/5"></div>
-        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-purple/10 to-transparent rounded-full blur-2xl"></div>
-        
-        <div className="relative p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="rounded-xl bg-purple-100 dark:bg-purple-900/50 p-3 border border-purple-200 dark:border-purple-700">
-              <Map className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-foreground">Admin Tools</h3>
-              <p className="text-sm text-muted-foreground">Advanced tools for data management and system maintenance</p>
+      {/* System Configuration Section */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+          <Settings className="h-5 w-5 text-indigo-600" />
+          System Configuration
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Zones Configuration */}
+          <div className="relative overflow-hidden rounded-2xl border border-indigo-200/50 bg-gradient-to-br from-indigo-50/80 via-indigo-50/60 to-blue-50/40 dark:from-indigo-950/40 dark:via-indigo-950/30 dark:to-blue-950/20 shadow-xl backdrop-blur-sm hover:shadow-2xl transition-all duration-300 hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-r from-indigo-400/5 to-blue-400/5"></div>
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-indigo-400/10 to-transparent rounded-full blur-2xl"></div>
+            
+            <div className="relative p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="rounded-xl bg-indigo-100 dark:bg-indigo-900/50 p-3 border border-indigo-200 dark:border-indigo-700">
+                  <MapPin className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">Zones</h3>
+                  <p className="text-sm text-muted-foreground">Configure geographical zones</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Badge variant={zones.length > 0 ? 'default' : 'outline'} className="text-xs">
+                  {zones.length} zones configured
+                </Badge>
+                <Button asChild variant="outline" className="w-full">
+                  <Link href="/admin/zones">
+                    <MapPin className="h-4 w-4 mr-2" />
+                    Manage Zones
+                  </Link>
+                </Button>
+              </div>
             </div>
           </div>
-          <div className="space-y-4">
-            <ConfigItem
-              label="Club Geolocation"
-              value="Use Google Maps to find and set club locations"
-              href="/admin/geolocate-clubs"
-              isConfigured={true}
-            />
-            <ConfigItem
-              label="API Endpoints"
-              value="Manage and monitor all application endpoints"
-              href="/admin/api-endpoints"
-              isConfigured={true}
-            />
-            <ConfigItem
-              label="Database Seed"
-              value="Initialize the database with sample data"
-              href="/admin/seed"
-              isConfigured={true}
-            />
+
+          {/* Clubs Configuration */}
+          <div className="relative overflow-hidden rounded-2xl border border-orange-200/50 bg-gradient-to-br from-orange-50/80 via-orange-50/60 to-amber-50/40 dark:from-orange-950/40 dark:via-orange-950/30 dark:to-amber-950/20 shadow-xl backdrop-blur-sm hover:shadow-2xl transition-all duration-300 hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-r from-orange-400/5 to-amber-400/5"></div>
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-orange-400/10 to-transparent rounded-full blur-2xl"></div>
+            
+            <div className="relative p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="rounded-xl bg-orange-100 dark:bg-orange-900/50 p-3 border border-orange-200 dark:border-orange-700">
+                  <Users className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">Clubs</h3>
+                  <p className="text-sm text-muted-foreground">Manage club registry</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Badge variant={clubs.length > 0 ? 'default' : 'outline'} className="text-xs">
+                  {clubs.length} clubs registered
+                </Badge>
+                <Button asChild variant="outline" className="w-full">
+                  <Link href="/admin/clubs">
+                    <Users className="h-4 w-4 mr-2" />
+                    Manage Clubs
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Event Types Configuration */}
+          <div className="relative overflow-hidden rounded-2xl border border-teal-200/50 bg-gradient-to-br from-teal-50/80 via-teal-50/60 to-cyan-50/40 dark:from-teal-950/40 dark:via-teal-950/30 dark:to-cyan-950/20 shadow-xl backdrop-blur-sm hover:shadow-2xl transition-all duration-300 hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-r from-teal-400/5 to-cyan-400/5"></div>
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-teal-400/10 to-transparent rounded-full blur-2xl"></div>
+            
+            <div className="relative p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="rounded-xl bg-teal-100 dark:bg-teal-900/50 p-3 border border-teal-200 dark:border-teal-700">
+                  <FileText className="h-5 w-5 text-teal-600 dark:text-teal-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">Event Types</h3>
+                  <p className="text-sm text-muted-foreground">Configure event categories</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Badge variant={eventTypes.length > 0 ? 'default' : 'outline'} className="text-xs">
+                  {eventTypes.length} types available
+                </Badge>
+                <Button asChild variant="outline" className="w-full">
+                  <Link href="/admin/event-types">
+                    <FileText className="h-4 w-4 mr-2" />
+                    Manage Types
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* API & Integration Section */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+          <Globe className="h-5 w-5 text-violet-600" />
+          API & Integration
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Embed Calendar */}
+          <div className="relative overflow-hidden rounded-2xl border border-violet-200/50 bg-gradient-to-br from-violet-50/80 via-violet-50/60 to-purple-50/40 dark:from-violet-950/40 dark:via-violet-950/30 dark:to-purple-950/20 shadow-xl backdrop-blur-sm hover:shadow-2xl transition-all duration-300 hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-r from-violet-400/5 to-purple-400/5"></div>
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-violet-400/10 to-transparent rounded-full blur-2xl"></div>
+            
+            <div className="relative p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="rounded-xl bg-violet-100 dark:bg-violet-900/50 p-3 border border-violet-200 dark:border-violet-700">
+                  <ExternalLink className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">Embed Calendar</h3>
+                  <p className="text-sm text-muted-foreground">External calendar API</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs text-violet-700 dark:text-violet-300">
+                  Public API endpoint for embedding calendars in external websites
+                </p>
+                <Button asChild className="w-full bg-violet-600 hover:bg-violet-700 text-white">
+                  <Link href="/api/embed/calendar" target="_blank">
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Open API
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* API Endpoints */}
+          <div className="relative overflow-hidden rounded-2xl border border-rose-200/50 bg-gradient-to-br from-rose-50/80 via-rose-50/60 to-pink-50/40 dark:from-rose-950/40 dark:via-rose-950/30 dark:to-pink-950/20 shadow-xl backdrop-blur-sm hover:shadow-2xl transition-all duration-300 hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-r from-rose-400/5 to-pink-400/5"></div>
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-rose-400/10 to-transparent rounded-full blur-2xl"></div>
+            
+            <div className="relative p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="rounded-xl bg-rose-100 dark:bg-rose-900/50 p-3 border border-rose-200 dark:border-rose-700">
+                  <Globe className="h-5 w-5 text-rose-600 dark:text-rose-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">API Endpoints</h3>
+                  <p className="text-sm text-muted-foreground">Monitor all endpoints</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs text-rose-700 dark:text-rose-300">
+                  Manage and monitor all application API endpoints
+                </p>
+                <Button asChild variant="outline" className="w-full">
+                  <Link href="/admin/api-endpoints">
+                    <Globe className="h-4 w-4 mr-2" />
+                    View Endpoints
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Club Geolocation */}
+          <div className="relative overflow-hidden rounded-2xl border border-emerald-200/50 bg-gradient-to-br from-emerald-50/80 via-emerald-50/60 to-green-50/40 dark:from-emerald-950/40 dark:via-emerald-950/30 dark:to-green-950/20 shadow-xl backdrop-blur-sm hover:shadow-2xl transition-all duration-300 hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/5 to-green-400/5"></div>
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-emerald-400/10 to-transparent rounded-full blur-2xl"></div>
+            
+            <div className="relative p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="rounded-xl bg-emerald-100 dark:bg-emerald-900/50 p-3 border border-emerald-200 dark:border-emerald-700">
+                  <Map className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">Club Geolocation</h3>
+                  <p className="text-sm text-muted-foreground">Set club locations</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs text-emerald-700 dark:text-emerald-300">
+                  Use Google Maps to find and set club GPS coordinates
+                </p>
+                <Button asChild variant="outline" className="w-full">
+                  <Link href="/admin/geolocate-clubs">
+                    <Map className="h-4 w-4 mr-2" />
+                    Set Locations
+                  </Link>
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

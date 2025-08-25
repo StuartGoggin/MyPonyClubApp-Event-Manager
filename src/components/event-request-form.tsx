@@ -336,8 +336,18 @@ export function EventRequestForm({
   
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        {/* Hydration protection - prevent SSR/client mismatch */}
+        {!isClient && (
+          <div className="lg:col-span-3 flex items-center justify-center py-12">
+            <div className="text-center space-y-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+              <p className="text-muted-foreground">Loading form...</p>
+            </div>
+          </div>
+        )}
+        
         {/* Loading state for embed mode */}
-        {isLoadingData && (
+        {isClient && isLoadingData && (
           <div className="lg:col-span-3 flex items-center justify-center py-12">
             <div className="text-center space-y-4">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
@@ -390,8 +400,8 @@ export function EventRequestForm({
           </div>
         )}
 
-        {/* Main form content - only show when not loading */}
-        {!isLoadingData && (
+        {/* Main form content - only show when client is ready and not loading */}
+        {isClient && !isLoadingData && (
           <>
             <div className="lg:col-span-2">
             <Card className="enhanced-card">

@@ -5,7 +5,13 @@ A comprehensive Next.js application for managing pony club events, featuring adv
 
 ## ✨ Latest Features (August 2025)
 
-### 🎛️ Enhanced Admin Dashboard (Latest)
+### 📝 Embeddable Event Request Form (Latest)
+- **Request Form Embed**: Complete event request form for external websites (`/embed/request-event`)
+- **Self-Contained Interface**: Automatic data loading with professional success flow
+- **iframe Integration**: Optimized for embedding in external sites with responsive design
+- **Enhanced Component**: Upgraded EventRequestForm with embed mode support and callbacks
+
+### 🎛️ Enhanced Admin Dashboard
 - **Reorganized Admin Interface**: Restructured dashboard with logical section grouping
 - **Visual Category Grouping**: Color-coded API endpoint management with themed sections
 - **Comprehensive Page Registry**: All application pages included in endpoint management
@@ -18,11 +24,12 @@ A comprehensive Next.js application for managing pony club events, featuring adv
 - **Batch Processing**: Professional 4-step import workflow with review and rollback capabilities
 - **Club Matching**: Intelligent club name matching with suggestions and validation
 
-### 🌐 Embeddable Calendar System
+### 🌐 Embeddable System
 - **Full Calendar Embed**: Complete calendar view for external websites (`/embed/calendar`)
 - **Compact Calendar**: Streamlined view for smaller spaces (`/embed/calendar/compact`)
+- **Event Request Form**: Complete event submission form for external sites (`/embed/request-event`)
 - **Calendar API**: JSON and iCal export endpoints for external integrations
-- **Google Sites Ready**: Optimized for iframe embedding in Google Sites
+- **Google Sites Ready**: Optimized for iframe embedding in Google Sites and other platforms
 
 ### 🗺️ Club Geolocation
 - **Google Maps Integration**: Interactive location setting for all 172+ clubs

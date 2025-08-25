@@ -56,10 +56,12 @@ const eventRequestSchema = z.object({
 type EventRequestFormValues = z.infer<typeof eventRequestSchema>;
 
 interface EventRequestFormProps {
-  clubs: Club[];
-  eventTypes: EventType[];
-  allEvents: Event[];
-  zones: Zone[];
+  clubs?: Club[];
+  eventTypes?: EventType[];
+  allEvents?: Event[];
+  zones?: Zone[];
+  embedMode?: boolean;
+  onSubmit?: (data: any) => void;
 }
 
 const haversineDistance = (
@@ -88,11 +90,25 @@ const initialState: FormState = {
     errors: {},
 };
 
-export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventRequestFormProps) {
+export function EventRequestForm({ 
+  clubs: propClubs, 
+  eventTypes: propEventTypes, 
+  allEvents: propAllEvents, 
+  zones: propZones,
+  embedMode = false,
+  onSubmit
+}: EventRequestFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [state, formAction] = useFormState(createEventRequestAction, initialState);
   const [showSuccess, setShowSuccess] = useState(false);
+  
+  // Data loading state for embed mode
+  const [clubs, setClubs] = useState<Club[]>(propClubs || []);
+  const [eventTypes, setEventTypes] = useState<EventType[]>(propEventTypes || []);
+  const [allEvents, setAllEvents] = useState<Event[]>(propAllEvents || []);
+  const [zones, setZones] = useState<Zone[]>(propZones || []);
+  const [isLoadingData, setIsLoadingData] = useState(embedMode && (!propClubs || !propEventTypes || !propAllEvents || !propZones));
   
   const [conflictSuggestions, setConflictSuggestions] = useState<Record<string, SuggestAlternativeDatesOutput | null>>({});
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState<Record<string, boolean>>({});
@@ -118,6 +134,40 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  // Fetch data for embed mode
+  useEffect(() => {
+    if (embedMode && isLoadingData) {
+      const fetchData = async () => {
+        try {
+          const [clubsRes, eventTypesRes, eventsRes, zonesRes] = await Promise.all([
+            fetch('/api/clubs'),
+            fetch('/api/event-types'),
+            fetch('/api/events'),
+            fetch('/api/zones')
+          ]);
+
+          const [clubsData, eventTypesData, eventsData, zonesData] = await Promise.all([
+            clubsRes.json(),
+            eventTypesRes.json(),
+            eventsRes.json(),
+            zonesRes.json()
+          ]);
+
+          setClubs(clubsData.clubs || clubsData);
+          setEventTypes(eventTypesData.eventTypes || eventTypesData);
+          setAllEvents(eventsData.events || eventsData);
+          setZones(zonesData.zones || zonesData);
+          setIsLoadingData(false);
+        } catch (error) {
+          console.error('Error fetching data:', error);
+          setIsLoadingData(false);
+        }
+      };
+
+      fetchData();
+    }
+  }, [embedMode, isLoadingData]);
 
   // Handle form submission success
   useEffect(() => {
@@ -286,6 +336,16 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
   
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        {/* Loading state for embed mode */}
+        {isLoadingData && (
+          <div className="lg:col-span-3 flex items-center justify-center py-12">
+            <div className="text-center space-y-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+              <p className="text-muted-foreground">Loading form data...</p>
+            </div>
+          </div>
+        )}
+        
         {/* Success Confirmation Modal */}
         {showSuccess && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -330,7 +390,10 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
           </div>
         )}
 
-        <div className="lg:col-span-2">
+        {/* Main form content - only show when not loading */}
+        {!isLoadingData && (
+          <>
+            <div className="lg:col-span-2">
             <Card className="enhanced-card">
                 <CardContent className="pt-6">
                 <Form {...form}>
@@ -340,11 +403,25 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
                       onSubmit={(evt) => {
                           evt.preventDefault();
                           form.handleSubmit(
-                            () => {
-                              // Validation succeeded, call the server action
-                              if (formRef.current) {
-                                const formData = new FormData(formRef.current);
-                                formAction(formData);
+                            (data) => {
+                              // Validation succeeded
+                              if (embedMode && onSubmit) {
+                                // In embed mode, call the callback with form data
+                                const submissionData = {
+                                  id: Date.now().toString(),
+                                  eventName: data.name,
+                                  eventDate: format(data.dates[0].value, 'PPP'),
+                                  clubName: clubs.find(c => c.id === data.clubId)?.name || 'Unknown Club',
+                                  eventType: eventTypes.find(t => t.id === data.eventTypeId)?.name || 'Unknown Type',
+                                  ...data
+                                };
+                                onSubmit(submissionData);
+                              } else {
+                                // Normal mode, call the server action
+                                if (formRef.current) {
+                                  const formData = new FormData(formRef.current);
+                                  formAction(formData);
+                                }
                               }
                             },
                             (errors) => {
@@ -559,6 +636,8 @@ export function EventRequestForm({ clubs, eventTypes, allEvents, zones }: EventR
                 </CardContent>
             </Card>
         </div>
+          </>
+        )}
     </div>
   );
 }

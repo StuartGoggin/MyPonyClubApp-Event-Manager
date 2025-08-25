@@ -149,6 +149,19 @@ export const ENDPOINTS: APIEndpointDefinition[] = [
     ],
     example: 'GET /api/embed/calendar?format=ical&upcoming=true&limit=10'
   },
+  {
+    id: 'embed-request-event',
+    path: '/embed/request-event',
+    method: 'GET',
+    category: 'embed',
+    name: 'Embed Request Event Form',
+    description: 'Embeddable event request form for external websites',
+    enabled: true,
+    requiresAuth: false,
+    icon: 'Calendar',
+    isPage: true,
+    example: '<iframe src="/embed/request-event" width="800" height="800"></iframe>'
+  },
 
   // Admin Management Endpoints
   {
@@ -570,6 +583,18 @@ export const ENDPOINTS: APIEndpointDefinition[] = [
     enabled: true,
     requiresAuth: false,
     icon: 'Calendar',
+    isPage: true
+  },
+  {
+    id: 'embed-request-event-page',
+    path: '/embed/request-event',
+    method: 'GET',
+    category: 'embed',
+    name: 'Request Event Form',
+    description: 'Embeddable event request form for external websites',
+    enabled: true,
+    requiresAuth: false,
+    icon: 'PlusCircle',
     isPage: true
   }
 ];

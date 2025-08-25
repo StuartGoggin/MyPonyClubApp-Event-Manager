@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Enhanced background - slightly darker for better contrast */
+    --background: 210 20% 96%;
+    --foreground: 222.2 84% 4.9%;
+    
+    /* Premium card styling with subtle elevation */
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    
+    /* Enhanced popover contrast */
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    
+    /* Sophisticated primary - deep teal blue */
+    --primary: 201 96% 32%;
+    --primary-foreground: 210 40% 98%;
+    
+    /* Refined secondary palette */
+    --secondary: 210 20% 92%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    
+    /* Enhanced muted tones */
+    --muted: 210 16% 91%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    
+    /* Professional accent */
+    --accent: 210 20% 92%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    
+    /* Critical alerts with better visibility */
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 40% 98%;
+    
+    /* Elegant borders */
+    --border: 214.3 31.8% 87%;
+    --input: 214.3 31.8% 87%;
+    --ring: 201 96% 32%;
+    
+    /* Enhanced radius for premium feel */
+    --radius: 0.5rem;
+    
+    /* Premium font family */
+    font-family: 'PT Sans', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  }
+
+  .dark {
+    /* Dark mode with sophisticated contrast */
+    --background: 222.2 84% 6%;
+    --foreground: 210 40% 98%;
+    
+    --card: 222.2 84% 8%;
+    --card-foreground: 210 40% 98%;
+    
+    --popover: 222.2 84% 8%;
+    --popover-foreground: 210 40% 98%;
+    
+    /* Vibrant primary for dark mode */
+    --primary: 201 96% 45%;
+    --primary-foreground: 222.2 84% 4.9%;
+    
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    
+    --destructive: 0 62.8% 60%;
+    --destructive-foreground: 210 40% 98%;
+    
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 201 96% 45%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'PT Sans', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  }
+}
+
+/* Font definitions */
+.font-body {
+  font-family: 'PT Sans', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+}

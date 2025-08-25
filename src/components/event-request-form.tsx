@@ -140,12 +140,32 @@ export function EventRequestForm({
     if (embedMode && isLoadingData) {
       const fetchData = async () => {
         try {
+          // Add timeout and retry logic
+          const fetchWithTimeout = async (url: string, timeout = 10000) => {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeout);
+            
+            try {
+              const response = await fetch(url, { signal: controller.signal });
+              clearTimeout(timeoutId);
+              return response;
+            } catch (error) {
+              clearTimeout(timeoutId);
+              throw error;
+            }
+          };
+
           const [clubsRes, eventTypesRes, eventsRes, zonesRes] = await Promise.all([
-            fetch('/api/clubs'),
-            fetch('/api/event-types'),
-            fetch('/api/events'),
-            fetch('/api/zones')
+            fetchWithTimeout('/api/clubs'),
+            fetchWithTimeout('/api/event-types'),
+            fetchWithTimeout('/api/events'),
+            fetchWithTimeout('/api/zones')
           ]);
+
+          // Handle non-200 responses
+          if (!clubsRes.ok || !eventTypesRes.ok || !eventsRes.ok || !zonesRes.ok) {
+            throw new Error('One or more API requests failed');
+          }
 
           const [clubsData, eventTypesData, eventsData, zonesData] = await Promise.all([
             clubsRes.json(),
@@ -160,8 +180,21 @@ export function EventRequestForm({
           setZones(zonesData.zones || zonesData);
           setIsLoadingData(false);
         } catch (error) {
-          console.error('Error fetching data:', error);
+          console.error('Error fetching data for embed mode:', error);
+          
+          // Provide fallback empty data instead of staying in loading state
+          setClubs([]);
+          setEventTypes([]);
+          setAllEvents([]);
+          setZones([]);
           setIsLoadingData(false);
+          
+          // Show error toast
+          toast({
+            title: 'Connection Issue',
+            description: 'Some data may not be available. You can still submit your request.',
+            variant: 'destructive',
+          });
         }
       };
 

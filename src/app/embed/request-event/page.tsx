@@ -10,6 +10,11 @@ import { Button } from "@/components/ui/button";
 export default function EmbedRequestEventPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submissionData, setSubmissionData] = useState<any>(null);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const handleFormSubmit = (data: any) => {
     setSubmissionData(data);
@@ -20,6 +25,24 @@ export default function EmbedRequestEventPage() {
     setIsSubmitted(false);
     setSubmissionData(null);
   };
+
+  // Prevent hydration mismatch by not rendering until client-side
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4">
+        <div className="max-w-4xl mx-auto">
+          <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="text-2xl text-center">Request an Event Date</CardTitle>
+              <CardDescription className="text-center">
+                Loading...
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   if (isSubmitted) {
     return (

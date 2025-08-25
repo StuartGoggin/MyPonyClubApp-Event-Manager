@@ -28,7 +28,8 @@ import {
   RefreshCw,
   Trash2,
   Sprout,
-  Monitor
+  Monitor,
+  PlusCircle
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ENDPOINTS, APIEndpointDefinition } from '@/lib/api-registry';
@@ -48,7 +49,8 @@ const iconMap = {
   RefreshCw,
   Trash2,
   Sprout,
-  Monitor
+  Monitor,
+  PlusCircle
 };
 
 export default function APIEndpointsPage() {

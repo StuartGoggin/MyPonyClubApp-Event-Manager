@@ -4,7 +4,35 @@ This document outlines the features and ideas for the PonyClub Events applicatio
 
 ## Recent Updates (August 24, 2025)
 
-### Enhanced Admin Dashboard Organization 🎛️ (Latest)
+### Embeddable Event Request Form 📝 (Latest)
+- **Complete Event Request Embed System**: Revolutionary embeddable form allowing external websites to integrate event request functionality:
+    - **Dedicated Embed Page** (`/embed/request-event`): Full event request form optimized for iframe embedding
+    - **Self-Contained Interface**: Complete form with all necessary data fetching, no external dependencies required
+    - **Success Flow Management**: Professional success confirmation with submission details and next steps guidance
+    - **Responsive Design**: Adapts to different iframe sizes and container constraints with mobile-friendly layout
+    - **Visual Polish**: Clean gradient background and glass morphism effects for professional appearance
+
+- **Enhanced EventRequestForm Component**: Upgraded core form component to support both regular and embed modes:
+    - **Embed Mode Support**: New `embedMode` prop for specialized embedding behavior
+    - **Dynamic Data Loading**: Automatically fetches clubs, event types, events, and zones when data not provided
+    - **Callback Integration**: Custom `onSubmit` callback for embed-specific submission handling
+    - **Loading States**: Professional loading indicators during data fetching in embed mode
+    - **Flexible Architecture**: Maintains backward compatibility while adding embed functionality
+
+- **Comprehensive API Registry Integration**: Extended endpoint management system with request form support:
+    - **Registry Entries**: Added embed request form to both API endpoints and pages categories
+    - **Visual Management**: Included in admin API endpoints interface with proper categorization
+    - **Icon Integration**: PlusCircle icon for visual distinction from calendar embeds
+    - **Documentation Ready**: Example iframe embed code provided for easy integration
+
+- **External Website Integration**: Purpose-built for seamless integration into external sites:
+    - **iframe Ready**: Optimized dimensions and styling for iframe embedding
+    - **No CORS Issues**: Self-contained embed system eliminates cross-domain complications
+    - **Submission Handling**: Captures form data and provides feedback without requiring external validation
+    - **User Experience**: Complete workflow from form submission to success confirmation
+    - **Professional Appearance**: Branded interface suitable for public-facing websites
+
+### Enhanced Admin Dashboard Organization 🎛️
 - **Restructured Admin Layout**: Reorganized admin dashboard with improved logical flow:
     - **System Configuration** (First Section): Core system setup including zones, clubs, and event types
     - **Data Management** (Second Section): Event management, calendar operations, and API endpoints
@@ -151,6 +179,7 @@ This document outlines the features and ideas for the PonyClub Events applicatio
 #### Available Embed Endpoints
 - **Full Calendar**: `https://myponyclubapp-events--ponyclub-events.asia-east1.hosted.app/embed/calendar`
 - **Compact Calendar**: `https://myponyclubapp-events--ponyclub-events.asia-east1.hosted.app/embed/calendar/compact`
+- **Event Request Form**: `https://myponyclubapp-events--ponyclub-events.asia-east1.hosted.app/embed/request-event`
 - **Calendar API**: `https://myponyclubapp-events--ponyclub-events.asia-east1.hosted.app/api/embed/calendar`
 
 #### Production Features

@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getEvents, getZones, getClubs, getEventTypes } from '@/lib/data';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = request.nextUrl;
     const format = searchParams.get('format') || 'json';
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : undefined;
     const zone = searchParams.get('zone');

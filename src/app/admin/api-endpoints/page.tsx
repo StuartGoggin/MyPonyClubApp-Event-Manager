@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -59,19 +59,19 @@ export default function APIEndpointsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [baseUrl, setBaseUrl] = useState('');
 
-  // Base URL options
-  const baseUrlOptions = [
+  // Base URL options - memoized to prevent re-creation on every render
+  const baseUrlOptions = useMemo(() => [
     { value: 'http://localhost:9002', label: 'Local Development' },
     { value: 'https://myponyclub.events', label: 'Production' },
     { value: 'https://myponyclubapp-events--ponyclub-events.asia-east1.hosted.app', label: 'Staging/Firebase' }
-  ];
+  ], []);
 
   useEffect(() => {
     // Set default to current origin if it matches one of our options, otherwise use localhost
     const currentOrigin = window.location.origin;
     const matchingOption = baseUrlOptions.find(option => option.value === currentOrigin);
     setBaseUrl(matchingOption ? currentOrigin : 'http://localhost:9002');
-  }, []);
+  }, [baseUrlOptions]);
 
   const filteredEndpoints = endpoints.filter(endpoint => {
     const matchesSearch = endpoint.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

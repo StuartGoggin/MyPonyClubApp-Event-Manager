@@ -192,4 +192,16 @@
   .glass-effect {
     @apply bg-background/95 backdrop-blur-lg border border-border/50 shadow-2xl shadow-black/20;
   }
+  
+  /* Custom sidebar positioning to avoid header overlap */
+  .sidebar-below-header [data-sidebar="sidebar"] {
+    top: 5rem !important;
+    height: calc(100vh - 5rem) !important;
+  }
+  
+  /* Ensure mobile sidebar also respects header */
+  .sidebar-below-header [data-mobile="true"] {
+    top: 5rem !important;
+    height: calc(100vh - 5rem) !important;
+  }
 }

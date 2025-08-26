@@ -1,6 +1,7 @@
 'use client';
 
 import type { PropsWithChildren } from 'react';
+import { usePathname } from 'next/navigation';
 import {
   SidebarProvider,
   Sidebar,
@@ -16,7 +17,6 @@ import {
   SidebarGroupContent,
   SidebarSeparator,
 } from '@/components/ui/sidebar';
-// import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Calendar, PlusCircle, Database, FerrisWheel, Shield, Settings, MapPin, Building } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -36,9 +36,14 @@ const PonyIcon = (props: React.SVGProps<SVGSVGElement>) => (
     </svg>
 )
 
-
 export function AppLayout({ children }: PropsWithChildren) {
-  // const pathname = usePathname(); // Temporarily disabled due to context issues
+  const pathname = usePathname();
+  
+  // If this is an embed route, just return children without any app layout
+  if (pathname?.startsWith('/embed')) {
+    return <>{children}</>;
+  }
+
   const [eventSources, setEventSources] = useAtom(eventSourceAtom);
 
   const handleSourceChange = (source: EventSource, checked: boolean) => {

@@ -28,6 +28,7 @@ if (serviceAccountStr) {
                     ...serviceAccount,
                     private_key: formattedPrivateKey,
                 }),
+                storageBucket: `${serviceAccount.project_id}.firebasestorage.app`,
             });
             
             // Get Firestore instance and configure it only when first initializing

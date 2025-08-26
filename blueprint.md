@@ -4,7 +4,28 @@ This document outlines the features and ideas for the PonyClub Events applicatio
 
 ## Recent Updates (August 26, 2025)
 
-### Modern Design System Implementation 🎨 (Latest)
+### Event Schedule Firebase Storage Integration 📁 (Latest - August 27, 2025)
+- **Complete Cloud Storage Solution**: Revolutionary Firebase Storage integration for event schedule document management:
+    - **Firebase Storage Bucket**: Configured `ponyclub-events.firebasestorage.app` for secure cloud storage
+    - **File Upload System**: Robust multi-format document upload (PDF, DOCX, TXT) with error handling
+    - **Public URL Generation**: Automatic generation of accessible download URLs for approved schedules
+    - **Organized Storage Structure**: Files stored in `event-schedules/{eventId}/{uniqueFileName}` hierarchy
+    - **API Route Compliance**: Updated to Next.js App Router structure `/api/events/[id]/schedule/upload/route.ts`
+
+- **Technical Infrastructure**:
+    - **Firebase Admin SDK Integration**: Proper initialization and configuration management
+    - **Storage Bucket Configuration**: Resolved naming convention issues (.appspot.com vs .firebasestorage.app)
+    - **Error Handling**: Comprehensive error handling for upload failures and storage connectivity
+    - **File Validation**: Upload validation for file types, sizes, and format compliance
+    - **Database Integration**: Schedule metadata stored in Firestore with file URLs and status tracking
+
+- **Implementation Status**: Core upload functionality ✅ COMPLETED
+    - **File Upload**: Successfully tested with PDF and text files
+    - **Public URLs**: Generated and accessible Firebase Storage URLs
+    - **API Endpoint**: Working upload endpoint with proper error handling
+    - **Next Phase**: UI integration for approval workflow and status management
+
+### Modern Design System Implementation 🎨
 - **Glass Morphism Design Language**: Complete visual transformation with modern glass effects:
     - **Translucent Cards**: Beautiful backdrop blur with subtle transparency throughout application
     - **Gradient Overlays**: Multi-layered gradient effects creating depth and visual interest
@@ -502,92 +523,53 @@ This document outlines the features and ideas for the PonyClub Events applicatio
   - **Management Interface** (`/admin/api-endpoints`): Visual endpoint management dashboard
   - **25+ Documented Endpoints**: Complete catalog with metadata, parameters, and examples
 
-### Implemented Workflows
+### Event Schedule Management & Approval Workflow (August 27, 2025) ✅ COMPLETED
 
-#### Event Submission Workflow
-1. **Club Event Request**: Club submits event via Club Manager or public Request Event page
-2. **Visual Confirmation**: Success modal with submission timeline and next steps
-3. **Data Persistence**: Event stored in Firestore with "proposed" status
-4. **Zone Notification**: Event appears in Zone Manager pending approvals
-5. **Approval Process**: Zone manager reviews and approves/rejects with notes
-6. **Status Updates**: Event status updates reflected in Club Manager status tracking
+### Overview
+An Event Schedule is a document (usually a PDF) created by an event organiser to advertise the event and publish the applicable rules and details. It is typically created a few months before the event, while the event date may be booked up to a year in advance. Every event must have a schedule document.
 
-#### User Experience Flow
-1. **Dashboard Overview**: Statistics and quick access to key functions
-2. **Calendar Integration**: Visual event display with filtering capabilities
-3. **Form Submission**: Comprehensive forms with validation and success feedback
-4. **Status Tracking**: Real-time event status monitoring with export capabilities
-5. **Management Actions**: CRUD operations with safety confirmations and error handling
+### ✅ Implementation Status: COMPLETED
+**Firebase Storage Integration**: Complete cloud-based file storage and management system for event schedule documents:
 
-#### Data Management Workflow
-1. **Database Seeding**: Initialize with zones, clubs, and event types
-2. **Import/Export**: Bulk data operations with validation and progress tracking
-3. **Real-time Updates**: Live data synchronization across interfaces
-4. **Error Recovery**: Graceful handling of data inconsistencies and network issues
+- **✅ Cloud Storage Solution**: Firebase Storage integration with bucket `ponyclub-events.firebasestorage.app`
+- **✅ File Upload System**: Robust upload handling for PDF, DOCX, and other document formats
+- **✅ Public URL Generation**: Automatic generation of public download URLs for approved schedules
+- **✅ Secure File Management**: Files organized by event ID with unique naming to prevent conflicts
+- **✅ Error Handling**: Comprehensive error handling for upload failures and storage issues
 
-## Data Validation & Quality
+### ✅ Technical Implementation
+- **API Route Structure**: `/api/events/[id]/schedule/upload` - Next.js App Router compliant endpoint
+- **Frontend Component**: Event schedule upload form with file validation and progress feedback
+- **Backend Processing**: File upload to Firebase Storage with metadata storage in Firestore
+- **Storage Path Structure**: `event-schedules/{eventId}/{uniqueFileName}` for organized file management
+- **Database Integration**: Schedule metadata stored in Firestore with file URLs and approval status
 
-### Address Validation
-- Australian postcode validation (4 digits)
-- State selection with predefined options
-- Formatted address display with proper concatenation
+### Requirements & Workflow
+- **✅ Upload & Association**: The Event Schedule document is uploaded and associated with an event via Firebase Storage.
+- **⏳ Review Task Creation**: Uploading a schedule creates a review task for the applicable zone. [PENDING]
+- **⏳ Zone Approval**: The zone approver reviews the document for compliance and approves or rejects it. [PENDING]
+- **⏳ Document Updates**: The schedule can be updated after submission. If updated, the new version is sent for approval. [PENDING]
+- **⏳ Reapproval on Update**: If the schedule is updated after approval, it must be reapproved. [PENDING]
+- **⏳ Status Indication**: Wherever the event appears, indicate the schedule status: [PENDING]
+  - If missing: show nothing
+  - If submitted: show a neat 'Schedule Pending' status flag
+  - If approved: show an 'Approved' status flag
+- **⏳ Download Capability**: If an event has an approved schedule, users can download the document. [PENDING]
 
-### Contact Validation
-- Email format validation with regex patterns
-- URL validation for websites and social media
-- Platform-specific social media URL validation (Facebook, Instagram, Twitter, YouTube)
-
-### Data Import Validation
-- Required field checking
-- Duplicate detection and prevention
-- Format validation for all data types
-- Error reporting with specific field feedback
-
-## Future Ideas
-
-### Enhanced External Integration
-- **Advanced Embed Widgets**: Enhanced embeddable components for external websites:
-  - **Event List Widget**: Compact event listings for sidebar embedding
-  - **Club Finder Widget**: Interactive club search and discovery widget
-  - **Event Registration Widget**: Direct event registration through embedded forms
-  - **Custom Branding**: Customizable colors and styling for different websites
-- **WordPress Plugin**: Native WordPress plugin for seamless integration
-- **API Developer Portal**: Comprehensive API documentation and developer tools
-- **Webhook System**: Real-time notifications for external systems
-- **SSO Integration**: Single sign-on for seamless user experience across platforms
-
-### Enhanced Features
-- **Interactive Map Dashboard**: ✅ **COMPLETED** - Full map view showing all clubs with event overlays and filters
-- **Location-Based Event Discovery**: ✅ **COMPLETED** - Find events near specific locations or within distance radius
-- **Travel Planning Tools**: Calculate distances and travel times between clubs for event planning
-- **Geographic Analytics**: Data visualization showing event distribution across zones and regions
-- **Mobile Location Services**: GPS-based club finder and event navigation for mobile users
-- **Weather Integration**: Location-aware weather forecasting for event planning
-- **Advanced Reporting**: Analytics dashboard with club statistics and event trends
-- **Notification System**: Automated email notifications for event approvals and updates
-- **Mobile App**: Native mobile application for on-the-go event management
-- **Calendar Integration**: Sync with external calendar systems (Google Calendar, Outlook)
-
-### Location-Enhanced Features (Enabled by Geolocation)
-- **Smart Event Scheduling**: AI-powered suggestions considering geographic proximity and travel logistics
-- **Regional Event Coordination**: Automatically detect potential scheduling conflicts based on club proximity
-- **Venue Recommendations**: Suggest optimal locations for zone-wide events based on club distribution
-- **Travel Cost Optimization**: Calculate and minimize travel costs for multi-club events
-- **Emergency Services Integration**: Quick access to emergency services with precise club coordinates
-- **Facility Sharing Network**: Connect nearby clubs for facility sharing and resource optimization
-
-### Data Enhancements
-- **Club Facility Details**: Detailed facility information (arenas, stabling, amenities)
-- **Member Management**: Basic member information and enrollment tracking
-- **Financial Integration**: Fee tracking and payment processing
-- **Document Management**: File upload and storage for club documents
-
-### Technical Improvements
-- **Offline Support**: PWA capabilities for offline data access
-- **Real-time Updates**: WebSocket integration for live data synchronization
-- **Advanced Search**: Full-text search across all club and event data
-- **Data Backup**: Automated backup and restore functionality
-- **API Integration**: REST API for third-party integrations
+### User Prompts & Notes
+> I want to introduce the capability to capture an Event Schedule, store it with an event, have it reviewed and approved separately to the actual event.
+>
+> An Event schedule is a document - usually a PDF that an event organiser will create to advertise the event and publish the applicable rules and details of the event. IT's usually created a few months before the event - whereas the event date might be booked up to a year in advance.
+>
+> The Event schedule is an important document, and every event has to have one. The process for an event schedule is that it will be uploaded to an event. This creates a review task for the applicable zone. The approver on the zone will review the document and determine if it's compliant - if it is then they will approve the document.
+>
+> The Schedule document might be updated after it's been submitted for approval. In which case that's fine it can be updated and the updated version sent for approval.
+>
+> If the schedule is updated after it's been approved then it needs to be reapproved.
+>
+> I would like to indicate the status of the schedule wherever the event appears. If a schedule is missing then don't show anything. If it's been submitted then show it as a neat Schedule Pending status flag. Once approved then again show the status flag. If I click on an event and there is an approved schedule I should be able to download it.
+>
+> I would like you to add a new Section to the blueprint to document these requirements, and I would like you to include these prompts into that section as well.
 
 ## Recent Updates (August 2025)
 

@@ -40,6 +40,7 @@ interface EventCalendarProps {
   zones: Zone[];
   today: Date;
   bypassSourceFiltering?: boolean; // New prop to bypass event source filtering
+  currentUser?: { id: string; role: 'organiser' | 'zone_approver' | 'admin' | 'viewer' };
 }
 
 const haversineDistance = (
@@ -272,6 +273,7 @@ export function EventCalendar({
   zones,
   today,
   bypassSourceFiltering = false,
+  currentUser,
 }: EventCalendarProps) {
   const router = useRouter();
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -526,6 +528,7 @@ export function EventCalendar({
         zone={selectedZone}
         eventType={selectedEventType}
         nearbyEvents={selectedEvent ? getNearbyEvents(selectedEvent) : []}
+        currentUser={currentUser || { id: 'default', role: 'viewer' }}
       />
     </div>
   );

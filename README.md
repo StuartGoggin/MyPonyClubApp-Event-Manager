@@ -5,7 +5,17 @@ A comprehensive Next.js application for managing pony club events, featuring adv
 
 ## ✨ Latest Features (August 2025)
 
-### 🎨 Modern Design System (Latest)
+### 📁 Event Schedule Management (Latest - August 27, 2025)
+- **Firebase Storage Integration**: Complete cloud-based document storage for event schedules
+- **Multi-Format Support**: Upload PDF, DOCX, TXT, and other document formats
+- **Secure File Management**: Organized storage structure with unique file naming to prevent conflicts
+- **Public URL Generation**: Automatic generation of accessible download URLs for approved schedules
+- **API Compliance**: Next.js App Router compliant endpoints for file upload and management
+- **Error Handling**: Comprehensive upload validation and error handling for robust user experience
+- **Cloud Storage Benefits**: Scalable Firebase Storage bucket (`ponyclub-events.firebasestorage.app`)
+- **Future Workflow**: Foundation for approval workflow and status management system
+
+### 🎨 Modern Design System
 - **Glass Morphism Effects**: Beautiful translucent cards with backdrop blur and gradient overlays
 - **Compact Layouts**: Space-efficient designs for better screen utilization and mobile experience
 - **Gradient Typography**: Stunning gradient text effects for headers and important elements

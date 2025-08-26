@@ -184,6 +184,21 @@ export interface EventType {
 
 export type EventStatus = 'proposed' | 'approved' | 'rejected' | 'public_holiday';
 export type EventSource = 'pca' | 'event_secretary' | 'zone' | 'public_holiday';
+export type EventScheduleStatus = 'missing' | 'pending' | 'approved' | 'rejected';
+
+export interface EventSchedule {
+  id: string;
+  eventId: string;
+  fileUrl: string; // URL to the uploaded document
+  fileType: string; // e.g., 'pdf', 'docx', 'doc', 'txt'
+  uploadedAt: Date;
+  updatedAt?: Date;
+  status: EventScheduleStatus;
+  submittedBy: string;
+  reviewedBy?: string;
+  reviewedAt?: Date;
+  notes?: string;
+}
 
 export interface Event {
   id: string;
@@ -204,4 +219,7 @@ export interface Event {
   notes?: string;
   submittedBy?: string;
   submittedByContact?: string;
+
+  // Event schedule reference
+  schedule?: EventSchedule;
 }

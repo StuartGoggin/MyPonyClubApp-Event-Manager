@@ -368,52 +368,52 @@ export function EventRequestForm({
   };
   
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
         {/* Hydration protection - prevent SSR/client mismatch */}
         {!isClient && (
-          <div className="lg:col-span-3 flex items-center justify-center py-12">
-            <div className="text-center space-y-4">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-              <p className="text-muted-foreground">Loading form...</p>
+          <div className="lg:col-span-3 flex items-center justify-center py-8">
+            <div className="text-center space-y-3">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
+              <p className="text-muted-foreground text-sm">Loading form...</p>
             </div>
           </div>
         )}
         
         {/* Loading state for embed mode */}
         {isClient && isLoadingData && (
-          <div className="lg:col-span-3 flex items-center justify-center py-12">
-            <div className="text-center space-y-4">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-              <p className="text-muted-foreground">Loading form data...</p>
+          <div className="lg:col-span-3 flex items-center justify-center py-8">
+            <div className="text-center space-y-3">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
+              <p className="text-muted-foreground text-sm">Loading form data...</p>
             </div>
           </div>
         )}
         
-        {/* Success Confirmation Modal */}
+        {/* Compact Success Confirmation Modal */}
         {showSuccess && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
             <Card className="mx-4 max-w-md w-full enhanced-card glass-effect">
-              <CardHeader className="text-center">
-                <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                  <CheckCircle className="w-6 h-6 text-green-600" />
+              <CardHeader className="text-center pb-3">
+                <div className="mx-auto w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mb-3">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
                 </div>
-                <CardTitle className="text-green-600 bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                <CardTitle className="text-green-600 bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent text-lg">
                   Event Request Submitted!
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-sm">
                   Your event request has been successfully submitted for approval
                 </CardDescription>
               </CardHeader>
-              <CardContent className="text-center space-y-4">
-                <div className="text-sm text-muted-foreground">
-                  <p className="mb-2">✓ Event data has been saved</p>
-                  <p className="mb-2">✓ Zone managers have been notified</p>
+              <CardContent className="text-center space-y-3 pt-0">
+                <div className="text-xs text-muted-foreground">
+                  <p className="mb-1">✓ Event data has been saved</p>
+                  <p className="mb-1">✓ Zone managers have been notified</p>
                   <p>✓ You will receive updates on the approval status</p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2">
                   <Button 
                     onClick={() => setShowSuccess(false)}
-                    className="premium-button flex-1"
+                    className="premium-button flex-1 h-9"
                   >
                     Submit Another Event
                   </Button>
@@ -423,7 +423,7 @@ export function EventRequestForm({
                       setShowSuccess(false);
                       router.push('/');
                     }}
-                    className="premium-button-outline flex-1"
+                    className="premium-button-outline flex-1 h-9"
                   >
                     View Calendar
                   </Button>
@@ -433,12 +433,12 @@ export function EventRequestForm({
           </div>
         )}
 
-        {/* Main form content - only show when client is ready and not loading */}
+        {/* Compact Main form content - only show when client is ready and not loading */}
         {isClient && !isLoadingData && (
           <>
             <div className="lg:col-span-2">
             <Card className="enhanced-card">
-                <CardContent className="pt-6">
+                <CardContent className="pt-4">
                 <Form {...form}>
                     <form
                       ref={formRef}
@@ -478,15 +478,15 @@ export function EventRequestForm({
                             }
                           )(evt);
                       }}
-                      className="space-y-8"
+                      className="space-y-4"
                     >
                         <Card className="enhanced-card">
-                            <CardHeader>
-                                <CardTitle className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                            <CardHeader className="pb-3">
+                                <CardTitle className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent text-lg">
                                     Club Details
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="grid md:grid-cols-2 gap-4">
+                            <CardContent className="grid md:grid-cols-2 gap-3">
                                 <FormItem>
                                     <FormLabel>Zone</FormLabel>
                                     <Select 
@@ -545,11 +545,11 @@ export function EventRequestForm({
                         </Card>
                         
                         <Card>
-                             <CardHeader>
-                                <CardTitle>Event Details</CardTitle>
-                                <CardDescription>Enter the details for the event you are requesting.</CardDescription>
+                             <CardHeader className="pb-3">
+                                <CardTitle className="text-lg">Event Details</CardTitle>
+                                <CardDescription className="text-sm">Enter the details for the event you are requesting.</CardDescription>
                              </CardHeader>
-                             <CardContent className="grid md:grid-cols-2 gap-4">
+                             <CardContent className="grid md:grid-cols-2 gap-3">
                                 <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Event Name</FormLabel><FormControl><Input placeholder="e.g., Spring Dressage Gala" {...field} /></FormControl><FormMessage /></FormItem>)} />
                                 <FormField control={form.control} name="eventTypeId" render={({ field }) => (<FormItem><FormLabel>Event Type</FormLabel><Select onValueChange={field.onChange} value={field.value} name={field.name}><FormControl><SelectTrigger className='bg-card'><SelectValue placeholder="Select an event type" /></SelectTrigger></FormControl><SelectContent>{eventTypes.filter(t => t.id !== 'ph').map(type => (<SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
                                 <FormField control={form.control} name="location" render={({ field }) => (<FormItem><FormLabel>Location / Address</FormLabel><FormControl><Input placeholder="e.g., 123 Equestrian Rd" {...field} /></FormControl><FormMessage /></FormItem>)} />
@@ -558,29 +558,29 @@ export function EventRequestForm({
                         </Card>
 
                         <Card>
-                            <CardHeader>
-                                <CardTitle>Date Preferences</CardTitle>
-                                <CardDescription>Add up to 4 preferred dates for this event.</CardDescription>
+                            <CardHeader className="pb-3">
+                                <CardTitle className="text-lg">Date Preferences</CardTitle>
+                                <CardDescription className="text-sm">Add up to 4 preferred dates for this event.</CardDescription>
                             </CardHeader>
-                            <CardContent className="space-y-6">
+                            <CardContent className="space-y-4">
                                 {fields.map((field, index) => (
-                                <div key={field.id} className="p-4 border rounded-lg space-y-4 relative bg-muted/20">
+                                <div key={field.id} className="p-3 border rounded-lg space-y-3 relative bg-muted/20">
                                     <div className='flex justify-between items-center'>
-                                      <h4 className="font-semibold text-lg">Date Option {index + 1}</h4>
+                                      <h4 className="font-semibold text-base">Date Option {index + 1}</h4>
                                       {fields.length > 1 && (
                                           <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => remove(index)}><Trash2 className="h-4 w-4" /></Button>
                                       )}
                                     </div>
-                                    <div className="grid md:grid-cols-2 gap-4">
-                                        <FormField control={form.control} name={`dates.${index}.value`} render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Event Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={'outline'} className={cn('w-full pl-3 text-left font-normal bg-card', !field.value && 'text-muted-foreground' )}>{isClient && field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={date => date < new Date() || date < new Date('1900-01-01')} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
+                                    <div className="grid md:grid-cols-2 gap-3">
+                                        <FormField control={form.control} name={`dates.${index}.value`} render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Event Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={'outline'} className={cn('w-full pl-3 text-left font-normal bg-card h-9', !field.value && 'text-muted-foreground' )}>{isClient && field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={date => date < new Date() || date < new Date('1900-01-01')} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
                                         
                                         <div className="space-y-2 self-end">
-                                            <Button type="button" onClick={() => handleAnalyzeDate(index)} disabled={isLoadingSuggestions[index]} className="w-full">
-                                                <Wand2 className="mr-2 h-4 w-4" />
-                                                {isLoadingSuggestions[index] ? 'Analyzing...' : 'Analyze Date for Conflicts'}
+                                            <Button type="button" onClick={() => handleAnalyzeDate(index)} disabled={isLoadingSuggestions[index]} className="w-full h-9 text-sm">
+                                                <Wand2 className="mr-1.5 h-3.5 w-3.5" />
+                                                {isLoadingSuggestions[index] ? 'Analyzing...' : 'Analyze Date'}
                                             </Button>
                                             {isLoadingSuggestions[index] && (
-                                                <p className="text-sm text-muted-foreground text-center">Checking for conflicts...</p>
+                                                <p className="text-xs text-muted-foreground text-center">Checking for conflicts...</p>
                                             )}
                                         </div>
                                     </div>
@@ -609,7 +609,7 @@ export function EventRequestForm({
                                 </div>
                                 ))}
                                 {fields.length < 4 && (
-                                    <Button type="button" variant="outline" onClick={() => append({ value: new Date() })}><PlusCircle className="mr-2 h-4 w-4" /> Add another date</Button>
+                                    <Button type="button" variant="outline" onClick={() => append({ value: new Date() })} className="h-9"><PlusCircle className="mr-1.5 h-3.5 w-3.5" /> Add another date</Button>
                                 )}
                                  <Controller
                                     name="dates"
@@ -620,17 +620,17 @@ export function EventRequestForm({
                         </Card>
                         
                         <Card>
-                            <CardHeader><CardTitle>Additional Information</CardTitle></CardHeader>
-                            <CardContent className="space-y-4">
-                                <FormField control={form.control} name="notes" render={({ field }) => (<FormItem><FormLabel>Any other notes</FormLabel><FormControl><Textarea placeholder="Add any extra details here..." {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                <div className="grid md:grid-cols-2 gap-4">
+                            <CardHeader className="pb-3"><CardTitle className="text-lg">Additional Information</CardTitle></CardHeader>
+                            <CardContent className="space-y-3">
+                                <FormField control={form.control} name="notes" render={({ field }) => (<FormItem><FormLabel>Any other notes</FormLabel><FormControl><Textarea placeholder="Add any extra details here..." className="h-20" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <div className="grid md:grid-cols-2 gap-3">
                                     <FormField control={form.control} name="submittedBy" render={({ field }) => (<FormItem><FormLabel>Who filled in this form</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                                     <FormField control={form.control} name="submittedByContact" render={({ field }) => (<FormItem><FormLabel>Contact Number</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
                                 </div>
                             </CardContent>
                         </Card>
 
-                        <Button type="submit">
+                        <Button type="submit" className="h-10">
                           Submit Request
                         </Button>
                     </form>
@@ -638,34 +638,34 @@ export function EventRequestForm({
                 </CardContent>
             </Card>
         </div>
-        <div className="lg:col-span-1 space-y-8">
+        <div className="lg:col-span-1 space-y-4">
             <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><History className="h-5 w-5" /> Club Event History</CardTitle>
-                    <CardDescription>Past and future events for the selected club.</CardDescription>
+                <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-lg"><History className="h-4 w-4" /> Club Event History</CardTitle>
+                    <CardDescription className="text-sm">Past and future events for the selected club.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     {!selectedClubId ? (
-                        <p className="text-sm text-muted-foreground">Please select a club to see its event history.</p>
+                        <p className="text-xs text-muted-foreground">Please select a club to see its event history.</p>
                     ) : (
-                        <div className="space-y-4">
+                        <div className="space-y-3">
                             <div>
-                                <h4 className="font-semibold mb-2">Future & Proposed Events</h4>
+                                <h4 className="font-semibold mb-2 text-sm">Future & Proposed Events</h4>
                                 {clubEvents.future.length > 0 ? (
-                                     <div className="text-sm border rounded-lg">
+                                     <div className="text-xs border rounded-lg">
                                         {clubEvents.future.map((e, index) => (
                                           <div key={e.id} className={cn("p-2", index !== clubEvents.future.length - 1 && 'border-b')}>
                                             <strong>{format(new Date(e.date), 'do MMM yyyy')}:</strong> {e.name} <span className="text-xs capitalize p-1 rounded-md bg-muted">({e.status.replace('_', ' ')})</span>
                                           </div>
                                         ))}
                                     </div>
-                                ) : <p className="text-sm text-muted-foreground">No upcoming events.</p>}
+                                ) : <p className="text-xs text-muted-foreground">No upcoming events.</p>}
                             </div>
                             <Separator/>
                             <div>
-                                <h4 className="font-semibold mb-2">Past Events</h4>
+                                <h4 className="font-semibold mb-2 text-sm">Past Events</h4>
                                  {clubEvents.past.length > 0 ? (
-                                    <div className="text-sm border rounded-lg max-h-48 overflow-y-auto">
+                                    <div className="text-xs border rounded-lg max-h-32 overflow-y-auto">
                                         {clubEvents.past.map((e, index) => (
                                           <div key={e.id} className={cn("p-2", index !== clubEvents.past.length - 1 && 'border-b')}>
                                             <strong>{format(new Date(e.date), 'do MMM yyyy')}:</strong> {e.name} <span className="text-xs capitalize p-1 rounded-md bg-muted">({e.status})</span>

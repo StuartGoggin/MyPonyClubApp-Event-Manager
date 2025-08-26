@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Event, Club, EventType } from '@/lib/types';
 import { EditEventDialog } from './edit-event-dialog';
+import { EventScheduleUpload } from '../event-schedule-upload';
 
 // Utility function to format dates with validation
 const formatDate = (date: Date | string | any) => {
@@ -191,38 +192,29 @@ export function ClubEventStatus({
                   {events.map((event, index) => {
                     const canEdit = event.status === 'proposed' || event.status === 'approved' || event.status === 'rejected';
                     const isEven = index % 2 === 0;
-                    
                     return (
-                      <TableRow 
-                        key={event.id} 
-                        className={`transition-all duration-200 hover:bg-slate-50 hover:shadow-sm ${
-                          isEven ? 'bg-white' : 'bg-slate-25'
-                        }`}
+                      <TableRow
+                        key={event.id}
+                        className={`transition-all duration-200 hover:bg-slate-50 hover:shadow-sm ${isEven ? 'bg-white' : 'bg-slate-25'}`}
+                        style={{ verticalAlign: 'middle' }}
                       >
-                        <TableCell className="py-4">
+                        <TableCell className="py-4 align-middle">
                           <div className="space-y-2">
                             <div className="flex items-center gap-2">
-                              <h4 className="font-semibold text-slate-900">{event.name}</h4>
+                              <h4 className="font-semibold text-slate-900 text-lg">{event.name}</h4>
                               {event.isQualifier && (
-                                <Badge variant="secondary" className="bg-purple-100 text-purple-700 border-purple-200 text-xs">
-                                  Qualifier
-                                </Badge>
+                                <Badge variant="secondary" className="bg-purple-100 text-purple-700 border-purple-200 text-xs">Qualifier</Badge>
                               )}
                             </div>
                             <div className="flex items-center gap-4 text-sm text-slate-600">
-                              <span className="bg-slate-100 px-2 py-1 rounded-md font-medium">
-                                {getEventTypeName(event.eventTypeId)}
-                              </span>
+                              <span className="bg-slate-100 px-2 py-1 rounded-md font-medium">{getEventTypeName(event.eventTypeId)}</span>
                               {event.location && (
-                                <span className="flex items-center gap-1">
-                                  <span>📍</span>
-                                  {event.location}
-                                </span>
+                                <span className="flex items-center gap-1"><span>📍</span>{event.location}</span>
                               )}
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="py-4">
+                        <TableCell className="py-4 align-middle">
                           <div className="flex items-center gap-2 text-slate-700">
                             <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
                               <Calendar className="h-4 w-4 text-blue-600" />
@@ -230,12 +222,12 @@ export function ClubEventStatus({
                             <span className="font-medium">{formatDate(event.date)}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="py-4">
+                        <TableCell className="py-4 align-middle">
                           <div className="flex items-center gap-3">
                             {getStatusBadge(event.status)}
                           </div>
                         </TableCell>
-                        <TableCell className="py-4">
+                        <TableCell className="py-4 align-middle">
                           {event.coordinatorName ? (
                             <div className="space-y-1">
                               <div className="font-medium text-slate-900">{event.coordinatorName}</div>
@@ -247,14 +239,15 @@ export function ClubEventStatus({
                             <span className="text-slate-400 italic">Not specified</span>
                           )}
                         </TableCell>
-                        <TableCell className="text-right py-4">
-                          <div className="flex justify-end gap-2">
+                        <TableCell className="text-right py-4 align-middle">
+                          <div className="flex items-center gap-2 justify-end">
                             {canEdit && (
                               <Button
                                 size="sm"
                                 variant="outline"
                                 onClick={() => handleEditEvent(event)}
                                 className="premium-button-outline hover:scale-105 transition-transform"
+                                aria-label="Edit event"
                               >
                                 <Edit3 className="h-4 w-4 mr-1" />
                                 Edit
@@ -265,10 +258,18 @@ export function ClubEventStatus({
                               variant="ghost"
                               onClick={() => {/* TODO: View event details */}}
                               className="hover:bg-slate-100 hover:scale-105 transition-all"
+                              aria-label="View event details"
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
                           </div>
+                          {/* Event Schedule Upload for events without a schedule */}
+                          {!event.schedule && (
+                            <div className="mt-3 w-full max-w-xs mx-auto p-4 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 shadow flex flex-col items-center gap-2">
+                              <span className="text-xs text-blue-700 font-semibold mb-1 block">No schedule uploaded</span>
+                              <EventScheduleUpload eventId={event.id} onUploadSuccess={onEventUpdate} />
+                            </div>
+                          )}
                         </TableCell>
                       </TableRow>
                     );

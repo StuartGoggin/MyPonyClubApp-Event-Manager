@@ -29,6 +29,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import React from 'react';
+import { EventScheduleUpload } from '@/components/event-schedule-upload';
+import { EventScheduleReview } from '@/components/event-schedule-review';
 
 interface EventDialogProps {
   event: Event | null;
@@ -38,6 +40,7 @@ interface EventDialogProps {
   nearbyEvents: Event[];
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
+  currentUser: { id: string; role: 'organiser' | 'zone_approver' | 'admin' | 'viewer' };
 }
 
 export function EventDialog({
@@ -48,6 +51,7 @@ export function EventDialog({
   nearbyEvents,
   isOpen,
   onOpenChange,
+  currentUser,
 }: EventDialogProps) {
   if (!event || !eventType) return null;
   // For public holidays, club might be undefined.
@@ -298,6 +302,53 @@ export function EventDialog({
                   ))}
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Event Schedule Status & Download */}
+          {event.schedule && (
+            <div className="border-t pt-4">
+              <h3 className="font-semibold mb-3 flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Event Schedule
+              </h3>
+              <div className="flex items-center gap-2 mb-2">
+                {event.schedule.status === 'pending' && (
+                  <Badge variant="outline" className="text-yellow-600 border-yellow-600">Schedule Pending</Badge>
+                )}
+                {event.schedule.status === 'approved' && (
+                  <Badge variant="default" className="bg-green-600">Schedule Approved</Badge>
+                )}
+                {event.schedule.status === 'rejected' && (
+                  <Badge variant="destructive">Schedule Rejected</Badge>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <a href={event.schedule.fileUrl} target="_blank" rel="noopener noreferrer" className="btn btn-secondary">
+                  Download Schedule ({event.schedule.fileType})
+                </a>
+              </div>
+              {/* Conditional rendering for review */}
+              {currentUser?.role === 'zone_approver' && event.schedule.status === 'pending' && (
+                <EventScheduleReview
+                  eventId={event.id}
+                  schedule={{
+                    ...event.schedule,
+                    reviewedAt: event.schedule.reviewedAt ? event.schedule.reviewedAt.toString() : undefined,
+                  }}
+                  reviewer={currentUser.id}
+                />
+              )}
+            </div>
+          )}
+          {/* Conditional rendering for upload */}
+          {!event.schedule && currentUser?.role === 'organiser' && (
+            <div className="border-t pt-4">
+              <h3 className="font-semibold mb-3 flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Upload Event Schedule
+              </h3>
+              <EventScheduleUpload eventId={event.id} />
             </div>
           )}
         </div>

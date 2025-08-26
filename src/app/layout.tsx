@@ -5,8 +5,8 @@ import { AppLayout } from '@/components/layout/app-layout';
 import { JotaiProvider } from '@/lib/state';
 
 export const metadata: Metadata = {
-  title: 'PonyClub Events',
-  description: 'Event management for Pony Clubs',
+  title: 'MyPonyClub Events',
+  description: 'Event management for MyPonyClub',
 };
 
 export default function RootLayout({

@@ -106,31 +106,60 @@ export default function ManageEventsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Manage my Events</h1>
-        <p className="text-muted-foreground">
-          Review, approve, and manage event requests from your zone&apos;s clubs
-        </p>
+    <div className="space-y-4">
+      {/* Compact Glass Header Panel */}
+      <div className="relative overflow-hidden rounded-xl border border-border/40 bg-gradient-to-br from-background via-background/95 to-primary/5 shadow-lg backdrop-blur-sm">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-emerald-500/5"></div>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-primary/10 to-transparent rounded-full blur-2xl"></div>
+        
+        <div className="relative p-4">
+          <div className="flex items-center gap-3">
+            <div className="relative flex-shrink-0">
+              <div className="relative rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 p-2.5 border border-primary/40 backdrop-blur-sm">
+                <CheckCircle className="h-6 w-6 text-primary drop-shadow-lg" />
+              </div>
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-primary via-purple-600 to-accent bg-clip-text text-transparent">
+                Manage Events
+              </h1>
+              <p className="text-muted-foreground text-sm">
+                Review and manage event requests
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
+      {/* Compact Enhanced Tabs */}
       <Tabs defaultValue="pending" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="pending" className="flex items-center gap-2">
-            <Clock className="h-4 w-4" />
-            Pending ({getEventsByStatus('proposed').length})
-          </TabsTrigger>
-          <TabsTrigger value="approved" className="flex items-center gap-2">
-            <CheckCircle className="h-4 w-4" />
-            Approved ({getEventsByStatus('approved').length})
-          </TabsTrigger>
-          <TabsTrigger value="rejected" className="flex items-center gap-2">
-            <XCircle className="h-4 w-4" />
-            Rejected ({getEventsByStatus('rejected').length})
-          </TabsTrigger>
-        </TabsList>
+        <div className="relative overflow-hidden rounded-lg border border-border/40 bg-gradient-to-r from-background/95 to-background/90 backdrop-blur-sm p-0.5">
+          <TabsList className="grid w-full grid-cols-3 bg-transparent h-10">
+            <TabsTrigger 
+              value="pending" 
+              className="flex items-center gap-1.5 text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500/20 data-[state=active]:to-orange-500/20 data-[state=active]:text-amber-700 data-[state=active]:border-amber-200 transition-all duration-300"
+            >
+              <Clock className="h-3.5 w-3.5" />
+              Pending ({getEventsByStatus('proposed').length})
+            </TabsTrigger>
+            <TabsTrigger 
+              value="approved" 
+              className="flex items-center gap-1.5 text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500/20 data-[state=active]:to-green-500/20 data-[state=active]:text-emerald-700 data-[state=active]:border-emerald-200 transition-all duration-300"
+            >
+              <CheckCircle className="h-3.5 w-3.5" />
+              Approved ({getEventsByStatus('approved').length})
+            </TabsTrigger>
+            <TabsTrigger 
+              value="rejected" 
+              className="flex items-center gap-1.5 text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500/20 data-[state=active]:to-rose-500/20 data-[state=active]:text-red-700 data-[state=active]:border-red-200 transition-all duration-300"
+            >
+              <XCircle className="h-3.5 w-3.5" />
+              Rejected ({getEventsByStatus('rejected').length})
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-        <TabsContent value="pending" className="space-y-4">
+        <TabsContent value="pending" className="space-y-3">
           {getEventsByStatus('proposed').map(event => (
             <EventCard
               key={event.id}
@@ -144,17 +173,18 @@ export default function ManageEventsPage() {
             />
           ))}
           {getEventsByStatus('proposed').length === 0 && (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <CheckCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No Pending Events</h3>
-                <p className="text-muted-foreground">All events have been reviewed.</p>
-              </CardContent>
-            </Card>
+            <div className="relative overflow-hidden rounded-lg border border-border/40 bg-gradient-to-br from-background via-background/95 to-muted/20 shadow-lg backdrop-blur-sm">
+              <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 to-green-500/5"></div>
+              <div className="relative py-6 text-center">
+                <CheckCircle className="h-8 w-8 text-emerald-500 mx-auto mb-2" />
+                <h3 className="text-base font-semibold mb-1 bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">No Pending Events</h3>
+                <p className="text-muted-foreground text-sm">All events have been reviewed.</p>
+              </div>
+            </div>
           )}
         </TabsContent>
 
-        <TabsContent value="approved" className="space-y-4">
+        <TabsContent value="approved" className="space-y-3">
           {getEventsByStatus('approved').map(event => (
             <EventCard
               key={event.id}
@@ -181,45 +211,84 @@ export default function ManageEventsPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Action Dialog */}
+      {/* Enhanced Action Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {actionType === 'approve' ? 'Approve Event' : 'Reject Event'}
-            </DialogTitle>
-            <DialogDescription>
-              {actionType === 'approve' 
-                ? `Are you sure you want to approve "${selectedEvent?.name}"?`
-                : `Are you sure you want to reject "${selectedEvent?.name}"?`
-              }
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="notes">Notes (optional)</Label>
-              <Textarea
-                id="notes"
-                placeholder={actionType === 'approve' 
-                  ? "Add any approval notes or conditions..."
-                  : "Add a reason for rejection..."
-                }
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-              />
+        <DialogContent className="sm:max-w-md bg-gradient-to-br from-background via-background/95 to-primary/5 border border-border/40 shadow-2xl backdrop-blur-sm">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/3 via-transparent to-accent/3 rounded-lg"></div>
+          <div className="relative">
+            <DialogHeader className="space-y-3">
+              <div className="flex items-center gap-3">
+                <div className={`p-3 rounded-xl ${
+                  actionType === 'approve' 
+                    ? 'bg-gradient-to-br from-emerald-100 to-green-100 border-2 border-emerald-200' 
+                    : 'bg-gradient-to-br from-red-100 to-rose-100 border-2 border-red-200'
+                }`}>
+                  {actionType === 'approve' ? (
+                    <CheckCircle className="h-6 w-6 text-emerald-600" />
+                  ) : (
+                    <XCircle className="h-6 w-6 text-red-600" />
+                  )}
+                </div>
+                <div>
+                  <DialogTitle className="text-lg font-semibold">
+                    {actionType === 'approve' ? 'Approve Event' : 'Reject Event'}
+                  </DialogTitle>
+                  <DialogDescription className="text-muted-foreground">
+                    {actionType === 'approve' 
+                      ? `Confirm approval of "${selectedEvent?.name}"`
+                      : `Confirm rejection of "${selectedEvent?.name}"`
+                    }
+                  </DialogDescription>
+                </div>
+              </div>
+            </DialogHeader>
+            <div className="space-y-3 my-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="notes" className="font-medium text-sm">
+                  {actionType === 'approve' ? 'Approval Notes (optional)' : 'Rejection Reason (optional)'}
+                </Label>
+                <Textarea
+                  id="notes"
+                  placeholder={actionType === 'approve' 
+                    ? "Add any approval notes or conditions..."
+                    : "Add a reason for rejection..."
+                  }
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  className="bg-background/50 border-border/40 focus:border-primary/50 transition-colors h-20"
+                />
+              </div>
             </div>
+            <DialogFooter className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setIsDialogOpen(false)}
+                className="flex-1 hover:bg-muted/50 transition-colors h-9"
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={confirmAction}
+                className={`flex-1 transition-all duration-300 h-9 ${
+                  actionType === 'approve'
+                    ? 'bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 shadow-lg hover:shadow-emerald-500/20'
+                    : 'bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 shadow-lg hover:shadow-red-500/20'
+                } text-white`}
+              >
+                {actionType === 'approve' ? (
+                  <>
+                    <CheckCircle className="h-3.5 w-3.5 mr-1.5" />
+                    Approve
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="h-3.5 w-3.5 mr-1.5" />
+                    Reject
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button 
-              variant={actionType === 'approve' ? 'default' : 'destructive'}
-              onClick={confirmAction}
-            >
-              {actionType === 'approve' ? 'Approve Event' : 'Reject Event'}
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
@@ -240,92 +309,159 @@ function EventCard({ event, clubName, eventTypeName, zoneName, onApprove, onReje
   const getStatusBadge = (status: EventStatus) => {
     switch (status) {
       case 'proposed':
-        return <Badge variant="outline" className="text-amber-600 border-amber-600">Pending</Badge>;
+        return (
+          <Badge className="bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200 text-amber-900 shadow-amber-100/50">
+            <Clock className="h-3 w-3 mr-1" />
+            Pending
+          </Badge>
+        );
       case 'approved':
-        return <Badge variant="default" className="bg-green-600">Approved</Badge>;
+        return (
+          <Badge className="bg-gradient-to-r from-emerald-50 to-green-50 border-emerald-200 text-emerald-900 shadow-emerald-100/50">
+            <CheckCircle className="h-3 w-3 mr-1" />
+            Approved
+          </Badge>
+        );
       case 'rejected':
-        return <Badge variant="destructive">Rejected</Badge>;
+        return (
+          <Badge className="bg-gradient-to-r from-red-50 to-rose-50 border-red-200 text-red-900 shadow-red-100/50">
+            <XCircle className="h-3 w-3 mr-1" />
+            Rejected
+          </Badge>
+        );
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
   };
 
   return (
-    <Card>
-      <CardHeader>
+    <div className="relative overflow-hidden rounded-lg border border-border/40 bg-gradient-to-br from-background via-background/95 to-muted/10 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 backdrop-blur-sm">
+      {/* Subtle gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-r from-primary/3 via-transparent to-accent/3"></div>
+      
+      {/* Compact Header */}
+      <div className="relative p-4 border-b border-border/40">
         <div className="flex items-start justify-between">
-          <div>
-            <CardTitle className="text-lg">{event.name}</CardTitle>
-            <CardDescription className="flex items-center gap-4 mt-2">
-              <span className="flex items-center gap-1">
-                <Calendar className="h-4 w-4" />
-                {event.date.toLocaleDateString()}
-              </span>
-              <span className="flex items-center gap-1">
-                <MapPin className="h-4 w-4" />
-                {event.location}
-              </span>
-            </CardDescription>
-          </div>
-          {getStatusBadge(event.status)}
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm">
-              <User className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium">Club:</span>
-              <span>{clubName} ({zoneName})</span>
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold mb-1 bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text">
+              {event.name}
+            </h3>
+            <div className="flex flex-wrap items-center gap-3 text-muted-foreground text-sm">
+              <div className="flex items-center gap-1.5">
+                <div className="p-0.5 rounded bg-primary/10">
+                  <Calendar className="h-3.5 w-3.5 text-primary" />
+                </div>
+                <span className="font-medium">{event.date.toLocaleDateString()}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="p-0.5 rounded bg-accent/10">
+                  <MapPin className="h-3.5 w-3.5 text-accent" />
+                </div>
+                <span>{event.location}</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2 text-sm">
-              <FileText className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium">Type:</span>
-              <span>{eventTypeName}</span>
+          </div>
+          <div className="ml-3">
+            {getStatusBadge(event.status)}
+          </div>
+        </div>
+      </div>
+
+      {/* Compact Content */}
+      <div className="relative p-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 p-2 rounded bg-gradient-to-r from-background/50 to-muted/30 border border-border/30">
+              <div className="p-1 rounded bg-primary/10">
+                <User className="h-3.5 w-3.5 text-primary" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Club</p>
+                <p className="font-semibold text-sm">{clubName}</p>
+                <p className="text-xs text-muted-foreground">({zoneName})</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 p-2 rounded bg-gradient-to-r from-background/50 to-muted/30 border border-border/30">
+              <div className="p-1 rounded bg-accent/10">
+                <FileText className="h-3.5 w-3.5 text-accent" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Event Type</p>
+                <p className="font-semibold text-sm">{eventTypeName}</p>
+              </div>
             </div>
             {event.isQualifier && (
-              <div className="flex items-center gap-2 text-sm">
-                <AlertTriangle className="h-4 w-4 text-amber-500" />
-                <span className="font-medium text-amber-600">Qualifier Event</span>
+              <div className="flex items-center gap-2 p-2 rounded bg-gradient-to-r from-amber-50/50 to-orange-50/50 border border-amber-200/50">
+                <div className="p-1 rounded bg-amber-100">
+                  <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-amber-700 text-xs">Qualifier Event</p>
+                  <p className="text-xs text-amber-600">Special qualifying competition</p>
+                </div>
               </div>
             )}
           </div>
           <div className="space-y-2">
             {event.coordinatorName && (
-              <div className="flex items-center gap-2 text-sm">
-                <User className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">Coordinator:</span>
-                <span>{event.coordinatorName}</span>
+              <div className="flex items-center gap-2 p-2 rounded bg-gradient-to-r from-background/50 to-muted/30 border border-border/30">
+                <div className="p-1 rounded bg-purple-100">
+                  <User className="h-3.5 w-3.5 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground">Coordinator</p>
+                  <p className="font-semibold text-sm">{event.coordinatorName}</p>
+                </div>
               </div>
             )}
             {event.coordinatorContact && (
-              <div className="flex items-center gap-2 text-sm">
-                <Phone className="h-4 w-4 text-muted-foreground" />
-                <span>{event.coordinatorContact}</span>
+              <div className="flex items-center gap-2 p-2 rounded bg-gradient-to-r from-background/50 to-muted/30 border border-border/30">
+                <div className="p-1 rounded bg-blue-100">
+                  <Phone className="h-3.5 w-3.5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground">Contact</p>
+                  <p className="font-semibold text-sm">{event.coordinatorContact}</p>
+                </div>
               </div>
             )}
           </div>
         </div>
         
         {event.notes && (
-          <div className="mb-4 p-3 bg-muted/50 rounded-lg">
-            <p className="text-sm"><strong>Notes:</strong> {event.notes}</p>
+          <div className="mb-3 p-3 rounded bg-gradient-to-r from-primary/5 to-accent/5 border border-primary/20">
+            <div className="flex items-start gap-2">
+              <div className="p-0.5 rounded bg-primary/10 mt-0.5">
+                <FileText className="h-3.5 w-3.5 text-primary" />
+              </div>
+              <div>
+                <p className="font-medium text-xs text-primary mb-1">Notes</p>
+                <p className="text-xs text-muted-foreground">{event.notes}</p>
+              </div>
+            </div>
           </div>
         )}
 
         {showActions && (
           <div className="flex gap-2">
-            <Button onClick={onApprove} className="flex-1">
-              <CheckCircle className="h-4 w-4 mr-2" />
+            <Button 
+              onClick={onApprove} 
+              className="flex-1 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white shadow-lg hover:shadow-emerald-500/20 transition-all duration-300 h-9"
+            >
+              <CheckCircle className="h-3.5 w-3.5 mr-1.5" />
               Approve
             </Button>
-            <Button onClick={onReject} variant="destructive" className="flex-1">
-              <XCircle className="h-4 w-4 mr-2" />
+            <Button 
+              onClick={onReject} 
+              variant="destructive" 
+              className="flex-1 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 shadow-lg hover:shadow-red-500/20 transition-all duration-300 h-9"
+            >
+              <XCircle className="h-3.5 w-3.5 mr-1.5" />
               Reject
             </Button>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

@@ -141,11 +141,11 @@ export function ClubEventStatus({
   return (
     <div className="space-y-4">
       {/* Compact Header with Better Background */}
-      <Card className="enhanced-card glass-effect border-2 border-border/40 shadow-xl shadow-primary/10 bg-gradient-to-r from-white/95 via-slate-50/90 to-blue-50/80">
+      <Card className="enhanced-card glass-effect border border-border/40 shadow-lg shadow-primary/10 bg-gradient-to-r from-white/95 via-slate-50/90 to-blue-50/80 flex-shrink-0">
         <CardHeader className="pb-3 pt-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-bold bg-gradient-to-r from-primary via-primary/80 to-accent bg-clip-text text-transparent">
+              <h2 className="text-lg font-bold bg-gradient-to-r from-primary via-primary/80 to-accent bg-clip-text text-transparent">
                 Event Status Overview
               </h2>
               <p className="text-muted-foreground text-sm font-medium">
@@ -176,21 +176,21 @@ export function ClubEventStatus({
       {/* Compact Event Tiles with Enhanced Background Shading */}
       {events.length === 0 ? (
         <Card className="enhanced-card glass-effect bg-gradient-to-br from-slate-50/90 to-blue-50/70 border border-border/40">
-          <CardContent className="p-8 text-center">
-            <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+          <CardContent className="p-6 text-center">
+            <Calendar className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
             <h3 className="text-lg font-semibold mb-2">No Events Yet</h3>
             <p className="text-muted-foreground text-sm">
-              You haven't submitted any events yet. Use the "Submit Event" tab to create your first event request.
+              You haven't submitted any events yet. Use the "Add Event" button to create your first event request.
             </p>
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4 bg-gradient-to-br from-slate-50/30 via-background/50 to-blue-50/30 p-4 rounded-xl border border-border/20 shadow-inner">
+        <div className="space-y-4">
           {events.map((event) => {
             const canEdit = event.status === 'proposed' || event.status === 'approved' || event.status === 'rejected';
             
             return (
-              <Card key={event.id} className="enhanced-card glass-effect overflow-hidden border-2 border-border/50 shadow-xl shadow-black/10 hover:shadow-2xl hover:shadow-primary/10 transition-all duration-300 hover:border-primary/40 bg-gradient-to-r from-white/95 via-white/90 to-slate-50/80">
+              <Card key={event.id} className="enhanced-card glass-effect overflow-hidden border border-border/50 shadow-lg shadow-black/10 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 hover:border-primary/40 bg-gradient-to-r from-white/95 via-white/90 to-slate-50/80">
                 {/* Compact Tile Header */}
                 <div className="bg-gradient-to-r from-primary/8 via-background/95 to-accent/8 border-b border-border/50 p-4 backdrop-blur-sm">
                   <div className="flex items-center justify-between">

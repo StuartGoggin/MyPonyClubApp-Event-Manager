@@ -16,7 +16,8 @@ import {
   FileText,
   Upload,
   Download,
-  User
+  User,
+  Star
 } from 'lucide-react';
 import { Event, Club, EventType } from '@/lib/types';
 import { EditEventDialog } from './edit-event-dialog';
@@ -55,6 +56,46 @@ const formatDate = (date: Date | string | any) => {
   } catch (error) {
     console.error('Error formatting date:', error, 'Original date:', date);
     return 'Invalid Date';
+  }
+};
+
+// Utility function to format dates for event titles (e.g., "12th Dec 2026")
+const formatDateForTitle = (date: Date | string | any) => {
+  try {
+    // Handle various date formats that might come from the database
+    let validDate: Date;
+    
+    if (date instanceof Date) {
+      validDate = date;
+    } else if (typeof date === 'string') {
+      validDate = new Date(date);
+    } else if (date && typeof date === 'object' && date.toDate) {
+      // Firestore timestamp
+      validDate = date.toDate();
+    } else if (date && typeof date === 'object' && date.seconds) {
+      // Firestore timestamp with seconds
+      validDate = new Date(date.seconds * 1000);
+    } else {
+      throw new Error('Invalid date format');
+    }
+    
+    // Check if the date is valid
+    if (isNaN(validDate.getTime())) {
+      throw new Error('Invalid date value');
+    }
+    
+    const day = validDate.getDate();
+    const suffix = day === 1 || day === 21 || day === 31 ? 'st' :
+                   day === 2 || day === 22 ? 'nd' :
+                   day === 3 || day === 23 ? 'rd' : 'th';
+    
+    return new Intl.DateTimeFormat('en-AU', {
+      month: 'short',
+      year: 'numeric'
+    }).format(validDate).replace(/^(\w+)/, `${day}${suffix} $1`);
+  } catch (error) {
+    console.error('Error formatting date for title:', error, 'Original date:', date);
+    return '';
   }
 };
 
@@ -153,12 +194,9 @@ export function ClubEventStatus({
                 {/* Compact Tile Header */}
                 <div className="bg-gradient-to-r from-primary/8 via-background/95 to-accent/8 border-b border-border/50 p-4 backdrop-blur-sm">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-lg font-bold text-foreground">{event.name}</h3>
-                    {event.isQualifier && (
-                      <Badge variant="secondary" className="badge-enhanced bg-gradient-to-r from-purple-100/90 to-purple-200/70 text-purple-900 border-purple-400/60 text-xs font-semibold">
-                        Qualifier
-                      </Badge>
-                    )}
+                    <h3 className="text-lg font-bold text-foreground">
+                      {formatDateForTitle(event.date) && `${formatDateForTitle(event.date)} - `}{event.name}
+                    </h3>
                   </div>
                 </div>
 
@@ -168,14 +206,14 @@ export function ClubEventStatus({
                   <div className="p-4 bg-slate-200/80 backdrop-blur-sm flex flex-col justify-between min-h-[280px]">
                     <div className="space-y-4 flex-1">
                       {/* Event Details Section */}
-                      <div className="space-y-3 p-3 bg-white/90 backdrop-blur-sm rounded-lg border border-border/40 shadow-sm">
+                      <div className="space-y-1.5 p-3 bg-white/90 backdrop-blur-sm rounded-lg border border-border/40 shadow-sm">
                         <div className="flex items-center gap-2 mb-3">
                           <div className="h-1 w-8 bg-gradient-to-r from-primary to-accent rounded-full"></div>
-                          <div className="text-xs font-bold text-foreground/80 uppercase tracking-wide">Event Details</div>
+                          <div className="text-sm font-extrabold text-foreground uppercase tracking-wide">Event Details</div>
                         </div>
                         
                         {/* Event Date */}
-                        <div className="flex items-center gap-3 p-2.5 bg-white/90 backdrop-blur-sm rounded-lg border border-border/30 shadow-sm">
+                        <div className="flex items-center gap-3 p-2 bg-white/90 backdrop-blur-sm rounded-lg border border-border/30 shadow-sm">
                           <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
                             <Calendar className="h-4 w-4 text-blue-700" />
                           </div>
@@ -186,7 +224,7 @@ export function ClubEventStatus({
                         </div>
 
                         {/* Event Location */}
-                        <div className="flex items-center gap-3 p-2.5 bg-white/90 backdrop-blur-sm rounded-lg border border-border/30 shadow-sm">
+                        <div className="flex items-center gap-3 p-2 bg-white/90 backdrop-blur-sm rounded-lg border border-border/30 shadow-sm">
                           <div className="flex-shrink-0 w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
                             <MapPin className="h-4 w-4 text-green-700" />
                           </div>
@@ -197,7 +235,7 @@ export function ClubEventStatus({
                         </div>
 
                         {/* Event Type */}
-                        <div className="flex items-center gap-3 p-2.5 bg-white/90 backdrop-blur-sm rounded-lg border border-border/30 shadow-sm">
+                        <div className="flex items-center gap-3 p-2 bg-white/90 backdrop-blur-sm rounded-lg border border-border/30 shadow-sm">
                           <div className="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
                             <FileText className="h-4 w-4 text-purple-700" />
                           </div>
@@ -207,8 +245,27 @@ export function ClubEventStatus({
                           </div>
                         </div>
 
+                        {/* Zone Qualifier */}
+                        <div className="flex items-center gap-3 p-2 bg-white/90 backdrop-blur-sm rounded-lg border border-border/30 shadow-sm">
+                          <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
+                            event.isQualifier ? 'bg-yellow-100' : 'bg-gray-100'
+                          }`}>
+                            <Star className={`h-4 w-4 ${
+                              event.isQualifier ? 'text-yellow-700' : 'text-gray-500'
+                            }`} />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs font-medium text-muted-foreground">Zone Qualifier</div>
+                            <div className={`text-sm font-bold ${
+                              event.isQualifier ? 'text-yellow-800' : 'text-gray-600'
+                            }`}>
+                              {event.isQualifier ? 'YES' : 'NO'}
+                            </div>
+                          </div>
+                        </div>
+
                         {/* Event Coordinator */}
-                        <div className="flex items-center gap-3 p-2.5 bg-white/90 backdrop-blur-sm rounded-lg border border-border/30 shadow-sm">
+                        <div className="flex items-center gap-3 p-2 bg-white/90 backdrop-blur-sm rounded-lg border border-border/30 shadow-sm">
                           <div className="flex-shrink-0 w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
                             <User className="h-4 w-4 text-orange-700" />
                           </div>
@@ -263,7 +320,7 @@ export function ClubEventStatus({
                       <div className="space-y-3 p-3 bg-white/90 backdrop-blur-sm rounded-lg border border-border/40 shadow-sm">
                         <div className="flex items-center gap-2 mb-3">
                           <div className="h-1 w-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full"></div>
-                          <div className="text-xs font-bold text-foreground/80 uppercase tracking-wide">Event Schedule</div>
+                          <div className="text-sm font-extrabold text-foreground uppercase tracking-wide">Event Schedule</div>
                         </div>
 
                         {event.schedule ? (

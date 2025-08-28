@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, CheckCircle, Clock, Users, Building, Plus, Activity } from 'lucide-react';
+import { MapPin, CheckCircle, Clock, Users, Building, Plus, Activity, Calendar, FileText, XCircle, Filter } from 'lucide-react';
 import { Zone, Club, Event, EventType } from '@/lib/types';
 import { ClubEventSubmission } from '@/components/club-manager/club-event-submission';
 import { ClubEventStatus } from '@/components/club-manager/club-event-status';
@@ -20,6 +20,7 @@ export default function ClubEventManagerDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAddEventModal, setShowAddEventModal] = useState(false);
+  const [eventFilter, setEventFilter] = useState<'all' | 'upcoming' | 'past'>('all');
 
   // Future: This will be replaced with user's authorized clubs from authentication
   const [authorizedClubs, setAuthorizedClubs] = useState<string[]>([]);
@@ -82,6 +83,22 @@ export default function ClubEventManagerDashboard() {
   const selectedZone = zones.find(zone => zone.id === selectedClub?.zoneId);
   const clubEvents = Array.isArray(events) ? events.filter(event => event.clubId === selectedClubId) : [];
 
+  // Filter events based on time
+  const filteredClubEvents = clubEvents.filter(event => {
+    if (eventFilter === 'all') return true;
+    
+    const currentDate = new Date();
+    const eventDate = new Date(event.date);
+    
+    if (eventFilter === 'upcoming') {
+      return eventDate >= currentDate;
+    } else if (eventFilter === 'past') {
+      return eventDate < currentDate;
+    }
+    
+    return true;
+  });
+
   // Dashboard statistics for selected club
   const submittedEvents = clubEvents.filter(event => event.status === 'proposed').length;
   const approvedEvents = clubEvents.filter(event => event.status === 'approved').length;
@@ -113,105 +130,235 @@ export default function ClubEventManagerDashboard() {
   }
 
   return (
-    <div className="h-full flex flex-col bg-gradient-to-br from-slate-50/50 via-background to-blue-50/30">
-      {/* Compact Enhanced Header */}
-      <Card className="enhanced-card glass-effect border-2 border-border/40 shadow-xl shadow-primary/10 bg-gradient-to-r from-white/98 via-white/95 to-primary/8 flex-shrink-0 mx-4 mt-4">
-        <CardHeader className="pb-3 pt-4">
-          <div className="flex items-center justify-between gap-6">
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-primary via-primary/80 to-accent bg-clip-text text-transparent">
-                Club Event Manager
-              </h1>
-              <p className="text-muted-foreground text-sm font-medium">Submit and manage your event requests</p>
-            </div>
-            <div className="w-72">
-              <Select value={selectedClubId} onValueChange={setSelectedClubId}>
-                <SelectTrigger className="enhanced-select bg-white/90 backdrop-blur-sm border border-border/50 shadow-md h-10">
-                  <SelectValue placeholder="Select your club">
-                    {selectedClub?.name}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent className="glass-effect">
-                  {clubs
-                    .filter(club => authorizedClubs.includes(club.id))
-                    .sort((a, b) => a.name.localeCompare(b.name))
-                    .map(club => {
-                      const zone = zones.find(z => z.id === club.zoneId);
-                      return (
-                        <SelectItem key={club.id} value={club.id}>
-                          <div className="flex items-center gap-2">
-                            <Building className="h-4 w-4" />
-                            <div>
-                              <div className="font-medium">{club.name}</div>
-                              <div className="text-xs text-muted-foreground">
-                                {zone?.name || 'Unknown Zone'}
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50/50 via-background to-blue-50/30">
+      {/* Unified Header Zone with Two Rows */}
+      <div className="flex-shrink-0 mx-4 mt-4 mb-6 space-y-4">
+        
+        {/* Top Row: Page Info + Club Selection */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          
+          {/* Page Info Tile */}
+          <Card className="enhanced-card glass-effect border-2 border-border/40 shadow-lg bg-gradient-to-r from-white/98 via-white/95 to-primary/8">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex-shrink-0 p-2.5 bg-gradient-to-br from-primary/20 to-accent/20 rounded-lg shadow-inner backdrop-blur-sm">
+                  <Users className="h-6 w-6 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-xl font-bold bg-gradient-to-r from-primary via-primary/80 to-accent bg-clip-text text-transparent mb-1">
+                    Club Event Manager
+                  </h1>
+                  <p className="text-muted-foreground text-xs font-medium">Submit and manage your event requests</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Club Selection Tile */}
+          <Card className="enhanced-card glass-effect border-2 border-border/40 shadow-lg bg-gradient-to-r from-white/98 via-white/95 to-blue/8">
+            <CardContent className="p-4">
+              {selectedClub ? (
+                <Select value={selectedClubId} onValueChange={setSelectedClubId}>
+                  <SelectTrigger className="border-none shadow-none bg-transparent p-0 h-auto hover:bg-transparent focus:ring-0 w-full">
+                    <div className="text-left w-full">
+                      <h2 className="text-lg font-bold text-foreground cursor-pointer hover:text-primary transition-colors leading-tight truncate">
+                        {selectedClub.name}
+                      </h2>
+                      <div className="flex items-center gap-1.5 text-muted-foreground mt-0.5">
+                        <MapPin className="h-3 w-3 flex-shrink-0" />
+                        <span className="text-xs font-medium truncate">{selectedZone?.name || 'Unknown Zone'}</span>
+                      </div>
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent className="glass-effect">
+                    {clubs
+                      .filter(club => authorizedClubs.includes(club.id))
+                      .sort((a, b) => a.name.localeCompare(b.name))
+                      .map(club => {
+                        const zone = zones.find(z => z.id === club.zoneId);
+                        return (
+                          <SelectItem key={club.id} value={club.id}>
+                            <div className="flex items-center gap-2">
+                              <Building className="h-4 w-4" />
+                              <div>
+                                <div className="font-medium">{club.name}</div>
+                                <div className="text-xs text-muted-foreground">
+                                  {zone?.name || 'Unknown Zone'}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </SelectItem>
-                      );
-                    })}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="h-0.5 w-24 bg-gradient-to-r from-primary to-accent rounded-full mt-3 shadow-sm"></div>
-        </CardHeader>
-      </Card>
-
-      {/* Compact Enhanced Stats */}
-      {selectedClub && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-shrink-0 mx-4">
-          <Card className="enhanced-card glass-effect bg-gradient-to-br from-amber-50/90 to-orange-50/70 border-amber-300/60 shadow-lg shadow-amber-200/40 hover:shadow-xl hover:shadow-amber-300/50 transition-all duration-300 border-2">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-gradient-to-br from-amber-200/80 to-amber-300/60 rounded-lg shadow-inner backdrop-blur-sm">
-                  <Clock className="h-5 w-5 text-amber-800" />
+                          </SelectItem>
+                        );
+                      })}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="space-y-1">
+                  <h3 className="text-sm font-semibold text-muted-foreground">Select Club</h3>
+                  <Select value={selectedClubId} onValueChange={setSelectedClubId}>
+                    <SelectTrigger className="enhanced-select bg-white/90 backdrop-blur-sm border border-border/50 shadow-sm h-9 text-sm">
+                      <SelectValue placeholder="Choose your club..." />
+                    </SelectTrigger>
+                    <SelectContent className="glass-effect">
+                      {clubs
+                        .filter(club => authorizedClubs.includes(club.id))
+                        .sort((a, b) => a.name.localeCompare(b.name))
+                        .map(club => {
+                          const zone = zones.find(z => z.id === club.zoneId);
+                          return (
+                            <SelectItem key={club.id} value={club.id}>
+                              <div className="flex items-center gap-2">
+                                <Building className="h-4 w-4" />
+                                <div>
+                                  <div className="font-medium">{club.name}</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {zone?.name || 'Unknown Zone'}
+                                  </div>
+                                </div>
+                              </div>
+                            </SelectItem>
+                          );
+                        })}
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div className="flex-1">
-                  <div className="text-2xl font-bold text-amber-900">{submittedEvents}</div>
-                  <div className="text-xs font-semibold text-amber-700 uppercase tracking-wide">Submitted</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="enhanced-card glass-effect bg-gradient-to-br from-emerald-50/90 to-green-50/70 border-emerald-300/60 shadow-lg shadow-emerald-200/40 hover:shadow-xl hover:shadow-emerald-300/50 transition-all duration-300 border-2">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-gradient-to-br from-emerald-200/80 to-emerald-300/60 rounded-lg shadow-inner backdrop-blur-sm">
-                  <CheckCircle className="h-5 w-5 text-emerald-800" />
-                </div>
-                <div className="flex-1">
-                  <div className="text-2xl font-bold text-emerald-900">{approvedEvents}</div>
-                  <div className="text-xs font-semibold text-emerald-700 uppercase tracking-wide">Approved</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="enhanced-card glass-effect bg-gradient-to-br from-blue-50/90 to-cyan-50/70 border-blue-300/60 shadow-lg shadow-blue-200/40 hover:shadow-xl hover:shadow-blue-300/50 transition-all duration-300 border-2">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-gradient-to-br from-blue-200/80 to-blue-300/60 rounded-lg shadow-inner backdrop-blur-sm">
-                  <Activity className="h-5 w-5 text-blue-800" />
-                </div>
-                <div className="flex-1">
-                  <div className="text-2xl font-bold text-blue-900">{totalEvents}</div>
-                  <div className="text-xs font-semibold text-blue-700 uppercase tracking-wide">Total Events</div>
-                </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         </div>
-      )}
 
-      {/* Event Management Section - Scrollable */}
+        {/* Second Row: Statistics */}
+        {selectedClub && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            
+            {/* Event Date Requests Statistics */}
+            <Card className="enhanced-card glass-effect border-2 border-border/40 shadow-lg bg-gradient-to-r from-blue-50/90 to-cyan-50/70 border-blue-300/60">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Calendar className="h-5 w-5 text-blue-600" />
+                  <h3 className="text-sm font-bold text-blue-800">Event Date Requests</h3>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-3.5 w-3.5 text-amber-600" />
+                      <span className="text-xs font-medium text-muted-foreground">Pending Approval</span>
+                    </div>
+                    <span className="text-sm font-bold text-amber-800">{clubEvents.filter(e => e.status === 'pending').length}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-3.5 w-3.5 text-green-600" />
+                      <span className="text-xs font-medium text-muted-foreground">Dates Approved</span>
+                    </div>
+                    <span className="text-sm font-bold text-green-800">{clubEvents.filter(e => e.status === 'approved').length}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Activity className="h-3.5 w-3.5 text-blue-600" />
+                      <span className="text-xs font-medium text-muted-foreground">Total Events</span>
+                    </div>
+                    <span className="text-sm font-bold text-blue-800">{clubEvents.length}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            {/* Schedule Management Statistics */}
+            <Card className="enhanced-card glass-effect border-2 border-border/40 shadow-lg bg-gradient-to-r from-emerald-50/90 to-green-50/70 border-emerald-300/60">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <FileText className="h-5 w-5 text-green-600" />
+                  <h3 className="text-sm font-bold text-green-800">Schedule Management</h3>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-3.5 w-3.5 text-amber-600" />
+                      <span className="text-xs font-medium text-muted-foreground">Under Review</span>
+                    </div>
+                    <span className="text-sm font-bold text-amber-800">{clubEvents.filter(e => e.schedule && e.schedule.status === 'pending').length}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <XCircle className="h-3.5 w-3.5 text-red-600" />
+                      <span className="text-xs font-medium text-muted-foreground">Require Rework</span>
+                    </div>
+                    <span className="text-sm font-bold text-red-800">{clubEvents.filter(e => e.schedule && e.schedule.status === 'rejected').length}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-3.5 w-3.5 text-green-600" />
+                      <span className="text-xs font-medium text-muted-foreground">Approved</span>
+                    </div>
+                    <span className="text-sm font-bold text-green-800">{clubEvents.filter(e => e.schedule && e.schedule.status === 'approved').length}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-3.5 w-3.5 text-green-600" />
+                      <span className="text-xs font-medium text-muted-foreground">Total Schedules</span>
+                    </div>
+                    <span className="text-sm font-bold text-green-800">{clubEvents.filter(e => e.schedule).length}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </div>
+
+      {/* Event Management Section */}
       {selectedClub && (
-        <div className="flex-1 overflow-hidden mx-4 mb-4">
-          <div className="h-full bg-gradient-to-r from-slate-200/30 via-white/90 to-blue-100/30 rounded-xl border border-border/30 shadow-inner flex flex-col">
-            {/* Header with Add Event Button */}
-            <div className="flex items-center justify-end p-4 flex-shrink-0 border-b border-border/20">
+        <div className="flex-1 mx-4 mb-4">
+          <div className="bg-gradient-to-r from-slate-200/30 via-white/90 to-blue-100/30 rounded-xl border border-border/30 shadow-inner">
+            {/* Header with Event Filter and Add Event Button */}
+            <div className="flex items-center justify-between p-4 border-b border-border/20">
+              {/* Event Filter */}
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 p-1 bg-gradient-to-r from-slate-100 via-white to-blue-50 rounded-xl border border-border/40 shadow-lg backdrop-blur-sm">
+                  <div className="flex items-center gap-1.5 px-2 py-1">
+                    <Filter className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-semibold text-foreground">Filter:</span>
+                  </div>
+                  
+                  {/* Filter Buttons */}
+                  {[
+                    { key: 'all', label: 'All Events', icon: Calendar },
+                    { key: 'upcoming', label: 'Upcoming', icon: Clock },
+                    { key: 'past', label: 'Past Events', icon: CheckCircle }
+                  ].map(({ key, label, icon: Icon }) => (
+                    <button
+                      key={key}
+                      onClick={() => setEventFilter(key as 'all' | 'upcoming' | 'past')}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                        eventFilter === key
+                          ? 'bg-gradient-to-r from-primary/20 via-primary/15 to-accent/20 text-primary border border-primary/30 shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-white/60'
+                      }`}
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                      <span>{label}</span>
+                      {key === 'all' && (
+                        <span className="ml-1 px-1.5 py-0.5 bg-primary/10 text-primary rounded text-xs font-bold">
+                          {clubEvents.length}
+                        </span>
+                      )}
+                      {key === 'upcoming' && (
+                        <span className="ml-1 px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-bold">
+                          {clubEvents.filter(e => new Date(e.date) >= new Date()).length}
+                        </span>
+                      )}
+                      {key === 'past' && (
+                        <span className="ml-1 px-1.5 py-0.5 bg-gray-100 text-gray-700 rounded text-xs font-bold">
+                          {clubEvents.filter(e => new Date(e.date) < new Date()).length}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Add Event Button */}
               <Dialog open={showAddEventModal} onOpenChange={setShowAddEventModal}>
                 <DialogTrigger asChild>
                   <Button 
@@ -247,12 +394,12 @@ export default function ClubEventManagerDashboard() {
               </Dialog>
             </div>
 
-            {/* Event Status Display - Scrollable */}
-            <div className="flex-1 overflow-y-auto p-4">
+            {/* Event Status Display */}
+            <div className="p-4">
               <ClubEventStatus
                 clubId={selectedClubId}
                 clubName={selectedClub.name}
-                events={clubEvents}
+                events={filteredClubEvents}
                 clubs={clubs}
                 eventTypes={eventTypes}
                 onEventUpdate={handleEventUpdate}

@@ -241,8 +241,8 @@ export default function ClubEventManagerDashboard() {
                       clubName={selectedClub.name}
                       zoneName={selectedZone?.name || 'Unknown Zone'}
                       eventTypes={eventTypes}
-                      onEventSubmitted={(event) => {
-                        handleEventUpdate(event);
+                      onEventSubmitted={() => {
+                        handleEventUpdate();
                         setShowAddEventModal(false);
                       }}
                     />

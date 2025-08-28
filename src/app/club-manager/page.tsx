@@ -115,7 +115,7 @@ export default function ClubEventManagerDashboard() {
   return (
     <div className="h-full flex flex-col bg-gradient-to-br from-slate-50/50 via-background to-blue-50/30">
       {/* Compact Enhanced Header */}
-      <Card className="enhanced-card glass-effect border-2 border-border/40 shadow-xl shadow-primary/10 bg-gradient-to-r from-white/95 via-white/90 to-primary/5 flex-shrink-0 mx-4 mt-4">
+      <Card className="enhanced-card glass-effect border-2 border-border/40 shadow-xl shadow-primary/10 bg-gradient-to-r from-white/98 via-white/95 to-primary/8 flex-shrink-0 mx-4 mt-4">
         <CardHeader className="pb-3 pt-4">
           <div className="flex items-center justify-between gap-6">
             <div className="flex-1">
@@ -209,20 +209,16 @@ export default function ClubEventManagerDashboard() {
       {/* Event Management Section - Scrollable */}
       {selectedClub && (
         <div className="flex-1 overflow-hidden mx-4 mb-4">
-          <div className="h-full bg-gradient-to-r from-slate-100/40 via-background/80 to-blue-100/40 rounded-xl border border-border/30 shadow-inner flex flex-col">
+          <div className="h-full bg-gradient-to-r from-slate-200/30 via-white/90 to-blue-100/30 rounded-xl border border-border/30 shadow-inner flex flex-col">
             {/* Header with Add Event Button */}
-            <div className="flex items-center justify-between p-4 flex-shrink-0 border-b border-border/20">
-              <div className="flex items-center gap-3">
-                <Clock className="h-5 w-5 text-primary" />
-                <h3 className="text-lg font-bold text-foreground">Event Status ({totalEvents})</h3>
-              </div>
+            <div className="flex items-center justify-end p-4 flex-shrink-0 border-b border-border/20">
               <Dialog open={showAddEventModal} onOpenChange={setShowAddEventModal}>
                 <DialogTrigger asChild>
                   <Button 
                     size="lg"
-                    className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 px-6 py-3 font-semibold"
+                    className="distinctive-button-primary bg-gradient-to-r from-emerald-500 via-emerald-600 to-green-600 hover:from-emerald-600 hover:via-emerald-700 hover:to-green-700 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 px-8 py-4 font-bold text-lg rounded-2xl border-2 border-emerald-400/50 hover:border-emerald-300 backdrop-blur-sm"
                   >
-                    <Plus className="h-5 w-5 mr-2" />
+                    <Plus className="h-6 w-6 mr-3 drop-shadow-lg" />
                     Add Event
                   </Button>
                 </DialogTrigger>

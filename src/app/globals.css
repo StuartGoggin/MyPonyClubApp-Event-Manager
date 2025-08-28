@@ -2,10 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import distinctive button styles */
+@import '../styles/distinctive-buttons.css';
+
 @layer base {
   :root {
-    /* Enhanced background - slightly darker for better contrast */
-    --background: 210 20% 96%;
+    /* Enhanced background - warm gray for better tile contrast */
+    --background: 220 15% 92%;
     --foreground: 222.2 84% 4.9%;
     
     /* Premium card styling with subtle elevation */

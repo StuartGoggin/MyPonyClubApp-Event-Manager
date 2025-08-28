@@ -113,6 +113,7 @@ export function EventRequestForm({
   const [conflictSuggestions, setConflictSuggestions] = useState<Record<string, SuggestAlternativeDatesOutput | null>>({});
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState<Record<string, boolean>>({});
   const [isClient, setIsClient] = useState(false);
+  const [datePickerOpen, setDatePickerOpen] = useState<Record<number, boolean>>({});
 
   const form = useForm<EventRequestFormValues>({
     resolver: zodResolver(eventRequestSchema),
@@ -572,7 +573,50 @@ export function EventRequestForm({
                                       )}
                                     </div>
                                     <div className="grid md:grid-cols-2 gap-3">
-                                        <FormField control={form.control} name={`dates.${index}.value`} render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Event Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={'outline'} className={cn('w-full pl-3 text-left font-normal bg-card h-9', !field.value && 'text-muted-foreground' )}>{isClient && field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={date => date < new Date() || date < new Date('1900-01-01')} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
+                                        <FormField 
+                                          control={form.control} 
+                                          name={`dates.${index}.value`} 
+                                          render={({ field }) => (
+                                            <FormItem className="flex flex-col">
+                                              <FormLabel>Event Date</FormLabel>
+                                              <Popover open={datePickerOpen[index] || false} onOpenChange={(open) => setDatePickerOpen(prev => ({ ...prev, [index]: open }))}>
+                                                <PopoverTrigger asChild>
+                                                  <FormControl>
+                                                    <Button
+                                                      variant={'outline'}
+                                                      className={cn(
+                                                        'w-full pl-3 text-left font-normal bg-card h-9',
+                                                        !field.value && 'text-muted-foreground'
+                                                      )}
+                                                    >
+                                                      {isClient && field.value ? (
+                                                        format(field.value, 'PPP')
+                                                      ) : (
+                                                        <span>Pick a date</span>
+                                                      )}
+                                                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                    </Button>
+                                                  </FormControl>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-auto p-0" align="start">
+                                                  <Calendar
+                                                    mode="single"
+                                                    selected={field.value}
+                                                    onSelect={(date) => {
+                                                      field.onChange(date);
+                                                      setDatePickerOpen(prev => ({ ...prev, [index]: false }));
+                                                    }}
+                                                    disabled={(date) => 
+                                                      date < new Date() || date < new Date('1900-01-01')
+                                                    }
+                                                    initialFocus
+                                                  />
+                                                </PopoverContent>
+                                              </Popover>
+                                              <FormMessage />
+                                            </FormItem>
+                                          )} 
+                                        />
                                         
                                         <div className="space-y-2 self-end">
                                             <Button type="button" onClick={() => handleAnalyzeDate(index)} disabled={isLoadingSuggestions[index]} className="w-full h-9 text-sm">

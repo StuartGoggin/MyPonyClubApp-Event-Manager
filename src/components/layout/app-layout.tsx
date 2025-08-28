@@ -169,7 +169,7 @@ export function AppLayout({ children }: PropsWithChildren) {
         
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col">
-          <div className="flex-1 overflow-auto p-6">
+          <div className="flex-1 p-6">
             <div className="max-w-7xl mx-auto">
               {children}
             </div>

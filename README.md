@@ -5,9 +5,22 @@ A comprehensive Next.js application for managing pony club events, featuring adv
 
 ## ✨ Latest Features (August 2025)
 
-### 🎨 Club Manager Interface Redesign (Latest - August 28, 2025)
+### 🎨 Club Manager Interface Enhancement (Latest - August 29, 2025)
+- **Event Date Integration**: Event dates now prominently displayed in tile titles (format: "12th Dec 2026 - Event Name")
+- **Reorganized Zone Qualifier**: Moved from title badge to Event Details section with clear YES/NO display
+- **Optimized Spacing**: Refined vertical spacing in details sections for better information density
+- **Enhanced Section Headers**: Larger, bolder "EVENT DETAILS" and "EVENT SCHEDULE" headings for improved hierarchy
+- **Smart Event Filtering**: Professional filter system with three categories:
+  - **All Events**: Complete event list with total count
+  - **Upcoming Events**: Future events based on current date
+  - **Past Events**: Historical events for reference
+- **Dynamic Filter Badges**: Real-time event counts displayed on each filter option
+- **Professional Filter Design**: Glass morphism effects with gradient backgrounds and smooth transitions
+- **Improved Layout**: Filter positioned on left side, preserving the distinctive Add Event button
+
+### 🎨 Club Manager Interface Redesign (August 28, 2025)
 - **Professional Status Panel System**: Complete redesign with sophisticated dual-panel layout
-- **Unified Event Details Panel**: Comprehensive information display with icons for Date, Location, Type, and Coordinator
+- **Unified Event Details Panel**: Comprehensive information display with icons for Date, Location, Type, Zone Qualifier, and Coordinator
 - **Event Schedule Panel**: Dedicated schedule management with document display and upload functionality
 - **Distinctive Button System**: 10-type button styling with teal/emerald gradients and hover effects
 - **Dark Slate Backgrounds**: Consistent non-gradient backgrounds (`bg-slate-200/80`) for both panels

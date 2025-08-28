@@ -12,7 +12,11 @@ import {
   Clock, 
   Eye,
   Edit3,
-  AlertCircle
+  AlertCircle,
+  MapPin,
+  FileText,
+  Upload,
+  Download
 } from 'lucide-react';
 import { Event, Club, EventType } from '@/lib/types';
 import { EditEventDialog } from './edit-event-dialog';
@@ -135,215 +139,211 @@ export function ClubEventStatus({
   };
 
   return (
-    <div className="space-y-6">
-      {/* Main Events Table */}
-      <Card className="enhanced-card border-l-4 border-l-primary shadow-lg">
-        <CardHeader className="pb-4">
+    <div className="space-y-4">
+      {/* Compact Header with Better Background */}
+      <Card className="enhanced-card glass-effect border-2 border-border/40 shadow-xl shadow-primary/10 bg-gradient-to-r from-white/95 via-slate-50/90 to-blue-50/80">
+        <CardHeader className="pb-3 pt-4">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-2xl bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              <h2 className="text-xl font-bold bg-gradient-to-r from-primary via-primary/80 to-accent bg-clip-text text-transparent">
                 Event Status Overview
-              </CardTitle>
-              <CardDescription className="text-base mt-2">
-                All events submitted by {clubName} - {events.length} total event{events.length !== 1 ? 's' : ''}
-              </CardDescription>
-            </div>
-            <div className="flex gap-2">
-              <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 px-3 py-1">
-                <Clock className="h-3 w-3 mr-1" />
-                {eventsByStatus.submitted.length} Pending
-              </Badge>
-              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 px-3 py-1">
-                <CheckCircle className="h-3 w-3 mr-1" />
-                {eventsByStatus.approved.length} Approved
-              </Badge>
-              <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 px-3 py-1">
-                <XCircle className="h-3 w-3 mr-1" />
-                {eventsByStatus.rejected.length} Rejected
-              </Badge>
-            </div>
-          </div>
-          <div className="h-1 w-32 bg-gradient-to-r from-primary to-accent rounded-full mt-4"></div>
-        </CardHeader>
-        <CardContent>
-          {events.length === 0 ? (
-            <div className="text-center py-16">
-              <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center">
-                <Calendar className="h-12 w-12 text-slate-400" />
-              </div>
-              <h3 className="text-xl font-semibold text-slate-600 mb-2">No Events Yet</h3>
-              <p className="text-slate-500 max-w-sm mx-auto">
-                You haven't submitted any events yet. Use the "Submit Event" tab to create your first event request.
+              </h2>
+              <p className="text-muted-foreground text-sm font-medium">
+                {events.length} event{events.length !== 1 ? 's' : ''} submitted by {clubName}
               </p>
             </div>
-          ) : (
-            <div className="rounded-lg border border-slate-200 overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-gradient-to-r from-slate-50 to-slate-100 hover:from-slate-100 hover:to-slate-150">
-                    <TableHead className="font-semibold text-slate-700">Event Details</TableHead>
-                    <TableHead className="font-semibold text-slate-700">Date</TableHead>
-                    <TableHead className="font-semibold text-slate-700">Status</TableHead>
-                    <TableHead className="font-semibold text-slate-700">Coordinator</TableHead>
-                    <TableHead className="text-right font-semibold text-slate-700">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {events.map((event, index) => {
-                    const canEdit = event.status === 'proposed' || event.status === 'approved' || event.status === 'rejected';
-                    const isEven = index % 2 === 0;
-                    return (
-                      <TableRow
-                        key={event.id}
-                        className={`transition-all duration-200 hover:bg-slate-50 hover:shadow-sm ${isEven ? 'bg-white' : 'bg-slate-25'}`}
-                        style={{ verticalAlign: 'middle' }}
-                      >
-                        <TableCell className="py-4 align-middle">
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                              <h4 className="font-semibold text-slate-900 text-lg">{event.name}</h4>
-                              {event.isQualifier && (
-                                <Badge variant="secondary" className="bg-purple-100 text-purple-700 border-purple-200 text-xs">Qualifier</Badge>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-4 text-sm text-slate-600">
-                              <span className="bg-slate-100 px-2 py-1 rounded-md font-medium">{getEventTypeName(event.eventTypeId)}</span>
-                              {event.location && (
-                                <span className="flex items-center gap-1"><span>📍</span>{event.location}</span>
-                              )}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="py-4 align-middle">
-                          <div className="flex items-center gap-2 text-slate-700">
-                            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                              <Calendar className="h-4 w-4 text-blue-600" />
-                            </div>
-                            <span className="font-medium">{formatDate(event.date)}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="py-4 align-middle">
-                          <div className="flex items-center gap-3">
-                            {getStatusBadge(event.status)}
-                          </div>
-                        </TableCell>
-                        <TableCell className="py-4 align-middle">
-                          {event.coordinatorName ? (
-                            <div className="space-y-1">
-                              <div className="font-medium text-slate-900">{event.coordinatorName}</div>
-                              {event.coordinatorContact && (
-                                <div className="text-sm text-slate-500">{event.coordinatorContact}</div>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-slate-400 italic">Not specified</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right py-4 align-middle">
-                          <div className="flex items-center gap-2 justify-end">
-                            {canEdit && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleEditEvent(event)}
-                                className="premium-button-outline hover:scale-105 transition-transform"
-                                aria-label="Edit event"
-                              >
-                                <Edit3 className="h-4 w-4 mr-1" />
-                                Edit
-                              </Button>
-                            )}
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => {/* TODO: View event details */}}
-                              className="hover:bg-slate-100 hover:scale-105 transition-all"
-                              aria-label="View event details"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                          </div>
-                          {/* Event Schedule Upload for events without a schedule */}
-                          {!event.schedule && (
-                            <div className="mt-3 w-full max-w-xs mx-auto p-4 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 shadow flex flex-col items-center gap-2">
-                              <span className="text-xs text-blue-700 font-semibold mb-1 block">No schedule uploaded</span>
-                              <EventScheduleUpload eventId={event.id} onUploadSuccess={onEventUpdate} />
-                            </div>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Status and Edit Information */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Status & Edit Information</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <h4 className="font-medium text-sm">Event Status</h4>
-              <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <Clock className="h-5 w-5 text-amber-500 mt-0.5" />
-                  <div>
-                    <div className="font-medium text-amber-600">Submitted</div>
-                    <div className="text-muted-foreground text-sm">Your event has been submitted and is awaiting zone manager review</div>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
-                  <div>
-                    <div className="font-medium text-green-600">Approved</div>
-                    <div className="text-muted-foreground text-sm">Your event has been approved and will appear on the public calendar</div>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <XCircle className="h-5 w-5 text-red-500 mt-0.5" />
-                  <div>
-                    <div className="font-medium text-red-600">Rejected</div>
-                    <div className="text-muted-foreground text-sm">Your event was not approved. Check with your zone manager for feedback</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="space-y-4">
-              <h4 className="font-medium text-sm">Editing Events</h4>
-              <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <Edit3 className="h-5 w-5 text-blue-500 mt-0.5" />
-                  <div>
-                    <div className="font-medium text-blue-600">Edit Anytime</div>
-                    <div className="text-muted-foreground text-sm">You can edit event details even after submission</div>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5" />
-                  <div>
-                    <div className="font-medium text-amber-600">Date Changes</div>
-                    <div className="text-muted-foreground text-sm">Changing the date of an approved event requires reapproval</div>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Clock className="h-5 w-5 text-purple-500 mt-0.5" />
-                  <div>
-                    <div className="font-medium text-purple-600">Instant Updates</div>
-                    <div className="text-muted-foreground text-sm">Non-date changes update immediately without reapproval</div>
-                  </div>
-                </div>
-              </div>
+            <div className="flex gap-2">
+              <Badge variant="outline" className="badge-enhanced bg-gradient-to-r from-amber-100/90 to-orange-100/70 text-amber-900 border-amber-400/60 px-2.5 py-1 text-xs shadow-md">
+                <Clock className="h-3 w-3 mr-1.5" />
+                {eventsByStatus.submitted.length} Pending
+              </Badge>
+              <Badge variant="outline" className="badge-enhanced bg-gradient-to-r from-green-100/90 to-emerald-100/70 text-green-900 border-green-400/60 px-2.5 py-1 text-xs shadow-md">
+                <CheckCircle className="h-3 w-3 mr-1.5" />
+                {eventsByStatus.approved.length} Approved
+              </Badge>
+              {eventsByStatus.rejected.length > 0 && (
+                <Badge variant="outline" className="badge-enhanced bg-gradient-to-r from-red-100/90 to-rose-100/70 text-red-900 border-red-400/60 px-2.5 py-1 text-xs shadow-md">
+                  <XCircle className="h-3 w-3 mr-1.5" />
+                  {eventsByStatus.rejected.length} Rejected
+                </Badge>
+              )}
             </div>
           </div>
-        </CardContent>
+          <div className="h-0.5 w-20 bg-gradient-to-r from-primary to-accent rounded-full mt-2 shadow-sm"></div>
+        </CardHeader>
       </Card>
+
+      {/* Compact Event Tiles with Enhanced Background Shading */}
+      {events.length === 0 ? (
+        <Card className="enhanced-card glass-effect bg-gradient-to-br from-slate-50/90 to-blue-50/70 border border-border/40">
+          <CardContent className="p-8 text-center">
+            <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+            <h3 className="text-lg font-semibold mb-2">No Events Yet</h3>
+            <p className="text-muted-foreground text-sm">
+              You haven't submitted any events yet. Use the "Submit Event" tab to create your first event request.
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-4 bg-gradient-to-br from-slate-50/30 via-background/50 to-blue-50/30 p-4 rounded-xl border border-border/20 shadow-inner">
+          {events.map((event) => {
+            const canEdit = event.status === 'proposed' || event.status === 'approved' || event.status === 'rejected';
+            
+            return (
+              <Card key={event.id} className="enhanced-card glass-effect overflow-hidden border-2 border-border/50 shadow-xl shadow-black/10 hover:shadow-2xl hover:shadow-primary/10 transition-all duration-300 hover:border-primary/40 bg-gradient-to-r from-white/95 via-white/90 to-slate-50/80">
+                {/* Compact Tile Header */}
+                <div className="bg-gradient-to-r from-primary/8 via-background/95 to-accent/8 border-b border-border/50 p-4 backdrop-blur-sm">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-lg font-bold text-foreground">{event.name}</h3>
+                        {event.isQualifier && (
+                          <Badge variant="secondary" className="badge-enhanced bg-gradient-to-r from-purple-100/90 to-purple-200/70 text-purple-900 border-purple-400/60 text-xs font-semibold">
+                            Qualifier
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-4 text-sm">
+                        <div className="flex items-center gap-1.5 bg-white/80 backdrop-blur-sm px-2.5 py-1 rounded-full border border-border/50 shadow-sm">
+                          <Calendar className="h-3.5 w-3.5 text-primary" />
+                          <span className="font-semibold text-foreground text-xs">{formatDate(event.date)}</span>
+                        </div>
+                        {event.location && (
+                          <div className="flex items-center gap-1.5 bg-white/80 backdrop-blur-sm px-2.5 py-1 rounded-full border border-border/50 shadow-sm">
+                            <MapPin className="h-3.5 w-3.5 text-accent" />
+                            <span className="text-foreground text-xs">{event.location}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <Badge className={`badge-enhanced px-2.5 py-1 text-xs font-semibold shadow-md ${getEventTypeName(event.eventTypeId)} backdrop-blur-sm border`}>
+                        {getEventTypeName(event.eventTypeId)}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Compact Tile Content */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
+                  {/* Left Side - Event Details */}
+                  <div className="p-4 space-y-3 bg-gradient-to-br from-slate-50/80 via-background/90 to-slate-100/60 backdrop-blur-sm">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 p-2.5 bg-white/80 backdrop-blur-sm rounded-lg border border-border/50 shadow-sm">
+                        <div className="text-xs font-semibold text-muted-foreground">Status:</div>
+                        {getStatusBadge(event.status)}
+                      </div>
+                      
+                      <div className="space-y-2 p-3 bg-white/60 backdrop-blur-sm rounded-lg border border-border/40 shadow-sm">
+                        <div className="text-xs font-semibold text-muted-foreground">Event Coordinator:</div>
+                        {event.coordinatorName ? (
+                          <div className="pl-3 border-l-2 border-primary/50 bg-white/70 backdrop-blur-sm rounded-r-md p-2">
+                            <div className="font-semibold text-foreground text-sm">{event.coordinatorName}</div>
+                            {event.coordinatorContact && (
+                              <div className="text-xs text-muted-foreground mt-0.5">{event.coordinatorContact}</div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="text-muted-foreground italic text-xs bg-white/50 p-2 rounded-md border border-border/30">Not specified</div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Compact Edit Button */}
+                    <div className="pt-2">
+                      {canEdit ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleEditEvent(event)}
+                          className="w-full h-8 premium-button-outline bg-gradient-to-r from-primary/8 to-primary/12 hover:from-primary/15 hover:to-primary/25 border-primary/40 hover:border-primary/60 text-primary hover:text-primary font-semibold text-xs shadow-md"
+                        >
+                          <Edit3 className="h-3.5 w-3.5 mr-1.5" />
+                          Edit Event Details
+                        </Button>
+                      ) : (
+                        <Button size="sm" variant="ghost" disabled className="w-full h-8 bg-muted/60 text-muted-foreground text-xs">
+                          <Eye className="h-3.5 w-3.5 mr-1.5" />
+                          View Only
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Right Side - Event Schedule */}
+                  <div className="p-4 bg-gradient-to-br from-blue-50/90 to-blue-100/70 border-l border-border/60 backdrop-blur-sm">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 p-2.5 bg-white/90 backdrop-blur-sm rounded-lg border border-blue-300/50 shadow-sm">
+                        <FileText className="h-4 w-4 text-blue-700" />
+                        <h4 className="font-bold text-blue-900 text-sm">Event Schedule</h4>
+                      </div>
+
+                      {event.schedule ? (
+                        <div className="space-y-3">
+                          {/* Schedule Status */}
+                          <div className="flex items-center gap-2 p-2.5 bg-green-50/90 backdrop-blur-sm rounded-lg border border-green-300/60 shadow-sm">
+                            <CheckCircle className="h-4 w-4 text-green-700" />
+                            <span className="text-xs font-semibold text-green-800">Schedule Uploaded</span>
+                          </div>
+
+                          {/* Schedule Links/Info */}
+                          <div className="bg-white/95 backdrop-blur-sm p-3 rounded-lg border border-blue-200/70 shadow-sm">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <FileText className="h-4 w-4 text-blue-600" />
+                                <span className="font-medium text-blue-900 text-sm">Schedule.pdf</span>
+                              </div>
+                              <Button size="sm" variant="ghost" className="h-7 w-7 p-0 hover:bg-blue-100 text-blue-700">
+                                <Download className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          {/* Schedule Approval Status */}
+                          <div className="space-y-2 p-2.5 bg-amber-50/90 backdrop-blur-sm rounded-lg border border-amber-200/70 shadow-sm">
+                            <div className="text-xs font-semibold text-amber-800">Approval Status:</div>
+                            <Badge variant="outline" className="badge-enhanced bg-gradient-to-r from-amber-100/90 to-orange-100/70 text-amber-900 border-amber-400/60 text-xs">
+                              <Clock className="h-3 w-3 mr-1" />
+                              Pending Review
+                            </Badge>
+                          </div>
+
+                          {/* Update Schedule Button */}
+                          <Button size="sm" variant="outline" className="w-full h-8 premium-button-outline bg-gradient-to-r from-blue-50/80 to-blue-100/60 hover:from-blue-100/80 hover:to-blue-200/70 border-blue-400/60 hover:border-blue-500/70 text-blue-800 font-semibold text-xs">
+                            <Upload className="h-3.5 w-3.5 mr-1.5" />
+                            Update Schedule
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {/* No Schedule Status */}
+                          <div className="flex items-center gap-2 p-2.5 bg-amber-50/90 backdrop-blur-sm rounded-lg border border-amber-200/70 shadow-sm">
+                            <AlertCircle className="h-4 w-4 text-amber-700" />
+                            <span className="text-xs font-semibold text-amber-800">No Schedule Uploaded</span>
+                          </div>
+
+                          {/* Upload Prompt */}
+                          <div className="bg-white/95 backdrop-blur-sm p-3 rounded-lg border border-blue-200/70 text-center shadow-sm">
+                            <FileText className="h-8 w-8 text-blue-400 mx-auto mb-2" />
+                            <p className="text-xs text-blue-700 font-medium mb-2">
+                              Upload your event schedule for approval
+                            </p>
+                          </div>
+
+                          {/* Upload Schedule Button */}
+                          <div className="p-2 bg-white/80 backdrop-blur-sm rounded-lg border border-border/50 shadow-sm">
+                            <EventScheduleUpload eventId={event.id} onUploadSuccess={onEventUpdate} />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
 
       {/* Edit Event Dialog */}
       {editingEvent && (

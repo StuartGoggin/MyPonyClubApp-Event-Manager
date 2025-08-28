@@ -277,7 +277,23 @@ export function ClubEventStatus({
                                 <div className="text-xs font-medium text-muted-foreground">Document</div>
                                 <div className="text-sm font-bold text-foreground">Schedule.pdf</div>
                               </div>
-                              <Button size="sm" variant="ghost" className="distinctive-button-icon h-8 w-8 p-0 bg-blue-100 hover:bg-blue-200 text-blue-700 hover:text-blue-900 rounded-lg border border-blue-300/60 hover:border-blue-400 shadow-sm hover:shadow-md transition-all duration-300">
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                onClick={() => {
+                                  if (event.schedule?.fileUrl) {
+                                    // Create a temporary link to download the file
+                                    const link = document.createElement('a');
+                                    link.href = event.schedule.fileUrl;
+                                    link.download = `${event.name}-Schedule.pdf`;
+                                    link.target = '_blank';
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
+                                  }
+                                }}
+                                className="distinctive-button-icon h-8 w-8 p-0 bg-blue-100 hover:bg-blue-200 text-blue-700 hover:text-blue-900 rounded-lg border border-blue-300/60 hover:border-blue-400 shadow-sm hover:shadow-md transition-all duration-300"
+                              >
                                 <Download className="h-3 w-3" />
                               </Button>
                             </div>
@@ -321,7 +337,10 @@ export function ClubEventStatus({
                         </Button>
                       ) : (
                         <div className="p-2 bg-white/80 backdrop-blur-sm rounded-lg border border-border/50 shadow-sm">
-                          <EventScheduleUpload eventId={event.id} onUploadSuccess={onEventUpdate} />
+                          <EventScheduleUpload 
+                            eventId={event.id} 
+                            onUploadSuccess={(schedule) => onEventUpdate()} 
+                          />
                         </div>
                       )}
                     </div>

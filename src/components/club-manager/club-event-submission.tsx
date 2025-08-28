@@ -138,10 +138,10 @@ export function ClubEventSubmission({
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
                 onClick={() => setShowSuccess(false)}
-                className="bg-green-600 hover:bg-green-700"
+                className="distinctive-button-primary bg-gradient-to-r from-emerald-500 via-emerald-600 to-green-600 hover:from-emerald-600 hover:via-emerald-700 hover:to-green-700 text-white font-bold px-6 py-3 rounded-xl border-2 border-emerald-400/50 hover:border-emerald-300 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
               >
                 Submit Another Event
               </Button>
@@ -151,7 +151,7 @@ export function ClubEventSubmission({
                   setShowSuccess(false);
                   // Switch to Event Status tab (this would require a callback)
                 }}
-                className="border-green-200 text-green-700 hover:bg-green-50"
+                className="distinctive-button-secondary bg-gradient-to-r from-teal-50 via-teal-100 to-cyan-100 hover:from-teal-100 hover:via-teal-200 hover:to-cyan-200 border-2 border-teal-300/70 hover:border-teal-400 text-teal-800 hover:text-teal-900 font-bold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
               >
                 View Event Status
               </Button>
@@ -252,25 +252,19 @@ export function ClubEventSubmission({
               {/* Event Date */}
               <div className="space-y-2">
                 <Label>Event Date *</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start text-left font-normal"
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {formData.date ? format(formData.date, 'PPP') : 'Select date...'}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={formData.date}
-                      onSelect={(date) => setFormData(prev => ({ ...prev, date }))}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+                <Input
+                  type="date"
+                  value={formData.date ? format(formData.date, 'yyyy-MM-dd') : ''}
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      setFormData(prev => ({ ...prev, date: new Date(e.target.value) }));
+                    } else {
+                      setFormData(prev => ({ ...prev, date: undefined }));
+                    }
+                  }}
+                  min={format(new Date(), 'yyyy-MM-dd')}
+                  className="distinctive-button-input w-full h-10 bg-gradient-to-r from-white to-gray-50 hover:from-gray-50 hover:to-gray-100 border-2 border-gray-300/70 hover:border-gray-400 text-gray-700 rounded-xl shadow-md hover:shadow-lg transition-all duration-300"
+                />
               </div>
 
               {/* Location */}
@@ -344,7 +338,11 @@ export function ClubEventSubmission({
 
             {/* Submit Button */}
             <div className="flex justify-end">
-              <Button type="submit" disabled={isSubmitting} className="min-w-[120px]">
+              <Button 
+                type="submit" 
+                disabled={isSubmitting} 
+                className="distinctive-button-submit min-w-[160px] px-8 py-4 bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600 hover:from-blue-600 hover:via-blue-700 hover:to-indigo-700 text-white font-bold text-lg rounded-xl border-2 border-blue-400/50 hover:border-blue-300 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              >
                 {isSubmitting ? 'Submitting...' : 'Submit Event Request'}
               </Button>
             </div>

@@ -35,7 +35,7 @@ export function AppLayout({ children }: PropsWithChildren) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-50 to-slate-100">
+    <div className="min-h-screen bg-background">
       {/* Beautiful full-width header */}
       <AppHeader />
       

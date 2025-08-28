@@ -305,19 +305,20 @@ export function EditEventDialog({
             />
           </div>
 
-          <DialogFooter className="gap-2">
+          <DialogFooter className="gap-3">
             <Button 
               type="button" 
               variant="outline" 
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
+              className="distinctive-button-cancel px-6 py-3 bg-gradient-to-r from-gray-100 via-gray-200 to-slate-200 hover:from-gray-200 hover:via-gray-300 hover:to-slate-300 text-gray-700 hover:text-gray-900 font-bold rounded-xl border-2 border-gray-300/70 hover:border-gray-400 shadow-md hover:shadow-lg transition-all duration-300"
             >
               Cancel
             </Button>
             <Button 
               type="submit" 
               disabled={isSubmitting}
-              className="min-w-[120px]"
+              className="distinctive-button-save min-w-[140px] px-6 py-3 bg-gradient-to-r from-emerald-500 via-emerald-600 to-green-600 hover:from-emerald-600 hover:via-emerald-700 hover:to-green-700 text-white font-bold rounded-xl border-2 border-emerald-400/50 hover:border-emerald-300 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
               {isSubmitting ? (
                 <div className="flex items-center gap-2">
@@ -326,7 +327,7 @@ export function EditEventDialog({
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
-                  <Save className="h-4 w-4" />
+                  <Save className="h-4 w-4 drop-shadow-sm" />
                   Save Changes
                 </div>
               )}

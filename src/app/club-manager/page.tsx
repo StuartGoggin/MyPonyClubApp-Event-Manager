@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, CheckCircle, Clock, Users, Building, Plus, Activity, Calendar, FileText, XCircle, Filter } from 'lucide-react';
@@ -19,7 +18,7 @@ export default function ClubEventManagerDashboard() {
   const [selectedClubId, setSelectedClubId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showAddEventModal, setShowAddEventModal] = useState(false);
+  const [showAddEventForm, setShowAddEventForm] = useState(false);
   const [eventFilter, setEventFilter] = useState<'all' | 'upcoming' | 'past'>('all');
 
   // Future: This will be replaced with user's authorized clubs from authentication
@@ -313,97 +312,111 @@ export default function ClubEventManagerDashboard() {
           <div className="bg-gradient-to-r from-slate-200/30 via-white/90 to-blue-100/30 rounded-xl border border-border/30 shadow-inner">
             {/* Header with Event Filter and Add Event Button */}
             <div className="flex items-center justify-between p-4 border-b border-border/20">
-              {/* Event Filter */}
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2 p-1 bg-gradient-to-r from-slate-100 via-white to-blue-50 rounded-xl border border-border/40 shadow-lg backdrop-blur-sm">
-                  <div className="flex items-center gap-1.5 px-2 py-1">
-                    <Filter className="h-4 w-4 text-primary" />
-                    <span className="text-sm font-semibold text-foreground">Filter:</span>
+              {/* Event Filter - Only show when viewing events */}
+              {!showAddEventForm && (
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 p-1 bg-gradient-to-r from-slate-100 via-white to-blue-50 rounded-xl border border-border/40 shadow-lg backdrop-blur-sm">
+                    <div className="flex items-center gap-1.5 px-2 py-1">
+                      <Filter className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-semibold text-foreground">Filter:</span>
+                    </div>
+                    
+                    {/* Filter Buttons */}
+                    {[
+                      { key: 'all', label: 'All Events', icon: Calendar },
+                      { key: 'upcoming', label: 'Upcoming', icon: Clock },
+                      { key: 'past', label: 'Past Events', icon: CheckCircle }
+                    ].map(({ key, label, icon: Icon }) => (
+                      <button
+                        key={key}
+                        onClick={() => setEventFilter(key as 'all' | 'upcoming' | 'past')}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                          eventFilter === key
+                            ? 'bg-gradient-to-r from-primary/20 via-primary/15 to-accent/20 text-primary border border-primary/30 shadow-sm'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-white/60'
+                        }`}
+                      >
+                        <Icon className="h-3.5 w-3.5" />
+                        <span>{label}</span>
+                        {key === 'all' && (
+                          <span className="ml-1 px-1.5 py-0.5 bg-primary/10 text-primary rounded text-xs font-bold">
+                            {clubEvents.length}
+                          </span>
+                        )}
+                        {key === 'upcoming' && (
+                          <span className="ml-1 px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-bold">
+                            {clubEvents.filter(e => new Date(e.date) >= new Date()).length}
+                          </span>
+                        )}
+                        {key === 'past' && (
+                          <span className="ml-1 px-1.5 py-0.5 bg-gray-100 text-gray-700 rounded text-xs font-bold">
+                            {clubEvents.filter(e => new Date(e.date) < new Date()).length}
+                          </span>
+                        )}
+                      </button>
+                    ))}
                   </div>
-                  
-                  {/* Filter Buttons */}
-                  {[
-                    { key: 'all', label: 'All Events', icon: Calendar },
-                    { key: 'upcoming', label: 'Upcoming', icon: Clock },
-                    { key: 'past', label: 'Past Events', icon: CheckCircle }
-                  ].map(({ key, label, icon: Icon }) => (
-                    <button
-                      key={key}
-                      onClick={() => setEventFilter(key as 'all' | 'upcoming' | 'past')}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
-                        eventFilter === key
-                          ? 'bg-gradient-to-r from-primary/20 via-primary/15 to-accent/20 text-primary border border-primary/30 shadow-sm'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-white/60'
-                      }`}
-                    >
-                      <Icon className="h-3.5 w-3.5" />
-                      <span>{label}</span>
-                      {key === 'all' && (
-                        <span className="ml-1 px-1.5 py-0.5 bg-primary/10 text-primary rounded text-xs font-bold">
-                          {clubEvents.length}
-                        </span>
-                      )}
-                      {key === 'upcoming' && (
-                        <span className="ml-1 px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-bold">
-                          {clubEvents.filter(e => new Date(e.date) >= new Date()).length}
-                        </span>
-                      )}
-                      {key === 'past' && (
-                        <span className="ml-1 px-1.5 py-0.5 bg-gray-100 text-gray-700 rounded text-xs font-bold">
-                          {clubEvents.filter(e => new Date(e.date) < new Date()).length}
-                        </span>
-                      )}
-                    </button>
-                  ))}
                 </div>
-              </div>
+              )}
+
+              {/* Spacer when filter is hidden */}
+              {showAddEventForm && <div></div>}
 
               {/* Add Event Button */}
-              <Dialog open={showAddEventModal} onOpenChange={setShowAddEventModal}>
-                <DialogTrigger asChild>
-                  <Button 
-                    size="lg"
-                    className="distinctive-button-primary bg-gradient-to-r from-emerald-500 via-emerald-600 to-green-600 hover:from-emerald-600 hover:via-emerald-700 hover:to-green-700 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 px-8 py-4 font-bold text-lg rounded-2xl border-2 border-emerald-400/50 hover:border-emerald-300 backdrop-blur-sm"
-                  >
+              <Button 
+                onClick={() => setShowAddEventForm(!showAddEventForm)}
+                size="lg"
+                className="distinctive-button-primary bg-gradient-to-r from-emerald-500 via-emerald-600 to-green-600 hover:from-emerald-600 hover:via-emerald-700 hover:to-green-700 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 px-8 py-4 font-bold text-lg rounded-2xl border-2 border-emerald-400/50 hover:border-emerald-300 backdrop-blur-sm"
+              >
+                {showAddEventForm ? (
+                  <>
+                    <Users className="h-6 w-6 mr-3 drop-shadow-lg" />
+                    View Events
+                  </>
+                ) : (
+                  <>
                     <Plus className="h-6 w-6 mr-3 drop-shadow-lg" />
                     Add Event
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto glass-effect">
-                  <DialogHeader>
-                    <DialogTitle className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                      Submit New Event
-                    </DialogTitle>
-                    <DialogDescription className="text-muted-foreground">
-                      Create a new event request for {selectedClub.name} in {selectedZone?.name || 'Unknown Zone'}
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="mt-4">
-                    <ClubEventSubmission
-                      clubId={selectedClubId}
-                      clubName={selectedClub.name}
-                      zoneName={selectedZone?.name || 'Unknown Zone'}
-                      eventTypes={eventTypes}
-                      onEventSubmitted={() => {
-                        handleEventUpdate();
-                        setShowAddEventModal(false);
-                      }}
-                    />
-                  </div>
-                </DialogContent>
-              </Dialog>
+                  </>
+                )}
+              </Button>
             </div>
 
-            {/* Event Status Display */}
+            {/* Content Area - Event List or Add Form */}
             <div className="p-4">
-              <ClubEventStatus
-                clubId={selectedClubId}
-                clubName={selectedClub.name}
-                events={filteredClubEvents}
-                clubs={clubs}
-                eventTypes={eventTypes}
-                onEventUpdate={handleEventUpdate}
-              />
+              {showAddEventForm ? (
+                // Add Event Form
+                <div className="space-y-4">
+                  <div className="border-b border-border/20 pb-4 mb-4">
+                    <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                      Submit New Event
+                    </h2>
+                    <p className="text-muted-foreground mt-1">
+                      Create a new event request for {selectedClub.name} in {selectedZone?.name || 'Unknown Zone'}
+                    </p>
+                  </div>
+                  <ClubEventSubmission
+                    clubId={selectedClubId}
+                    clubName={selectedClub.name}
+                    zoneName={selectedZone?.name || 'Unknown Zone'}
+                    eventTypes={eventTypes}
+                    onEventSubmitted={() => {
+                      handleEventUpdate();
+                      setShowAddEventForm(false);
+                    }}
+                  />
+                </div>
+              ) : (
+                // Event Status Display
+                <ClubEventStatus
+                  clubId={selectedClubId}
+                  clubName={selectedClub.name}
+                  events={filteredClubEvents}
+                  clubs={clubs}
+                  eventTypes={eventTypes}
+                  onEventUpdate={handleEventUpdate}
+                />
+              )}
             </div>
           </div>
         </div>

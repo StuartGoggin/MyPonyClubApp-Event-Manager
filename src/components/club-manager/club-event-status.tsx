@@ -17,11 +17,12 @@ import {
   Upload,
   Download,
   User,
-  Star
+  Star,
+  X
 } from 'lucide-react';
 import { Event, Club, EventType } from '@/lib/types';
-import { EditEventDialog } from './edit-event-dialog';
 import { EventScheduleUpload } from '../event-schedule-upload';
+import { InlineEditEventForm } from './inline-edit-event-form';
 
 // Utility function to format dates with validation
 const formatDate = (date: Date | string | any) => {
@@ -116,17 +117,10 @@ export function ClubEventStatus({
   eventTypes, 
   onEventUpdate 
 }: ClubEventStatusProps) {
-  const [editingEvent, setEditingEvent] = useState<Event | null>(null);
-  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
 
   const handleEditEvent = (event: Event) => {
-    setEditingEvent(event);
-    setShowEditDialog(true);
-  };
-
-  const handleEditDialogClose = () => {
-    setShowEditDialog(false);
-    setEditingEvent(null);
+    setEditingEventId(editingEventId === event.id ? null : event.id);
   };
 
   const getEventTypeName = (eventTypeId: string) => {
@@ -200,8 +194,21 @@ export function ClubEventStatus({
                   </div>
                 </div>
 
-                {/* Compact Tile Content */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
+                {/* Conditional Content - Edit Form or Normal View */}
+                {editingEventId === event.id ? (
+                  // Inline Edit Form
+                  <InlineEditEventForm
+                    event={event}
+                    eventTypes={eventTypes}
+                    onEventUpdated={() => {
+                      onEventUpdate();
+                      setEditingEventId(null);
+                    }}
+                    onCancel={() => setEditingEventId(null)}
+                  />
+                ) : (
+                  // Normal Tile Content
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
                   {/* Left Side - Event Status Panel */}
                   <div className="p-4 bg-slate-200/80 backdrop-blur-sm flex flex-col justify-between min-h-[280px]">
                     <div className="space-y-4 flex-1">
@@ -299,10 +306,23 @@ export function ClubEventStatus({
                           size="sm"
                           variant="outline"
                           onClick={() => handleEditEvent(event)}
-                          className="distinctive-button-secondary w-full h-10 bg-gradient-to-r from-teal-50 via-teal-100 to-cyan-100 hover:from-teal-100 hover:via-teal-200 hover:to-cyan-200 border-2 border-teal-300/70 hover:border-teal-400 text-teal-800 hover:text-teal-900 font-bold text-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 backdrop-blur-sm"
+                          className={`distinctive-button-secondary w-full h-10 border-2 font-bold text-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 backdrop-blur-sm ${
+                            editingEventId === event.id
+                              ? 'bg-gradient-to-r from-red-50 via-red-100 to-red-200 hover:from-red-100 hover:via-red-200 hover:to-red-300 border-red-300/70 hover:border-red-400 text-red-800 hover:text-red-900'
+                              : 'bg-gradient-to-r from-teal-50 via-teal-100 to-cyan-100 hover:from-teal-100 hover:via-teal-200 hover:to-cyan-200 border-teal-300/70 hover:border-teal-400 text-teal-800 hover:text-teal-900'
+                          }`}
                         >
-                          <Edit3 className="h-4 w-4 mr-2 drop-shadow-sm" />
-                          Edit Event Details
+                          {editingEventId === event.id ? (
+                            <>
+                              <X className="h-4 w-4 mr-2 drop-shadow-sm" />
+                              Cancel Edit
+                            </>
+                          ) : (
+                            <>
+                              <Edit3 className="h-4 w-4 mr-2 drop-shadow-sm" />
+                              Edit Event Details
+                            </>
+                          )}
                         </Button>
                       ) : (
                         <Button size="sm" variant="ghost" disabled className="distinctive-button-disabled w-full h-10 bg-gradient-to-r from-slate-100 to-slate-200 border-2 border-slate-300/50 text-slate-500 font-bold text-sm rounded-xl shadow-inner">
@@ -402,22 +422,12 @@ export function ClubEventStatus({
                       )}
                     </div>
                   </div>
-                </div>
+                  </div>
+                )}
               </Card>
             );
           })}
         </div>
-      )}
-
-      {/* Edit Event Dialog */}
-      {editingEvent && (
-        <EditEventDialog
-          event={editingEvent}
-          eventTypes={eventTypes}
-          open={showEditDialog}
-          onOpenChange={handleEditDialogClose}
-          onEventUpdated={onEventUpdate}
-        />
       )}
     </div>
   );

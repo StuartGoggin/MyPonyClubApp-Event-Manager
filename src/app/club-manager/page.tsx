@@ -243,7 +243,7 @@ export default function ClubEventManagerDashboard() {
                       <Clock className="h-3.5 w-3.5 text-amber-600" />
                       <span className="text-xs font-medium text-muted-foreground">Pending Approval</span>
                     </div>
-                    <span className="text-sm font-bold text-amber-800">{clubEvents.filter(e => e.status === 'pending').length}</span>
+                    <span className="text-sm font-bold text-amber-800">{clubEvents.filter(e => e.status === 'proposed').length}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">

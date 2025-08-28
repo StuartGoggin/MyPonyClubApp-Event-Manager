@@ -90,7 +90,8 @@ export async function GET(request: NextRequest) {
         isQualifier: data.isQualifier,
         notes: data.notes,
         submittedBy: data.submittedBy,
-        submittedByContact: data.submittedByContact
+        submittedByContact: data.submittedByContact,
+        schedule: data.schedule
       });
     });
 

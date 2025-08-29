@@ -407,19 +407,13 @@ export function ClubEventStatus({
 
                     {/* Schedule Action Button - Moved to bottom */}
                     <div className="pt-4 mt-auto">
-                      {event.schedule ? (
-                        <Button size="sm" variant="outline" className="distinctive-button-secondary w-full h-10 bg-gradient-to-r from-teal-50 via-teal-100 to-cyan-100 hover:from-teal-100 hover:via-teal-200 hover:to-cyan-200 border-2 border-teal-300/70 hover:border-teal-400 text-teal-800 hover:text-teal-900 font-bold text-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 backdrop-blur-sm">
-                          <Upload className="h-4 w-4 mr-2 drop-shadow-sm" />
-                          Update Schedule
-                        </Button>
-                      ) : (
-                        <div className="p-2 bg-white/80 backdrop-blur-sm rounded-lg border border-border/50 shadow-sm">
-                          <EventScheduleUpload 
-                            eventId={event.id} 
-                            onUploadSuccess={(schedule) => onEventUpdate()} 
-                          />
-                        </div>
-                      )}
+                      <div className="p-2 bg-white/80 backdrop-blur-sm rounded-lg border border-border/50 shadow-sm">
+                        <EventScheduleUpload 
+                          eventId={event.id} 
+                          existingSchedule={event.schedule}
+                          onUploadSuccess={(schedule) => onEventUpdate()} 
+                        />
+                      </div>
                     </div>
                   </div>
                   </div>

@@ -4,10 +4,11 @@ import { Upload } from 'lucide-react';
 
 interface EventScheduleUploadProps {
   eventId: string;
+  existingSchedule?: any; // Add this to detect if we're updating
   onUploadSuccess?: (schedule: any) => void;
 }
 
-export const EventScheduleUpload: React.FC<EventScheduleUploadProps> = ({ eventId, onUploadSuccess }) => {
+export const EventScheduleUpload: React.FC<EventScheduleUploadProps> = ({ eventId, existingSchedule, onUploadSuccess }) => {
   const [file, setFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,7 +55,7 @@ export const EventScheduleUpload: React.FC<EventScheduleUploadProps> = ({ eventI
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-3">
         <label htmlFor="schedule-file" className="block text-sm font-bold text-teal-800">
-          Select event schedule file
+          {existingSchedule ? 'Select replacement schedule file' : 'Select event schedule file'}
         </label>
         <input 
           id="schedule-file"
@@ -70,7 +71,7 @@ export const EventScheduleUpload: React.FC<EventScheduleUploadProps> = ({ eventI
         className="distinctive-button-secondary w-full h-10 bg-gradient-to-r from-teal-50 via-teal-100 to-cyan-100 hover:from-teal-100 hover:via-teal-200 hover:to-cyan-200 border-2 border-teal-300/70 hover:border-teal-400 text-teal-800 hover:text-teal-900 font-bold text-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 backdrop-blur-sm"
       >
         <Upload className="h-4 w-4 mr-2 drop-shadow-sm" />
-        {submitting ? 'Uploading...' : 'Upload Schedule'}
+        {submitting ? 'Uploading...' : (existingSchedule ? 'Update Schedule' : 'Upload Schedule')}
       </Button>
       {error && (
         <div className="text-red-500 bg-red-50 p-4 rounded border">

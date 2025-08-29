@@ -220,7 +220,7 @@ export function ClubEventStatus({
                         </div>
                         
                         {/* Event Date */}
-                        <div className="flex items-center gap-3 p-2 bg-white/90 backdrop-blur-sm rounded-lg border border-border/30 shadow-sm">
+                        <div className="flex items-center gap-3 p-2">
                           <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
                             <Calendar className="h-4 w-4 text-blue-700" />
                           </div>
@@ -231,7 +231,7 @@ export function ClubEventStatus({
                         </div>
 
                         {/* Event Location */}
-                        <div className="flex items-center gap-3 p-2 bg-white/90 backdrop-blur-sm rounded-lg border border-border/30 shadow-sm">
+                        <div className="flex items-center gap-3 p-2">
                           <div className="flex-shrink-0 w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
                             <MapPin className="h-4 w-4 text-green-700" />
                           </div>
@@ -242,7 +242,7 @@ export function ClubEventStatus({
                         </div>
 
                         {/* Event Type */}
-                        <div className="flex items-center gap-3 p-2 bg-white/90 backdrop-blur-sm rounded-lg border border-border/30 shadow-sm">
+                        <div className="flex items-center gap-3 p-2">
                           <div className="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
                             <FileText className="h-4 w-4 text-purple-700" />
                           </div>
@@ -253,7 +253,7 @@ export function ClubEventStatus({
                         </div>
 
                         {/* Zone Qualifier */}
-                        <div className="flex items-center gap-3 p-2 bg-white/90 backdrop-blur-sm rounded-lg border border-border/30 shadow-sm">
+                        <div className="flex items-center gap-3 p-2">
                           <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
                             event.isQualifier ? 'bg-yellow-100' : 'bg-gray-100'
                           }`}>
@@ -272,7 +272,7 @@ export function ClubEventStatus({
                         </div>
 
                         {/* Event Coordinator */}
-                        <div className="flex items-center gap-3 p-2 bg-white/90 backdrop-blur-sm rounded-lg border border-border/30 shadow-sm">
+                        <div className="flex items-center gap-3 p-2">
                           <div className="flex-shrink-0 w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
                             <User className="h-4 w-4 text-orange-700" />
                           </div>

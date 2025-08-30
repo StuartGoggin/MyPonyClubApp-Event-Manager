@@ -54,6 +54,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       eventId,
       fileUrl,
       fileType,
+      fileName,
       uploadedAt: new Date(),
       status: 'pending',
       submittedBy,

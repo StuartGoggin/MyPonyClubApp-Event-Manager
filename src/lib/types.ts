@@ -191,6 +191,7 @@ export interface EventSchedule {
   eventId: string;
   fileUrl: string; // URL to the uploaded document
   fileType: string; // e.g., 'pdf', 'docx', 'doc', 'txt'
+  fileName: string; // The actual filename stored in storage
   uploadedAt: Date;
   updatedAt?: Date;
   status: EventScheduleStatus;

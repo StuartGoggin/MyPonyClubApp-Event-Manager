@@ -23,6 +23,7 @@ import {
 import { Event, Club, EventType } from '@/lib/types';
 import { EventScheduleUpload } from '../event-schedule-upload';
 import { InlineEditEventForm } from './inline-edit-event-form';
+import { EventRailwayProgress } from './event-railway-progress';
 
 // Utility function to format dates with validation
 const formatDate = (date: Date | string | any) => {
@@ -218,84 +219,76 @@ export function ClubEventStatus({
                           <div className="h-1 w-8 bg-gradient-to-r from-primary to-accent rounded-full"></div>
                           <div className="text-sm font-extrabold text-foreground uppercase tracking-wide">Event Details</div>
                         </div>
-                        
-                        {/* Event Date */}
-                        <div className="flex items-center gap-3 p-2">
-                          <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <Calendar className="h-4 w-4 text-blue-700" />
+                        {/* Responsive 2-column grid for details */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                          {/* Event Date */}
+                          <div className="flex items-center gap-3 p-2">
+                            <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                              <Calendar className="h-4 w-4 text-blue-700" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-xs font-medium text-muted-foreground">Date</div>
+                              <div className="text-sm font-bold text-foreground">{formatDate(event.date)}</div>
+                            </div>
                           </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="text-xs font-medium text-muted-foreground">Date</div>
-                            <div className="text-sm font-bold text-foreground">{formatDate(event.date)}</div>
+                          {/* Event Location */}
+                          <div className="flex items-center gap-3 p-2">
+                            <div className="flex-shrink-0 w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                              <MapPin className="h-4 w-4 text-green-700" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-xs font-medium text-muted-foreground">Location</div>
+                              <div className="text-sm font-bold text-foreground">{event.location || 'Not specified'}</div>
+                            </div>
                           </div>
-                        </div>
-
-                        {/* Event Location */}
-                        <div className="flex items-center gap-3 p-2">
-                          <div className="flex-shrink-0 w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                            <MapPin className="h-4 w-4 text-green-700" />
+                          {/* Event Type */}
+                          <div className="flex items-center gap-3 p-2">
+                            <div className="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                              <FileText className="h-4 w-4 text-purple-700" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-xs font-medium text-muted-foreground">Event Type</div>
+                              <div className="text-sm font-bold text-foreground">{getEventTypeName(event.eventTypeId)}</div>
+                            </div>
                           </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="text-xs font-medium text-muted-foreground">Location</div>
-                            <div className="text-sm font-bold text-foreground">{event.location || 'Not specified'}</div>
-                          </div>
-                        </div>
-
-                        {/* Event Type */}
-                        <div className="flex items-center gap-3 p-2">
-                          <div className="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                            <FileText className="h-4 w-4 text-purple-700" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="text-xs font-medium text-muted-foreground">Event Type</div>
-                            <div className="text-sm font-bold text-foreground">{getEventTypeName(event.eventTypeId)}</div>
-                          </div>
-                        </div>
-
-                        {/* Zone Qualifier */}
-                        <div className="flex items-center gap-3 p-2">
-                          <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
-                            event.isQualifier ? 'bg-yellow-100' : 'bg-gray-100'
-                          }`}>
-                            <Star className={`h-4 w-4 ${
-                              event.isQualifier ? 'text-yellow-700' : 'text-gray-500'
-                            }`} />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="text-xs font-medium text-muted-foreground">Zone Qualifier</div>
-                            <div className={`text-sm font-bold ${
-                              event.isQualifier ? 'text-yellow-800' : 'text-gray-600'
+                          {/* Zone Qualifier */}
+                          <div className="flex items-center gap-3 p-2">
+                            <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
+                              event.isQualifier ? 'bg-yellow-100' : 'bg-gray-100'
                             }`}>
-                              {event.isQualifier ? 'YES' : 'NO'}
+                              <Star className={`h-4 w-4 ${
+                                event.isQualifier ? 'text-yellow-700' : 'text-gray-500'
+                              }`} />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-xs font-medium text-muted-foreground">Zone Qualifier</div>
+                              <div className={`text-sm font-bold ${
+                                event.isQualifier ? 'text-yellow-800' : 'text-gray-600'
+                              }`}>
+                                {event.isQualifier ? 'YES' : 'NO'}
+                              </div>
+                            </div>
+                          </div>
+                          {/* Event Coordinator */}
+                          <div className="flex items-center gap-3 p-2">
+                            <div className="flex-shrink-0 w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                              <User className="h-4 w-4 text-orange-700" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-xs font-medium text-muted-foreground">Coordinator</div>
+                              {event.coordinatorName ? (
+                                <div>
+                                  <div className="text-sm font-bold text-foreground">{event.coordinatorName}</div>
+                                  {event.coordinatorContact && (
+                                    <div className="text-xs text-muted-foreground mt-0.5">{event.coordinatorContact}</div>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="text-sm text-muted-foreground italic">Not specified</div>
+                              )}
                             </div>
                           </div>
                         </div>
-
-                        {/* Event Coordinator */}
-                        <div className="flex items-center gap-3 p-2">
-                          <div className="flex-shrink-0 w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                            <User className="h-4 w-4 text-orange-700" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="text-xs font-medium text-muted-foreground">Coordinator</div>
-                            {event.coordinatorName ? (
-                              <div>
-                                <div className="text-sm font-bold text-foreground">{event.coordinatorName}</div>
-                                {event.coordinatorContact && (
-                                  <div className="text-xs text-muted-foreground mt-0.5">{event.coordinatorContact}</div>
-                                )}
-                              </div>
-                            ) : (
-                              <div className="text-sm text-muted-foreground italic">Not specified</div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Status Section */}
-                      <div className="flex items-center gap-2 p-2.5 bg-white/90 backdrop-blur-sm rounded-lg border border-border/50 shadow-sm">
-                        <div className="text-xs font-semibold text-muted-foreground">Status:</div>
-                        {getStatusBadge(event.status)}
                       </div>
                     </div>
 
@@ -352,7 +345,7 @@ export function ClubEventStatus({
                               </div>
                               <div className="min-w-0 flex-1">
                                 <div className="text-xs font-medium text-muted-foreground">Document</div>
-                                <div className="text-sm font-bold text-foreground">Schedule.pdf</div>
+                                <div className="text-sm font-bold text-foreground">{event.schedule?.fileName ?? 'Schedule.pdf'}</div>
                               </div>
                               <Button 
                                 size="sm" 
@@ -362,7 +355,7 @@ export function ClubEventStatus({
                                     // Create a temporary link to download the file
                                     const link = document.createElement('a');
                                     link.href = event.schedule.fileUrl;
-                                    link.download = `${event.name}-Schedule.pdf`;
+                                    link.download = event.schedule.fileName ?? 'Schedule.pdf';
                                     link.target = '_blank';
                                     document.body.appendChild(link);
                                     link.click();
@@ -388,21 +381,7 @@ export function ClubEventStatus({
                         )}
                       </div>
 
-                      {/* Schedule Status Section */}
-                      <div className="flex items-center gap-2 p-2.5 bg-white/90 backdrop-blur-sm rounded-lg border border-border/50 shadow-sm">
-                        <div className="text-xs font-semibold text-muted-foreground">Schedule Status:</div>
-                        {event.schedule ? (
-                          <Badge variant="outline" className="badge-enhanced bg-green-50 text-green-800 border-green-300/60 text-xs">
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                            Uploaded - Pending Review
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="badge-enhanced bg-amber-50 text-amber-800 border-amber-300/60 text-xs">
-                            <AlertCircle className="h-3 w-3 mr-1" />
-                            Not Uploaded
-                          </Badge>
-                        )}
-                      </div>
+                      {/* Schedule Status Section removed as requested */}
                     </div>
 
                     {/* Schedule Action Button - Moved to bottom */}
@@ -418,6 +397,20 @@ export function ClubEventStatus({
                   </div>
                   </div>
                 )}
+
+                {/* Railway Progress Section - Full Width Below Both Columns */}
+                <div className="p-4 bg-gradient-to-r from-blue-50/50 via-indigo-50/30 to-purple-50/50 backdrop-blur-sm border-t border-border/40">
+                  <div className="p-4 bg-white/95 backdrop-blur-sm rounded-lg border border-border/40 shadow-sm">
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="h-1 w-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full"></div>
+                      <div className="text-sm font-extrabold text-foreground uppercase tracking-wide">Approval Progress</div>
+                    </div>
+                    <EventRailwayProgress 
+                      event={event} 
+                      schedules={event.schedule ? [event.schedule] : []} 
+                    />
+                  </div>
+                </div>
               </Card>
             );
           })}

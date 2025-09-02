@@ -22,6 +22,12 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       return NextResponse.json({ error: 'Database not configured.' }, { status: 500 });
     }
 
+    // Fetch the event from Firestore
+    const eventDoc = await adminDb.collection('events').doc(eventId).get();
+    if (!eventDoc.exists) {
+      return NextResponse.json({ error: 'Event not found.' }, { status: 404 });
+    }
+
     // Upload file to Firebase Storage using Admin SDK
     const bucket = admin.storage().bucket();
     // Extract original filename (without extension)

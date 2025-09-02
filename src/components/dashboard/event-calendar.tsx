@@ -431,7 +431,7 @@ const CalendarGrid = ({
                             <button
                               key={event.id || i}
                               className={cn(
-                                "rounded-xl shadow-sm border bg-white p-2 text-left transition hover:ring-2 hover:ring-primary w-full",
+                                "rounded-xl shadow-sm border bg-white p-2 text-left transition hover:ring-2 hover:ring-primary max-w-xs w-full",
                                 event.status === 'approved' ? 'event-approved' :
                                 event.status === 'proposed' ? 'event-proposed' :
                                 event.status === 'public_holiday' ? 'event-holiday' :

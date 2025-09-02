@@ -213,6 +213,8 @@ export interface Event {
   location: string;
   source: EventSource;
 
+
+  description?: string;
   // New fields from form
   coordinatorName?: string;
   coordinatorContact?: string;

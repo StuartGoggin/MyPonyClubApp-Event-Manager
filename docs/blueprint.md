@@ -1,3 +1,9 @@
+## Calendar UI Improvements (September 2, 2025)
+
+- **Weekend Highlighting**: Saturday and Sunday cells now have a uniform, darker blue background for clear visual distinction.
+- **Event Box Styling**: Events are displayed in individual boxes with rounded corners, shadow, and border for a modern look.
+- **Event Spacing**: Multiple events on the same day are spaced apart for clarity and readability.
+- **Event Summary Dialog**: Clicking an event opens a modal with full event details, including description, club, date, and status.
 # **App Name**: PonyClub Events
 
 ## Core Features (Updated August 29, 2025):

@@ -49,15 +49,68 @@ export function EventCalendar({
   zones,
   today,
   bypassSourceFiltering = false,
-  currentUser,
+  currentUser
 }: EventCalendarProps) {
-  const router = useRouter();
+  const currentYear = getYear(new Date());
+  const yearOptions = Array.from({ length: 6 }, (_, i) => currentYear - 2 + i); // 2 years back, 3 forward
+  const monthOptions = [
+    { value: 1, label: 'January' },
+    { value: 2, label: 'February' },
+    { value: 3, label: 'March' },
+    { value: 4, label: 'April' },
+    { value: 5, label: 'May' },
+    { value: 6, label: 'June' },
+    { value: 7, label: 'July' },
+    { value: 8, label: 'August' },
+    { value: 9, label: 'September' },
+    { value: 10, label: 'October' },
+    { value: 11, label: 'November' },
+    { value: 12, label: 'December' }
+  ];
+  const [selectedYear, setSelectedYear] = useState(currentYear);
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<'month' | 'year'>('month');
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [eventSources] = useAtom(eventSourceAtom);
   const [filterMode, setFilterMode] = useState<'location' | 'distance'>('location');
+  // PDF export state
+  const [pdfScope, setPdfScope] = useState<'month' | 'year' | 'custom'>('month');
+  const [pdfStartDate, setPdfStartDate] = useState<string>('');
+  const [pdfEndDate, setPdfEndDate] = useState<string>('');
+
+  const handleDownloadPDF = async () => {
+    const params = new URLSearchParams({
+      scope: pdfScope,
+      year: pdfScope === 'year' ? String(selectedYear) : pdfScope === 'month' ? String(selectedYear) : '',
+      month: pdfScope === 'month' ? String(selectedMonth) : '',
+      startDate: pdfScope === 'custom' ? pdfStartDate : '',
+      endDate: pdfScope === 'custom' ? pdfEndDate : '',
+    });
+    const res = await fetch(`/api/calendar/pdf?${params.toString()}`);
+    if (!res.ok) {
+      alert('Failed to generate PDF');
+      return;
+    }
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    let filename = '';
+    if (pdfScope === 'custom') {
+      filename = `calendar_custom_${pdfStartDate}_to_${pdfEndDate}.pdf`;
+    } else if (pdfScope === 'month') {
+      filename = `calendar_month_${selectedYear}_${String(selectedMonth).padStart(2, '0')}.pdf`;
+    } else if (pdfScope === 'year') {
+      filename = `calendar_year_${selectedYear}.pdf`;
+    }
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  };
   const [selectedZoneId, setSelectedZoneId] = useState<string>('all');
   const [selectedClubId, setSelectedClubId] = useState<string>('all');
   const [homeClubId, setHomeClubId] = useState<string | null>(null);
@@ -166,6 +219,122 @@ export function EventCalendar({
   return (
   <div className="enhanced-card rounded-lg border shadow-lg glass-effect">
     <div className="flex flex-col gap-4 p-4 border-b border-border/50">
+    {/* PDF Export Controls - Enhanced UI */}
+    <div className="w-full flex flex-col md:flex-row items-center justify-between gap-2 mb-2 p-2 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg border border-border/40 shadow-sm">
+      <div className="flex flex-col gap-1 w-full">
+        <div className="flex flex-col gap-0 min-w-[120px]">
+          <label className="text-xs font-semibold text-primary mb-1">Calendar PDF Scope</label>
+          <div className="flex gap-1">
+            <Button
+              variant={pdfScope === 'month' ? 'secondary' : 'outline'}
+              size="sm"
+              className={pdfScope === 'month' ? 'premium-button px-2 py-1 text-xs' : 'premium-button-outline px-2 py-1 text-xs'}
+              onClick={() => setPdfScope('month')}
+            >
+              This Month
+            </Button>
+            <Button
+              variant={pdfScope === 'year' ? 'secondary' : 'outline'}
+              size="sm"
+              className={pdfScope === 'year' ? 'premium-button px-2 py-1 text-xs' : 'premium-button-outline px-2 py-1 text-xs'}
+              onClick={() => setPdfScope('year')}
+            >
+              This Year
+            </Button>
+            <Button
+              variant={pdfScope === 'custom' ? 'secondary' : 'outline'}
+              size="sm"
+              className={pdfScope === 'custom' ? 'premium-button px-2 py-1 text-xs' : 'premium-button-outline px-2 py-1 text-xs'}
+              onClick={() => setPdfScope('custom')}
+            >
+              Custom Range
+            </Button>
+          </div>
+          {/* Month/Year Selection Buttons */}
+          {pdfScope === 'month' && (
+            <div className="flex gap-1 mt-1 items-center">
+              <Select value={String(selectedMonth)} onValueChange={(value) => setSelectedMonth(Number(value))}>
+                <SelectTrigger className="h-6 text-xs min-w-[90px] px-2 py-0.5 border-primary/40 bg-gradient-to-r from-primary/5 to-accent/5">
+                  <SelectValue>
+                    {monthOptions.find(m => m.value === selectedMonth)?.label}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {monthOptions.map(m => (
+                    <SelectItem key={m.value} value={String(m.value)} className="text-xs">
+                      {m.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={String(selectedYear)} onValueChange={(value) => setSelectedYear(Number(value))}>
+                <SelectTrigger className="h-6 text-xs min-w-[70px] px-2 py-0.5 border-primary/40 bg-gradient-to-r from-primary/5 to-accent/5">
+                  <SelectValue>{selectedYear}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {yearOptions.map(y => (
+                    <SelectItem key={y} value={String(y)} className="text-xs">
+                      {y}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          {pdfScope === 'year' && (
+            <div className="flex gap-1 mt-1 items-center">
+              <Select value={String(selectedYear)} onValueChange={(value) => setSelectedYear(Number(value))}>
+                <SelectTrigger className="h-6 text-xs min-w-[70px] px-2 py-0.5 border-primary/40 bg-gradient-to-r from-primary/5 to-accent/5">
+                  <SelectValue>{selectedYear}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {yearOptions.map(y => (
+                    <SelectItem key={y} value={String(y)} className="text-xs">
+                      {y}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </div>
+        {pdfScope === 'custom' && (
+          <div className="flex flex-row items-center gap-1 mt-1">
+            <label htmlFor="pdfStartDate" className="text-xs font-semibold text-primary">Start</label>
+            <input
+              id="pdfStartDate"
+              type="date"
+              value={pdfStartDate}
+              onChange={e => setPdfStartDate(e.target.value)}
+              className="border border-primary/40 rounded px-1 py-0.5 focus:ring-1 focus:ring-primary/40 min-w-[90px] text-xs"
+              placeholder="Start date"
+              title="Select start date"
+            />
+            <label htmlFor="pdfEndDate" className="text-xs font-semibold text-primary">End</label>
+            <input
+              id="pdfEndDate"
+              type="date"
+              value={pdfEndDate}
+              onChange={e => setPdfEndDate(e.target.value)}
+              className="border border-primary/40 rounded px-1 py-0.5 focus:ring-1 focus:ring-primary/40 min-w-[90px] text-xs"
+              placeholder="End date"
+              title="Select end date"
+            />
+          </div>
+        )}
+      </div>
+      <div className="flex items-center justify-end w-full md:w-auto">
+        <Button
+          variant="default"
+          size="sm"
+          className="premium-button font-bold px-3 py-1 text-sm shadow ring-1 ring-primary/20 hover:ring-accent/30 transition"
+          onClick={handleDownloadPDF}
+          disabled={pdfScope === 'custom' && (!pdfStartDate || !pdfEndDate)}
+        >
+          <span className="mr-1">📄</span> Download PDF
+        </Button>
+      </div>
+    </div>
     <div className="flex flex-wrap items-center justify-between gap-4">
       <div className="flex items-center gap-4">
         <h2 className="text-xl font-semibold font-headline bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">

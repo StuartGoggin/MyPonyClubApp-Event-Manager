@@ -29,7 +29,10 @@ import {
   Trash2,
   Sprout,
   Monitor,
-  PlusCircle
+  PlusCircle,
+  HardDrive,
+  FileUp,
+  Package
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ENDPOINTS, APIEndpointDefinition } from '@/lib/api-registry';
@@ -50,7 +53,10 @@ const iconMap = {
   Trash2,
   Sprout,
   Monitor,
-  PlusCircle
+  PlusCircle,
+  HardDrive,
+  FileUp,
+  Package
 };
 
 export default function APIEndpointsPage() {
@@ -130,6 +136,8 @@ export default function APIEndpointsPage() {
       case 'embed': return <ExternalLink className="h-4 w-4" />;
       case 'data': return <Database className="h-4 w-4" />;
       case 'pages': return <FileText className="h-4 w-4" />;
+      case 'storage': return <HardDrive className="h-4 w-4" />;
+      case 'documents': return <FileUp className="h-4 w-4" />;
       default: return <Settings className="h-4 w-4" />;
     }
   };
@@ -141,6 +149,8 @@ export default function APIEndpointsPage() {
       case 'embed': return 'border-orange-200 bg-orange-50';
       case 'data': return 'border-teal-200 bg-teal-50';
       case 'pages': return 'border-green-200 bg-green-50';
+      case 'storage': return 'border-indigo-200 bg-indigo-50';
+      case 'documents': return 'border-pink-200 bg-pink-50';
       default: return 'border-gray-200 bg-gray-50';
     }
   };
@@ -152,6 +162,8 @@ export default function APIEndpointsPage() {
     embed: endpoints.filter(e => e.category === 'embed').length,
     data: endpoints.filter(e => e.category === 'data').length,
     pages: endpoints.filter(e => e.category === 'pages').length,
+    storage: endpoints.filter(e => e.category === 'storage').length,
+    documents: endpoints.filter(e => e.category === 'documents').length,
   };
 
   const categories = [
@@ -161,6 +173,8 @@ export default function APIEndpointsPage() {
     { key: 'admin', name: 'Admin APIs', icon: <Shield className="h-4 w-4" />, color: 'purple' },
     { key: 'embed', name: 'Embed APIs', icon: <ExternalLink className="h-4 w-4" />, color: 'orange' },
     { key: 'data', name: 'Data APIs', icon: <Database className="h-4 w-4" />, color: 'teal' },
+    { key: 'storage', name: 'Storage APIs', icon: <HardDrive className="h-4 w-4" />, color: 'indigo' },
+    { key: 'documents', name: 'Document APIs', icon: <FileUp className="h-4 w-4" />, color: 'pink' },
   ];
 
   return (

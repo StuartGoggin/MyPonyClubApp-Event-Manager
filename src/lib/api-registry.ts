@@ -14,7 +14,7 @@ export interface APIEndpointDefinition {
   id: string;
   path: string;
   method: 'GET' | 'POST' | 'PUT' | 'DELETE';
-  category: 'public' | 'admin' | 'embed' | 'data' | 'pages';
+  category: 'public' | 'admin' | 'embed' | 'data' | 'pages' | 'storage' | 'documents';
   name: string;
   description: string;
   enabled: boolean;
@@ -150,22 +150,6 @@ export const ENDPOINTS: APIEndpointDefinition[] = [
     example: 'GET /api/embed/calendar?format=ical&upcoming=true&limit=10'
   },
   {
-    id: 'calendar-pdf',
-    path: '/api/calendar/pdf',
-    method: 'GET',
-    category: 'public',
-    name: 'Generate Calendar PDF',
-    description: 'Generate professional PDF calendar with compact design and enhanced event display',
-    enabled: true,
-    requiresAuth: false,
-    icon: 'FileText',
-    params: [
-      { name: 'month', type: 'number', required: true, description: 'Month number (1-12)' },
-      { name: 'year', type: 'number', required: true, description: 'Year (e.g., 2025)' }
-    ],
-    example: 'GET /api/calendar/pdf?month=1&year=2025'
-  },
-  {
     id: 'embed-request-event',
     path: '/embed/request-event',
     method: 'GET',
@@ -177,6 +161,228 @@ export const ENDPOINTS: APIEndpointDefinition[] = [
     icon: 'Calendar',
     isPage: true,
     example: '<iframe src="/embed/request-event" width="800" height="800"></iframe>'
+  },
+
+  // Calendar PDF Generation
+  {
+    id: 'calendar-pdf',
+    path: '/api/calendar/pdf',
+    method: 'GET',
+    category: 'public',
+    name: 'Generate Calendar PDF',
+    description: 'Generate professional PDF calendar with filtering and customization options',
+    enabled: true,
+    requiresAuth: false,
+    icon: 'FileText',
+    params: [
+      { name: 'scope', type: 'string', required: false, description: 'Calendar scope: month, year, or custom' },
+      { name: 'month', type: 'number', required: false, description: 'Month number (1-12)' },
+      { name: 'year', type: 'number', required: false, description: 'Year (e.g., 2025)' },
+      { name: 'startDate', type: 'string', required: false, description: 'Start date for custom range (YYYY-MM-DD)' },
+      { name: 'endDate', type: 'string', required: false, description: 'End date for custom range (YYYY-MM-DD)' },
+      { name: 'filterScope', type: 'string', required: false, description: 'Filter scope: all, zone, or club' },
+      { name: 'zoneId', type: 'string', required: false, description: 'Zone ID for filtering' },
+      { name: 'clubId', type: 'string', required: false, description: 'Club ID for filtering' }
+    ],
+    example: 'GET /api/calendar/pdf?scope=month&month=9&year=2025&filterScope=zone&zoneId=zone-1'
+  },
+
+  // Document Management Endpoints
+  {
+    id: 'event-schedule-upload',
+    path: '/api/events/[id]/schedule/upload',
+    method: 'POST',
+    category: 'documents',
+    name: 'Upload Event Schedule',
+    description: 'Upload schedule documents for events using Firebase Storage',
+    enabled: true,
+    requiresAuth: true,
+    icon: 'Upload',
+    params: [
+      { name: 'id', type: 'string', required: true, description: 'Event ID' },
+      { name: 'file', type: 'file', required: true, description: 'Schedule document file (PDF, DOC, DOCX)' }
+    ],
+    example: 'POST /api/events/event-123/schedule/upload'
+  },
+  {
+    id: 'event-schedule-upload-local',
+    path: '/api/events/[id]/schedule/upload-local',
+    method: 'POST',
+    category: 'documents',
+    name: 'Upload Event Schedule (Local)',
+    description: 'Upload schedule documents for events using local file storage',
+    enabled: true,
+    requiresAuth: true,
+    icon: 'Upload',
+    params: [
+      { name: 'id', type: 'string', required: true, description: 'Event ID' },
+      { name: 'file', type: 'file', required: true, description: 'Schedule document file (PDF, DOC, DOCX)' }
+    ],
+    example: 'POST /api/events/event-123/schedule/upload-local'
+  },
+
+  // Storage Management Endpoints
+  {
+    id: 'test-storage',
+    path: '/api/admin/test-storage',
+    method: 'GET',
+    category: 'storage',
+    name: 'Test Storage Connection',
+    description: 'Test Firebase Storage connection and configuration',
+    enabled: true,
+    requiresAuth: true,
+    icon: 'CheckCircle',
+    example: 'GET /api/admin/test-storage'
+  },
+  {
+    id: 'test-storage-simple',
+    path: '/api/admin/test-storage-simple',
+    method: 'GET',
+    category: 'storage',
+    name: 'Simple Storage Test',
+    description: 'Simplified Firebase Storage connectivity test',
+    enabled: true,
+    requiresAuth: true,
+    icon: 'CheckCircle',
+    example: 'GET /api/admin/test-storage-simple'
+  },
+  {
+    id: 'setup-storage',
+    path: '/api/admin/setup-storage',
+    method: 'POST',
+    category: 'storage',
+    name: 'Setup Storage',
+    description: 'Initialize Firebase Storage bucket configuration',
+    enabled: true,
+    requiresAuth: true,
+    icon: 'Settings',
+    example: 'POST /api/admin/setup-storage'
+  },
+  {
+    id: 'setup-storage-advanced',
+    path: '/api/admin/setup-storage-advanced',
+    method: 'POST',
+    category: 'storage',
+    name: 'Advanced Storage Setup',
+    description: 'Advanced Firebase Storage bucket configuration',
+    enabled: true,
+    requiresAuth: true,
+    icon: 'Settings',
+    example: 'POST /api/admin/setup-storage-advanced'
+  },
+  {
+    id: 'create-storage-bucket',
+    path: '/api/admin/create-storage-bucket',
+    method: 'POST',
+    category: 'storage',
+    name: 'Create Storage Bucket',
+    description: 'Create new Firebase Storage bucket',
+    enabled: true,
+    requiresAuth: true,
+    icon: 'Database',
+    example: 'POST /api/admin/create-storage-bucket'
+  },
+  {
+    id: 'discover-buckets',
+    path: '/api/admin/discover-buckets',
+    method: 'GET',
+    category: 'storage',
+    name: 'Discover Storage Buckets',
+    description: 'List available Firebase Storage buckets',
+    enabled: true,
+    requiresAuth: true,
+    icon: 'Search',
+    example: 'GET /api/admin/discover-buckets'
+  },
+
+  // Enhanced Data Export Endpoints
+  {
+    id: 'export-events',
+    path: '/api/admin/export-events',
+    method: 'GET',
+    category: 'data',
+    name: 'Export Events Data',
+    description: 'Export comprehensive events data with club and zone information',
+    enabled: true,
+    requiresAuth: true,
+    icon: 'Download',
+    example: 'GET /api/admin/export-events'
+  },
+  {
+    id: 'export-data-comprehensive',
+    path: '/api/admin/export-data',
+    method: 'GET',
+    category: 'data',
+    name: 'Export All Data',
+    description: 'Export complete database backup with all entities',
+    enabled: true,
+    requiresAuth: true,
+    icon: 'Download',
+    example: 'GET /api/admin/export-data'
+  },
+
+  // Database Maintenance Endpoints
+  {
+    id: 'purge-database',
+    path: '/api/admin/purge-database',
+    method: 'DELETE',
+    category: 'admin',
+    name: 'Purge Database',
+    description: 'Remove all data from the database (destructive operation)',
+    enabled: true,
+    requiresAuth: true,
+    icon: 'Trash2',
+    example: 'DELETE /api/admin/purge-database'
+  },
+  {
+    id: 'cleanup-duplicates',
+    path: '/api/admin/cleanup-duplicates',
+    method: 'DELETE',
+    category: 'admin',
+    name: 'Cleanup Duplicates',
+    description: 'Remove duplicate records from the database',
+    enabled: true,
+    requiresAuth: true,
+    icon: 'RefreshCw',
+    example: 'DELETE /api/admin/cleanup-duplicates'
+  },
+  {
+    id: 'debug-env',
+    path: '/api/admin/debug-env',
+    method: 'GET',
+    category: 'admin',
+    name: 'Debug Environment',
+    description: 'Debug environment variables and configuration',
+    enabled: true,
+    requiresAuth: true,
+    icon: 'Monitor',
+    example: 'GET /api/admin/debug-env'
+  },
+
+  // Enhanced Import/Export
+  {
+    id: 'import-batches',
+    path: '/api/admin/import-batches',
+    method: 'POST',
+    category: 'data',
+    name: 'Import Data Batches',
+    description: 'Process bulk data imports in batches',
+    enabled: true,
+    requiresAuth: true,
+    icon: 'Upload',
+    example: 'POST /api/admin/import-batches'
+  },
+  {
+    id: 'get-import-batches',
+    path: '/api/admin/import-batches',
+    method: 'GET',
+    category: 'data',
+    name: 'Get Import Status',
+    description: 'Check status of batch import operations',
+    enabled: true,
+    requiresAuth: true,
+    icon: 'Clock',
+    example: 'GET /api/admin/import-batches'
   },
 
   // Admin Management Endpoints

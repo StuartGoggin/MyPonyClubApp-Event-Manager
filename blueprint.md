@@ -601,7 +601,32 @@ This document outlines the features and ideas for the PonyClub Events applicatio
 - **API Registry System**: Centralized endpoint management
   - **Registry Definition** (`/lib/api-registry.ts`): Central source of truth for all endpoints
   - **Management Interface** (`/admin/api-endpoints`): Visual endpoint management dashboard
-  - **25+ Documented Endpoints**: Complete catalog with metadata, parameters, and examples
+  - **35+ Documented Endpoints**: Complete catalog with metadata, parameters, and examples
+
+#### New API Categories (September 2025)
+- **Calendar PDF Generation**: Enhanced PDF export with filtering capabilities
+  - **PDF Calendar API** (`/api/calendar/pdf`): GET with comprehensive filtering options
+  - **Filter Scopes**: all, zone, club filtering with dynamic title generation
+  - **Date Ranges**: month, year, custom range support
+  - **Professional Output**: Enhanced PDF layout with event details and club information
+
+- **Document Management APIs**: File upload and storage management
+  - **Event Schedule Upload** (`/api/events/[id]/schedule/upload`): POST Firebase Storage upload
+  - **Local Schedule Upload** (`/api/events/[id]/schedule/upload-local`): POST local file storage
+  - **File Validation**: Multi-format support (PDF, DOC, DOCX) with size and type validation
+  - **Secure Storage**: Organized file structure with unique naming and public URL generation
+
+- **Storage Management APIs**: Firebase Storage administration
+  - **Storage Testing** (`/api/admin/test-storage`, `/api/admin/test-storage-simple`): GET connectivity tests
+  - **Storage Setup** (`/api/admin/setup-storage`, `/api/admin/setup-storage-advanced`): POST configuration
+  - **Bucket Management** (`/api/admin/create-storage-bucket`, `/api/admin/discover-buckets`): Storage operations
+  - **Health Monitoring**: Real-time storage status and configuration validation
+
+- **Enhanced Data Operations**: Advanced import/export and maintenance
+  - **Comprehensive Export** (`/api/admin/export-events`, `/api/admin/export-data`): GET enhanced exports
+  - **Batch Processing** (`/api/admin/import-batches`): POST/GET bulk data operations
+  - **Database Maintenance** (`/api/admin/purge-database`, `/api/admin/cleanup-duplicates`): DELETE operations
+  - **Debug Tools** (`/api/admin/debug-env`): GET environment diagnostics
 
 ### Event Schedule Management & Approval Workflow (August 27, 2025) ✅ COMPLETED
 

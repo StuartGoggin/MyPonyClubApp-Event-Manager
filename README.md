@@ -106,12 +106,25 @@ A comprehensive Next.js application for managing pony club events, featuring adv
 - **Manual Override**: Click-and-drag interface for precise location adjustment
 
 ### 🔧 API Management
-- **25+ Endpoint Registry**: Comprehensive API endpoint management system
-- **Visual Category Grouping**: Color-coded sections (Pages, Public APIs, Admin APIs, Embed APIs, Data APIs)
+- **35+ Endpoint Registry**: Comprehensive API endpoint management system with new categories
+- **Enhanced Categories**: 
+  - **Public APIs**: Core data access endpoints
+  - **Admin APIs**: Administrative functions
+  - **Embed APIs**: External website integration
+  - **Data APIs**: Import/export operations
+  - **Storage APIs**: Firebase Storage management
+  - **Documents APIs**: File upload and document management
+- **Visual Category Grouping**: Color-coded sections with dedicated icons
 - **Admin Dashboard**: Real-time enable/disable controls for all endpoints
 - **Base URL Selector**: Dynamic environment switching for testing
 - **Documentation**: Detailed parameter and usage documentation
 - **Page Integration**: Application pages included alongside API endpoints
+
+#### New API Categories (September 2025)
+- **Calendar PDF Generation**: Advanced PDF export with filtering and customization
+- **Document Management**: Event schedule upload with Firebase Storage integration
+- **Storage Administration**: Bucket management and connectivity testing
+- **Enhanced Data Operations**: Batch processing and database maintenance tools
 
 ## 🚀 Quick Start
 

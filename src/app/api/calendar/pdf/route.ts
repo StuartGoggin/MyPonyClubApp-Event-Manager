@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateCalendarPDF } from '@/lib/calendar-pdf';
-import { getEvents, getClubs, getEventTypes } from '@/lib/data';
+import { getEvents, getClubs, getEventTypes, getZones } from '@/lib/data';
 
 // Force dynamic rendering for this route since it uses request parameters
 export const dynamic = 'force-dynamic';
@@ -14,12 +14,16 @@ export async function GET(request: NextRequest) {
     const month = parseInt(searchParams.get('month') || (new Date().getMonth() + 1).toString());
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
+    const filterScope = searchParams.get('filterScope') || 'all';
+    const zoneId = searchParams.get('zoneId');
+    const clubId = searchParams.get('clubId');
 
     // Fetch real events from Firestore
-    const [events, clubs, eventTypes] = await Promise.all([
+    const [events, clubs, eventTypes, zones] = await Promise.all([
       getEvents(),
       getClubs(), 
-      getEventTypes()
+      getEventTypes(),
+      getZones()
     ]);
 
     // Filter events for the requested date range
@@ -46,6 +50,20 @@ export async function GET(request: NextRequest) {
         return eventDate >= start && eventDate <= end;
       });
     }
+
+    // Apply scope filtering (all events, zone events, or club events)
+    if (filterScope === 'zone' && zoneId) {
+      // Filter events for specific zone
+      const zoneClubs = clubs.filter(club => club.zoneId === zoneId);
+      const zoneClubIds = zoneClubs.map(club => club.id);
+      filteredEvents = filteredEvents.filter(event => 
+        event.clubId && zoneClubIds.includes(event.clubId)
+      );
+    } else if (filterScope === 'club' && clubId) {
+      // Filter events for specific club
+      filteredEvents = filteredEvents.filter(event => event.clubId === clubId);
+    }
+    // If filterScope === 'all', no additional filtering needed
 
     // Enhance events with additional information
     const enhancedEvents = filteredEvents.map(event => {
@@ -84,11 +102,25 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Generate dynamic title based on filter scope
+    let calendarTitle = 'PonyClub Events Calendar';
+    if (filterScope === 'zone' && zoneId) {
+      const zone = zones.find(z => z.id === zoneId);
+      if (zone) {
+        calendarTitle = `${zone.name} Zone Events Calendar`;
+      }
+    } else if (filterScope === 'club' && clubId) {
+      const club = clubs.find(c => c.id === clubId);
+      if (club) {
+        calendarTitle = `${club.name} Events Calendar`;
+      }
+    }
+
     // Generate PDF
     const pdfBuffer = generateCalendarPDF({ 
       months, 
       events: enhancedEvents, 
-      title: 'PonyClub Events Calendar' 
+      title: calendarTitle 
     });
 
     const filename = scope === 'month' ? `calendar_month_${year}_${month.toString().padStart(2, '0')}.pdf` :

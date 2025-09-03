@@ -1,12 +1,25 @@
-## Calendar UI Improvements (September 2, 2025)
+# **App Name**: PonyClub Events
+
+## Latest Enhancements (September 3, 2025):
+
+### PDF Calendar Generation System:
+- **Professional PDF Calendars**: High-quality calendar generation with modern design principles
+- **Compact Layout Design**: Efficiently uses half-page space while maintaining readability
+- **Enhanced Event Display**: Shows up to 25 characters for single events, 20 for multiple events
+- **Multi-Event Support**: Displays up to 4 individual events before using rollup counts
+- **Modern Visual Styling**: Best-of-breed calendar design with gradients, shadows, and professional typography
+- **Real-Time Data Integration**: Live event data from Firestore database with club and event type information
+- **Optimized File Size**: Efficient 11KB PDF generation using jsPDF library
+- **Smart Text Management**: Proper ellipsis truncation and intelligent font sizing (5pt)
+
+## Calendar UI Improvements (September 2, 2025):
 
 - **Weekend Highlighting**: Saturday and Sunday cells now have a uniform, darker blue background for clear visual distinction.
 - **Event Box Styling**: Events are displayed in individual boxes with rounded corners, shadow, and border for a modern look.
 - **Event Spacing**: Multiple events on the same day are spaced apart for clarity and readability.
 - **Event Summary Dialog**: Clicking an event opens a modal with full event details, including description, club, date, and status.
-# **App Name**: PonyClub Events
 
-## Core Features (Updated August 29, 2025):
+## Core Features (Updated September 3, 2025):
 
 ### Event Management System:
 - **Calendar Dashboard**: Professional calendar view with proposed and approved events, clear approval status highlighting

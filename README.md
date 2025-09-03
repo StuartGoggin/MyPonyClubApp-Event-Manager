@@ -3,9 +3,23 @@ Event Management System for Pony Club Zones
 
 A comprehensive Next.js application for managing pony club events, featuring advanced calendar imports, multi-format document processing, embeddable calendars, zone coordination, and a sophisticated modern design system.
 
-## ✨ Latest Features (August 2025)
+## ✨ Latest Features (September 2025)
 
-### 🎨 Club Manager Interface Enhancement (Latest - August 29, 2025)
+### 📊 Enhanced PDF Calendar Generation (September 3, 2025)
+- **Compact Calendar Design**: Professionally compressed calendar layout using only half the page
+- **Extended Event Text Display**: Event names show up to 25 characters (single events) or 20 characters (multiple events)
+- **Multi-Event Support**: Displays up to 4 individual events per day before showing rollup counts
+- **Modern Visual Design**: Best-of-breed calendar styling with:
+  - Enhanced color palette with professional gradients
+  - Subtle shadow effects and rounded corners
+  - Optimized typography with smart font sizing (5pt for maximum text)
+  - Clean cell borders with weekend highlighting
+- **Smart Text Truncation**: Proper ellipsis (…) character for clean appearance
+- **Optimal Layout**: 15px cell height with 10px day headers for compact yet readable display
+- **Real Event Data**: Fully integrated with Firestore database for live event information
+- **PDF Optimization**: Efficient 11KB file generation with jsPDF library
+
+### 🎨 Club Manager Interface Enhancement (August 29, 2025)
 - **Event Date Integration**: Event dates now prominently displayed in tile titles (format: "12th Dec 2026 - Event Name")
 - **Reorganized Zone Qualifier**: Moved from title badge to Event Details section with clear YES/NO display
 - **Optimized Spacing**: Refined vertical spacing in details sections for better information density

@@ -201,7 +201,7 @@ export function EventRequestForm({
 
       fetchData();
     }
-  }, [embedMode, isLoadingData]);
+  }, [embedMode, isLoadingData, toast]);
 
   // Handle form submission success
   useEffect(() => {

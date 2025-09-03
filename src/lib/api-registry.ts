@@ -150,6 +150,22 @@ export const ENDPOINTS: APIEndpointDefinition[] = [
     example: 'GET /api/embed/calendar?format=ical&upcoming=true&limit=10'
   },
   {
+    id: 'calendar-pdf',
+    path: '/api/calendar/pdf',
+    method: 'GET',
+    category: 'public',
+    name: 'Generate Calendar PDF',
+    description: 'Generate professional PDF calendar with compact design and enhanced event display',
+    enabled: true,
+    requiresAuth: false,
+    icon: 'FileText',
+    params: [
+      { name: 'month', type: 'number', required: true, description: 'Month number (1-12)' },
+      { name: 'year', type: 'number', required: true, description: 'Year (e.g., 2025)' }
+    ],
+    example: 'GET /api/calendar/pdf?month=1&year=2025'
+  },
+  {
     id: 'embed-request-event',
     path: '/embed/request-event',
     method: 'GET',

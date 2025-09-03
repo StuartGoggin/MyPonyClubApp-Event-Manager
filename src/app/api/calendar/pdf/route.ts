@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateCalendarPDF } from '@/lib/calendar-pdf';
-// You will need to implement this function to fetch events for a date range
-import { adminDb } from '@/lib/firebase-admin';
-import PDFDocument from 'pdfkit';
+import { getEvents, getClubs, getEventTypes } from '@/lib/data';
+
+// Force dynamic rendering for this route since it uses request parameters
+export const dynamic = 'force-dynamic';
 
 // GET: Generate a PDF of the calendar (month or year view)
 export async function GET(request: NextRequest) {
@@ -14,18 +15,56 @@ export async function GET(request: NextRequest) {
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
 
-    // Fetch events for the requested range (stub)
-    // TODO: Implement actual Firestore query for events in the range
-    const events: any[] = [
-      // Example event for demo
-      { name: 'Demo Event', date: `${year}-${month}-15`, status: 'approved' },
-    ];
+    // Fetch real events from Firestore
+    const [events, clubs, eventTypes] = await Promise.all([
+      getEvents(),
+      getClubs(), 
+      getEventTypes()
+    ]);
 
-    // Create PDF document
-    const doc = new PDFDocument({ autoFirstPage: false });
-    const chunks: Buffer[] = [];
-    doc.on('data', (chunk: any) => chunks.push(chunk));
-    doc.on('end', () => {});
+    // Filter events for the requested date range
+    let filteredEvents = events;
+    
+    if (scope === 'month') {
+      // Filter events for the specific month
+      filteredEvents = events.filter(event => {
+        const eventDate = new Date(event.date);
+        return eventDate.getFullYear() === year && eventDate.getMonth() + 1 === month;
+      });
+    } else if (scope === 'year') {
+      // Filter events for the specific year
+      filteredEvents = events.filter(event => {
+        const eventDate = new Date(event.date);
+        return eventDate.getFullYear() === year;
+      });
+    } else if (scope === 'custom' && startDate && endDate) {
+      // Filter events for custom date range
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      filteredEvents = events.filter(event => {
+        const eventDate = new Date(event.date);
+        return eventDate >= start && eventDate <= end;
+      });
+    }
+
+    // Enhance events with additional information
+    const enhancedEvents = filteredEvents.map(event => {
+      const club = clubs.find(c => c.id === event.clubId);
+      const eventType = eventTypes.find(et => et.id === event.eventTypeId);
+      
+      return {
+        name: event.name || eventType?.name || 'Event',
+        date: event.date.toISOString().split('T')[0], // Convert Date to YYYY-MM-DD string
+        status: event.status || 'pending',
+        club: club?.name,
+        eventType: eventType?.name,
+        location: event.location || club?.physicalAddress || club?.address?.suburb,
+        contact: event.coordinatorContact || club?.email || club?.phone,
+        coordinator: event.coordinatorName
+      };
+    });
+
+    console.log(`PDF: Found ${enhancedEvents.length} events for ${scope} ${year}${scope === 'month' ? '-' + month : ''}`);
 
     // Prepare months array for PDF utility
     const months = [];
@@ -46,7 +85,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Generate PDF
-    const pdfBuffer = generateCalendarPDF({ months, events, title: 'PonyClub Events Calendar' });
+    const pdfBuffer = generateCalendarPDF({ 
+      months, 
+      events: enhancedEvents, 
+      title: 'PonyClub Events Calendar' 
+    });
 
     const filename = scope === 'month' ? `calendar_month_${year}_${month.toString().padStart(2, '0')}.pdf` :
                     scope === 'year' ? `calendar_year_${year}.pdf` :

@@ -1,9 +1,20 @@
-# Admin Dashboard Updates (August 24, 2025)
+# Admin Dashboard Updates (September 3, 2025)
 
 ## Overview
-This document summarizes the recent improvements made to the admin dashboard and API endpoints management system.
+This document summarizes the recent improvements made to the admin dashboard, API endpoints management system, and the new PDF calendar generation capabilities.
 
-## ✅ Completed Improvements
+## ✅ Latest Updates (September 3, 2025)
+
+### PDF Calendar Generation System
+- **New API Endpoint**: `/api/calendar/pdf` for professional PDF calendar generation
+- **Compact Design**: Half-page calendar layout optimized for printing and digital use
+- **Enhanced Event Display**: Up to 25 characters for single events, 20 for multiple events
+- **Multi-Event Support**: Shows up to 4 individual events before rollup counts
+- **Modern Visual Design**: Professional styling with gradients, shadows, and typography
+- **Real-Time Integration**: Live Firestore data with clubs and event types
+- **Optimized Performance**: ~11KB file size with sub-second generation
+
+## ✅ Completed Improvements (August 24, 2025)
 
 ### 1. Admin Dashboard Reorganization
 - **New Section Order**:

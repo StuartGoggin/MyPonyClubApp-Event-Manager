@@ -620,8 +620,6 @@ const CalendarGrid = ({
   today: Date;
   clubs: Club[];
 }) => {
-    // Track selected event for summary dialog
-    const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const start = startOfWeek(startOfMonth(month), { weekStartsOn });
   const end = endOfWeek(endOfMonth(month), { weekStartsOn });
   
@@ -717,7 +715,7 @@ const CalendarGrid = ({
                                 'event-default',
                                 isYearView ? "text-xs" : "text-sm"
                               )}
-                              onClick={() => setSelectedEvent(event)}
+                              onClick={() => onEventClick(event.id)}
                             >
                               <div className={cn("flex items-start gap-1.5")}> 
                                 <div className="flex-shrink-0 pt-0.5">
@@ -771,24 +769,6 @@ const CalendarGrid = ({
                             </button>
                           ))}
                         </div>
-  {/* Event Summary Dialog */}
-  <Dialog open={!!selectedEvent} onOpenChange={() => setSelectedEvent(null)}>
-    <DialogContent>
-      <DialogHeader>
-        <DialogTitle>{selectedEvent?.name}</DialogTitle>
-        <DialogDescription>
-          <div className="space-y-2">
-            <div><strong>Date:</strong> {selectedEvent?.date ? format(new Date(selectedEvent.date), 'PPP') : ''}</div>
-            <div><strong>Club:</strong> {selectedEvent?.clubId ? getClubName(selectedEvent.clubId) : ''}</div>
-            <div><strong>Status:</strong> {selectedEvent?.status}</div>
-            {selectedEvent?.description && (
-              <div><strong>Description:</strong> {selectedEvent.description}</div>
-            )}
-          </div>
-        </DialogDescription>
-      </DialogHeader>
-    </DialogContent>
-  </Dialog>
                       </div>
                     </td>
                   );

@@ -5,7 +5,7 @@ A comprehensive Next.js application for managing pony club events, featuring adv
 
 ## ✨ Latest Features (September 2025)
 
-### 🧪 Testing Infrastructure & Event Export (September 5, 2025)
+### 🧪 Testing Infrastructure & Data Management (September 5, 2025)
 - **Testing Section**: New dedicated testing area in admin dashboard with purple-themed design
 - **Advanced Event Export Tool**: Complete backup and migration system
   - Full ZIP archive creation with real schedule file downloads
@@ -13,11 +13,19 @@ A comprehensive Next.js application for managing pony club events, featuring adv
   - Real-time progress tracking with detailed logging
   - SHA-256 integrity verification with manifest files
   - Self-contained exports with all dependencies
-- **Professional Export Interface**: 
-  - Multi-stage progress indicators (database fetch, file download, compression)
-  - Success/error handling with retry capabilities
-  - Auto-download with manual re-download option
-  - Configurable compression levels (low/medium/high)
+- **Comprehensive Event Import Tool**: Complete data restoration capabilities
+  - ZIP archive processing with manifest verification
+  - Intelligent conflict detection (duplicate IDs, names, dates)
+  - Advanced conflict resolution (skip, overwrite, rename)
+  - Dry run mode for safe import testing
+  - Real-time import progress with detailed logging
+  - Schedule file restoration to Firebase Storage
+- **Professional Data Management Interface**: 
+  - Multi-stage progress indicators (analysis, validation, import, upload)
+  - Conflict resolution UI with side-by-side comparison
+  - Success/error handling with comprehensive reporting
+  - Auto-download export with manual re-download option
+  - Configurable compression levels and import filtering
 - **Geographic Distance Features**: Enhanced event dialog with distance calculations
   - Haversine formula for accurate distance between club coordinates
   - Visual distance tiles (green for success, red for unavailable)
@@ -131,12 +139,12 @@ A comprehensive Next.js application for managing pony club events, featuring adv
 - **35+ Endpoint Registry**: Comprehensive API endpoint management system with new categories
 - **Enhanced Categories**: 
   - **Public APIs**: Core data access endpoints
-  - **Admin APIs**: Administrative functions including event export
+  - **Admin APIs**: Administrative functions including event export and import
   - **Embed APIs**: External website integration
-  - **Data APIs**: Import/export operations
+  - **Data APIs**: Import/export operations with conflict resolution
   - **Storage APIs**: Firebase Storage management
   - **Documents APIs**: File upload and document management
-  - **Testing APIs**: Export and backup operations
+  - **Testing APIs**: Export, import, and backup operations
 - **Visual Category Grouping**: Color-coded sections with dedicated icons
 - **Admin Dashboard**: Real-time enable/disable controls for all endpoints
 - **Base URL Selector**: Dynamic environment switching for testing
@@ -145,6 +153,7 @@ A comprehensive Next.js application for managing pony club events, featuring adv
 
 #### New API Categories (September 2025)
 - **Event Export System**: Comprehensive ZIP archive generation with filtering
+- **Event Import System**: Complete data restoration with conflict detection and resolution
 - **Calendar PDF Generation**: Advanced PDF export with filtering and customization
 - **Document Management**: Event schedule upload with Firebase Storage integration
 - **Storage Administration**: Bucket management and connectivity testing

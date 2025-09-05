@@ -2,6 +2,7 @@
 // lib/firebase-admin.ts
 import * as admin from 'firebase-admin';
 import { getFirestore } from 'firebase-admin/firestore';
+import { getStorage } from 'firebase-admin/storage';
 
 // Don't initialize during build time or if env var is missing
 const serviceAccountStr = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
@@ -9,6 +10,7 @@ const serviceAccountStr = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
 export type DatabaseStatus = 'connected' | 'disconnected' | 'error' | 'unknown';
 
 let adminDb: any = null;
+let storageInstance: any = null;
 let dbConnectionStatus: DatabaseStatus = 'unknown';
 
 // Only initialize if we have credentials and we're not in a build context
@@ -34,12 +36,17 @@ if (serviceAccountStr) {
             // Get Firestore instance and configure it only when first initializing
             adminDb = getFirestore();
             adminDb.settings({ ignoreUndefinedProperties: true });
+            
+            // Get Storage instance
+            storageInstance = getStorage();
+            
             dbConnectionStatus = 'connected';
             console.log('✅ Firebase Admin SDK initialized successfully');
         } else {
             // If app already exists, just get the existing Firestore instance
             // Don't call settings() again as it can only be called once
             adminDb = getFirestore();
+            storageInstance = getStorage();
             dbConnectionStatus = 'connected';
             console.log('✅ Using existing Firebase Admin SDK instance');
         }
@@ -89,3 +96,6 @@ export const getDatabaseErrorMessage = (): string | null => {
 
 // Export adminDb - will be null during build time if no credentials
 export { adminDb };
+
+// Export storage bucket - will be null during build time if no credentials
+export const bucket = storageInstance?.bucket();

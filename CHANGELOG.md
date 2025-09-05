@@ -2,12 +2,12 @@
 
 All notable changes to the MyPonyClubApp Event Manager will be documented in this file.
 
-## [September 5, 2025] - Testing Infrastructure & Event Export System
+## [September 5, 2025] - Testing Infrastructure & Data Management System
 
 ### Added ✨
 - **Testing Section in Admin Dashboard**: New dedicated testing area for development tools
   - Purple-themed Testing section with TestTube icon
-  - Comprehensive event export functionality
+  - Comprehensive event export and import functionality
   - Professional card-based layout matching existing admin design
 - **Advanced Event Export Tool**: Complete data backup and migration system
   - Full ZIP archive export with real schedule file downloads
@@ -15,17 +15,24 @@ All notable changes to the MyPonyClubApp Event Manager will be documented in thi
   - Real-time progress tracking with detailed logging
   - Integrity verification with SHA-256 checksums and manifest files
   - Self-contained exports with all dependencies and metadata
+- **Comprehensive Event Import Tool**: Complete data restoration capabilities
+  - ZIP archive processing with automatic validation
+  - Intelligent conflict detection (duplicate IDs, names, dates, missing dependencies)
+  - Advanced conflict resolution options (skip, overwrite, rename)
+  - Dry run mode for safe import testing without database changes
+  - Real-time import progress with detailed logging
+  - Schedule file restoration to Firebase Storage
+  - Version compatibility checking and manifest verification
+- **Professional Data Management Interface**: 
+  - Multi-stage progress tracking for both export and import operations
+  - Conflict resolution UI with side-by-side data comparison
+  - Color-coded conflict severity indicators (red=high, yellow=medium, blue=low)
+  - Comprehensive error handling and reporting
 - **Robust File Download System**: Firebase Storage integration for schedule files
   - Downloads actual PDF/document files instead of placeholders
   - 30-second timeout protection with graceful error handling
   - Sanitized filenames: `{eventId}-{eventName}.{extension}`
   - Error files generated for failed downloads with detailed diagnostics
-- **Enhanced UI Components**: Professional export interface
-  - Real-time progress bars with percentage completion
-  - Detailed logging output with timestamps
-  - Success/error state handling with retry capabilities
-  - Configurable compression levels (low/medium/high)
-  - Auto-download with manual re-download option
 
 ### Enhanced 🎨
 - **Event Dialog Distance Calculations**: Geographic proximity features

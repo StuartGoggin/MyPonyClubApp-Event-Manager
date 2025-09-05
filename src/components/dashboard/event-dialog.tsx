@@ -25,7 +25,8 @@ import {
   FileText,
   Award,
   Building2,
-  XCircle
+  XCircle,
+  Navigation
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import React from 'react';
@@ -38,6 +39,7 @@ interface EventDialogProps {
   zone: Zone | undefined;
   eventType: EventType | undefined;
   nearbyEvents: Event[];
+  clubs: Club[];
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   currentUser: { id: string; role: 'organiser' | 'zone_approver' | 'admin' | 'viewer' };
@@ -49,6 +51,7 @@ export function EventDialog({
   zone,
   eventType,
   nearbyEvents,
+  clubs,
   isOpen,
   onOpenChange,
   currentUser,
@@ -56,6 +59,44 @@ export function EventDialog({
   if (!event || !eventType) return null;
   // For public holidays, club might be undefined.
   if (event.source !== 'public_holiday' && !club) return null;
+
+  // Calculate distance between two coordinates using Haversine formula
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c; // Distance in kilometers
+  };
+
+  // Get distance to nearby event
+  const getEventDistance = (nearbyEvent: Event): string | null => {
+    if (!club?.latitude || !club?.longitude) {
+      console.log('No coordinates for current club:', club?.name);
+      return null;
+    }
+    
+    // Find the club for the nearby event
+    const nearbyClub = clubs.find(c => c.id === nearbyEvent.clubId);
+    if (!nearbyClub?.latitude || !nearbyClub?.longitude) {
+      console.log('No coordinates for nearby club:', nearbyClub?.name);
+      return null;
+    }
+    
+    const distance = calculateDistance(
+      club.latitude,
+      club.longitude,
+      nearbyClub.latitude,
+      nearbyClub.longitude
+    );
+    
+    console.log(`Distance between ${club.name} and ${nearbyClub.name}: ${Math.round(distance)}km`);
+    return `${Math.round(distance)}km away`;
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -131,146 +172,120 @@ export function EventDialog({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-headline text-2xl pr-8">{event.name}</DialogTitle>
-          <DialogDescription className="flex items-center gap-2 text-base">
-            <Calendar className="h-4 w-4" />
-            {format(eventDate, 'PPPP')}
-          </DialogDescription>
+          <div className="flex items-center gap-3 text-base text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              {format(eventDate, 'PPPP')}
+            </div>
+            {getStatusBadge(event.status)}
+          </div>
         </DialogHeader>
         
-        <div className="space-y-6 py-4">
-          {/* Status and Basic Info */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-3">
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Status</label>
-                <div className="mt-1">
-                  {getStatusBadge(event.status)}
-                </div>
+        <div className="space-y-4 py-4">
+          {/* Main Event Info Card */}
+          <div className="bg-muted/20 p-4 rounded-lg space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Tag className="h-4 w-4" />
+                <span>{eventType.name}</span>
+                {event.isQualifier && (
+                  <Badge variant="secondary" className="ml-2">
+                    <Award className="h-3 w-3 mr-1" />
+                    Qualifier
+                  </Badge>
+                )}
               </div>
-              
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Event Type</label>
-                <div className="flex items-center gap-2 mt-1">
-                  <Tag className="h-4 w-4 text-muted-foreground" />
-                  <span>{eventType.name}</span>
-                  {event.isQualifier && (
-                    <Badge variant="secondary" className="ml-2">
-                      <Award className="h-3 w-3 mr-1" />
-                      Qualifier
-                    </Badge>
+            </div>
+            
+            {event.location && (
+              <div className="flex items-center gap-2 text-sm">
+                <MapPin className="h-4 w-4 text-muted-foreground" />
+                <span>{event.location}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Organization & Contact Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Organization Card */}
+            {(club || zone) && (
+              <div className="bg-muted/20 p-4 rounded-lg">
+                <div className="flex items-center gap-2 font-medium text-foreground mb-3">
+                  <Building2 className="h-4 w-4" />
+                  Organization
+                </div>
+                <div className="space-y-2">
+                  {club && (
+                    <div>
+                      <div className="font-medium text-foreground">{club.name}</div>
+                      {club.email && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                          <Mail className="h-3 w-3 flex-shrink-0" />
+                          <a href={`mailto:${club.email}`} className="hover:underline">
+                            {club.email}
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {zone && (
+                    <div className="text-sm text-muted-foreground">
+                      {zone.name}
+                    </div>
                   )}
                 </div>
               </div>
-            </div>
+            )}
 
-            <div className="space-y-3">
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Source</label>
-                <div className="mt-1 capitalize">
-                  {event.source?.replace('_', ' ') || 'Unknown'}
+            {/* Contact Card */}
+            {(event.coordinatorName || event.coordinatorContact || event.submittedBy || event.submittedByContact) && (
+              <div className="bg-muted/20 p-4 rounded-lg">
+                <div className="flex items-center gap-2 font-medium text-foreground mb-3">
+                  <User className="h-4 w-4" />
+                  Contact Details
                 </div>
-              </div>
-              
-              {event.location && (
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Location</label>
-                  <div className="flex items-center gap-2 mt-1">
-                    <MapPin className="h-4 w-4 text-muted-foreground" />
-                    <span>{event.location}</span>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Club and Zone Information */}
-          {(club || zone) && (
-            <div className="border-t pt-4">
-              <h3 className="font-semibold mb-3 flex items-center gap-2">
-                <Building2 className="h-4 w-4" />
-                Organization Details
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {club && (
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Club</label>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                      <span>{club.name}</span>
-                    </div>
-                    {club.email && (
-                      <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-                        <Mail className="h-3 w-3" />
-                        <a href={`mailto:${club.email}`} className="hover:underline">
-                          {club.email}
-                        </a>
+                
+                <div className="space-y-3">
+                  {(event.coordinatorName || event.coordinatorContact) && (
+                    <div className="grid grid-cols-3 gap-4 items-start">
+                      <div className="text-sm text-muted-foreground font-medium">
+                        Coordinator:
                       </div>
-                    )}
-                  </div>
-                )}
-                
-                {zone && (
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Zone</label>
-                    <div className="mt-1">{zone.name}</div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Coordinator Information */}
-          {(event.coordinatorName || event.coordinatorContact) && (
-            <div className="border-t pt-4">
-              <h3 className="font-semibold mb-3 flex items-center gap-2">
-                <User className="h-4 w-4" />
-                Event Coordinator
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {event.coordinatorName && (
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Coordinator</label>
-                    <div className="mt-1">{event.coordinatorName}</div>
-                  </div>
-                )}
-                
-                {event.coordinatorContact && (
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Contact</label>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
-                      <span>{event.coordinatorContact}</span>
+                      <div className="col-span-2 space-y-1">
+                        {event.coordinatorName && (
+                          <div className="font-medium text-foreground">{event.coordinatorName}</div>
+                        )}
+                        {event.coordinatorContact && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Phone className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                            <span className="text-foreground">{event.coordinatorContact}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                  
+                  {(event.submittedBy || event.submittedByContact) && (
+                    <div className="grid grid-cols-3 gap-4 items-start pt-2 border-t border-border/50">
+                      <div className="text-sm text-muted-foreground font-medium">
+                        Submitted by:
+                      </div>
+                      <div className="col-span-2 space-y-1">
+                        {event.submittedBy && (
+                          <div className="font-medium text-foreground">{event.submittedBy}</div>
+                        )}
+                        {event.submittedByContact && (
+                          <div className="text-sm text-muted-foreground">
+                            {event.submittedByContact}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
-
-          {/* Submission Information */}
-          {(event.submittedBy || event.submittedByContact) && (
-            <div className="border-t pt-4">
-              <h3 className="font-semibold mb-3 flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                Submission Details
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {event.submittedBy && (
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Submitted By</label>
-                    <div className="mt-1">{event.submittedBy}</div>
-                  </div>
-                )}
-                
-                {event.submittedByContact && (
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Submitter Contact</label>
-                    <div className="mt-1">{event.submittedByContact}</div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Notes */}
           {event.notes && (
@@ -294,12 +309,36 @@ export function EventDialog({
                   The following events are scheduled nearby and may create conflicts:
                 </p>
                 <div className="space-y-2">
-                  {nearbyEvents.map(nearbyEvent => (
-                    <div key={nearbyEvent.id} className="text-sm text-amber-700 bg-amber-100 p-2 rounded">
-                      <div className="font-medium">{nearbyEvent.name}</div>
-                      <div className="text-xs">{format(formatDate(nearbyEvent.date), 'PPP')}</div>
-                    </div>
-                  ))}
+                  {nearbyEvents.map(nearbyEvent => {
+                    const distance = getEventDistance(nearbyEvent);
+                    const hasDistance = distance !== null;
+                    
+                    return (
+                      <div key={nearbyEvent.id} className="text-sm text-amber-700 bg-amber-100 p-2 rounded">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="font-medium">{nearbyEvent.name}</div>
+                            <div className="text-xs">{format(formatDate(nearbyEvent.date), 'PPP')}</div>
+                          </div>
+                          
+                          {/* Distance Tile */}
+                          <div className={cn(
+                            "flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium ml-3",
+                            "shadow-sm border transform rotate-12",
+                            hasDistance 
+                              ? "bg-green-100 border-green-300 text-green-700" 
+                              : "bg-red-100 border-red-300 text-red-700"
+                          )}>
+                            <Navigation className={cn(
+                              "h-3 w-3",
+                              hasDistance ? "text-green-600" : "text-red-600"
+                            )} />
+                            {hasDistance ? distance : "N/A"}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>

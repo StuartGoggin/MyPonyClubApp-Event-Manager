@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, Users, MapPin, FileText, AlertTriangle, CheckCircle, Clock, Map, ExternalLink, Database, Upload, Settings, Globe } from 'lucide-react';
+import { Calendar, Users, MapPin, FileText, AlertTriangle, CheckCircle, Clock, Map, ExternalLink, Database, Upload, Settings, Globe, Download, Package, TestTube } from 'lucide-react';
 import Link from 'next/link';
 import { getAllZones, getAllClubs, getAllEventTypes } from '@/lib/server-data';
 import { getDatabaseErrorMessage, isDatabaseConnected } from '@/lib/firebase-admin';
@@ -448,6 +448,44 @@ async function AdminDashboardContent() {
                   <Link href="/admin/geolocate-clubs">
                     <Map className="h-4 w-4 mr-2" />
                     Set Locations
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Testing Section */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+          <TestTube className="h-5 w-5 text-purple-600" />
+          Testing
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Event Export Tool */}
+          <div className="relative overflow-hidden rounded-2xl border border-purple-200/50 bg-gradient-to-br from-purple-50/80 via-purple-50/60 to-violet-50/40 dark:from-purple-950/40 dark:via-purple-950/30 dark:to-violet-950/20 shadow-xl backdrop-blur-sm hover:shadow-2xl transition-all duration-300 hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-400/5 to-violet-400/5"></div>
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-purple-400/10 to-transparent rounded-full blur-2xl"></div>
+            
+            <div className="relative p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="rounded-xl bg-purple-100 dark:bg-purple-900/50 p-3 border border-purple-200 dark:border-purple-700">
+                  <Package className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">Event Export</h3>
+                  <p className="text-sm text-muted-foreground">Export event data archive</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs text-purple-700 dark:text-purple-300">
+                  Export all events with schedules and metadata as a complete ZIP archive
+                </p>
+                <Button asChild variant="outline" className="w-full">
+                  <Link href="/admin/testing/export-events">
+                    <Download className="h-4 w-4 mr-2" />
+                    Export Events
                   </Link>
                 </Button>
               </div>

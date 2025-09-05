@@ -576,6 +576,7 @@ export function EventCalendar({
     zone={selectedZone}
     eventType={selectedEventType}
     nearbyEvents={selectedEvent ? getNearbyEvents(selectedEvent) : []}
+    clubs={clubs}
     currentUser={currentUser || { id: 'default', role: 'viewer' }}
     />
   </div>

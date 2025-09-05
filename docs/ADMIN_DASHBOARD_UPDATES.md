@@ -1,9 +1,26 @@
-# Admin Dashboard Updates (September 3, 2025)
+# Admin Dashboard Updates (September 5, 2025)
 
 ## Overview
-This document summarizes the recent improvements made to the admin dashboard, API endpoints management system, and the new PDF calendar generation capabilities.
+This document summarizes the recent improvements made to the admin dashboard, API endpoints management system, testing infrastructure, and the PDF calendar generation capabilities.
 
-## ✅ Latest Updates (September 3, 2025)
+## ✅ Latest Updates (September 5, 2025)
+
+### Testing Infrastructure Addition
+- **New Testing Section**: Added dedicated testing area in admin dashboard
+- **Purple Theme Integration**: Consistent with existing design system using purple gradients
+- **Event Export Tool**: Comprehensive backup and migration system
+  - Complete ZIP archive creation with real schedule files
+  - Advanced filtering by event types and date ranges
+  - Real-time progress tracking with detailed logging
+  - SHA-256 integrity verification with manifest files
+  - Self-contained exports with all dependencies
+- **Enhanced Geographic Features**: Distance calculations in event dialogs
+  - Haversine formula for accurate club-to-club distances
+  - Visual distance tiles (green for success, red for unavailable)
+  - Integration with scheduling conflict detection
+- **Professional UI Components**: Export interface with progress bars, logging, and error handling
+
+## ✅ Previous Updates (September 3, 2025)
 
 ### PDF Calendar Generation System
 - **New API Endpoint**: `/api/calendar/pdf` for professional PDF calendar generation

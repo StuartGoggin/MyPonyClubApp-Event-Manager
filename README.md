@@ -20,6 +20,12 @@ A comprehensive Next.js application for managing pony club events, featuring adv
   - Dry run mode for safe import testing
   - Real-time import progress with detailed logging
   - Schedule file restoration to Firebase Storage
+- **Test Data Generator**: Realistic synthetic data creation for testing
+  - Configurable generation (1-5 years, 1-20 events/week)
+  - Authentic patterns with seasonal variation and weekend bias
+  - Mock PDF schedule generation with professional layouts
+  - Export-compatible ZIP format with manifest verification
+  - Preview mode and real-time progress monitoring
 - **Professional Data Management Interface**: 
   - Multi-stage progress indicators (analysis, validation, import, upload)
   - Conflict resolution UI with side-by-side comparison

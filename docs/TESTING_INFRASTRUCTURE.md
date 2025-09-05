@@ -1,7 +1,7 @@
 # Testing Infrastructure Documentation
 
 ## Overview
-The Testing section in the Admin Dashboard provides comprehensive tools for data backup, migration, and system testing. This documentation covers the Event Export Tool and related testing infrastructure.
+The Testing section in the Admin Dashboard provides comprehensive tools for data backup, migration, and system testing. This documentation covers the Event Export Tool, Event Import Tool, and related testing infrastructure.
 
 ## Event Export Tool
 
@@ -140,7 +140,6 @@ events-export-2025-09-05T12-34-56.zip
 
 #### Planned Features
 - **Selective Event Export**: Individual event selection interface
-- **Import Functionality**: Restore data from exported archives
 - **Scheduled Exports**: Automated backup scheduling
 - **Cloud Storage Integration**: Direct export to cloud storage services
 
@@ -150,25 +149,169 @@ events-export-2025-09-05T12-34-56.zip
 - **Format Options**: Additional export formats (JSON, CSV, Excel)
 - **Incremental Exports**: Delta exports since last backup
 
+## Event Import Tool
+
+### Purpose
+The Event Import Tool provides comprehensive data restoration capabilities from exported ZIP archives, enabling complete backup recovery, data migration, and testing scenarios with advanced conflict detection and resolution.
+
+### Features
+
+#### 📂 Archive Processing
+- **ZIP File Validation**: Complete archive structure and content verification
+- **Manifest Verification**: SHA-256 checksum validation for file integrity
+- **Version Compatibility**: Automatic compatibility checking with current system
+- **Dependency Analysis**: Missing club/zone/event-type detection
+
+#### 🔍 Conflict Detection
+- **Duplicate ID Detection**: Identifies events with matching IDs but different data
+- **Name Conflicts**: Finds events with same names but different dates/details
+- **Date Conflicts**: Detects scheduling conflicts with existing events
+- **Missing Dependencies**: Reports missing clubs, zones, or event types
+
+#### ⚡ Resolution Options
+- **Skip Import**: Ignore conflicting events during import
+- **Overwrite Existing**: Replace existing data with imported version
+- **Rename Import**: Auto-rename imported events to avoid conflicts
+- **Selective Resolution**: Configure resolution per conflict type
+
+#### 🛡️ Safety Features
+- **Dry Run Mode**: Simulate imports without making any database changes
+- **Progress Monitoring**: Real-time progress with detailed logging
+- **Rollback Information**: Complete operation tracking for potential rollbacks
+- **Validation Checks**: Pre-import validation of all data integrity
+
+#### 📊 Import Configuration
+- **Event Type Filtering**: Import only specific event types
+- **Date Range Limiting**: Restrict imports to specific date ranges
+- **Schedule File Control**: Option to skip schedule file uploads
+- **Manifest Validation**: Toggle integrity verification requirements
+
+### Technical Implementation
+
+#### Backend API (`/api/admin/import`)
+```typescript
+interface ImportConfig {
+  eventTypes: string[];           // Filter imported event types
+  dateRange: {
+    start: string;               // Earliest event date to import
+    end: string;                 // Latest event date to import
+  };
+  dryRun: boolean;              // Simulate without database changes
+  validateManifest: boolean;     // Verify file integrity
+  allowDuplicates: boolean;      // Allow duplicate event imports
+  skipSchedules: boolean;        // Skip schedule file uploads
+}
+
+interface ConflictItem {
+  id: string;                   // Unique conflict identifier
+  type: 'duplicate_id' | 'duplicate_name' | 'date_conflict' | 'club_missing' | 'type_missing';
+  severity: 'high' | 'medium' | 'low';
+  existing: any;                // Current database record
+  imported: any;                // Incoming import record
+  resolution: 'skip' | 'overwrite' | 'rename' | 'merge' | null;
+  message: string;              // Human-readable conflict description
+}
+
+interface ImportResult {
+  success: boolean;             // Overall import success status
+  imported: number;             // Count of successfully imported events
+  skipped: number;              // Count of skipped events
+  errors: string[];             // List of error messages
+  conflicts: ConflictItem[];    // Resolved conflict details
+  schedulesUploaded: number;    // Count of uploaded schedule files
+}
+```
+
+#### Archive Structure Validation
+```
+expected-structure/
+├── events.json              (Required: All event definitions)
+├── clubs.json               (Required: Club data with coordinates)
+├── zones.json               (Required: Zone definitions)
+├── event-types.json         (Required: Event type configurations)
+├── manifest.json            (Optional: Integrity verification)
+├── README.md               (Optional: Export documentation)
+└── schedules/              (Optional: PDF schedule files)
+    ├── event-123.pdf
+    ├── event-456.pdf
+    └── ...
+```
+
+#### Conflict Resolution Process
+1. **Archive Analysis**: Parse ZIP contents and validate structure
+2. **Data Extraction**: Read JSON files and validate format
+3. **Conflict Detection**: Compare imported data with existing database
+4. **User Resolution**: Present conflicts with resolution options
+5. **Import Execution**: Apply resolved conflicts and import data
+6. **Schedule Upload**: Transfer PDF files to Firebase Storage
+7. **Completion Report**: Provide detailed import summary
+
+### User Interface
+
+#### Import Workflow
+1. **File Selection**: Drag-and-drop or browse for ZIP archive
+2. **Analysis Phase**: Automatic archive validation and conflict detection
+3. **Configuration**: Set import options and filters
+4. **Conflict Resolution**: Review and resolve detected conflicts
+5. **Import Execution**: Monitor progress and view detailed logs
+6. **Results Summary**: Review import statistics and any errors
+
+#### Conflict Resolution UI
+- **Visual Conflict Cards**: Color-coded by severity (red=high, yellow=medium, blue=low)
+- **Side-by-side Comparison**: Existing vs. imported data comparison
+- **One-click Resolution**: Quick resolution buttons for each conflict
+- **Bulk Actions**: Apply same resolution to multiple similar conflicts
+
+#### Progress Monitoring
+- **Multi-stage Progress**: Archive parsing, validation, import, file upload
+- **Detailed Logging**: Timestamped entries for each operation
+- **Error Reporting**: Clear error messages with suggested solutions
+- **Summary Statistics**: Real-time counts of processed, imported, and skipped items
+
 ### Usage Examples
 
-#### Basic Export
+#### Export Usage
 1. Navigate to `/admin/testing/export-events`
 2. Configure desired options (all defaults work for complete export)
 3. Click "Start Export"
 4. Monitor progress and download when complete
 
-#### Filtered Export
-1. Select specific event types (e.g., only Rally and ODE)
-2. Set date range (e.g., 2025-01-01 to 2025-12-31)
-3. Choose compression level based on needs
-4. Include/exclude schedules based on requirements
+#### Import Usage
+1. Navigate to `/admin/testing/import-events`
+2. Select ZIP archive file (drag-and-drop supported)
+3. Click "Analyze Archive" to detect conflicts
+4. Resolve any conflicts using the resolution interface
+5. Configure import options (dry run recommended first)
+6. Click "Import Events" and monitor progress
+
+#### Backup & Restore Workflow
+1. **Export Current Data**: Create complete backup with Export Tool
+2. **Test Import**: Use dry run mode to validate backup integrity
+3. **Migration**: Import data into new environment with conflict resolution
+4. **Verification**: Compare imported data with original export manifest
+
+#### Conflict Resolution Examples
+
+**Duplicate ID Conflict**:
+- Existing: Event ID "rally-001" (Spring Rally, March 15)
+- Imported: Event ID "rally-001" (Summer Rally, June 20)
+- Resolution: Choose "Rename Import" to create "rally-001_imported_[timestamp]"
+
+**Name Conflict**:
+- Existing: "Spring Rally" on March 15
+- Imported: "Spring Rally" on March 20  
+- Resolution: Choose "Overwrite" to update date, or "Skip" to keep existing
+
+**Missing Club**:
+- Imported event references Club ID "club-999" which doesn't exist
+- Resolution: Import will be skipped unless club data is imported first
 
 #### Troubleshooting
-- **Large Exports**: Use high compression for large datasets
-- **Network Issues**: Check Firebase Storage permissions
-- **File Errors**: Review log output for specific file issues
-- **Browser Limits**: Modern browsers handle large downloads efficiently
+- **Large Imports**: Use compression settings and dry run mode for testing
+- **Network Issues**: Check Firebase Storage and Firestore permissions
+- **Conflict Resolution**: Use dry run to identify all conflicts before importing
+- **File Validation**: Enable manifest validation for integrity checking
+- **Browser Limits**: Modern browsers handle large ZIP files efficiently
 
 ---
 

@@ -197,10 +197,21 @@ export default function PurgeEventsPage() {
       formData.append('operation', 'purge');
       formData.append('config', JSON.stringify(purgeConfig));
 
+      console.log('Starting purge operation with config:', purgeConfig);
+      
+      // Add timeout and progress updates
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+      }, 300000); // 5 minute timeout
+
       const response = await fetch('/api/admin/purge-events', {
         method: 'POST',
-        body: formData
+        body: formData,
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -219,11 +230,18 @@ export default function PurgeEventsPage() {
       setPurgeResult(result.result);
 
     } catch (error: any) {
+      console.error('Purge operation failed:', error);
+      
+      let errorMessage = error.message;
+      if (error.name === 'AbortError') {
+        errorMessage = 'Operation timed out after 5 minutes. This may be due to a large number of events or database connectivity issues.';
+      }
+      
       setPurgeProgress(prev => ({
         stage: 'Purge Failed',
         percentage: 0,
-        details: error.message,
-        logs: [...prev?.logs || [], `[${new Date().toLocaleTimeString()}] Error: ${error.message}`]
+        details: errorMessage,
+        logs: [...prev?.logs || [], `[${new Date().toLocaleTimeString()}] Error: ${errorMessage}`]
       }));
     } finally {
       setIsPurging(false);

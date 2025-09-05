@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import JSZip from 'jszip';
 import { Event, Club, Zone } from '@/lib/types';
-import { getAllEvents, getAllClubs, getAllZones, deleteEvent } from '@/lib/server-data';
+import { getAllEvents, getAllClubs, getAllZones, deleteEvent, deleteEventsBatch } from '@/lib/server-data';
 import { createHash } from 'crypto';
 
 interface PurgeConfig {
@@ -294,32 +294,36 @@ async function performPurge(matches: MatchedEvent[], config: PurgeConfig): Promi
     }
   }
 
-  // Process deletions
-  for (const match of filteredMatches) {
-    try {
-      // Update summary statistics
-      summary.byZone[match.zone] = (summary.byZone[match.zone] || 0) + 1;
-      summary.byClub[match.club] = (summary.byClub[match.club] || 0) + 1;
-      summary.byStatus[match.status] = (summary.byStatus[match.status] || 0) + 1;
-      summary.byMatchType[match.matchType] = (summary.byMatchType[match.matchType] || 0) + 1;
+  // Process deletions in batches
+  console.log(`Processing ${filteredMatches.length} events for ${config.dryRun ? 'simulation' : 'deletion'}`);
 
-      if (config.dryRun) {
-        // Simulate deletion
-        deleted++;
-      } else {
-        // Actual deletion
-        const success = await deleteEvent(match.id);
-        if (success) {
-          deleted++;
-        } else {
-          skipped++;
-          errors.push(`Failed to delete event: ${match.name} (${match.id})`);
-        }
-      }
-    } catch (error: any) {
-      skipped++;
-      errors.push(`Error deleting event ${match.id}: ${error.message}`);
+  // Update summary statistics
+  for (const match of filteredMatches) {
+    summary.byZone[match.zone] = (summary.byZone[match.zone] || 0) + 1;
+    summary.byClub[match.club] = (summary.byClub[match.club] || 0) + 1;
+    summary.byStatus[match.status] = (summary.byStatus[match.status] || 0) + 1;
+    summary.byMatchType[match.matchType] = (summary.byMatchType[match.matchType] || 0) + 1;
+  }
+
+  if (config.dryRun) {
+    // Simulate deletion - no actual database operations
+    deleted = filteredMatches.length;
+    console.log(`Dry run: would delete ${deleted} events`);
+  } else {
+    // Actual deletion using batch operations
+    const eventIds = filteredMatches.map(match => match.id);
+    const { success, failed } = await deleteEventsBatch(eventIds);
+    
+    deleted = success.length;
+    skipped = failed.length;
+    
+    // Add errors for failed deletions
+    for (const failedId of failed) {
+      const failedMatch = filteredMatches.find(m => m.id === failedId);
+      errors.push(`Failed to delete event: ${failedMatch?.name || failedId}`);
     }
+    
+    console.log(`Batch deletion completed: ${deleted} deleted, ${skipped} failed`);
   }
 
   return {

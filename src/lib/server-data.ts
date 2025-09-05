@@ -205,3 +205,48 @@ export async function deleteEvent(eventId: string): Promise<boolean> {
     return false;
   }
 }
+
+export async function deleteEventsBatch(eventIds: string[]): Promise<{ success: string[], failed: string[] }> {
+  const success: string[] = [];
+  const failed: string[] = [];
+  
+  try {
+    if (!adminDb || !isDatabaseConnected()) {
+      const errorMessage = getDatabaseErrorMessage();
+      console.warn('⚠️ deleteEventsBatch: Database connection issue -', errorMessage);
+      return { success, failed: eventIds };
+    }
+    
+    // Firestore batch has a limit of 500 operations
+    const BATCH_SIZE = 500;
+    const batches = [];
+    
+    for (let i = 0; i < eventIds.length; i += BATCH_SIZE) {
+      batches.push(eventIds.slice(i, i + BATCH_SIZE));
+    }
+    
+    for (const batch of batches) {
+      const firestoreBatch = adminDb.batch();
+      
+      for (const eventId of batch) {
+        const eventRef = adminDb.collection('events').doc(eventId);
+        firestoreBatch.delete(eventRef);
+      }
+      
+      try {
+        await firestoreBatch.commit();
+        success.push(...batch);
+        console.log(`Batch deleted ${batch.length} events successfully`);
+      } catch (error: any) {
+        console.error('Error in batch delete:', error);
+        failed.push(...batch);
+      }
+    }
+    
+  } catch (error: any) {
+    console.error('Error in deleteEventsBatch:', error);
+    failed.push(...eventIds);
+  }
+  
+  return { success, failed };
+}

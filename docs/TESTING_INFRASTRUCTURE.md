@@ -1,7 +1,7 @@
 # Testing Infrastructure Documentation
 
 ## Overview
-The Testing section in the Admin Dashboard provides comprehensive tools for data backup, migration, and system testing. This documentation covers the Event Export Tool, Event Import Tool, and related testing infrastructure.
+The Testing section in the Admin Dashboard provides comprehensive tools for data backup, migration, and system testing. This documentation covers the Event Export Tool, Event Import Tool, Test Data Generator, and related testing infrastructure.
 
 ## Event Export Tool
 
@@ -268,50 +268,165 @@ expected-structure/
 - **Error Reporting**: Clear error messages with suggested solutions
 - **Summary Statistics**: Real-time counts of processed, imported, and skipped items
 
+## Test Data Generator
+
+### Purpose
+The Test Data Generator creates realistic synthetic event data in export-compatible ZIP format for testing, development, and demonstration purposes. It generates comprehensive datasets with authentic patterns and relationships.
+
+### Features
+
+#### 🎯 Realistic Data Generation
+- **Configurable Time Spans**: Generate data spanning 1-5 years with customizable event density
+- **Authentic Patterns**: Seasonal variation with higher activity in spring/summer months
+- **Weekend Bias**: Configurable weekend event preference (default 60% weekend events)
+- **Event Distribution**: Balanced distribution across multiple event types and venues
+
+#### 📊 Advanced Configuration
+- **Volume Control**: 1-20 events per week with seasonal multipliers
+- **Zone/Club Filtering**: Generate data for specific zones or clubs
+- **Event Type Selection**: Include all or specific event types (Rally, ODE, Show Jumping, etc.)
+- **Schedule Coverage**: Configurable percentage of events with schedule files (0-100%)
+
+#### 📋 Approval Status Simulation
+- **Realistic Distribution**: Configurable approval ratios (default: 80% approved, 15% proposed, 5% rejected)
+- **Status Variety**: Mix of approved, proposed, and rejected events for testing workflows
+- **Historical Patterns**: Past events more likely to be approved, future events mixed status
+
+#### 📄 Schedule File Generation
+- **Mock PDF Creation**: Realistic PDF schedule files using pdf-lib
+- **Professional Layout**: Event details, venue information, and structured timetables
+- **Variable Coverage**: Configurable percentage of events with schedules
+- **Authentic Content**: Real-looking event schedules with registration times, activities, and contact details
+
+#### 🛡️ Export Compatibility
+- **Identical Format**: Generated archives use exact same structure as Export Tool
+- **Manifest Generation**: Complete manifest.json with checksums and metadata
+- **Version Tagging**: Clear identification as generated test data
+- **Import Ready**: Direct compatibility with Import Tool for seamless testing
+
+### Technical Implementation
+
+#### Backend API (`/api/admin/generate-test-data`)
+```typescript
+interface GenerationConfig {
+  years: number;                    // Time span (1-5 years)
+  eventsPerWeek: number;           // Average events per week (1-20)
+  selectedZones: string[];         // Zone filtering (empty = all)
+  selectedClubs: string[];         // Club filtering (empty = all)
+  includeSchedules: boolean;       // Generate schedule files
+  scheduleProbability: number;     // Percentage with schedules (0-100)
+  approvalDistribution: {
+    approved: number;              // Percentage approved (0-100)
+    pending: number;               // Percentage proposed (0-100)
+    rejected: number;              // Percentage rejected (0-100)
+  };
+  seasonalVariation: boolean;      // Apply seasonal patterns
+  weekendBias: boolean;           // Prefer weekend events
+  dryRun: boolean;                // Preview mode without file creation
+  outputFormat: 'zip' | 'preview'; // Output format selection
+}
+```
+
+#### Data Generation Algorithms
+- **Date Distribution**: Weighted random distribution with seasonal multipliers
+- **Weekend Preference**: Configurable bias toward Saturday/Sunday events  
+- **Event Naming**: Realistic naming patterns using templates per event type
+- **Venue Assignment**: Random club selection with zone relationship validation
+- **Coordinator Details**: Generated contact information with realistic patterns
+
+#### PDF Schedule Generation
+```typescript
+// Mock PDF generation with professional layout
+const generateMockPDF = async (event, club, eventType) => {
+  // Professional event schedule with:
+  // - Event header and details
+  // - Venue information and address  
+  // - Structured timetable (8:00 AM - 5:00 PM)
+  // - Registration and activity periods
+  // - Contact information and notes
+};
+```
+
+#### Archive Structure
+```
+test-data-YYYY-MM-DD-NNNevents.zip
+├── events.json              (Generated event records)
+├── clubs.json               (Club definitions with coordinates)
+├── zones.json               (Zone definitions)
+├── event-types.json         (Event type configurations)
+├── manifest.json            (Integrity verification)
+├── README.md               (Generation documentation)
+└── schedules/              (Mock PDF schedule files)
+    ├── test-event-1-Spring-Rally.pdf
+    ├── test-event-2-Summer-ODE.pdf
+    └── ...
+```
+
+### User Interface
+
+#### Generation Workflow
+1. **Time Configuration**: Set years and events per week using sliders
+2. **Filtering Options**: Select specific zones/clubs or use all available
+3. **Realism Settings**: Configure seasonal variation, weekend bias, schedule coverage
+4. **Approval Distribution**: Set realistic approval status percentages
+5. **Preview/Generate**: Use dry run mode to preview or generate actual files
+6. **Progress Monitoring**: Real-time progress with detailed logging
+7. **Auto-Download**: Automatic ZIP file download upon completion
+
+#### Configuration Interface
+- **Intuitive Sliders**: Visual control for numeric parameters (years, events/week, coverage %)
+- **Checkbox Controls**: Enable/disable features (seasonal variation, weekend bias, schedules)
+- **Dropdown Selection**: Zone and club filtering with "All" options
+- **Approval Sliders**: Visual distribution control for approval status ratios
+- **Preview Mode**: Dry run option for safe configuration testing
+
+#### Progress Visualization
+- **Multi-stage Progress**: Initialize → Generate Events → Create Schedules → Build Archive
+- **Percentage Completion**: Real-time progress bars with detailed stage information
+- **Detailed Logging**: Timestamped entries showing generation steps and statistics
+- **Error Handling**: Clear error messages with suggested troubleshooting steps
+
 ### Usage Examples
 
-#### Export Usage
-1. Navigate to `/admin/testing/export-events`
-2. Configure desired options (all defaults work for complete export)
-3. Click "Start Export"
-4. Monitor progress and download when complete
+#### Quick Test Dataset
+```
+Configuration:
+- Years: 1
+- Events per week: 3
+- All zones and clubs
+- Weekend bias: Enabled
+- Schedule coverage: 50%
+- Output: ~156 events with realistic distribution
+```
 
-#### Import Usage
-1. Navigate to `/admin/testing/import-events`
-2. Select ZIP archive file (drag-and-drop supported)
-3. Click "Analyze Archive" to detect conflicts
-4. Resolve any conflicts using the resolution interface
-5. Configure import options (dry run recommended first)
-6. Click "Import Events" and monitor progress
+#### Comprehensive Development Dataset  
+```
+Configuration:
+- Years: 3
+- Events per week: 8  
+- Seasonal variation: Enabled
+- Weekend bias: Enabled
+- Schedule coverage: 80%
+- Output: ~1,000+ events with full schedule files
+```
 
-#### Backup & Restore Workflow
-1. **Export Current Data**: Create complete backup with Export Tool
-2. **Test Import**: Use dry run mode to validate backup integrity
-3. **Migration**: Import data into new environment with conflict resolution
-4. **Verification**: Compare imported data with original export manifest
+#### Zone-Specific Testing
+```
+Configuration:
+- Years: 2
+- Events per week: 5
+- Selected zones: Western Australia only
+- Schedule coverage: 100%
+- Output: Zone-focused dataset for regional testing
+```
 
-#### Conflict Resolution Examples
-
-**Duplicate ID Conflict**:
-- Existing: Event ID "rally-001" (Spring Rally, March 15)
-- Imported: Event ID "rally-001" (Summer Rally, June 20)
-- Resolution: Choose "Rename Import" to create "rally-001_imported_[timestamp]"
-
-**Name Conflict**:
-- Existing: "Spring Rally" on March 15
-- Imported: "Spring Rally" on March 20  
-- Resolution: Choose "Overwrite" to update date, or "Skip" to keep existing
-
-**Missing Club**:
-- Imported event references Club ID "club-999" which doesn't exist
-- Resolution: Import will be skipped unless club data is imported first
-
-#### Troubleshooting
-- **Large Imports**: Use compression settings and dry run mode for testing
-- **Network Issues**: Check Firebase Storage and Firestore permissions
-- **Conflict Resolution**: Use dry run to identify all conflicts before importing
-- **File Validation**: Enable manifest validation for integrity checking
-- **Browser Limits**: Modern browsers handle large ZIP files efficiently
+#### Preview Mode Testing
+```
+Configuration:
+- Dry run: Enabled
+- Any settings for preview
+- Output: Statistics and sample data without file creation
+```
 
 ---
 

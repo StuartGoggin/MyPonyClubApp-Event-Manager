@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, Users, MapPin, FileText, AlertTriangle, CheckCircle, Clock, Map, ExternalLink, Database, Upload, Settings, Globe, Download, Package, TestTube, FileUp, Factory } from 'lucide-react';
+import { Calendar, Users, MapPin, FileText, AlertTriangle, CheckCircle, Clock, Map, ExternalLink, Database, Upload, Settings, Globe, Download, Package, TestTube, FileUp, Factory, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { getAllZones, getAllClubs, getAllEventTypes } from '@/lib/server-data';
 import { getDatabaseErrorMessage, isDatabaseConnected } from '@/lib/firebase-admin';
@@ -544,6 +544,35 @@ async function AdminDashboardContent() {
                   <Link href="/admin/testing/generate-test-data">
                     <Factory className="h-4 w-4 mr-2" />
                     Generate Test Data
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Event Purge Tool */}
+          <div className="relative overflow-hidden rounded-2xl border border-red-200/50 bg-gradient-to-br from-red-50/80 via-red-50/60 to-orange-50/40 dark:from-red-950/40 dark:via-red-950/30 dark:to-orange-950/20 shadow-xl backdrop-blur-sm hover:shadow-2xl transition-all duration-300 hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-r from-red-400/5 to-orange-400/5"></div>
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-red-400/10 to-transparent rounded-full blur-2xl"></div>
+            
+            <div className="relative p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="rounded-xl bg-red-100 dark:bg-red-900/50 p-3 border border-red-200 dark:border-red-700">
+                  <Trash2 className="h-5 w-5 text-red-600 dark:text-red-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">Event Purge Tool</h3>
+                  <p className="text-sm text-muted-foreground">Safe event removal</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs text-red-700 dark:text-red-300">
+                  Safely remove events from the database using exported ZIP archives with intelligent matching
+                </p>
+                <Button asChild variant="outline" className="w-full border-red-200 hover:bg-red-50 dark:border-red-700 dark:hover:bg-red-950/30">
+                  <Link href="/admin/testing/purge-events">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Purge Events
                   </Link>
                 </Button>
               </div>

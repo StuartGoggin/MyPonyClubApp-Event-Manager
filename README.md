@@ -21,6 +21,7 @@ A comprehensive Next.js application for managing pony club events, featuring adv
   - Real-time import progress with detailed logging
   - Schedule file restoration to Firebase Storage
 - **Test Data Generator**: Realistic synthetic data creation for testing
+- **Event Purge Tool**: Safe removal of events using exported archives
   - Configurable generation (1-5 years, 1-20 events/week)
   - Authentic patterns with seasonal variation and weekend bias
   - Mock PDF schedule generation with professional layouts

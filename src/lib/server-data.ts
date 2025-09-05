@@ -188,3 +188,20 @@ export async function createClub(clubData: Omit<Club, 'id'>): Promise<Club | nul
     return null;
   }
 }
+
+export async function deleteEvent(eventId: string): Promise<boolean> {
+  try {
+    if (!adminDb || !isDatabaseConnected()) {
+      const errorMessage = getDatabaseErrorMessage();
+      console.warn('⚠️ deleteEvent: Database connection issue -', errorMessage);
+      return false;
+    }
+    
+    await adminDb.collection('events').doc(eventId).delete();
+    console.log(`Event ${eventId} deleted successfully`);
+    return true;
+  } catch (error: any) {
+    console.error('Error deleting event:', error);
+    return false;
+  }
+}

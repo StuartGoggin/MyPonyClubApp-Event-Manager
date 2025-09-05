@@ -428,6 +428,156 @@ Configuration:
 - Output: Statistics and sample data without file creation
 ```
 
+## Event Purge Tool
+
+### Purpose
+The Event Purge Tool provides safe, controlled removal of event records from the database using exported ZIP archives as reference. This allows precise cleanup of test data, migration rollbacks, or selective data management.
+
+### Features
+
+#### 🎯 Archive-Based Matching
+- **ZIP Archive Analysis**: Upload exported archives to identify matching events
+- **Intelligent Matching**: Multiple algorithms for exact, near, and partial matches
+- **Confidence Scoring**: 0-100% confidence ratings for match reliability
+- **Match Types**: Exact ID matches, name similarity, date correlation, club/type matching
+
+#### 🛡️ Safety & Security
+- **Dry Run Mode**: Simulate purge operations without database changes
+- **Confirmation Requirements**: Multi-step confirmation before permanent deletion
+- **Backup Creation**: Automatic backup before purging (optional)
+- **Integrity Validation**: Manifest and checksum verification of input archives
+
+#### 🔍 Advanced Filtering
+- **Zone Filtering**: Limit purge operations to specific zones
+- **Club Filtering**: Target specific clubs for selective deletion
+- **Date Range Filtering**: Time-based constraints for purge operations
+- **Status Filtering**: Filter by event status (proposed, approved, etc.)
+
+#### 📊 Comprehensive Reporting
+- **Match Analysis**: Detailed breakdown of found matches with confidence levels
+- **Purge Summary**: Statistics by zone, club, status, and match type
+- **Error Reporting**: Detailed logging of skipped or failed deletions
+- **Audit Trail**: Complete operation logs for compliance and debugging
+
+### Technical Implementation
+
+#### Backend API (`/api/admin/purge-events`)
+```typescript
+interface PurgeConfig {
+  dryRun: boolean;                    // Simulate without deleting
+  requireConfirmation: boolean;       // Require explicit confirmation
+  filterByZone: string[];            // Zone ID filters
+  filterByClub: string[];            // Club ID filters
+  filterByDateRange: {
+    start: string;                   // ISO date string
+    end: string;                     // ISO date string
+  };
+  skipScheduleFiles: boolean;        // Preserve schedule files
+  createBackup: boolean;             // Create backup before purge
+}
+
+interface MatchedEvent {
+  id: string;                        // Database event ID
+  name: string;                      // Event name
+  date: string;                      // Event date
+  club: string;                      // Club name
+  zone: string;                      // Zone name
+  status: string;                    // Event status
+  matchType: 'exact' | 'near' | 'partial';  // Match confidence level
+  confidence: number;                // 0-100 percentage score
+}
+
+interface PurgeResult {
+  success: boolean;
+  totalMatched: number;              // Events found in archive
+  deleted: number;                   // Successfully deleted
+  skipped: number;                   // Failed or filtered out
+  errors: string[];                  // Error messages
+  backupCreated?: string;            // Backup filename if created
+  purgeTime: number;                 // Operation duration in ms
+  summary: {
+    byZone: { [zone: string]: number };     // Deletions by zone
+    byClub: { [club: string]: number };     // Deletions by club
+    byStatus: { [status: string]: number }; // Deletions by status
+    byMatchType: { [type: string]: number }; // Deletions by match type
+  };
+}
+```
+
+#### Matching Algorithms
+
+**Exact Matching (80-100% confidence)**
+- Identical event IDs (40 points)
+- Perfect name match (25 points)  
+- Same date (20 points)
+- Same club (10 points)
+- Same event type (5 points)
+
+**Near Matching (60-79% confidence)**
+- Similar names with string similarity algorithms
+- Date variations within 1-7 days
+- Related clubs or zones
+- Similar event characteristics
+
+**Partial Matching (40-59% confidence)**
+- Significant name overlap
+- Broader date ranges
+- Related metadata
+- Pattern-based associations
+
+#### Frontend Components
+
+**Archive Upload Interface**
+- File validation for ZIP archives
+- Real-time upload progress
+- Archive structure verification
+- Manifest integrity checking
+
+**Match Analysis Display**
+- Tabular view of matched events
+- Confidence level visualization
+- Match type categorization
+- Filter and sort capabilities
+
+**Safety Configuration Panel**
+- Dry run toggle with visual indicators
+- Confirmation requirement settings
+- Backup creation options
+- Filter configuration interface
+
+### Usage Examples
+
+#### Safe Test Data Cleanup
+```
+Process:
+1. Upload test data export archive
+2. Enable dry run mode
+3. Review matched events (expect high confidence)
+4. Configure filters if needed
+5. Execute simulation
+6. Review results and confirm actual purge
+```
+
+#### Selective Event Removal
+```
+Process:
+1. Upload archive containing events to remove
+2. Set zone/club filters to limit scope
+3. Enable backup creation
+4. Require confirmation
+5. Execute purge with detailed logging
+```
+
+#### Migration Rollback
+```
+Process:
+1. Upload original export before migration
+2. Set date range filters for migration period
+3. Create comprehensive backup
+4. Use exact matching only (high confidence threshold)
+5. Execute with full audit trail
+```
+
 ---
 
-This documentation provides comprehensive coverage of the Testing infrastructure and Event Export Tool functionality.
+This documentation provides comprehensive coverage of the Testing infrastructure, Event Export Tool, Event Import Tool, Test Data Generator, and Event Purge Tool functionality.

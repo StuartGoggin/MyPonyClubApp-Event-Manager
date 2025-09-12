@@ -22,8 +22,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { RouteGuard } from '@/components/auth/route-guard';
 
-export default function UserManagementPage() {
+function UserManagementContent() {
   const [users, setUsers] = useState<User[]>([]);
   const [clubs, setClubs] = useState<any[]>([]);
   const [zones, setZones] = useState<any[]>([]);
@@ -669,5 +670,13 @@ export default function UserManagementPage() {
         onUserUpdated={handleUserUpdated}
       />
     </div>
+  );
+}
+
+export default function UserManagementPage() {
+  return (
+    <RouteGuard requireAuth={true} requiredRoles={['super_user']}>
+      <UserManagementContent />
+    </RouteGuard>
   );
 }

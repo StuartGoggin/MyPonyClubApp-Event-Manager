@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -14,49 +14,17 @@ export default function LoginPage() {
     ponyClubId: '',
     mobileNumber: ''
   });
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
+  const { login, loading } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch('/api/auth', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(credentials)
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        // Store token in localStorage (you might want to use a more secure method)
-        localStorage.setItem('auth_token', data.token);
-        localStorage.setItem('user_data', JSON.stringify(data.user));
-        
-        // Redirect based on user role
-        switch (data.user.role) {
-          case 'super_user':
-            router.push('/admin');
-            break;
-          case 'zone_rep':
-            router.push('/zone-manager');
-            break;
-          default:
-            router.push('/club-manager');
-        }
-      } else {
-        setError(data.message || data.error || 'Login failed');
-      }
+      await login(credentials);
     } catch (err) {
-      setError('Network error. Please try again.');
-    } finally {
-      setLoading(false);
+      setError(err instanceof Error ? err.message : 'Login failed');
     }
   };
 

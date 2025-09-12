@@ -6,6 +6,7 @@ import { Calendar, Users, MapPin, FileText, AlertTriangle, CheckCircle, Clock, M
 import Link from 'next/link';
 import { getAllZones, getAllClubs, getAllEventTypes } from '@/lib/server-data';
 import { getDatabaseErrorMessage, isDatabaseConnected } from '@/lib/firebase-admin';
+import { RouteGuard } from '@/components/auth/route-guard';
 
 async function AdminDashboardContent() {
   // Check database connection
@@ -713,8 +714,10 @@ function ConfigItem({ label, value, href, isConfigured }: ConfigItemProps) {
 
 export default function AdminDashboardPage() {
   return (
-    <Suspense fallback={<div className="p-6">Loading dashboard...</div>}>
-      <AdminDashboardContent />
-    </Suspense>
+    <RouteGuard requireAuth={true} requiredRoles={['super_user']}>
+      <Suspense fallback={<div className="p-6">Loading dashboard...</div>}>
+        <AdminDashboardContent />
+      </Suspense>
+    </RouteGuard>
   );
 }

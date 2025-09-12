@@ -11,10 +11,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Upload, Download, UserPlus, Settings, AlertCircle, CheckCircle, Users, Search, Filter, X } from 'lucide-react';
+import { Upload, Download, UserPlus, Settings, AlertCircle, CheckCircle, Users, Search, Filter, X, MoreHorizontal } from 'lucide-react';
 import { ImportPreviewDialog } from '@/components/admin/import-preview-dialog';
+import { UserActionsDialog } from '@/components/admin/user-actions-dialog';
 import { ImportPreviewResult } from '@/app/api/admin/users/import/preview/route';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export default function UserManagementPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -27,6 +34,10 @@ export default function UserManagementPage() {
   const [previewData, setPreviewData] = useState<ImportPreviewResult | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [validRows, setValidRows] = useState<any[]>([]);
+  
+  // User actions dialog state
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [showUserActions, setShowUserActions] = useState(false);
   
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -282,6 +293,20 @@ export default function UserManagementPage() {
 
   const hasActiveFilters = searchTerm !== '' || roleFilter !== 'all' || statusFilter !== 'all' || clubFilter !== 'all' || zoneFilter !== 'all';
 
+  const handleUserAction = (user: User) => {
+    setSelectedUser(user);
+    setShowUserActions(true);
+  };
+
+  const handleCloseUserActions = () => {
+    setSelectedUser(null);
+    setShowUserActions(false);
+  };
+
+  const handleUserUpdated = () => {
+    loadUsers(); // Reload users after update
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto p-6">
@@ -501,9 +526,19 @@ export default function UserManagementPage() {
                             }
                           </TableCell>
                           <TableCell>
-                            <Button variant="outline" size="sm">
-                              <Settings className="h-4 w-4" />
-                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleUserAction(user)}>
+                                  <Settings className="h-4 w-4 mr-2" />
+                                  Manage User
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </TableCell>
                         </TableRow>
                       ))
@@ -592,6 +627,14 @@ export default function UserManagementPage() {
         onConfirmImport={handleConfirmImport}
         isImporting={importing}
         validRows={validRows}
+      />
+
+      {/* User Actions Dialog */}
+      <UserActionsDialog
+        user={selectedUser}
+        isOpen={showUserActions}
+        onClose={handleCloseUserActions}
+        onUserUpdated={handleUserUpdated}
       />
     </div>
   );

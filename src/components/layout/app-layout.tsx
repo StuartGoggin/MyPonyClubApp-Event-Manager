@@ -4,6 +4,7 @@ import type { PropsWithChildren } from 'react';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { AppHeader } from '@/components/layout/app-header';
+import { useAuth } from '@/contexts/auth-context';
 import Link from 'next/link';
 import { Calendar, PlusCircle, Database, FerrisWheel, Shield, Settings, MapPin, Building, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,11 +12,71 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAtom } from 'jotai';
 import { eventSourceAtom, type EventSource } from '@/lib/state';
+import { NavigationItem, filterNavigationByRole, UserRole } from '@/lib/access-control';
 
 export function AppLayout({ children }: PropsWithChildren) {
   const pathname = usePathname();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [eventSources, setEventSources] = useAtom(eventSourceAtom);
+  const { user, isAuthenticated } = useAuth();
+  
+  // Navigation items with role-based access control
+  const navigationItems: NavigationItem[] = [
+    {
+      href: '/',
+      title: 'View Calendar',
+      icon: Calendar,
+      label: 'View Calendar',
+      // Public access - no role requirements
+    },
+    {
+      href: '/request-event',
+      title: 'Request Event',
+      icon: PlusCircle,
+      label: 'Request Event',
+      requireAuth: true,
+      // All authenticated users can request events
+    },
+    {
+      href: '/manage-events',
+      title: 'Manage my Events',
+      icon: Settings,
+      label: 'Manage my Events',
+      requireAuth: true,
+      // All authenticated users can manage their own events
+    },
+    {
+      href: '/admin',
+      title: 'Admin Dashboard',
+      icon: Shield,
+      label: 'Admin',
+      requireAuth: true,
+      requiredRoles: ['super_user'], // Only super users can access admin
+    },
+    {
+      href: '/zone-manager',
+      title: 'Zone Manager',
+      icon: MapPin,
+      label: 'Zone Manager',
+      requireAuth: true,
+      requiredRoles: ['super_user', 'zone_rep'], // Super users and zone reps
+    },
+    {
+      href: '/club-manager',
+      title: 'Club Manager',
+      icon: Building,
+      label: 'Club Manager',
+      requireAuth: true,
+      // All authenticated users can access club manager functionality
+    },
+  ];
+
+  // Filter navigation items based on user role and authentication status
+  const visibleNavigationItems = filterNavigationByRole(
+    navigationItems,
+    user?.role as UserRole,
+    isAuthenticated
+  );
   
   // If this is an embed route, just return children without any app layout
   if (pathname?.startsWith('/embed')) {
@@ -66,54 +127,17 @@ export function AppLayout({ children }: PropsWithChildren) {
           <div className="flex flex-col p-4 space-y-2">
             {/* Navigation Menu */}
             <div className="space-y-1">
-              <Link
-                href="/"
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-primary/10 hover:text-primary"
-                title="View Calendar"
-              >
-                <Calendar className="h-4 w-4" />
-                {!sidebarCollapsed && <span>View Calendar</span>}
-              </Link>
-              <Link
-                href="/request-event"
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-primary/10 hover:text-primary"
-                title="Request Event"
-              >
-                <PlusCircle className="h-4 w-4" />
-                {!sidebarCollapsed && <span>Request Event</span>}
-              </Link>
-              <Link
-                href="/manage-events"
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-primary/10 hover:text-primary"
-                title="Manage my Events"
-              >
-                <Settings className="h-4 w-4" />
-                {!sidebarCollapsed && <span>Manage my Events</span>}
-              </Link>
-              <Link
-                href="/admin"
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-primary/10 hover:text-primary"
-                title="Admin Dashboard"
-              >
-                <Shield className="h-4 w-4" />
-                {!sidebarCollapsed && <span>Admin</span>}
-              </Link>
-              <Link
-                href="/zone-manager"
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-primary/10 hover:text-primary"
-                title="Zone Manager"
-              >
-                <MapPin className="h-4 w-4" />
-                {!sidebarCollapsed && <span>Zone Manager</span>}
-              </Link>
-              <Link
-                href="/club-manager"
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-primary/10 hover:text-primary"
-                title="Club Manager"
-              >
-                <Building className="h-4 w-4" />
-                {!sidebarCollapsed && <span>Club Manager</span>}
-              </Link>
+              {visibleNavigationItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-primary/10 hover:text-primary"
+                  title={item.title}
+                >
+                  <item.icon className="h-4 w-4" />
+                  {!sidebarCollapsed && <span>{item.label}</span>}
+                </Link>
+              ))}
             </div>
             
             {/* Separator */}

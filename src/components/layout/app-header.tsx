@@ -1,9 +1,9 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { User, Bell, Settings } from 'lucide-react';
 import Link from 'next/link';
+import { UserAccountMenu } from './user-account-menu';
 
 // A simple SVG pony icon.
 const PonyIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -76,26 +76,8 @@ export function AppHeader() {
               <Settings className="h-4 w-4 text-muted-foreground" />
             </Button>
 
-            {/* User status */}
-            <div className="flex items-center gap-3 pl-4 border-l border-border/40">
-              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-white/10 to-white/5 backdrop-blur-sm border border-white/20 hover:border-white/30 transition-all duration-300">
-                <div className="relative">
-                  <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center border-2 border-primary/40">
-                    <User className="h-4 w-4 text-primary" />
-                  </div>
-                  <div className="absolute -bottom-1 -right-1 h-3 w-3 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full border-2 border-background"></div>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-sm font-semibold text-foreground">Public User</span>
-                  <Badge 
-                    variant="secondary" 
-                    className="text-xs px-2 py-0 h-4 bg-gradient-to-r from-primary/20 to-accent/20 border-primary/30 text-primary font-medium"
-                  >
-                    Guest
-                  </Badge>
-                </div>
-              </div>
-            </div>
+            {/* User account menu */}
+            <UserAccountMenu />
           </div>
         </div>
       </div>

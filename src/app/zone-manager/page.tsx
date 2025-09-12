@@ -10,8 +10,9 @@ import { Zone, Club, Event, EventType } from '@/lib/types';
 import { EventCalendar } from '@/components/dashboard/event-calendar';
 import { ZoneEventApproval } from '@/components/zone-manager/zone-event-approval';
 import { ZoneEventManagement } from '@/components/zone-manager/zone-event-management';
+import { RouteGuard } from '@/components/auth/route-guard';
 
-export default function ZoneManagerDashboard() {
+function ZoneManagerContent() {
   const [zones, setZones] = useState<Zone[]>([]);
   const [clubs, setClubs] = useState<Club[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
@@ -313,5 +314,13 @@ export default function ZoneManagerDashboard() {
         </>
       )}
     </div>
+  );
+}
+
+export default function ZoneManagerDashboard() {
+  return (
+    <RouteGuard requireAuth={true} requiredRoles={['super_user', 'zone_rep']}>
+      <ZoneManagerContent />
+    </RouteGuard>
   );
 }

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Data</title>
+</head>
+<body>
+    <h1>Debug Data Inspection</h1>
+    
+    <h2>Clubs Data</h2>
+    <div id="clubs"></div>
+    
+    <h2>Zones Data</h2>
+    <div id="zones"></div>
+    
+    <h2>Users Data (first 3)</h2>
+    <div id="users"></div>
+
+    <script>
+        async function loadData() {
+            try {
+                // Load clubs
+                const clubsRes = await fetch('/api/clubs');
+                const clubsData = await clubsRes.json();
+                const clubs = Array.isArray(clubsData) ? clubsData : clubsData.clubs || [];
+                document.getElementById('clubs').innerHTML = '<pre>' + JSON.stringify(clubs, null, 2) + '</pre>';
+                
+                // Load zones
+                const zonesRes = await fetch('/api/zones');
+                const zonesData = await zonesRes.json();
+                const zones = Array.isArray(zonesData) ? zonesData : zonesData.zones || [];
+                document.getElementById('zones').innerHTML = '<pre>' + JSON.stringify(zones, null, 2) + '</pre>';
+                
+                // Load users (first few)
+                const usersRes = await fetch('/api/admin/users');
+                const usersData = await usersRes.json();
+                const users = usersData.users ? usersData.users.slice(0, 3) : [];
+                document.getElementById('users').innerHTML = '<pre>' + JSON.stringify(users, null, 2) + '</pre>';
+                
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        }
+        
+        loadData();
+    </script>
+</body>
+</html>

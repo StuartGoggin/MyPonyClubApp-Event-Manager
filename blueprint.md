@@ -911,3 +911,21 @@ An Event Schedule is a document (usually a PDF) created by an event organiser to
 - **Embed Options**: 3 embeddable interfaces (calendar, compact calendar, event request)
 - **File Formats**: 5 supported import formats (CSV, Excel, PDF, DOCX, text)
 - **Club Data**: 172+ Australian pony clubs with geolocation support
+- **User Import System**: Comprehensive user data import with optional role handling
+
+## 📚 Additional Documentation
+
+### Specialized Documentation Files
+- **[User Import System](./docs/USER_IMPORT_SYSTEM.md)**: Comprehensive guide to the user import system with optional role handling, zone/club mapping, and import pipeline architecture
+- **[Firebase Setup](./FIREBASE_SETUP.md)**: Complete Firebase configuration instructions for development and production
+- **[API Documentation](./docs/API.md)**: Detailed API endpoint documentation with examples and usage patterns
+
+### Import System Architecture
+For detailed information about the user import system including:
+- Optional role import framework
+- Advanced zone and club mapping algorithms
+- Database integration and caching strategies
+- Error handling and validation processes
+- TypeScript integration and type safety
+
+Refer to the dedicated **[User Import System Documentation](./docs/USER_IMPORT_SYSTEM.md)** for complete technical specifications and usage examples.

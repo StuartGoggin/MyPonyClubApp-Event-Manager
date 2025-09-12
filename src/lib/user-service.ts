@@ -479,4 +479,86 @@ export class UserService {
       return { updated: false };
     }
   }
+
+  /**
+   * Send credentials email to user
+   */
+  static async sendCredentialsEmail(user: User): Promise<void> {
+    try {
+      // In a production environment, this would use a real email service
+      // like SendGrid, AWS SES, or similar
+      
+      const emailContent = {
+        to: user.email,
+        subject: 'Your Pony Club Event Manager Login Credentials',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #2563eb;">Your Pony Club Event Manager Login Credentials</h2>
+            
+            <p>Hello ${user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'Pony Club Member'},</p>
+            
+            <p>Here are your login credentials for the Pony Club Event Manager system:</p>
+            
+            <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <p><strong>Username:</strong> ${user.ponyClubId}</p>
+              <p><strong>Password:</strong> ${user.mobileNumber}</p>
+            </div>
+            
+            <p>You can use these credentials to log in to the Pony Club Event Manager at:</p>
+            <p><a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002'}" style="color: #2563eb;">${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002'}</a></p>
+            
+            <p><strong>Important:</strong> Please keep these credentials secure and do not share them with others.</p>
+            
+            <p>If you have any questions or need assistance, please contact your zone administrator.</p>
+            
+            <p>Best regards,<br>
+            Pony Club Event Manager Team</p>
+          </div>
+        `,
+        text: `
+Your Pony Club Event Manager Login Credentials
+
+Hello ${user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'Pony Club Member'},
+
+Here are your login credentials for the Pony Club Event Manager system:
+
+Username: ${user.ponyClubId}
+Password: ${user.mobileNumber}
+
+You can use these credentials to log in to the Pony Club Event Manager at:
+${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002'}
+
+Important: Please keep these credentials secure and do not share them with others.
+
+If you have any questions or need assistance, please contact your zone administrator.
+
+Best regards,
+Pony Club Event Manager Team
+        `
+      };
+
+      // Log the email for development/testing purposes
+      console.log('=== CREDENTIALS EMAIL ===');
+      console.log(`To: ${emailContent.to}`);
+      console.log(`Subject: ${emailContent.subject}`);
+      console.log('--- Email Content ---');
+      console.log(emailContent.text);
+      console.log('=====================');
+
+      // TODO: Replace with actual email service implementation
+      // Examples:
+      // - SendGrid: await sgMail.send(emailContent);
+      // - AWS SES: await ses.sendEmail(emailContent).promise();
+      // - Nodemailer: await transporter.sendMail(emailContent);
+      
+      // For now, we'll simulate email sending
+      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API delay
+      
+      console.log(`Credentials email successfully "sent" to ${user.email}`);
+      
+    } catch (error) {
+      console.error('Error sending credentials email:', error);
+      throw new Error('Failed to send credentials email');
+    }
+  }
 }

@@ -201,6 +201,76 @@ export interface EventSchedule {
   notes?: string;
 }
 
+// User Management Types
+export type UserRole = 'standard' | 'zone_rep' | 'super_user';
+
+export interface User {
+  id: string;                      // Firestore document ID
+  ponyClubId: string;             // Unique Pony Club identifier
+  mobileNumber: string;           // Registered mobile phone number
+  role: UserRole;                 // User's access level
+  clubId: string;                 // Associated club ID
+  zoneId: string;                 // Associated zone ID
+  
+  // Additional user information
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  
+  // Audit fields
+  createdAt: Date;
+  updatedAt: Date;
+  lastLoginAt?: Date;
+  isActive: boolean;
+  
+  // Import tracking
+  importedAt?: Date;
+  importBatch?: string;           // Track which import batch this user came from
+}
+
+export interface UserImportRow {
+  ponyClubId: string;
+  mobileNumber: string;
+  clubName: string;
+  zoneName: string;
+  role?: string; // Make role optional
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+}
+
+export interface UserImportResult {
+  success: boolean;
+  totalRows: number;
+  successfulImports: number;
+  failedImports: number;
+  updatedUsers?: number;
+  createdUsers?: number;
+  errors: UserImportError[];
+  importBatch: string;
+  importedAt: Date;
+}
+
+export interface UserImportError {
+  row: number;
+  data: UserImportRow;
+  error: string;
+  field?: string;
+}
+
+// Authentication types
+export interface LoginCredentials {
+  ponyClubId: string;
+  mobileNumber: string;
+}
+
+export interface AuthSession {
+  userId: string;
+  user: User;
+  expiresAt: Date;
+  createdAt: Date;
+}
+
 export interface Event {
   id: string;
   name: string;

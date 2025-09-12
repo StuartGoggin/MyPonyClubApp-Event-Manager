@@ -5,6 +5,26 @@ A comprehensive Next.js application for managing pony club events, featuring adv
 
 ## ✨ Latest Features (September 2025)
 
+### 👥 Advanced User Management System (September 12, 2025)
+- **Optional Role Import System**: Revolutionary user import with flexible role handling
+  - **Role Column Support**: User roles stored as separate database column (not using Membership)
+  - **Optional Role Import**: Import works seamlessly whether spreadsheets contain role data or not
+  - **Data Update Capability**: Existing user data updates with new values during import
+  - **Graceful Fallback**: When role column missing, import continues without role data
+  - **Default Role Assignment**: New users without role data get 'standard' role automatically
+- **Comprehensive Import Mapping System**: Advanced zone and club name resolution
+  - **Zone Mapping Engine**: Intelligent mapping from spreadsheet formats to system zones
+  - **Club Name Resolution**: Fuzzy matching and normalization for club name variations
+  - **Database Integration**: Real-time zone and club lookup with caching system
+  - **Pattern Matching**: Advanced similarity scoring and normalization algorithms
+  - **Static Mapping Library**: Comprehensive mappings for all Victorian zones and common abbreviations
+- **Robust Import Pipeline**: Complete user data processing system
+  - **Multi-Format Support**: CSV and Excel file import with optional column handling
+  - **Schema Validation**: Zod-based validation with optional field support
+  - **Error Resilience**: Graceful handling of missing or invalid data
+  - **TypeScript Integration**: Full type safety throughout import pipeline
+  - **Logging System**: Comprehensive debug logging for mapping and validation
+
 ### 🧪 Testing Infrastructure & Data Management (September 5, 2025)
 - **Testing Section**: New dedicated testing area in admin dashboard with purple-themed design
 - **Advanced Event Export Tool**: Complete backup and migration system
@@ -201,8 +221,16 @@ The application will be available at http://localhost:9002
 ## 📁 Project Structure
 - `/src/app` - Next.js app router pages
 - `/src/components` - Reusable React components
-- `/src/lib` - Utilities, data access, and Firebase configuration
+- `/src/lib` - Utilities, data access, Firebase configuration, and user import system
 - `/src/ai` - Genkit AI flows for intelligent features
+- `/docs` - Comprehensive documentation including specialized guides
+
+### Key Import System Files
+- `/src/lib/import-mappings.ts` - Advanced zone and club name mapping system
+- `/src/lib/user-validation.ts` - User import validation with optional role support
+- `/src/lib/user-service.ts` - User processing with conditional role assignment
+- `/src/lib/spreadsheet-parser.ts` - CSV/Excel parsing with optional column handling
+- `/docs/USER_IMPORT_SYSTEM.md` - Comprehensive user import system documentation
 
 ## 🔧 Available Scripts
 - `npm run dev` - Start development server on port 9002
@@ -232,6 +260,27 @@ This app includes AI-powered features using Google's Genkit:
 - **Forms**: React Hook Form with Zod validation
 - **State**: Jotai for client state management
 - **Styling**: Custom CSS classes for glass effects, gradients, and enhanced visual hierarchy
+
+## 📚 Documentation
+
+### Core Documentation
+- **[Blueprint](./docs/blueprint.md)**: Complete application architecture and feature overview
+- **[Firebase Setup](./FIREBASE_SETUP.md)**: Detailed Firebase configuration guide
+
+### Specialized Guides
+- **[User Import System](./docs/USER_IMPORT_SYSTEM.md)**: Comprehensive guide covering:
+  - Optional role import framework with flexible handling
+  - Advanced zone and club mapping algorithms
+  - Database integration and caching strategies
+  - Import pipeline architecture and error handling
+  - TypeScript integration and type safety
+  - Configuration, usage examples, and troubleshooting
+
+### System Features
+- **User Management**: Optional role imports, data updates, graceful fallbacks
+- **Mapping Engine**: Zone/club name resolution with fuzzy matching
+- **Import Pipeline**: Multi-format support with comprehensive validation
+- **Error Handling**: Robust error management throughout import process
 
 ## 🎨 Design Features
 - **Glass Morphism**: Translucent cards with backdrop blur effects

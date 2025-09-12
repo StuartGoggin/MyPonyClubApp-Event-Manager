@@ -1,6 +1,19 @@
 # **App Name**: PonyClub Events
 
-## Latest Enhancements (September 3, 2025):
+## Latest Enhancements (September 12, 2025):
+
+### Advanced User Management System:
+- **Optional Role Import Framework**: Revolutionary user import system with flexible role handling
+- **Role Database Architecture**: User roles stored as separate database column for enhanced flexibility
+- **Import Adaptability**: System works seamlessly whether spreadsheets contain role data or not
+- **Data Update Capability**: Existing user records update with new values during import process
+- **Graceful Role Handling**: When role column missing, import continues without role assignment
+- **Intelligent Mapping System**: Comprehensive zone and club name resolution with fuzzy matching
+- **Database Integration**: Real-time zone and club lookup with sophisticated caching mechanisms
+- **Pattern Recognition**: Advanced similarity scoring and text normalization algorithms
+- **TypeScript Pipeline**: Full type safety throughout import validation and processing
+
+## Previous Enhancements (September 3, 2025):
 
 ### PDF Calendar Generation System:
 - **Professional PDF Calendars**: High-quality calendar generation with modern design principles
@@ -53,6 +66,24 @@
 - **Multi-Format Export**: JSON and iCal endpoints for external integrations
 
 ### Import & Processing:
+- **Advanced User Import System**: Revolutionary user data import with optional role handling
+  - **Flexible Role Support**: User roles stored as separate database column (not using Membership)
+  - **Optional Column Handling**: Import works whether spreadsheets contain role data or not
+  - **Data Update Capability**: Existing user records update with new values during import
+  - **Graceful Fallback**: When role column missing, import continues without role assignment
+  - **Default Role Assignment**: New users without role data get 'standard' role automatically
+- **Comprehensive Mapping Engine**: Advanced zone and club name resolution system
+  - **Zone Mapping Library**: Static mappings for all Victorian zones with pattern variations
+  - **Club Name Resolution**: Fuzzy matching and normalization for club name variations
+  - **Database Integration**: Real-time zone and club lookup with sophisticated caching
+  - **Pattern Recognition**: Advanced similarity scoring (Jaccard) and text normalization
+  - **Import Mappings**: Complete mapping system in `src/lib/import-mappings.ts`
+- **Robust Import Pipeline**: Complete user data processing system
+  - **Multi-Format Support**: CSV and Excel file import with optional column detection
+  - **Schema Validation**: Zod-based validation with optional field support throughout
+  - **Error Resilience**: Graceful handling of missing or invalid data at all levels
+  - **TypeScript Integration**: Full type safety with optional fields in UserImportRow
+  - **Comprehensive Logging**: Debug logging for mapping, validation, and processing
 - **Advanced Calendar Import**: Multi-format support (CSV, Excel, PDF, DOCX, text files)
 - **Smart Date Parsing**: Intelligent recognition of Pony Club date formats
 - **Batch Processing**: Professional 4-step import workflow with review and rollback

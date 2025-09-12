@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, Users, MapPin, FileText, AlertTriangle, CheckCircle, Clock, Map, ExternalLink, Database, Upload, Settings, Globe, Download, Package, TestTube, FileUp, Factory, Trash2 } from 'lucide-react';
+import { Calendar, Users, MapPin, FileText, AlertTriangle, CheckCircle, Clock, Map, ExternalLink, Database, Upload, Settings, Globe, Download, Package, TestTube, FileUp, Factory, Trash2, UserCheck } from 'lucide-react';
 import Link from 'next/link';
 import { getAllZones, getAllClubs, getAllEventTypes } from '@/lib/server-data';
 import { getDatabaseErrorMessage, isDatabaseConnected } from '@/lib/firebase-admin';
@@ -242,6 +242,35 @@ async function AdminDashboardContent() {
                   <Link href="/admin/event-types">
                     <FileText className="h-4 w-4 mr-2" />
                     Manage Types
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* User Management */}
+          <div className="relative overflow-hidden rounded-2xl border border-sky-200/50 bg-gradient-to-br from-sky-50/80 via-sky-50/60 to-blue-50/40 dark:from-sky-950/40 dark:via-sky-950/30 dark:to-blue-950/20 shadow-xl backdrop-blur-sm hover:shadow-2xl transition-all duration-300 hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-r from-sky-400/5 to-blue-400/5"></div>
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-sky-400/10 to-transparent rounded-full blur-2xl"></div>
+            
+            <div className="relative p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="rounded-xl bg-sky-100 dark:bg-sky-900/50 p-3 border border-sky-200 dark:border-sky-700">
+                  <UserCheck className="h-5 w-5 text-sky-600 dark:text-sky-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">User Management</h3>
+                  <p className="text-sm text-muted-foreground">Manage user accounts & roles</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Badge variant="outline" className="text-xs">
+                  Authentication & roles
+                </Badge>
+                <Button asChild variant="outline" className="w-full">
+                  <Link href="/admin/users">
+                    <UserCheck className="h-4 w-4 mr-2" />
+                    Manage Users
                   </Link>
                 </Button>
               </div>
@@ -573,6 +602,38 @@ async function AdminDashboardContent() {
                   <Link href="/admin/testing/purge-events">
                     <Trash2 className="h-4 w-4 mr-2" />
                     Purge Events
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* User Data Deletion Tool */}
+          <div className="relative overflow-hidden rounded-2xl border border-red-300/60 bg-gradient-to-br from-red-100/90 via-red-50/70 to-orange-50/50 dark:from-red-950/50 dark:via-red-950/40 dark:to-orange-950/30 shadow-xl backdrop-blur-sm hover:shadow-2xl transition-all duration-300 hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-orange-500/10"></div>
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-red-500/15 to-transparent rounded-full blur-2xl"></div>
+            
+            <div className="relative p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="rounded-xl bg-red-200 dark:bg-red-800/60 p-3 border border-red-300 dark:border-red-600">
+                  <UserCheck className="h-5 w-5 text-red-700 dark:text-red-300" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                    User Data Deletion
+                    <AlertTriangle className="h-4 w-4 text-red-600" />
+                  </h3>
+                  <p className="text-sm text-muted-foreground">⚠️ TESTING ONLY</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs text-red-800 dark:text-red-200 font-medium">
+                  DANGER: Permanently delete user data from database. For testing purposes only!
+                </p>
+                <Button asChild variant="outline" className="w-full border-red-300 hover:bg-red-100 dark:border-red-600 dark:hover:bg-red-950/50 text-red-700 dark:text-red-300">
+                  <Link href="/admin/testing/delete-users">
+                    <UserCheck className="h-4 w-4 mr-2" />
+                    Delete User Data
                   </Link>
                 </Button>
               </div>

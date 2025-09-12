@@ -151,6 +151,10 @@ export function ImportPreviewDialog({
 
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
+                      <span>Users with Email:</span>
+                      <span className="font-medium">{previewData.summary.usersWithEmail || 0}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
                       <span>Missing Mobile Numbers:</span>
                       <span className="font-medium">{previewData.summary.missingMobileNumbers}</span>
                     </div>
@@ -186,6 +190,7 @@ export function ImportPreviewDialog({
                       <TableRow>
                         <TableHead>Pony Club ID</TableHead>
                         <TableHead>Name</TableHead>
+                        <TableHead>Email</TableHead>
                         <TableHead>Mobile</TableHead>
                         <TableHead>Club</TableHead>
                         <TableHead>Zone</TableHead>
@@ -201,6 +206,13 @@ export function ImportPreviewDialog({
                               ? `${row.firstName || ''} ${row.lastName || ''}`.trim()
                               : '-'
                             }
+                          </TableCell>
+                          <TableCell>
+                            {row.email ? (
+                              <span className="text-sm">{row.email}</span>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">-</span>
+                            )}
                           </TableCell>
                           <TableCell>{row.mobileNumber || '-'}</TableCell>
                           <TableCell>{row.originalClubName || '-'}</TableCell>

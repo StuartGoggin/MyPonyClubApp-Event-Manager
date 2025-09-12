@@ -269,18 +269,42 @@ export default function UserManagementPage() {
 
   // Get unique values for filter dropdowns
   const uniqueRoles = [...new Set(users.map(user => user.role))].sort();
+  
+  // Filter clubs based on selected zone
+  const availableClubs = zoneFilter === 'all' 
+    ? clubs 
+    : clubs.filter(club => club.zoneId === zoneFilter);
+    
   const uniqueClubs = [...new Set(users.map(user => user.clubId).filter(Boolean))]
     .sort()
     .map(clubId => ({
       id: clubId,
       name: getClubName(clubId)
-    }));
+    }))
+    .filter(club => 
+      zoneFilter === 'all' || 
+      availableClubs.some(availableClub => availableClub.id === club.id)
+    );
+    
   const uniqueZones = [...new Set(users.map(user => user.zoneId).filter(Boolean))]
     .sort()
     .map(zoneId => ({
       id: zoneId,
       name: getZoneName(zoneId)
     }));
+
+  // Handle zone filter change - clear club filter if selected club is not in new zone
+  const handleZoneFilterChange = (newZoneFilter: string) => {
+    setZoneFilter(newZoneFilter);
+    
+    // If a club is selected but it's not in the new zone, clear the club filter
+    if (clubFilter !== 'all' && newZoneFilter !== 'all') {
+      const selectedClub = clubs.find(club => club.id === clubFilter);
+      if (selectedClub && selectedClub.zoneId !== newZoneFilter) {
+        setClubFilter('all');
+      }
+    }
+  };
 
   // Clear all filters
   const clearFilters = () => {
@@ -439,6 +463,20 @@ export default function UserManagementPage() {
                     </SelectContent>
                   </Select>
 
+                  <Select value={zoneFilter} onValueChange={handleZoneFilterChange}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="Zone" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Zones</SelectItem>
+                      {uniqueZones.map(zone => (
+                        <SelectItem key={zone.id} value={zone.id}>
+                          {zone.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
                   <Select value={clubFilter} onValueChange={setClubFilter}>
                     <SelectTrigger className="w-40">
                       <SelectValue placeholder="Club" />
@@ -448,20 +486,6 @@ export default function UserManagementPage() {
                       {uniqueClubs.map(club => (
                         <SelectItem key={club.id} value={club.id}>
                           {club.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  <Select value={zoneFilter} onValueChange={setZoneFilter}>
-                    <SelectTrigger className="w-40">
-                      <SelectValue placeholder="Zone" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Zones</SelectItem>
-                      {uniqueZones.map(zone => (
-                        <SelectItem key={zone.id} value={zone.id}>
-                          {zone.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -482,6 +506,7 @@ export default function UserManagementPage() {
                     <TableRow>
                       <TableHead>Pony Club ID</TableHead>
                       <TableHead>Name</TableHead>
+                      <TableHead>Email</TableHead>
                       <TableHead>Club</TableHead>
                       <TableHead>Zone</TableHead>
                       <TableHead>Role</TableHead>
@@ -493,7 +518,7 @@ export default function UserManagementPage() {
                   <TableBody>
                     {filteredUsers.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                           {hasActiveFilters ? 'No users match the current filters' : 'No users found'}
                         </TableCell>
                       </TableRow>
@@ -506,6 +531,13 @@ export default function UserManagementPage() {
                               ? `${user.firstName || ''} ${user.lastName || ''}`.trim()
                               : '-'
                             }
+                          </TableCell>
+                          <TableCell>
+                            {user.email ? (
+                              <span className="text-sm">{user.email}</span>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">-</span>
+                            )}
                           </TableCell>
                           <TableCell>{getClubName(user.clubId)}</TableCell>
                           <TableCell>{getZoneName(user.zoneId)}</TableCell>

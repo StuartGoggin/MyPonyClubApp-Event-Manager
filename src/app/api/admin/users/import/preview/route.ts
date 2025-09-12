@@ -16,6 +16,7 @@ export interface ImportPreviewResult {
     rolesFound: string[];
     missingMobileNumbers: number;
     missingClubNames: number;
+    usersWithEmail: number;
     duplicatePonyClubIds: string[];
     // Mapping statistics
     mappedClubs: string[];
@@ -130,6 +131,7 @@ export async function POST(request: NextRequest) {
     const mappedZones = new Set<string>();
     let missingMobileNumbers = 0;
     let missingClubNames = 0;
+    let usersWithEmail = 0;
     let successfulClubMappings = 0;
     let successfulZoneMappings = 0;
     
@@ -137,22 +139,17 @@ export async function POST(request: NextRequest) {
       // Track original data
       if (row.clubName) clubsFound.add(row.clubName);
       if (row.zoneName) zonesFound.add(row.zoneName);
-      rolesFound.add(row.role);
+      if (row.role) rolesFound.add(row.role);
       
-      // Apply mapping and track results
-      const mappingResult = mapImportData({
-        clubName: row.clubName,
-        zoneName: row.zoneName
-      });
-      
-      if (mappingResult.clubName) {
-        mappedClubs.add(mappingResult.clubName);
-        if (row.clubName) successfulClubMappings++;
+      // For preview, we'll show basic stats (actual mapping happens during import)
+      if (row.clubName) {
+        mappedClubs.add(row.clubName); // Simplified for preview
+        successfulClubMappings++;
       }
       
-      if (mappingResult.zoneName) {
-        mappedZones.add(mappingResult.zoneName);
-        if (row.zoneName) successfulZoneMappings++;
+      if (row.zoneName) {
+        mappedZones.add(row.zoneName); // Simplified for preview  
+        successfulZoneMappings++;
       }
       
       // Check for duplicates
@@ -162,28 +159,24 @@ export async function POST(request: NextRequest) {
         ponyClubIds.add(row.ponyClubId);
       }
       
-      // Count missing fields
+      // Count missing fields and email presence
       if (!row.mobileNumber) missingMobileNumbers++;
       if (!row.clubName) missingClubNames++;
+      if (row.email && row.email.trim() !== '') usersWithEmail++;
     });
     
     // Generate sample data (first 10 valid rows) with mapping applied
     const sampleData = validRows.slice(0, 10).map(row => {
-      const mappingResult = mapImportData({
-        clubName: row.clubName,
-        zoneName: row.zoneName
-      });
-      
       return {
         ponyClubId: row.ponyClubId,
         firstName: row.firstName,
         lastName: row.lastName,
         mobileNumber: row.mobileNumber || '(Not provided)',
         originalClubName: row.clubName || '(Not provided)',
-        mappedClubName: mappingResult.clubName || '(No mapping found)',
+        mappedClubName: '(Applied during import)',
         originalZoneName: row.zoneName || '(Not provided)',
-        mappedZoneName: mappingResult.zoneName,
-        role: row.role,
+        mappedZoneName: row.zoneName || '(Not provided)',
+        role: row.role || 'standard',
         email: row.email
       };
     });
@@ -196,7 +189,7 @@ export async function POST(request: NextRequest) {
       mobileNumber: row.mobileNumber,
       clubName: row.clubName,
       zoneName: row.zoneName,
-      role: row.role,
+      role: row.role || 'standard',
       email: row.email
     }));
     
@@ -213,6 +206,7 @@ export async function POST(request: NextRequest) {
         rolesFound: Array.from(rolesFound).sort(),
         missingMobileNumbers,
         missingClubNames,
+        usersWithEmail,
         duplicatePonyClubIds: Array.from(duplicatePonyClubIds).sort(),
         // Add mapping statistics
         mappedClubs: Array.from(mappedClubs).sort(),

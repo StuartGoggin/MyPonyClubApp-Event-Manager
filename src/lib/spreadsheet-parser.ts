@@ -21,7 +21,7 @@ export class SpreadsheetParser {
     role: ['role', 'user role', 'access level', 'permission', 'user_role', 'access_level', 'level', 'membership'],
     firstName: ['first name', 'firstname', 'given name', 'first_name', 'fname', 'forename'],
     lastName: ['last name', 'lastname', 'surname', 'family name', 'last_name', 'lname', 'family_name'],
-    email: ['email address', 'email', 'e-mail', 'email_address', 'e_mail', 'mail']
+    email: ['email address', 'email', 'e-mail', 'email_address', 'e_mail', 'mail', 'primary email']
   };
   
   /**
@@ -293,8 +293,23 @@ export class SpreadsheetParser {
       console.log(`[SpreadsheetParser] Looking for field "${fieldName}" with variants:`, variants);
       
       const columnIndex = headers.findIndex(header => {
+        const headerLower = header.toLowerCase();
+        
+        // For email field, explicitly exclude emergency email columns
+        if (fieldName === 'email' && (
+          headerLower.includes('emergency') || 
+          headerLower.includes('emergency email') ||
+          headerLower.includes('emergency_email') ||
+          headerLower.includes('emerg email') ||
+          headerLower.includes('next of kin') ||
+          headerLower.includes('nok email')
+        )) {
+          console.log(`[SpreadsheetParser] Excluding emergency email column: "${header}"`);
+          return false;
+        }
+        
         const found = variants.some(variant => {
-          const matches = header.includes(variant);
+          const matches = headerLower.includes(variant.toLowerCase());
           if (matches) {
             console.log(`[SpreadsheetParser] Found match: "${header}" matches variant "${variant}"`);
           }
@@ -426,7 +441,7 @@ export class SpreadsheetParser {
       'Role',
       'First Name',
       'Last Name',
-      'Email'
+      'Email Address'
     ];
     
     const sampleData = [

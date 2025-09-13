@@ -109,12 +109,21 @@ export const UserImportRowSchema = z.object({
       
       // Normalize role names from spreadsheet
       const normalized = s.toLowerCase().trim();
+      
+      // Check if this is membership status data rather than role data
+      if (normalized === 'historical membership' || normalized === 'historical' || 
+          normalized.includes('historical') || normalized === 'inactive membership') {
+        // Return undefined so this doesn't override existing roles, 
+        // and let membershipStatus field handle the membership logic
+        console.log(`[UserValidation] Detected membership status "${s}", not treating as role`);
+        return undefined;
+      }
+      
       switch (normalized) {
         case 'standard':
         case 'standard user':
         case 'member':
         case 'user':
-        case 'historical membership':
         case 'membership':
         case 'active membership':
           return 'standard';
@@ -167,7 +176,22 @@ export const UserImportRowSchema = z.object({
     .toLowerCase()
     .optional()
     .or(z.literal(''))
-    .transform(s => s === '' ? undefined : s)
+    .transform(s => s === '' ? undefined : s),
+
+  membershipStatus: z.string()
+    .optional()
+    .transform(s => {
+      // If membership status column is missing or empty, return undefined
+      if (!s || s.trim() === '' || s.trim() === 'null' || s.trim() === 'undefined') {
+        return undefined;
+      }
+      
+      // Normalize membership status
+      const normalized = s.toLowerCase().trim();
+      
+      // Return normalized status for processing
+      return normalized;
+    })
 });
 
 export const UserSchema = z.object({

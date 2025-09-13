@@ -99,77 +99,164 @@ export function ImportPreviewDialog({
             </AlertDescription>
           </Alert>
 
-          {/* Data Summary */}
+          {/* Enhanced Data Summary */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Users className="h-4 w-4" />
                 Data Summary
               </CardTitle>
+              <CardDescription>
+                Comprehensive analysis of the data found in your import file
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-3">
-                  <div>
-                    <h4 className="font-medium">Clubs Found ({previewData.summary.clubsFound.length})</h4>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {previewData.summary.clubsFound.slice(0, 10).map(club => (
-                        <Badge key={club} variant="outline" className="text-xs">{club}</Badge>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                {/* Organization Data */}
+                <div className="space-y-4">
+                  <div className="border-l-4 border-blue-500 pl-3">
+                    <h4 className="font-semibold text-blue-700 flex items-center gap-1">
+                      🏇 Clubs Found ({previewData.summary.clubsFound.length})
+                    </h4>
+                    <div className="mt-2 space-y-1">
+                      {previewData.summary.clubsFound.slice(0, 8).map(club => (
+                        <div key={club} className="text-sm bg-blue-50 px-2 py-1 rounded text-blue-800">
+                          {club}
+                        </div>
                       ))}
-                      {previewData.summary.clubsFound.length > 10 && (
-                        <Badge variant="secondary" className="text-xs">
-                          +{previewData.summary.clubsFound.length - 10} more
-                        </Badge>
+                      {previewData.summary.clubsFound.length > 8 && (
+                        <div className="text-xs text-blue-600 font-medium pt-1">
+                          +{previewData.summary.clubsFound.length - 8} more clubs
+                        </div>
                       )}
                     </div>
                   </div>
                   
-                  <div>
-                    <h4 className="font-medium">Zones Found ({previewData.summary.zonesFound.length})</h4>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {previewData.summary.zonesFound.slice(0, 10).map(zone => (
-                        <Badge key={zone} variant="outline" className="text-xs">{zone}</Badge>
+                  <div className="border-l-4 border-green-500 pl-3">
+                    <h4 className="font-semibold text-green-700 flex items-center gap-1">
+                      📍 Zones Found ({previewData.summary.zonesFound.length})
+                    </h4>
+                    <div className="mt-2 space-y-1">
+                      {previewData.summary.zonesFound.map(zone => (
+                        <div key={zone} className="text-sm bg-green-50 px-2 py-1 rounded text-green-800">
+                          {zone}
+                        </div>
                       ))}
-                      {previewData.summary.zonesFound.length > 10 && (
-                        <Badge variant="secondary" className="text-xs">
-                          +{previewData.summary.zonesFound.length - 10} more
-                        </Badge>
-                      )}
                     </div>
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <div>
-                    <h4 className="font-medium">Roles Found</h4>
-                    <div className="flex flex-wrap gap-1 mt-1">
+                {/* User Data Quality */}
+                <div className="space-y-4">
+                  <div className="border-l-4 border-purple-500 pl-3">
+                    <h4 className="font-semibold text-purple-700 flex items-center gap-1">
+                      👤 User Roles & Membership
+                    </h4>
+                    <div className="mt-2 space-y-2">
                       {previewData.summary.rolesFound.map(role => (
-                        <Badge key={role} variant="default" className="text-xs">{role}</Badge>
+                        <div key={role} className="flex items-center justify-between">
+                          <Badge variant="default" className="text-xs capitalize">
+                            {role.replace('_', ' ')}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {/* You could add role counts here if available */}
+                          </span>
+                        </div>
                       ))}
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Users with Email:</span>
-                      <span className="font-medium">{previewData.summary.usersWithEmail || 0}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Missing Mobile Numbers:</span>
-                      <span className="font-medium">{previewData.summary.missingMobileNumbers}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Missing Club Names:</span>
-                      <span className="font-medium">{previewData.summary.missingClubNames}</span>
-                    </div>
-                    {previewData.summary.duplicatePonyClubIds.length > 0 && (
-                      <div className="flex justify-between text-sm text-orange-600">
-                        <span>Duplicate IDs:</span>
-                        <span className="font-medium">{previewData.summary.duplicatePonyClubIds.length}</span>
+                  <div className="border-l-4 border-amber-500 pl-3">
+                    <h4 className="font-semibold text-amber-700 flex items-center gap-1">
+                      📞 Contact Information
+                    </h4>
+                    <div className="mt-2 space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Users with Email:</span>
+                        <Badge variant="outline" className="text-green-700 bg-green-50">
+                          {previewData.summary.usersWithEmail || 0}
+                        </Badge>
                       </div>
-                    )}
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Users with Mobile:</span>
+                        <Badge variant="outline" className="text-blue-700 bg-blue-50">
+                          {(previewData.validRows || 0) - (previewData.summary.missingMobileNumbers || 0)}
+                        </Badge>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Missing Mobile:</span>
+                        <Badge variant="outline" className="text-orange-700 bg-orange-50">
+                          {previewData.summary.missingMobileNumbers || 0}
+                        </Badge>
+                      </div>
+                    </div>
                   </div>
                 </div>
+
+                {/* Data Quality Issues */}
+                <div className="space-y-4">
+                  <div className="border-l-4 border-red-500 pl-3">
+                    <h4 className="font-semibold text-red-700 flex items-center gap-1">
+                      ⚠️ Data Quality Issues
+                    </h4>
+                    <div className="mt-2 space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Missing Club Names:</span>
+                        <Badge variant={previewData.summary.missingClubNames > 0 ? "destructive" : "outline"}>
+                          {previewData.summary.missingClubNames}
+                        </Badge>
+                      </div>
+                      
+                      {previewData.summary.duplicatePonyClubIds.length > 0 && (
+                        <div className="bg-orange-50 border border-orange-200 rounded p-2">
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-sm font-medium text-orange-800">Duplicate Pony Club IDs:</span>
+                            <Badge variant="outline" className="text-orange-700 bg-orange-100">
+                              {previewData.summary.duplicatePonyClubIds.length}
+                            </Badge>
+                          </div>
+                          <div className="text-xs text-orange-700">
+                            {previewData.summary.duplicatePonyClubIds.slice(0, 3).join(', ')}
+                            {previewData.summary.duplicatePonyClubIds.length > 3 && '...'}
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Error Rows:</span>
+                        <Badge variant={previewData.errorRows > 0 ? "destructive" : "outline"}>
+                          {previewData.errorRows}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-l-4 border-emerald-500 pl-3">
+                    <h4 className="font-semibold text-emerald-700 flex items-center gap-1">
+                      ✅ Import Summary
+                    </h4>
+                    <div className="mt-2 space-y-2">
+                      <div className="bg-emerald-50 border border-emerald-200 rounded p-2">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-emerald-600">
+                            {previewData.validRows}
+                          </div>
+                          <div className="text-xs text-emerald-700">
+                            Users ready to import
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="text-xs text-muted-foreground">
+                        <div>• {previewData.summary.clubsFound.length} unique clubs detected</div>
+                        <div>• {previewData.summary.zonesFound.length} zones identified</div>
+                        <div>• {Math.round(((previewData.validRows || 0) / (previewData.totalRows || 1)) * 100)}% success rate</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
               </div>
             </CardContent>
           </Card>

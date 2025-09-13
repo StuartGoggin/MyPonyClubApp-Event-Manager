@@ -18,10 +18,11 @@ export class SpreadsheetParser {
     mobileNumber: ['mobile number', 'mobile', 'phone', 'cell phone', 'cellular', 'mobile_number', 'phone_number', 'contact', 'contact number'],
     clubName: ['club name', 'club', 'pony club', 'club_name', 'pony_club', 'club name', 'ponyclub'],
     zoneName: ['zone name', 'zone', 'zone_name', 'region', 'area'],
-    role: ['role', 'user role', 'access level', 'permission', 'user_role', 'access_level', 'level', 'membership'],
+    role: ['role', 'user role', 'access level', 'permission', 'user_role', 'access_level', 'level'],
+    membershipStatus: ['membership', 'membership status', 'membership_status', 'member status', 'status', 'membership type'],
     firstName: ['first name', 'firstname', 'given name', 'first_name', 'fname', 'forename'],
     lastName: ['last name', 'lastname', 'surname', 'family name', 'last_name', 'lname', 'family_name'],
-    email: ['email address', 'email', 'e-mail', 'email_address', 'e_mail', 'mail', 'primary email']
+    email: ['email address', 'primary email', 'user email', 'member email', 'personal email', 'email', 'e-mail', 'email_address', 'e_mail', 'mail']
   };
   
   /**
@@ -301,10 +302,20 @@ export class SpreadsheetParser {
           headerLower.includes('emergency email') ||
           headerLower.includes('emergency_email') ||
           headerLower.includes('emerg email') ||
+          headerLower.includes('emerg_email') ||
+          headerLower.includes('emergency contact') ||
+          headerLower.includes('emergency_contact') ||
           headerLower.includes('next of kin') ||
-          headerLower.includes('nok email')
+          headerLower.includes('nok email') ||
+          headerLower.includes('nok_email') ||
+          headerLower.includes('contact email') ||
+          headerLower.includes('contact_email') ||
+          headerLower.includes('parent email') ||
+          headerLower.includes('parent_email') ||
+          headerLower.includes('guardian email') ||
+          headerLower.includes('guardian_email')
         )) {
-          console.log(`[SpreadsheetParser] Excluding emergency email column: "${header}"`);
+          console.log(`[SpreadsheetParser] Excluding emergency/contact email column: "${header}"`);
           return false;
         }
         
@@ -394,7 +405,7 @@ export class SpreadsheetParser {
       console.log(`[SpreadsheetParser] Row ${rowNumber}: No zone name provided, will use default`);
     }
     
-    // Handle role - make it optional, skip if not present or if historical
+    // Handle role - make it optional, skip if not present
     let role: string | undefined = getValue('role');
     
     // If role column doesn't exist, that's fine - we'll skip role data
@@ -405,12 +416,29 @@ export class SpreadsheetParser {
       console.log(`[SpreadsheetParser] Row ${rowNumber}: Empty role, skipping role import`);
       role = undefined;
     } else {
-      // Check for historical membership (case-insensitive) - skip these rows entirely
-      if (role.toLowerCase().includes('historical')) {
-        throw new Error(`Row has Historical Membership - skipping import`);
-      }
-      
       console.log(`[SpreadsheetParser] Row ${rowNumber}: Role found: '${role}'`);
+    }
+
+    // Handle membership status - check for historical membership
+    let membershipStatus: string | undefined = getValue('membershipStatus');
+    
+    // If no dedicated membership column, check if role contains membership info
+    if (columnMapping['membershipStatus'] === undefined && role) {
+      // Check if role field actually contains membership status
+      if (role.toLowerCase().includes('membership') || role.toLowerCase().includes('historical')) {
+        membershipStatus = role;
+        role = undefined; // Clear role since it's actually membership status
+        console.log(`[SpreadsheetParser] Row ${rowNumber}: Detected membership status in role column: '${membershipStatus}'`);
+      }
+    } else if (membershipStatus) {
+      console.log(`[SpreadsheetParser] Row ${rowNumber}: Membership status found: '${membershipStatus}'`);
+    }
+
+    console.log(`[SpreadsheetParser] Row ${rowNumber}: Final values - role: '${role}', membershipStatus: '${membershipStatus}'`);
+
+    // Check for historical membership - these will be processed for account deactivation
+    if (membershipStatus && membershipStatus.toLowerCase().includes('historical')) {
+      console.log(`[SpreadsheetParser] Row ${rowNumber}: Historical membership detected - will process for account deactivation`);
     }
     
     // Ensure at least one of firstName/lastName is provided if either is present
@@ -425,7 +453,8 @@ export class SpreadsheetParser {
       role: role,
       firstName: firstName || undefined,
       lastName: lastName || undefined,
-      email: getValue('email') || undefined
+      email: getValue('email') || undefined,
+      membershipStatus: membershipStatus
     };
   }
   

@@ -102,13 +102,17 @@ export const UserImportRowSchema = z.object({
   role: z.string()
     .optional()
     .transform(s => {
+      console.log(`[UserValidation] Role transform received: "${s}" (type: ${typeof s})`);
+      
       // If role column is missing or empty, return undefined (no role data)
       if (!s || s.trim() === '' || s.trim() === 'null' || s.trim() === 'undefined') {
+        console.log(`[UserValidation] Role is empty/null/undefined, returning undefined`);
         return undefined;
       }
       
       // Normalize role names from spreadsheet
       const normalized = s.toLowerCase().trim();
+      console.log(`[UserValidation] Normalized role: "${normalized}"`);
       
       // Check if this is membership status data rather than role data
       if (normalized === 'historical membership' || normalized === 'historical' || 
@@ -119,6 +123,14 @@ export const UserImportRowSchema = z.object({
         return undefined;
       }
       
+      // Check if this looks like membership data rather than role data
+      if (normalized.includes('riding member') || normalized.includes('non-riding') || 
+          normalized.includes('senior') || normalized.includes('junior') ||
+          normalized.includes('adult') || normalized.includes('child')) {
+        console.log(`[UserValidation] Detected membership data "${s}" in role field, not treating as role`);
+        return undefined;
+      }
+      
       switch (normalized) {
         case 'standard':
         case 'standard user':
@@ -126,22 +138,25 @@ export const UserImportRowSchema = z.object({
         case 'user':
         case 'membership':
         case 'active membership':
+          console.log(`[UserValidation] Mapping role "${s}" to standard`);
           return 'standard';
         case 'zone rep':
         case 'zone representative':
         case 'zone_rep':
         case 'zonerep':
+          console.log(`[UserValidation] Mapping role "${s}" to zone_rep`);
           return 'zone_rep';
         case 'super user':
         case 'super_user':
         case 'admin':
         case 'administrator':
         case 'superuser':
+          console.log(`[UserValidation] Mapping role "${s}" to super_user`);
           return 'super_user';
         default:
-          // Default to standard for any unrecognized membership types
-          console.log(`[UserValidation] Unknown role "${s}", defaulting to standard`);
-          return 'standard';
+          // THIS IS THE PROBLEMATIC FALLBACK - don't default to standard!
+          console.log(`[UserValidation] Unknown role "${s}", returning undefined instead of defaulting to standard`);
+          return undefined;
       }
     }),
   

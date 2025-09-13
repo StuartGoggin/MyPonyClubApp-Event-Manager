@@ -89,10 +89,10 @@ export function ImportPreviewDialog({
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              <div className="font-medium">Import Filtering Rules:</div>
+              <div className="font-medium">Import Processing Rules:</div>
               <div className="mt-1 text-sm space-y-1">
                 <div>• Users with blank membership will be excluded</div>
-                <div>• Users with "Historical Membership" will be excluded</div>
+                <div>• Users with historical/inactive memberships will be deactivated (isActive: false)</div>
                 <div>• Mobile numbers are optional for import</div>
                 <div>• Only users with valid membership types will be imported</div>
               </div>
@@ -192,6 +192,31 @@ export function ImportPreviewDialog({
                       </div>
                     </div>
                   </div>
+
+                  <div className="border-l-4 border-purple-500 pl-3">
+                    <h4 className="font-semibold text-purple-700 flex items-center gap-1">
+                      🕒 Membership Status
+                    </h4>
+                    <div className="mt-2 space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Active Memberships:</span>
+                        <Badge variant="outline" className="text-green-700 bg-green-50">
+                          {(previewData.validRows || 0) - (previewData.summary.historicalMemberships || 0)}
+                        </Badge>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Historical Memberships:</span>
+                        <Badge variant="outline" className="text-orange-700 bg-orange-50">
+                          {previewData.summary.historicalMemberships || 0}
+                        </Badge>
+                      </div>
+                      {(previewData.summary.historicalMemberships || 0) > 0 && (
+                        <div className="text-xs text-muted-foreground mt-1">
+                          ⚠️ Historical memberships will deactivate existing accounts
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Data Quality Issues */}
@@ -282,6 +307,7 @@ export function ImportPreviewDialog({
                         <TableHead>Club</TableHead>
                         <TableHead>Zone</TableHead>
                         <TableHead>Role</TableHead>
+                        <TableHead>Membership Status</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -306,6 +332,34 @@ export function ImportPreviewDialog({
                           <TableCell>{row.originalZoneName || '-'}</TableCell>
                           <TableCell>
                             <Badge variant="outline">{row.role}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            {row.membershipStatus ? (
+                              <Badge 
+                                variant={(
+                                  row.membershipStatus.toLowerCase().includes('historical') ||
+                                  row.membershipStatus.toLowerCase().includes('inactive') ||
+                                  row.membershipStatus.toLowerCase().includes('former') ||
+                                  row.membershipStatus.toLowerCase().includes('expired') ||
+                                  row.membershipStatus.toLowerCase().includes('lapsed') ||
+                                  row.membershipStatus.toLowerCase() === 'nil' ||
+                                  row.membershipStatus.toLowerCase() === 'none'
+                                ) ? 'destructive' : 'default'}
+                                className={(
+                                  row.membershipStatus.toLowerCase().includes('historical') ||
+                                  row.membershipStatus.toLowerCase().includes('inactive') ||
+                                  row.membershipStatus.toLowerCase().includes('former') ||
+                                  row.membershipStatus.toLowerCase().includes('expired') ||
+                                  row.membershipStatus.toLowerCase().includes('lapsed') ||
+                                  row.membershipStatus.toLowerCase() === 'nil' ||
+                                  row.membershipStatus.toLowerCase() === 'none'
+                                ) ? 'bg-orange-100 text-orange-800 border-orange-300' : ''}
+                              >
+                                {row.membershipStatus}
+                              </Badge>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">-</span>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))}

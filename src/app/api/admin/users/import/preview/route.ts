@@ -17,6 +17,7 @@ export interface ImportPreviewResult {
     missingMobileNumbers: number;
     missingClubNames: number;
     usersWithEmail: number;
+    historicalMemberships: number;
     duplicatePonyClubIds: string[];
     // Mapping statistics
     mappedClubs: string[];
@@ -37,6 +38,7 @@ export interface ImportPreviewResult {
     mappedZoneName?: string;
     role: string;
     email?: string;
+    membershipStatus?: string;
   }>;
   validRowsData: Array<{
     ponyClubId: string;
@@ -45,8 +47,9 @@ export interface ImportPreviewResult {
     mobileNumber?: string;
     clubName?: string;
     zoneName?: string;
-    role: string;
+    role?: string; // Make role optional to allow undefined
     email?: string;
+    membershipStatus?: string;
   }>;
   errors: Array<{
     row: number;
@@ -119,7 +122,9 @@ export async function POST(request: NextRequest) {
     }
     
     // Validate rows and generate preview
+    console.log(`[ImportPreview] Starting validation of ${parseResult.data.length} parsed rows`);
     const { validRows, errors: validationErrors } = validateUserImportRows(parseResult.data);
+    console.log(`[ImportPreview] Validation complete: ${validRows.length} valid rows, ${validationErrors.length} validation errors`);
     
     // Generate summary statistics with mapping information
     const clubsFound = new Set<string>();
@@ -134,6 +139,7 @@ export async function POST(request: NextRequest) {
     let usersWithEmail = 0;
     let successfulClubMappings = 0;
     let successfulZoneMappings = 0;
+    let historicalMemberships = 0;
     
     validRows.forEach(row => {
       // Track original data
@@ -163,6 +169,19 @@ export async function POST(request: NextRequest) {
       if (!row.mobileNumber) missingMobileNumbers++;
       if (!row.clubName) missingClubNames++;
       if (row.email && row.email.trim() !== '') usersWithEmail++;
+      
+      // Count historical memberships
+      if (row.membershipStatus && (
+        row.membershipStatus.toLowerCase().includes('historical') ||
+        row.membershipStatus.toLowerCase().includes('inactive') ||
+        row.membershipStatus.toLowerCase().includes('former') ||
+        row.membershipStatus.toLowerCase().includes('expired') ||
+        row.membershipStatus.toLowerCase().includes('lapsed') ||
+        row.membershipStatus.toLowerCase() === 'nil' ||
+        row.membershipStatus.toLowerCase() === 'none'
+      )) {
+        historicalMemberships++;
+      }
     });
     
     // Generate sample data (first 10 valid rows) with mapping applied
@@ -176,8 +195,9 @@ export async function POST(request: NextRequest) {
         mappedClubName: '(Applied during import)',
         originalZoneName: row.zoneName || '(Not provided)',
         mappedZoneName: row.zoneName || '(Not provided)',
-        role: row.role || 'standard',
-        email: row.email
+        role: row.role || 'standard', // Display default for UI, but validRowsData preserves undefined
+        email: row.email,
+        membershipStatus: row.membershipStatus
       };
     });
 
@@ -189,8 +209,9 @@ export async function POST(request: NextRequest) {
       mobileNumber: row.mobileNumber,
       clubName: row.clubName,
       zoneName: row.zoneName,
-      role: row.role || 'standard',
-      email: row.email
+      role: row.role, // Don't apply defaults here - preserve undefined for role preservation logic
+      email: row.email,
+      membershipStatus: row.membershipStatus
     }));
     
     const result: ImportPreviewResult = {
@@ -207,6 +228,7 @@ export async function POST(request: NextRequest) {
         missingMobileNumbers,
         missingClubNames,
         usersWithEmail,
+        historicalMemberships,
         duplicatePonyClubIds: Array.from(duplicatePonyClubIds).sort(),
         // Add mapping statistics
         mappedClubs: Array.from(mappedClubs).sort(),

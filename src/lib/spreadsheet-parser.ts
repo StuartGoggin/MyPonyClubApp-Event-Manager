@@ -422,6 +422,8 @@ export class SpreadsheetParser {
     // Handle membership status - check for historical membership
     let membershipStatus: string | undefined = getValue('membershipStatus');
     
+    console.log(`[SpreadsheetParser] Row ${rowNumber}: Initial role: '${role}', membershipStatus: '${membershipStatus}'`);
+    
     // If no dedicated membership column, check if role contains membership info
     if (columnMapping['membershipStatus'] === undefined && role) {
       // Check if role field actually contains membership status
@@ -435,10 +437,23 @@ export class SpreadsheetParser {
     }
 
     console.log(`[SpreadsheetParser] Row ${rowNumber}: Final values - role: '${role}', membershipStatus: '${membershipStatus}'`);
+    console.log(`[SpreadsheetParser] Row ${rowNumber}: Column mapping for membershipStatus: ${columnMapping['membershipStatus']}`);
 
     // Check for historical membership - these will be processed for account deactivation
-    if (membershipStatus && membershipStatus.toLowerCase().includes('historical')) {
-      console.log(`[SpreadsheetParser] Row ${rowNumber}: Historical membership detected - will process for account deactivation`);
+    if (membershipStatus && (
+      membershipStatus.toLowerCase().includes('historical') ||
+      membershipStatus.toLowerCase().includes('inactive') ||
+      membershipStatus.toLowerCase().includes('former') ||
+      membershipStatus.toLowerCase().includes('expired') ||
+      membershipStatus.toLowerCase().includes('lapsed') ||
+      membershipStatus.toLowerCase() === 'nil' ||
+      membershipStatus.toLowerCase() === 'none'
+    )) {
+      console.log(`[SpreadsheetParser] Row ${rowNumber}: Historical/inactive membership detected - will process for account deactivation`);
+    } else if (membershipStatus) {
+      console.log(`[SpreadsheetParser] Row ${rowNumber}: Active membership detected: '${membershipStatus}'`);
+    } else {
+      console.log(`[SpreadsheetParser] Row ${rowNumber}: No membership status found`);
     }
     
     // Ensure at least one of firstName/lastName is provided if either is present

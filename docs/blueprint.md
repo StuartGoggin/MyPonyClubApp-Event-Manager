@@ -1,10 +1,27 @@
-# **App Name**: PonyClub Events
+# **Ap### 🔧 Critical Role Preservation Bug Fix:
+- **Role Preservation System**: Fixed critical bug where super_user roles were being incorrectly overwritten during CSV imports
+- **Root Cause Resolution**: Removed default value assignment (`|| 'standard'`) in preview endpoint's `validRowsData` generation
+- **Impact Mitigation**: CSVs without role columns now properly preserve existing user roles instead of changing them to 'standard'
+- **Enhanced Validation**: Added comprehensive role field detection to distinguish membership data from role data
+- **Debug Infrastructure**: Implemented detailed role assignment logging for troubleshooting and verification
+- **Type Safety Enhancement**: Updated TypeScript definitions to properly handle optional role fields
+- **Role Detection Logic**: Automatically identifies membership status data ("Senior Riding Member", "Non-Riding Member") vs role data
+- **📋 Technical Documentation**: See [User Import Role Preservation System](./user-import-role-preservation.md) for detailed implementation: PonyClub Events
 
 # **App Name**: PonyClub Events
 
 ## Latest Enhancements (September 13, 2025):
 
-### 🚀 Enhanced User Import System with Preview & Progress Tracking:
+### � Critical Role Preservation Bug Fix:
+- **Role Preservation System**: Fixed critical bug where super_user roles were being incorrectly overwritten during CSV imports
+- **Root Cause Resolution**: Removed default value assignment (`|| 'standard'`) in preview endpoint's `validRowsData` generation
+- **Impact Mitigation**: CSVs without role columns now properly preserve existing user roles instead of changing them to 'standard'
+- **Enhanced Validation**: Added comprehensive role field detection to distinguish membership data from role data
+- **Debug Infrastructure**: Implemented detailed role assignment logging for troubleshooting and verification
+- **Type Safety Enhancement**: Updated TypeScript definitions to properly handle optional role fields
+- **Role Detection Logic**: Automatically identifies membership status data ("Senior Riding Member", "Non-Riding Member") vs role data
+
+### �🚀 Enhanced User Import System with Preview & Progress Tracking:
 - **Two-Stage Import Workflow**: Complete preview-then-import system for maximum user control
   - **File Upload & Parse**: Intelligent file processing with comprehensive validation
   - **Preview & Review**: Detailed import summary with ability to confirm or abort

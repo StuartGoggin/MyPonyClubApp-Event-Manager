@@ -645,8 +645,21 @@ Pony Club Event Manager Team
     let changesSummary: ImportChangesSummary | undefined;
     
     try {
-      // Validate all rows first
-      const { validRows, errors: validationErrors } = validateUserImportRows(rawRows);
+      // Check if we already have validated rows (from preview) or need to validate raw data
+      let validRows: ValidatedUserImportRow[];
+      let validationErrors: Array<{ row: number; error: string; data: unknown }> = [];
+      
+      // If the first item has the structure of a ValidatedUserImportRow, assume pre-validated
+      const firstRow = rawRows[0] as any;
+      if (firstRow && typeof firstRow === 'object' && 'ponyClubId' in firstRow && typeof firstRow.ponyClubId === 'string') {
+        console.log('[UserService] Using pre-validated rows from preview');
+        validRows = rawRows as ValidatedUserImportRow[];
+      } else {
+        console.log('[UserService] Validating raw rows');
+        const validationResult = validateUserImportRows(rawRows);
+        validRows = validationResult.validRows;
+        validationErrors = validationResult.errors;
+      }
       
       // Add validation errors to the error list
       errors.push(...validationErrors.map(e => ({
@@ -680,8 +693,16 @@ Pony Club Event Manager Team
           // Check for historical membership - handle these specially
           console.log(`[UserService] Processing row for ${row.ponyClubId}, membershipStatus: '${row.membershipStatus}'`);
           
-          if (row.membershipStatus && row.membershipStatus.toLowerCase().includes('historical')) {
-            console.log(`[UserService] Historical membership detected for ${row.ponyClubId}`);
+          if (row.membershipStatus && (
+            row.membershipStatus.toLowerCase().includes('historical') ||
+            row.membershipStatus.toLowerCase().includes('inactive') ||
+            row.membershipStatus.toLowerCase().includes('former') ||
+            row.membershipStatus.toLowerCase().includes('expired') ||
+            row.membershipStatus.toLowerCase().includes('lapsed') ||
+            row.membershipStatus.toLowerCase() === 'nil' ||
+            row.membershipStatus.toLowerCase() === 'none'
+          )) {
+            console.log(`[UserService] Historical/inactive membership detected for ${row.ponyClubId}: "${row.membershipStatus}"`);
             // Find existing user to deactivate
             const existingUser = await this.getUserByPonyClubId(row.ponyClubId);
             if (existingUser) {
@@ -1031,6 +1052,9 @@ Pony Club Event Manager Team
     importedAt: Date,
     isReImport: boolean = false
   ): Promise<{ updated: boolean }> {
+    // Debug: Log the exact structure of the row being processed
+    console.log(`[UserService] Processing row structure for ${row.ponyClubId}:`, JSON.stringify(row, null, 2));
+    
     // Check if user already exists
     const existingUser = await this.getUserByPonyClubId(row.ponyClubId);
     
@@ -1058,6 +1082,8 @@ Pony Club Event Manager Team
     };
     
     // Handle role assignment with proper preservation logic
+    console.log(`[UserService] Role assignment for ${row.ponyClubId}: row.role="${row.role}", isReImport=${isReImport}, existingUser=${!!existingUser}`);
+    
     if (row.role !== undefined) {
       // Role column exists and has a value
       if (isReImport && existingUser && row.role !== existingUser.role) {
@@ -1070,14 +1096,19 @@ Pony Club Event Manager Team
         userData.role = row.role;
       } else {
         // Re-import with same role - preserve existing
+        console.log(`[UserService] Re-import with same role for ${row.ponyClubId}, preserving: ${existingUser.role}`);
         userData.role = existingUser.role;
       }
     } else if (existingUser) {
       // No role column in spreadsheet - always preserve existing user's role
       userData.role = existingUser.role;
       console.log(`[UserService] No role column found, preserving existing role for ${row.ponyClubId}: ${existingUser.role}`);
+    } else {
+      // New user with no role column - don't set role (will use system default)
+      console.log(`[UserService] New user ${row.ponyClubId} with no role column, will use system default`);
     }
-    // For new users with no role column, don't set a role (will use system default)
+    
+    console.log(`[UserService] Final userData.role for ${row.ponyClubId}: ${userData.role}`);
     
     // Add mobile number if provided (now optional)
     if (row.mobileNumber) {

@@ -1,4 +1,19 @@
-# MyPonyClubApp Event Manager
+# MyP## ✨ Latest Features (September 2025)
+
+### 🔧 Critical Role Preservation Bug Fix (September 13, 2025)
+- **Role Preservation Fix**: Fixed critical bug where super_user roles were being overwritten to 'standard' during CSV imports
+  - **Root Cause**: Preview endpoint was applying default values (`|| 'standard'`) to undefined role fields in `validRowsData`
+  - **Impact**: CSVs without role columns were incorrectly changing existing user roles instead of preserving them
+  - **Solution**: Removed default assignment in preview data transmission, preserving `undefined` values for role preservation logic
+  - **Validation Enhancement**: Added comprehensive debugging and role field detection for membership data vs role data
+  - **Type Safety**: Updated TypeScript definitions to properly handle optional role fields
+- **Enhanced Role Detection**: Improved validation to distinguish between membership status and role data
+  - **Membership Data Detection**: Automatically detects "Senior Riding Member", "Non-Riding Member", etc. as membership status
+  - **Role Preservation Logic**: When no role column exists, existing user roles (super_user, zone_rep) are preserved
+  - **Fallback Behavior**: New users without role data receive system default ('standard') role
+  - **Debug Logging**: Comprehensive role assignment tracking for troubleshooting
+
+### 🚀 Enhanced User Import System with Preview & Progress Tracking (September 13, 2025)ClubApp Event Manager
 Event Management System for Pony Club Zones
 
 A comprehensive Next.js application for managing pony club events, featuring advanced calendar imports, multi-format document processing, embeddable calendars, zone coordination, and a sophisticated modern design system.
@@ -248,7 +263,25 @@ A comprehensive Next.js application for managing pony club events, featuring adv
 
 The application will be available at http://localhost:9002
 
-## 📁 Project Structure
+## � Technical Documentation
+
+### User Import System
+- **[Role Preservation System](./docs/user-import-role-preservation.md)** - Detailed technical documentation for role preservation during CSV imports
+- **Two-Stage Import Workflow** - Preview-then-import system with comprehensive validation
+- **Historical Membership Processing** - Automatic user deactivation for historical memberships
+- **Club/Zone Mapping Engine** - Intelligent fuzzy matching and normalization
+
+### API Documentation
+- **35+ Endpoint Registry** - Comprehensive API system with 7 categories
+- **Real-time Admin Controls** - Enable/disable endpoints dynamically
+- **Multi-Environment Support** - Base URL switching for testing
+
+### Development
+- **TypeScript Integration** - Full type safety throughout the application
+- **Firebase Integration** - Firestore database and Storage for documents
+- **Modern React Patterns** - Next.js 14 with app router and server components
+
+## �📁 Project Structure
 - `/src/app` - Next.js app router pages
 - `/src/components` - Reusable React components
 - `/src/lib` - Utilities, data access, Firebase configuration, and user import system

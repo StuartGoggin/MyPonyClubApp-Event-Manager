@@ -2,14 +2,38 @@
 
 ## Overview
 
-The User Import System is a comprehensive solution for importing user data from spreadsheets with flexible role handling, advanced zone/club mapping, and robust error handling. The system supports optional role columns and seamlessly updates existing user data.
+The User Import System is a comprehensive solution for importing user data from spreadsheets with enhanced preview functionality, real-time progress tracking, flexible role handling, advanced zone/club mapping, and robust error handling. The system features a two-stage workflow with comprehensive data analysis and user confirmation.
 
 ## Key Features
+
+### 🚀 Enhanced Import Workflow with Preview System
+- **Two-Stage Process**: Preview-then-import workflow for maximum user control
+- **Comprehensive Data Analysis**: Detailed file summary with organization and quality metrics
+- **Visual Data Summary**: 3-column layout with color-coded sections for easy review
+- **Preview Before Import**: No accidental imports - always review before executing
+- **Abort Capability**: Cancel at preview stage without making any changes
+- **Enhanced Progress Tracking**: Real-time feedback for long-running mapping operations
+
+### 📊 Advanced Import Preview System
+- **File Summary Statistics**: Total rows, valid rows, error rates, and success percentages
+- **Organization Data Display**: Visual listings of clubs and zones found in the data
+- **Data Quality Assessment**: Analysis of contact information, missing data, and duplicates
+- **Sample Data Preview**: First 10 rows displayed in formatted table
+- **Error Analysis**: Detailed error reporting with filtering context and reasons
+- **Import Rules Explanation**: Clear documentation of filtering and processing rules
+
+### ⏱️ Enhanced Progress Tracking
+- **Multi-Phase Progress**: Upload → Validation → Mapping → Import with detailed steps
+- **Mapping Stage Simulation**: Detailed progress tracking for 5+ minute club/zone mapping operations
+- **Real-Time Updates**: 200ms intervals with specific action descriptions
+- **Visual Progress Indicators**: Phase icons, percentages, and current action displays
+- **Background Processing**: Non-blocking UI with proper loading states
 
 ### ✨ Optional Role Import Framework
 - **Flexible Role Support**: User roles stored as separate database column (not using Membership system)
 - **Optional Column Handling**: Import functions whether spreadsheets contain role data or not
 - **Data Update Capability**: Existing user records update with new values during import
+- **Historical Membership Processing**: Intelligent handling of "Historical Membership" status with automatic deactivation
 - **Graceful Fallback**: When role column missing, import continues without role assignment
 - **Default Role Assignment**: New users without role data automatically get 'standard' role
 

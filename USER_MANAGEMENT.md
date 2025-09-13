@@ -1,6 +1,6 @@
 # User Management & Authentication System
 
-This document outlines the user management and authentication system for the PonyClub Event Manager application.
+This document outlines the enhanced user management and authentication system for the PonyClub Event Manager application, featuring advanced import capabilities with preview functionality and real-time progress tracking.
 
 ## Overview
 
@@ -8,6 +8,35 @@ The system provides role-based access control with three user types:
 - **Standard User**: Access to their own Pony Club only
 - **Zone Representative**: Access to all clubs in their zone + zone admin functions  
 - **Super User**: Full access to all clubs, zones, and admin functions
+
+## Enhanced Import System (September 13, 2025)
+
+### 🚀 Two-Stage Import Workflow
+- **Stage 1**: File Upload → Parse → Comprehensive Preview & Analysis
+- **Stage 2**: User Confirmation → Progress-Tracked Import → Results Summary
+- **Preview First Approach**: No accidental imports - always review before executing
+- **Abort Capability**: Cancel at preview stage without making any changes
+
+### 📊 Advanced Import Preview
+- **Enhanced Data Summary**: 3-column layout with color-coded information sections
+- **Organization Analysis**: Visual listings of clubs and zones found in data
+- **Data Quality Assessment**: Contact information analysis and missing data reporting
+- **Issue Detection**: Duplicate ID detection with actual values and context
+- **File Statistics**: Total/valid/error rows with success percentages
+- **Sample Data Display**: First 10 rows in formatted table for verification
+
+### ⏱️ Real-Time Progress Tracking
+- **Multi-Phase Progress**: Upload → Validation → Mapping → Import with detailed steps
+- **Mapping Stage Simulation**: Detailed progress for 5+ minute club/zone mapping operations
+- **Real-Time Updates**: 200ms intervals with specific action descriptions
+- **Visual Indicators**: Phase icons, percentages, and current action displays
+- **Background Processing**: Non-blocking UI with proper loading states
+
+### 🔄 Historical Membership Processing
+- **Automatic Deactivation**: Users with "Historical Membership" status automatically deactivated
+- **Account Preservation**: Historical users kept in system but marked inactive
+- **Role Protection**: Existing roles preserved when historical status detected
+- **Smart Detection**: Distinguishes between membership status and role data
 
 ## Components
 

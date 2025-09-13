@@ -14,6 +14,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Upload, Download, UserPlus, Settings, AlertCircle, CheckCircle, Users, Search, Filter, X, MoreHorizontal } from 'lucide-react';
 import { ImportPreviewDialog } from '@/components/admin/import-preview-dialog';
 import { UserActionsDialog } from '@/components/admin/user-actions-dialog';
+import AdvancedUserImport from '@/components/admin/advanced-user-import';
+import ImportTemplateCard from '@/components/admin/import-template-card';
 import { ImportPreviewResult } from '@/app/api/admin/users/import/preview/route';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
@@ -360,29 +362,6 @@ function UserManagementContent() {
         </Alert>
       )}
 
-      {importResult && (
-        <Alert className="mb-6" variant={importResult.success ? "default" : "destructive"}>
-          <CheckCircle className="h-4 w-4" />
-          <AlertDescription>
-            Import completed: {importResult.successfulImports} users processed ({importResult.createdUsers || 0} created, {importResult.updatedUsers || 0} updated), {importResult.failedImports} failed.
-            {importResult.errors.length > 0 && (
-              <details className="mt-2">
-                <summary className="cursor-pointer">View errors ({importResult.errors.length})</summary>
-                <ul className="mt-2 list-disc list-inside">
-                  {importResult.errors.slice(0, 5).map((error, index) => (
-                    <li key={index} className="text-sm">
-                      Row {error.row}: {error.error}
-                    </li>
-                  ))}
-                  {importResult.errors.length > 5 && (
-                    <li className="text-sm">... and {importResult.errors.length - 5} more errors</li>
-                  )}
-                </ul>
-              </details>
-            )}
-          </AlertDescription>
-        </Alert>
-      )}
 
       <Tabs defaultValue="users" className="space-y-6">
         <TabsList>
@@ -584,70 +563,13 @@ function UserManagementContent() {
         </TabsContent>
 
         <TabsContent value="import">
-          <div className="grid gap-6 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Import Users</CardTitle>
-                <CardDescription>
-                  Upload a spreadsheet to import multiple users at once
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="file-upload">Select File</Label>
-                  <Input
-                    id="file-upload"
-                    type="file"
-                    accept=".xlsx,.xls,.csv"
-                    onChange={handleFileSelect}
-                    disabled={importing}
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    Supported formats: Excel (.xlsx, .xls) and CSV (.csv)
-                  </p>
-                </div>
-                
-                {importing && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
-                    Processing file...
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Download Template</CardTitle>
-                <CardDescription>
-                  Get a sample spreadsheet with the correct format
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button onClick={downloadTemplate} variant="outline" className="w-full">
-                  <Download className="h-4 w-4 mr-2" />
-                  Download CSV Template
-                </Button>
-                
-                <div className="mt-4 space-y-2">
-                  <h4 className="text-sm font-medium">Required Columns:</h4>
-                  <ul className="text-sm text-muted-foreground space-y-1">
-                    <li>• Pony Club ID (e.g., PC123456)</li>
-                    <li>• Mobile Number (Australian format)</li>
-                    <li>• Club Name (must exist in system)</li>
-                    <li>• Zone Name (must exist in system)</li>
-                    <li>• Role (Standard, Zone Rep, Super User)</li>
-                  </ul>
-                  
-                  <h4 className="text-sm font-medium mt-4">Optional Columns:</h4>
-                  <ul className="text-sm text-muted-foreground space-y-1">
-                    <li>• First Name</li>
-                    <li>• Last Name</li>
-                    <li>• Email</li>
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <AdvancedUserImport onImportComplete={loadUsers} />
+            </div>
+            <div>
+              <ImportTemplateCard />
+            </div>
           </div>
         </TabsContent>
       </Tabs>

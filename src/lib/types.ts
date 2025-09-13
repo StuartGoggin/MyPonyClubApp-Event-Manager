@@ -237,6 +237,7 @@ export interface UserImportRow {
   firstName?: string;
   lastName?: string;
   email?: string;
+  membershipStatus?: string; // Added for membership status (active, historical, etc.)
 }
 
 export interface UserImportResult {
@@ -246,9 +247,49 @@ export interface UserImportResult {
   failedImports: number;
   updatedUsers?: number;
   createdUsers?: number;
+  deactivatedUsers?: number; // Added for historical membership processing
   errors: UserImportError[];
   importBatch: string;
   importedAt: Date;
+  changesSummary?: ImportChangesSummary; // Added for re-import analysis
+}
+
+export interface ImportChangesSummary {
+  totalRows: number;
+  newUsers: number;
+  usersWithChanges: number;
+  fieldChanges: {
+    email: number;
+    mobileNumber: number;
+    firstName: number;
+    lastName: number;
+    clubId: number;
+    other: number;
+  };
+  detailedChanges: UserDetailedChanges[];
+}
+
+export interface UserDetailedChanges {
+  ponyClubId: string;
+  changes: ChangedFields;
+}
+
+export interface ChangedFields {
+  email?: FieldChange;
+  mobileNumber?: FieldChange;
+  firstName?: FieldChange;
+  lastName?: FieldChange;
+  clubId?: FieldChange;
+}
+
+export interface FieldChange {
+  old: string;
+  new: string;
+}
+
+export interface UserDataChanges {
+  hasChanges: boolean;
+  changedFields: ChangedFields;
 }
 
 export interface UserImportError {

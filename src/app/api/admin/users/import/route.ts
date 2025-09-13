@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     if (contentType?.includes('application/json')) {
       console.log('[UserImport] Processing confirmed import with pre-parsed data');
       
-      const { validRows, fileName } = await request.json();
+      const { validRows, fileName, isReImport = false } = await request.json();
       
       if (!validRows || !Array.isArray(validRows)) {
         return NextResponse.json(
@@ -22,24 +22,37 @@ export async function POST(request: NextRequest) {
         );
       }
       
-      console.log(`[UserImport] Confirmed import for ${fileName}: ${validRows.length} valid rows`);
+      console.log(`[UserImport] Confirmed import for ${fileName}: ${validRows.length} valid rows, re-import: ${isReImport}`);
       
-      // Import users directly
-      const importResult = await UserService.importUsers(validRows);
+      // Import users with enhanced change detection
+      const importResult = await UserService.importUsersWithChangeDetection(validRows, isReImport);
       
-      console.log(`[UserImport] Import complete: created=${importResult.createdUsers}, updated=${importResult.updatedUsers}, errors=${importResult.errors.length}`);
+      console.log(`[UserImport] Import complete: created=${importResult.createdUsers}, updated=${importResult.updatedUsers}, deactivated=${importResult.deactivatedUsers || 0}, errors=${importResult.errors.length}`);
       
-      return NextResponse.json({
+      // Include changes summary in response for re-imports
+      const deactivatedCount = importResult.deactivatedUsers || 0;
+      const message = deactivatedCount > 0 
+        ? `Import completed: ${importResult.createdUsers} users created, ${importResult.updatedUsers} users updated, ${deactivatedCount} users deactivated`
+        : `Import completed: ${importResult.createdUsers} users created, ${importResult.updatedUsers} users updated`;
+      
+      const responseData: any = {
         success: true,
-        message: `Import completed: ${importResult.createdUsers} users created, ${importResult.updatedUsers} users updated`,
+        message,
         results: {
           validRows: validRows.length,
           createdUsers: importResult.createdUsers,
           updatedUsers: importResult.updatedUsers,
+          deactivatedUsers: deactivatedCount,
           importErrors: importResult.errors.length
         },
         importErrors: importResult.errors
-      });
+      };
+
+      if (isReImport && importResult.changesSummary) {
+        responseData.changesSummary = importResult.changesSummary;
+      }
+
+      return NextResponse.json(responseData);
     }
     
     // Legacy file upload mode (fallback for compatibility)
@@ -97,9 +110,9 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Import users
+    // Import users with enhanced change detection (legacy mode defaults to new import)
     console.log(`[UserImport] Starting user import for ${parseResult.data.length} records`);
-    const importResult = await UserService.importUsers(parseResult.data);
+    const importResult = await UserService.importUsersWithChangeDetection(parseResult.data, false);
     
     console.log(`[UserImport] Import completed: success=${importResult.success}, successful=${importResult.successfulImports}, failed=${importResult.failedImports}`);
     

@@ -163,6 +163,28 @@ export const ENDPOINTS: APIEndpointDefinition[] = [
     example: '<iframe src="/embed/request-event" width="800" height="800"></iframe>'
   },
 
+  // Event Request PDF Generation
+  {
+    id: 'event-request-pdf',
+    path: '/api/event-request/pdf',
+    method: 'POST',
+    category: 'documents',
+    name: 'Generate Event Request PDF',
+    description: 'Generate professional PDF document from event request form submission data',
+    enabled: true,
+    requiresAuth: false,
+    icon: 'FileText',
+    params: [
+      { name: 'submittedBy', type: 'string', required: true, description: 'Name of the person submitting the request' },
+      { name: 'submittedByEmail', type: 'string', required: true, description: 'Email address of the submitter' },
+      { name: 'submittedByPhone', type: 'string', required: true, description: 'Phone number of the submitter' },
+      { name: 'clubId', type: 'string', required: true, description: 'ID of the club making the request' },
+      { name: 'events', type: 'array', required: true, description: 'Array of event objects with details' },
+      { name: 'generalNotes', type: 'string', required: false, description: 'General notes for the entire request' }
+    ],
+    example: 'POST /api/event-request/pdf with JSON body containing form data'
+  },
+
   // Calendar PDF Generation
   {
     id: 'calendar-pdf',

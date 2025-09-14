@@ -1,4 +1,39 @@
-# MyP## ✨ Latest Features (September 2025)
+# MyPonyClub Event Manager
+
+## ✨ Latest Features (September 2025)
+
+### 📄 Revolutionary PDF Event Request System (September 15, 2025)
+- **Hybrid PDF Generation**: Advanced document creation combining original policy pages with dynamic form generation
+  - **Original Policy Integration**: Uses actual Process.pdf first page for perfect formatting consistency
+  - **Dynamic Form Generation**: jsPDF-powered second page with professional layout and typography
+  - **Async Architecture**: Proper async/await handling with Buffer conversion for NextResponse
+  - **Error Resilience**: Comprehensive error handling with fallback PDF generation
+- **Professional Document Layout**: Modern, business-ready PDF design with enhanced visual hierarchy
+  - **Helvetica Typography**: Professional font family throughout with proper sizing hierarchy
+  - **Centered Dynamic Titles**: Auto-updating year display (e.g., "Events requested between 1st January to 31st December 2026")
+  - **Smart Year Detection**: Automatically uses year from first event or defaults to next calendar year
+  - **Responsive Text Wrapping**: Intelligent text fitting with proper line breaks and spacing
+- **Enhanced Visual Design**: Modern table styling and professional presentation
+  - **Steel Blue Header**: Professional table headers (#4682B4) with white text for excellent contrast
+  - **Color-Coded Qualifiers**: Green "YES" and red "NO" with centered alignment for quick scanning
+  - **Alternating Row Colors**: Subtle light blue alternating rows for improved readability
+  - **Optimized Column Widths**: Better proportioned columns (22, 85, 32, 35mm) for content display
+  - **Increased Font Sizes**: Enhanced readability with 10-11pt fonts throughout the table
+- **Intelligent Space Management**: Optimized layout ensuring all content fits professionally
+  - **Compact Spacing**: Reduced white space throughout (header: 8mm, text: 3.5mm, sections: 4-6mm)
+  - **Fixed Footer Positioning**: Club list always anchored at bottom (15-10mm from edge) regardless of content
+  - **Smart Notes Allocation**: Dynamic notes area sizing (15-35mm) with guaranteed minimum space
+  - **Separate Footer Sections**: Clean separation between notes and "Who filled in this form" areas
+- **Content Quality Improvements**: Professional, grammatically correct text with business-appropriate tone
+  - **Streamlined Instructions**: Concise, error-free text with proper grammar and professional language
+  - **Updated Submission Requirements**: General calendar year requirements instead of specific dates
+  - **Bullet Point Lists**: Clean, compact formatting with minimal spacing for maximum content density
+  - **Contact Information**: Clear submission instructions with highlighted email addresses
+- **Advanced Layout Engineering**: Precise positioning and spacing calculations for optimal presentation
+  - **Fixed Footer Architecture**: 20mm reserved for club footer, 15mm for signature section
+  - **Dynamic Content Fitting**: Intelligent space allocation preventing content overflow
+  - **Professional Signature Areas**: Enhanced "Who filled in this form" section with proper field sizing
+  - **Consistent Margins**: 20mm margins throughout with optimized content width calculations
 
 ### 🎯 Enhanced Event Request System (September 15, 2025)
 - **Revolutionary User Experience Design**: Complete redesign focusing on progressive disclosure and user-centric workflow

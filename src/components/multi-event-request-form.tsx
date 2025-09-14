@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { PlusCircle, Send, AlertCircle } from 'lucide-react';
+import { PlusCircle, Send, AlertCircle, FileText } from 'lucide-react';
 import { type Club, type EventType, type Event, type Zone } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -106,6 +106,7 @@ export function MultiEventRequestForm({
   const [isLoadingData, setIsLoadingData] = useState(embedMode && (!propClubs || !propEventTypes || !propAllEvents || !propZones));
   
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [selectedZoneId, setSelectedZoneId] = useState<string>();
   const [clubSearchTerm, setClubSearchTerm] = useState<string>('');
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -402,6 +403,107 @@ export function MultiEventRequestForm({
     });
   };
 
+  const generateAndDownloadPDF = async (data: MultiEventRequestFormValues) => {
+    try {
+      const response = await fetch('/api/event-request/pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error(`PDF generation failed: ${response.statusText}`);
+      }
+
+      // Get the PDF blob
+      const blob = await response.blob();
+      
+      // Get filename from response headers or create default
+      const contentDisposition = response.headers.get('content-disposition');
+      let filename = 'Event-Request-Form.pdf';
+      
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="([^"]+)"/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      console.log('PDF downloaded successfully:', filename);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      throw error;
+    }
+  };
+
+  const generatePDFPreview = async () => {
+    setIsGeneratingPDF(true);
+    try {
+      // Get current form data
+      const formData = form.getValues();
+      
+      // Validate that we have at least basic required data
+      if (!formData.submittedBy || !formData.clubId || !formData.events || formData.events.length === 0) {
+        toast({
+          title: 'Missing Information',
+          description: 'Please fill in your name, select a club, and add at least one event before generating the PDF preview.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Filter out empty events
+      const validEvents = formData.events.filter(event => 
+        event.name && event.date && event.eventTypeId && event.location
+      );
+
+      if (validEvents.length === 0) {
+        toast({
+          title: 'No Complete Events',
+          description: 'Please complete at least one event with all required fields before generating the PDF preview.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Generate PDF with current form data
+      await generateAndDownloadPDF({
+        ...formData,
+        events: validEvents
+      });
+
+      toast({
+        title: 'PDF Preview Generated',
+        description: 'Your PDF preview has been downloaded. You can review it before submitting your request.',
+      });
+    } catch (error) {
+      console.error('Error generating PDF preview:', error);
+      toast({
+        title: 'PDF Generation Failed',
+        description: 'Unable to generate PDF preview. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
+
   const onSubmitForm = async (data: MultiEventRequestFormValues) => {
     setIsSubmitting(true);
     try {
@@ -414,6 +516,19 @@ export function MultiEventRequestForm({
         const result = await createMultiEventRequestAction(data);
         
         if (result.success) {
+          // Generate and download PDF
+          try {
+            await generateAndDownloadPDF(data);
+          } catch (pdfError) {
+            console.error('PDF generation failed:', pdfError);
+            // Don't fail the entire submission if PDF generation fails
+            toast({
+              title: 'PDF Generation Warning',
+              description: 'Your request was submitted successfully, but the PDF could not be generated.',
+              variant: 'default',
+            });
+          }
+          
           toast({
             title: 'Request Submitted!',
             description: result.message,
@@ -849,10 +964,32 @@ export function MultiEventRequestForm({
                   </div>
                 </div>
 
-                <div className="flex justify-center">
+                <div className="flex justify-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <Button 
+                      type="button"
+                      variant="outline"
+                      onClick={generatePDFPreview}
+                      disabled={isGeneratingPDF || isSubmitting || eventFields.length === 0}
+                      size="lg"
+                      className="min-w-[160px]"
+                    >
+                      {isGeneratingPDF ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                      ) : (
+                        <FileText className="h-4 w-4 mr-2" />
+                      )}
+                      {isGeneratingPDF ? 'Generating...' : 'Preview PDF'}
+                    </Button>
+                    <HelpTooltip 
+                      content="Generate and download a PDF preview of your request form using the current data. You can review this before submitting your final request."
+                      side="top"
+                    />
+                  </div>
+                  
                   <Button 
                     type="submit" 
-                    disabled={isSubmitting || eventFields.length === 0}
+                    disabled={isSubmitting || isGeneratingPDF || eventFields.length === 0}
                     size="lg"
                     className="min-w-[200px]"
                   >

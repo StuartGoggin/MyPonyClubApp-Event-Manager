@@ -67,6 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('auth_token', data.token);
         localStorage.setItem('user_data', JSON.stringify(data.user));
         setUser(data.user);
+        setLoading(false); // Set loading to false after successful login
         
         // Redirect based on user role
         switch (data.user.role) {

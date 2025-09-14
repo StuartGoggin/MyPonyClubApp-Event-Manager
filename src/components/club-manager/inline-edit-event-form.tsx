@@ -7,9 +7,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Save, AlertTriangle } from 'lucide-react';
-import { Event, EventType } from '@/lib/types';
+import { Event, EventType, EventPriority } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
 interface InlineEditEventFormProps {
@@ -35,6 +36,8 @@ export function InlineEditEventForm({
     coordinatorName: '',
     coordinatorContact: '',
     isQualifier: false,
+    priority: undefined as EventPriority | undefined,
+    isHistoricallyTraditional: false,
     notes: ''
   });
 
@@ -58,6 +61,8 @@ export function InlineEditEventForm({
         coordinatorName: event.coordinatorName || '',
         coordinatorContact: event.coordinatorContact || '',
         isQualifier: event.isQualifier || false,
+        priority: event.priority,
+        isHistoricallyTraditional: event.isHistoricallyTraditional || false,
         notes: event.notes || ''
       });
     }
@@ -81,6 +86,13 @@ export function InlineEditEventForm({
         ...(dateChanged && event.status === 'approved' && { status: 'proposed' })
       };
 
+      console.log('Form Data before submission:', formData);
+      console.log('Priority field specifically:', formData.priority, 'type:', typeof formData.priority);
+      console.log('Traditional field specifically:', formData.isHistoricallyTraditional, 'type:', typeof formData.isHistoricallyTraditional);
+      console.log('Update Data being sent:', updateData);
+      console.log('Priority in update data:', updateData.priority);
+      console.log('Traditional in update data:', updateData.isHistoricallyTraditional);
+
       const response = await fetch(`/api/events/${event.id}`, {
         method: 'PATCH',
         headers: {
@@ -89,8 +101,12 @@ export function InlineEditEventForm({
         body: JSON.stringify(updateData),
       });
 
+      console.log('Response status:', response.status);
+      const responseData = await response.json();
+      console.log('Response data:', responseData);
+
       if (!response.ok) {
-        throw new Error('Failed to update event');
+        throw new Error(`Failed to update event: ${responseData.error || 'Unknown error'}`);
       }
 
       toast({
@@ -223,6 +239,61 @@ export function InlineEditEventForm({
           />
           <Label htmlFor="isQualifier" className="text-sm font-medium">Zone Qualifier Event</Label>
         </div>
+
+        {/* Event Priority */}
+        <div>
+          <Label htmlFor="priority" className="text-sm font-medium">Event Priority</Label>
+          <Select 
+            value={formData.priority?.toString() || 'none'} 
+            onValueChange={(value) => {
+              console.log('Priority changed:', value, 'typeof:', typeof value);
+              setFormData(prev => {
+                const newData = { 
+                  ...prev, 
+                  priority: value === 'none' ? undefined : parseInt(value) as EventPriority 
+                };
+                console.log('New form data after priority change:', newData);
+                return newData;
+              });
+            }}
+          >
+            <SelectTrigger className="mt-1">
+              <SelectValue placeholder="Select priority level" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">No Priority</SelectItem>
+              <SelectItem value="1">Priority 1 - Highest</SelectItem>
+              <SelectItem value="2">Priority 2 - High</SelectItem>
+              <SelectItem value="3">Priority 3 - Medium</SelectItem>
+              <SelectItem value="4">Priority 4 - Lowest</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Historical Traditional Event */}
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="isHistoricallyTraditional"
+            checked={formData.isHistoricallyTraditional}
+            onCheckedChange={(checked) => {
+              console.log('Checkbox changed:', checked, 'typeof:', typeof checked);
+              setFormData(prev => {
+                const newData = { 
+                  ...prev, 
+                  isHistoricallyTraditional: checked === true 
+                };
+                console.log('New form data after checkbox change:', newData);
+                return newData;
+              });
+            }}
+          />
+          <Label htmlFor="isHistoricallyTraditional" className="text-sm font-medium">
+            This is a historically traditional event
+          </Label>
+        </div>
+        <p className="text-xs text-muted-foreground ml-6">
+          Check this if the event has traditionally been held on this specific date or time of year.
+        </p>
 
         {/* Notes */}
         <div>

@@ -334,6 +334,60 @@ export interface Event {
   submittedBy?: string;
   submittedByContact?: string;
 
+  // Priority and historical traditional event fields
+  priority?: EventPriority;
+  isHistoricallyTraditional?: boolean;
+
   // Event schedule reference
   schedule?: EventSchedule;
+}
+
+// Priority-based event request types
+export type EventPriority = 1 | 2 | 3 | 4;
+
+export interface EventRequestDetails {
+  priority: EventPriority;
+  name: string;
+  eventTypeId: string;
+  location: string;
+  isQualifier?: boolean;
+  isHistoricallyTraditional?: boolean;  // Track if this is a traditional event with historical date significance
+  date: Date;  // Single preferred date for this event
+  description?: string;
+  coordinatorName?: string;
+  coordinatorContact?: string;
+  notes?: string;
+}
+
+export interface MultiEventRequest {
+  id?: string;
+  clubId: string;
+  submittedBy: string;
+  submittedByContact: string;
+  events: EventRequestDetails[];  // Up to 4 events with priorities 1-4
+  status: 'draft' | 'submitted' | 'under_review' | 'approved' | 'rejected';
+  submittedAt?: Date;
+  updatedAt?: Date;
+  approvedBy?: string;
+  approvedAt?: Date;
+  rejectionReason?: string;
+  generalNotes?: string;
+}
+
+// Legacy single event request interface for backward compatibility
+export interface SingleEventRequest {
+  id: string;
+  clubId: string;
+  name: string;
+  eventTypeId: string;
+  location: string;
+  date: Date;  // Single date for backward compatibility
+  coordinatorName?: string;
+  coordinatorContact?: string;
+  isQualifier?: boolean;
+  isHistoricallyTraditional?: boolean;  // Historical significance flag
+  notes?: string;
+  submittedBy?: string;
+  submittedByContact?: string;
+  status: EventStatus;
 }

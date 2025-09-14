@@ -29,6 +29,7 @@ export default function ClubEventManagerDashboard() {
   }, []);
 
   const fetchData = async () => {
+    console.log('Club Manager: fetchData called - refreshing all data');
     setLoading(true);
     setError(null);
     try {
@@ -48,13 +49,15 @@ export default function ClubEventManagerDashboard() {
       const eventsData = await eventsResponse.json();
       const eventTypesData = await eventTypesResponse.json();
 
-      console.log('API Responses:', { zonesData, clubsData, eventsData, eventTypesData });
+      console.log('Club Manager: API Responses:', { zonesData, clubsData, eventsData, eventTypesData });
 
       // Extract arrays from API responses (they return objects with nested arrays)
       setZones(zonesData.zones || zonesData || []);
       setClubs(clubsData.clubs || clubsData || []);
       setEvents(eventsData.events || eventsData || []);
       setEventTypes(eventTypesData.eventTypes || eventTypesData || []);
+
+      console.log('Club Manager: Data updated in state');
 
       // Future: Replace with actual user authorization check
       // For now, allow access to all clubs
@@ -74,6 +77,7 @@ export default function ClubEventManagerDashboard() {
   };
 
   const handleEventUpdate = () => {
+    console.log('Club Manager: handleEventUpdate called - triggering data refresh');
     fetchData(); // Refresh all data when events are updated
   };
 

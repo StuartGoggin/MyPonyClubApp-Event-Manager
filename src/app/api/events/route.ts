@@ -91,7 +91,9 @@ export async function GET(request: NextRequest) {
         notes: data.notes,
         submittedBy: data.submittedBy,
         submittedByContact: data.submittedByContact,
-        schedule: data.schedule
+        schedule: data.schedule,
+        priority: data.priority,
+        isHistoricallyTraditional: data.isHistoricallyTraditional
       });
     });
 

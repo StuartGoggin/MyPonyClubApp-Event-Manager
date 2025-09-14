@@ -4,17 +4,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle, Calendar, Clock, Users, FileText, CheckCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
+import { HelpSection } from '@/components/ui/help-section';
 
 export function EventRequestPolicyInfo() {
   return (
-    <Card className="mb-6">
-      <CardHeader>
-        <div className="flex items-center gap-2">
-          <FileText className="h-5 w-5 text-primary" />
-          <CardTitle>Events Calendar Policy & Application Process</CardTitle>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <HelpSection 
+      title="Events Calendar Policy & Application Process" 
+      variant="info"
+      defaultOpen={false}
+      className="mb-6"
+    >
+      <div className="space-y-4">
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
@@ -118,23 +118,27 @@ export function EventRequestPolicyInfo() {
         <Separator />
 
         <div className="bg-blue-50 p-4 rounded-lg">
-          <h4 className="font-medium text-blue-900 mb-2">Priority System Explanation</h4>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-            <div className="bg-red-100 p-2 rounded border-l-4 border-red-500">
-              <div className="font-medium text-red-800">Priority 1</div>
-              <div className="text-red-600">Must Have</div>
+          <h4 className="font-medium text-blue-900 mb-3">Priority Levels Reference</h4>
+          <p className="text-sm text-blue-700 mb-4">
+            Assign priorities to help zone coordinators understand which events are most important to your club. 
+            Each event must have a unique priority level.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <div className="inline-flex items-center gap-2 px-3 py-2 rounded-full bg-red-100 text-red-800 text-sm font-medium border border-red-200">
+              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+              Priority 1: Must Have
             </div>
-            <div className="bg-orange-100 p-2 rounded border-l-4 border-orange-500">
-              <div className="font-medium text-orange-800">Priority 2</div>
-              <div className="text-orange-600">High Importance</div>
+            <div className="inline-flex items-center gap-2 px-3 py-2 rounded-full bg-orange-100 text-orange-800 text-sm font-medium border border-orange-200">
+              <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+              Priority 2: High Importance
             </div>
-            <div className="bg-yellow-100 p-2 rounded border-l-4 border-yellow-500">
-              <div className="font-medium text-yellow-800">Priority 3</div>
-              <div className="text-yellow-600">Would Like</div>
+            <div className="inline-flex items-center gap-2 px-3 py-2 rounded-full bg-yellow-100 text-yellow-800 text-sm font-medium border border-yellow-200">
+              <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+              Priority 3: Would Like
             </div>
-            <div className="bg-green-100 p-2 rounded border-l-4 border-green-500">
-              <div className="font-medium text-green-800">Priority 4</div>
-              <div className="text-green-600">If Possible</div>
+            <div className="inline-flex items-center gap-2 px-3 py-2 rounded-full bg-green-100 text-green-800 text-sm font-medium border border-green-200">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              Priority 4: If Possible
             </div>
           </div>
         </div>
@@ -146,7 +150,7 @@ export function EventRequestPolicyInfo() {
             For complete details, please refer to the official policy document or contact your Zone Representative.
           </AlertDescription>
         </Alert>
-      </CardContent>
-    </Card>
+      </div>
+    </HelpSection>
   );
 }

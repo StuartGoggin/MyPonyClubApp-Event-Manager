@@ -18,7 +18,9 @@ import {
   Download,
   User,
   Star,
-  X
+  X,
+  Trophy,
+  Calendar as CalendarLucide
 } from 'lucide-react';
 import { Event, Club, EventType } from '@/lib/types';
 import { EventScheduleUpload } from '../event-schedule-upload';
@@ -185,13 +187,57 @@ export function ClubEventStatus({
             const canEdit = event.status === 'proposed' || event.status === 'approved' || event.status === 'rejected';
             
             return (
-              <Card key={event.id} className="enhanced-card glass-effect overflow-hidden border-2 border-border/60 shadow-xl shadow-black/15 hover:shadow-2xl hover:shadow-primary/15 transition-all duration-300 hover:border-primary/50 bg-gradient-to-r from-white/98 via-white/95 to-slate-50/90">
+              <Card key={event.id} className={`enhanced-card glass-effect overflow-hidden border-2 shadow-xl shadow-black/15 hover:shadow-2xl transition-all duration-300 bg-gradient-to-r from-white/98 via-white/95 to-slate-50/90 ${
+                event.isHistoricallyTraditional 
+                  ? 'border-amber-300/60 hover:border-amber-400/70 ring-2 ring-amber-200/50' 
+                  : 'border-border/60 hover:border-primary/50 hover:shadow-primary/15'
+              }`}>
                 {/* Compact Tile Header */}
-                <div className="bg-gradient-to-r from-primary/8 via-background/95 to-accent/8 border-b border-border/50 p-4 backdrop-blur-sm">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-lg font-bold text-foreground">
-                      {formatDateForTitle(event.date) && `${formatDateForTitle(event.date)} - `}{event.name}
-                    </h3>
+                <div className={`border-b border-border/50 p-4 backdrop-blur-sm ${
+                  event.isHistoricallyTraditional 
+                    ? 'bg-gradient-to-r from-amber-50/80 via-background/95 to-amber-100/60'
+                    : 'bg-gradient-to-r from-primary/8 via-background/95 to-accent/8'
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      {/* Priority indicator */}
+                      {event.priority && (
+                        <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md ${
+                          event.priority === 1 ? 'bg-gradient-to-br from-red-500 to-red-600' :
+                          event.priority === 2 ? 'bg-gradient-to-br from-orange-500 to-orange-600' :
+                          event.priority === 3 ? 'bg-gradient-to-br from-yellow-500 to-yellow-600' :
+                          'bg-gradient-to-br from-green-500 to-green-600'
+                        }`}>
+                          {event.priority}
+                        </div>
+                      )}
+                      
+                      <div className="flex flex-col">
+                        <h3 className="text-lg font-bold text-foreground">
+                          {formatDateForTitle(event.date) && `${formatDateForTitle(event.date)} - `}{event.name}
+                        </h3>
+                        
+                        {/* Traditional event indicator */}
+                        {event.isHistoricallyTraditional && (
+                          <div className="flex items-center gap-1 text-sm text-amber-700 mt-1">
+                            <CalendarLucide className="h-3 w-3" />
+                            <span className="font-medium">Historical Traditional Event</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Priority badge */}
+                    {event.priority && (
+                      <Badge className={`text-xs font-bold ${
+                        event.priority === 1 ? 'bg-gradient-to-r from-red-100 to-red-200 text-red-800 border-red-300' :
+                        event.priority === 2 ? 'bg-gradient-to-r from-orange-100 to-orange-200 text-orange-800 border-orange-300' :
+                        event.priority === 3 ? 'bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 border-yellow-300' :
+                        'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border-green-300'
+                      }`}>
+                        Priority #{event.priority}
+                      </Badge>
+                    )}
                   </div>
                 </div>
 
@@ -266,6 +312,65 @@ export function ClubEventStatus({
                                 event.isQualifier ? 'text-yellow-800' : 'text-gray-600'
                               }`}>
                                 {event.isQualifier ? 'YES' : 'NO'}
+                              </div>
+                            </div>
+                          </div>
+                          {/* Event Priority */}
+                          <div className="flex items-center gap-3 p-2">
+                            <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
+                              event.priority 
+                                ? (event.priority === 1 ? 'bg-red-100' :
+                                   event.priority === 2 ? 'bg-orange-100' :
+                                   event.priority === 3 ? 'bg-yellow-100' :
+                                   'bg-green-100')
+                                : 'bg-gray-100'
+                            }`}>
+                              <Trophy className={`h-4 w-4 ${
+                                event.priority 
+                                  ? (event.priority === 1 ? 'text-red-700' :
+                                     event.priority === 2 ? 'text-orange-700' :
+                                     event.priority === 3 ? 'text-yellow-700' :
+                                     'text-green-700')
+                                  : 'text-gray-500'
+                              }`} />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-xs font-medium text-muted-foreground">Priority</div>
+                              <div className={`text-sm font-bold ${
+                                event.priority 
+                                  ? (event.priority === 1 ? 'text-red-800' :
+                                     event.priority === 2 ? 'text-orange-800' :
+                                     event.priority === 3 ? 'text-yellow-800' :
+                                     'text-green-800')
+                                  : 'text-gray-600'
+                              }`}>
+                                {event.priority 
+                                  ? `#${event.priority} - ${
+                                      event.priority === 1 ? 'Highest' :
+                                      event.priority === 2 ? 'High' :
+                                      event.priority === 3 ? 'Medium' :
+                                      'Lowest'
+                                    }`
+                                  : 'Not Set'
+                                }
+                              </div>
+                            </div>
+                          </div>
+                          {/* Historical Traditional Event */}
+                          <div className="flex items-center gap-3 p-2">
+                            <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
+                              event.isHistoricallyTraditional ? 'bg-amber-100' : 'bg-gray-100'
+                            }`}>
+                              <CalendarLucide className={`h-4 w-4 ${
+                                event.isHistoricallyTraditional ? 'text-amber-700' : 'text-gray-500'
+                              }`} />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-xs font-medium text-muted-foreground">Traditional Event</div>
+                              <div className={`text-sm font-bold ${
+                                event.isHistoricallyTraditional ? 'text-amber-800' : 'text-gray-600'
+                              }`}>
+                                {event.isHistoricallyTraditional ? 'Historically Traditional' : 'Standard Event'}
                               </div>
                             </div>
                           </div>

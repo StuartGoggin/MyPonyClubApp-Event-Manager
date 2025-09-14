@@ -39,6 +39,48 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useRouter } from 'next/navigation';
 import { useFormState } from 'react-dom';
 
+// Individual event details schema
+const eventDetailsSchema = z.object({
+  priority: z.number().min(1).max(4),
+  name: z.string().min(3, { message: 'Event name must be at least 3 characters.' }),
+  eventTypeId: z.string({ required_error: 'Please select an event type.' }).min(1, 'Please select an event type.'),
+  location: z.string().min(3, { message: 'Location must be at least 3 characters.' }),
+  isQualifier: z.boolean().default(false),
+  dates: z.array(z.object({ value: z.date() })).min(1, 'You must add at least one date preference.'),
+  description: z.string().optional(),
+  coordinatorName: z.string().optional(),
+  coordinatorContact: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+// Main form schema for multiple events
+const multiEventRequestSchema = z.object({
+  clubId: z.string({ required_error: 'Please select a club.' }).min(1, 'Please select a club.'),
+  submittedBy: z.string().min(1, 'Please enter your name.'),
+  submittedByContact: z.string().min(1, 'Please enter your contact information.'),
+  events: z.array(eventDetailsSchema)
+    .min(1, 'You must add at least one event request.')
+    .max(4, 'You can request a maximum of 4 events.')
+    .refine((events) => {
+      // Check for duplicate priorities
+      const priorities = events.map(e => e.priority);
+      const uniquePriorities = new Set(priorities);
+      return priorities.length === uniquePriorities.size;
+    }, { message: 'Each event must have a unique priority (1-4).' })
+    .refine((events) => {
+      // Check that priorities are consecutive starting from 1
+      const priorities = events.map(e => e.priority).sort();
+      for (let i = 0; i < priorities.length; i++) {
+        if (priorities[i] !== i + 1) {
+          return false;
+        }
+      }
+      return true;
+    }, { message: 'Event priorities must be consecutive starting from 1 (e.g., if you have 3 events, use priorities 1, 2, and 3).' }),
+  generalNotes: z.string().optional(),
+});
+
+// Legacy single event schema for backward compatibility
 const eventRequestSchema = z.object({
   clubId: z.string({ required_error: 'Please select a club.' }).min(1, 'Please select a club.'),
   coordinatorName: z.string().optional(),
@@ -53,6 +95,7 @@ const eventRequestSchema = z.object({
   submittedByContact: z.string().optional(),
 });
 
+type MultiEventRequestFormValues = z.infer<typeof multiEventRequestSchema>;
 type EventRequestFormValues = z.infer<typeof eventRequestSchema>;
 
 interface EventRequestFormProps {
@@ -62,6 +105,7 @@ interface EventRequestFormProps {
   zones?: Zone[];
   embedMode?: boolean;
   onSubmit?: (data: any) => void;
+  mode?: 'single' | 'multi'; // Allow switching between single and multi-event modes
 }
 
 const haversineDistance = (

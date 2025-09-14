@@ -1,5 +1,37 @@
 # MyP## ✨ Latest Features (September 2025)
 
+### 🎯 Enhanced Event Request System (September 15, 2025)
+- **Revolutionary User Experience Design**: Complete redesign focusing on progressive disclosure and user-centric workflow
+  - **Name-First Approach**: Streamlined form flow starting with organizer name for immediate context
+  - **Intelligent Auto-Population**: Automatic form filling using comprehensive user directory
+  - **Visual Progress Indicators**: Clear visual feedback showing completion status across all form sections
+  - **Progressive Disclosure Pattern**: Help information available on-demand without overwhelming the main interface
+- **Advanced Autocomplete System**: Sophisticated user selection with real-time search
+  - **Fuzzy Name Matching**: Intelligent search across first name, last name, and full name combinations
+  - **User Directory Integration**: Seamless connection to club member database with 500+ users
+  - **Auto-Population Logic**: Automatic filling of club, email, and phone fields based on user selection
+  - **Manual Override Capability**: Allow custom entries when user not found in directory
+- **Separated Contact Management**: Enhanced contact field organization for better data quality
+  - **Dedicated Email Field**: Separate email input with validation and auto-population
+  - **Dedicated Phone Field**: Separate phone input with formatting and validation
+  - **Contact Validation**: Real-time validation ensuring data quality and completeness
+  - **Visual Field Organization**: Clear separation and labeling for improved user experience
+- **Professional Help System**: Comprehensive contextual help without interface clutter
+  - **HelpTooltip Component**: Reusable tooltip system for contextual assistance
+  - **HelpSection Component**: Collapsible content sections with variants and state management
+  - **Strategic Help Placement**: Tooltips positioned at key decision points and complex fields
+  - **Clean Default View**: Uncluttered interface with help available when needed
+- **Enhanced Policy Integration**: Organized information architecture with collapsible sections
+  - **Priority Levels Reference**: Visual priority badges moved to collapsible policy section
+  - **Collapsible Policy Information**: EventRequestPolicyInfo component with comprehensive guidelines
+  - **Content Deduplication**: Removed duplicate policy sections for cleaner page layout
+  - **Contextual Policy Access**: Policy information available within form context when needed
+- **Improved Form Validation & UX**: Enhanced form interaction patterns
+  - **Priority Field Integration**: Database-persisted priority selection (1-4) with validation
+  - **Traditional Event Marking**: Enhanced traditional event designation with database persistence
+  - **Real-time Validation**: Immediate feedback on form errors and completion status
+  - **Enhanced Visual Design**: Modern glass morphism effects and professional styling
+
 ### 🔧 Critical Role Preservation Bug Fix (September 13, 2025)
 - **Role Preservation Fix**: Fixed critical bug where super_user roles were being overwritten to 'standard' during CSV imports
   - **Root Cause**: Preview endpoint was applying default values (`|| 'standard'`) to undefined role fields in `validRowsData`
@@ -329,6 +361,7 @@ This app includes AI-powered features using Google's Genkit:
 ### Core Documentation
 - **[Blueprint](./docs/blueprint.md)**: Complete application architecture and feature overview
 - **[Firebase Setup](./FIREBASE_SETUP.md)**: Detailed Firebase configuration guide
+- **[Event Request System](./docs/EVENT_REQUEST_SYSTEM.md)**: Comprehensive guide to the enhanced event request workflow
 
 ### Specialized Guides
 - **[User Import System](./docs/USER_IMPORT_SYSTEM.md)**: Comprehensive guide covering:
@@ -340,6 +373,7 @@ This app includes AI-powered features using Google's Genkit:
   - Configuration, usage examples, and troubleshooting
 
 ### System Features
+- **Event Request System**: Revolutionary user-centric design with progressive disclosure, intelligent autocomplete, and contextual help
 - **User Management**: Optional role imports, data updates, graceful fallbacks
 - **Mapping Engine**: Zone/club name resolution with fuzzy matching
 - **Import Pipeline**: Multi-format support with comprehensive validation

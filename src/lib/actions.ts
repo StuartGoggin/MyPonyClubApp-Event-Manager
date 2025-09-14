@@ -24,7 +24,8 @@ const eventRequestSchema = z.object({
 const multiEventRequestSchema = z.object({
   clubId: z.string({ required_error: 'Please select a club.' }).min(1, 'Please select a club.'),
   submittedBy: z.string().min(1, 'Please enter your name.'),
-  submittedByContact: z.string().min(1, 'Please enter your contact information.'),
+  submittedByEmail: z.string().email('Please enter a valid email address.').min(1, 'Please enter your email address.'),
+  submittedByPhone: z.string().min(1, 'Please enter your phone number.'),
   events: z.array(z.object({
     priority: z.number().min(1).max(4),
     name: z.string().min(3, { message: 'Event name must be at least 3 characters.' }),
@@ -130,7 +131,10 @@ export async function createMultiEventRequestAction(data: any): Promise<FormStat
             };
         }
 
-        const { clubId, submittedBy, submittedByContact, events, generalNotes } = validatedFields.data;
+        const { clubId, submittedBy, submittedByEmail, submittedByPhone, events, generalNotes } = validatedFields.data;
+
+        // Combine contact information for backward compatibility
+        const submittedByContact = [submittedByEmail, submittedByPhone].filter(Boolean).join(' | ');
 
         // Create events for each priority
         for (const eventData of events) {

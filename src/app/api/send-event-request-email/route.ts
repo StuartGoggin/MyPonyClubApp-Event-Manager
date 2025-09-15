@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { generateEventRequestPDF } from '@/lib/event-request-pdf';
 import { getClubById, getZoneByClubId } from '@/lib/data';
-import { addEmailToQueue, getEmailQueueConfig } from '@/lib/email-queue';
+import { addEmailToQueue, getEmailQueueConfig } from '@/lib/email-queue-admin';
 import { QueuedEmail } from '@/lib/types';
 
 // Only initialize Resend if API key is available

@@ -6,7 +6,9 @@ import {
   deleteQueuedEmail, 
   bulkUpdateEmails, 
   bulkDeleteEmails,
-  getEmailQueueStats 
+  getEmailQueueStats,
+  addEmailToQueue,
+  duplicateEmail
 } from '@/lib/email-queue-admin';
 import { EmailStatus } from '@/lib/types';
 import { withAdminAuth } from '@/lib/auth-middleware';
@@ -44,7 +46,7 @@ export const GET = withAdminAuth(async (request: NextRequest) => {
 export const POST = withAdminAuth(async (request: NextRequest) => {
   try {
     const body = await request.json();
-    const { action, emailIds, updates } = body;
+    const { action, emailIds, updates, emailId, resetStatus } = body;
 
     // Handle bulk operations
     if (action === 'bulk-update' && emailIds && updates) {
@@ -57,9 +59,18 @@ export const POST = withAdminAuth(async (request: NextRequest) => {
       return NextResponse.json({ success: true, message: 'Emails deleted successfully' });
     }
 
+    // Handle email duplication (for resend functionality)
+    if (action === 'duplicate' && emailId) {
+      const newEmailId = await duplicateEmail(emailId, updates, resetStatus);
+      return NextResponse.json({ 
+        success: true, 
+        id: newEmailId, 
+        message: 'Email duplicated successfully' 
+      });
+    }
+
     // Handle single email creation
     if (!action && body.to && body.subject) {
-      const { addEmailToQueue } = await import('@/lib/email-queue-admin');
       const emailId = await addEmailToQueue(body);
       return NextResponse.json({ success: true, id: emailId, message: 'Email added to queue successfully' });
     }

@@ -1,5 +1,5 @@
 import { adminDb } from './firebase-admin';
-import { QueuedEmail, EmailStatus, EmailQueueStats, EmailQueueConfig, EmailTemplate } from './types';
+import { QueuedEmail, EmailStatus, EmailQueueStats, EmailQueueConfig, EmailTemplate, EmailLog } from './types';
 
 const EMAIL_QUEUE_COLLECTION = 'emailQueue';
 const EMAIL_CONFIG_COLLECTION = 'emailConfig';
@@ -19,10 +19,11 @@ export async function addEmailToQueue(email: Omit<QueuedEmail, 'id' | 'createdAt
       updatedAt: new Date(),
       retryCount: 0,
       maxRetries: 3,
+      // Set default status to pending if not provided
+      status: email.status || 'pending',
     };
 
     const docRef = await adminDb.collection(EMAIL_QUEUE_COLLECTION).add(emailData);
-    return docRef.id;
     return docRef.id;
   } catch (error) {
     console.error('Error adding email to queue:', error);
@@ -45,7 +46,7 @@ export async function getQueuedEmails(status?: EmailStatus, emailType?: string):
     const querySnapshot = await query.get();
     const emails: QueuedEmail[] = [];
 
-    querySnapshot.forEach((doc) => {
+    querySnapshot.forEach((doc: any) => {
       const data = doc.data();
       emails.push({
         id: doc.id,
@@ -84,6 +85,50 @@ export async function getQueuedEmailById(emailId: string): Promise<QueuedEmail |
     return null;
   } catch (error) {
     console.error('Error fetching queued email:', error);
+    throw error;
+  }
+}
+
+export async function duplicateEmail(emailId: string, updates?: Partial<QueuedEmail>, resetStatus: boolean = false): Promise<string> {
+  try {
+    const originalEmail = await getQueuedEmailById(emailId);
+    if (!originalEmail) {
+      throw new Error('Original email not found');
+    }
+
+    // Create new email data based on original
+    const newEmailData = {
+      to: originalEmail.to,
+      cc: originalEmail.cc,
+      bcc: originalEmail.bcc,
+      subject: originalEmail.subject,
+      textContent: originalEmail.textContent,
+      htmlContent: originalEmail.htmlContent,
+      type: originalEmail.type,
+      priority: originalEmail.priority,
+      attachments: originalEmail.attachments,
+      metadata: originalEmail.metadata,
+      // Apply any updates
+      ...updates,
+      // Reset status and timestamps if requested
+      status: resetStatus ? 'pending' : originalEmail.status,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      retryCount: 0,
+      maxRetries: originalEmail.maxRetries || 3,
+      // Clear sent/scheduled info for resend
+      sentAt: undefined,
+      sentBy: undefined,
+      scheduledFor: resetStatus ? undefined : originalEmail.scheduledFor,
+      // Add metadata about duplication
+      duplicatedFrom: emailId,
+      duplicatedAt: new Date()
+    };
+
+    const docRef = await adminDb.collection(EMAIL_QUEUE_COLLECTION).add(newEmailData);
+    return docRef.id;
+  } catch (error) {
+    console.error('Error duplicating email:', error);
     throw error;
   }
 }
@@ -289,7 +334,7 @@ export async function getEmailTemplates(): Promise<EmailTemplate[]> {
     const querySnapshot = await adminDb.collection(EMAIL_TEMPLATES_COLLECTION).orderBy('name').get();
     const templates: EmailTemplate[] = [];
 
-    querySnapshot.forEach((doc) => {
+    querySnapshot.forEach((doc: any) => {
       const data = doc.data();
       templates.push({
         id: doc.id,
@@ -358,7 +403,7 @@ export async function getEmailsToProcess(): Promise<QueuedEmail[]> {
     const querySnapshot = await query.get();
     const emails: QueuedEmail[] = [];
 
-    querySnapshot.forEach((doc) => {
+    querySnapshot.forEach((doc: any) => {
       const data = doc.data();
       emails.push({
         id: doc.id,
@@ -387,7 +432,7 @@ export async function getFailedEmailsForRetry(): Promise<QueuedEmail[]> {
     const querySnapshot = await query.get();
     const emails: QueuedEmail[] = [];
 
-    querySnapshot.forEach((doc) => {
+    querySnapshot.forEach((doc: any) => {
       const data = doc.data();
       emails.push({
         id: doc.id,
@@ -402,6 +447,53 @@ export async function getFailedEmailsForRetry(): Promise<QueuedEmail[]> {
     return emails;
   } catch (error) {
     console.error('Error fetching failed emails for retry:', error);
+    throw error;
+  }
+}
+
+// Email Logs Collection
+const EMAIL_LOGS_COLLECTION = 'emailLogs';
+
+export async function addEmailLog(log: Omit<EmailLog, 'id' | 'timestamp'>): Promise<string> {
+  try {
+    const logData = {
+      ...log,
+      timestamp: new Date(),
+    };
+
+    const docRef = await adminDb.collection(EMAIL_LOGS_COLLECTION).add(logData);
+    return docRef.id;
+  } catch (error) {
+    console.error('Error adding email log:', error);
+    throw error;
+  }
+}
+
+export async function getEmailLogs(limit: number = 100, status?: 'success' | 'error' | 'retry' | 'pending'): Promise<EmailLog[]> {
+  try {
+    let query = adminDb.collection(EMAIL_LOGS_COLLECTION)
+      .orderBy('timestamp', 'desc')
+      .limit(limit);
+
+    if (status) {
+      query = query.where('status', '==', status);
+    }
+
+    const querySnapshot = await query.get();
+    const logs: EmailLog[] = [];
+
+    querySnapshot.forEach((doc: any) => {
+      const data = doc.data();
+      logs.push({
+        id: doc.id,
+        ...data,
+        timestamp: data.timestamp?.toDate() || new Date(),
+      } as EmailLog);
+    });
+
+    return logs;
+  } catch (error) {
+    console.error('Error fetching email logs:', error);
     throw error;
   }
 }

@@ -15,9 +15,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Mail, Send, Trash2, Edit, Eye, CheckCircle, XCircle, Clock, AlertTriangle, Settings, Download, Filter, Search, RefreshCw } from 'lucide-react';
+import { CalendarIcon, Mail, Send, Trash2, Edit, Eye, CheckCircle, XCircle, Clock, AlertTriangle, Settings, Download, Filter, Search, RefreshCw, FileText, Activity, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
-import { QueuedEmail, EmailStatus, EmailQueueStats, EmailQueueConfig } from '@/lib/types';
+import { QueuedEmail, EmailStatus, EmailQueueStats, EmailQueueConfig, EmailLog } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import AdminAuthWrapper from '@/components/admin-auth-wrapper';
 
@@ -30,8 +30,12 @@ function EmailQueueAdminContent() {
   const [filterType, setFilterType] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [editingEmail, setEditingEmail] = useState<QueuedEmail | null>(null);
+  const [resendingEmail, setResendingEmail] = useState<QueuedEmail | null>(null);
+  const [resendEmailData, setResendEmailData] = useState<{to: string[]; cc?: string[]; bcc?: string[]}>({ to: [] });
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [logs, setLogs] = useState<any[]>([]);
+  const [isLoadingLogs, setIsLoadingLogs] = useState(false);
 
   // Fetch data functions
   const fetchEmails = async () => {
@@ -104,11 +108,29 @@ function EmailQueueAdminContent() {
     }
   };
 
+  const fetchLogs = async () => {
+    try {
+      setIsLoadingLogs(true);
+      const response = await fetch('/api/email-queue/logs');
+      const result = await response.json();
+      
+      if (result.success) {
+        setLogs(result.data);
+      } else {
+        console.error('Failed to fetch logs:', result.error);
+      }
+    } catch (error) {
+      console.error('Error fetching logs:', error);
+    } finally {
+      setIsLoadingLogs(false);
+    }
+  };
+
   // Load initial data
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
-      await Promise.all([fetchEmails(), fetchStats(), fetchConfig()]);
+      await Promise.all([fetchEmails(), fetchStats(), fetchConfig(), fetchLogs()]);
       setIsLoading(false);
     };
     
@@ -211,7 +233,7 @@ function EmailQueueAdminContent() {
     await fetchStats();
   };
 
-  const handleEmailAction = async (emailId: string, action: 'approve' | 'delete' | 'send' | 'cancel') => {
+  const handleEmailAction = async (emailId: string, action: 'approve' | 'delete' | 'send' | 'cancel' | 'resend') => {
     setIsRefreshing(true);
     
     try {
@@ -245,6 +267,21 @@ function EmailQueueAdminContent() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ emailId, sentById: 'admin' }),
+        });
+        
+        if (response.ok) {
+          await fetchEmails();
+        }
+      } else if (action === 'resend') {
+        // Create a duplicate email based on the existing one and mark it as pending
+        const response = await fetch('/api/email-queue', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            action: 'duplicate',
+            emailId: emailId,
+            resetStatus: true
+          }),
         });
         
         if (response.ok) {
@@ -300,6 +337,49 @@ function EmailQueueAdminContent() {
     }
   };
 
+  const handleEditResend = (email: QueuedEmail) => {
+    setResendingEmail(email);
+    setResendEmailData({
+      to: Array.isArray(email.to) ? email.to : [email.to],
+      cc: email.cc,
+      bcc: email.bcc
+    });
+  };
+
+  const handleResendWithEdits = async () => {
+    if (!resendingEmail) return;
+    
+    setIsRefreshing(true);
+    
+    try {
+      const response = await fetch('/api/email-queue', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'duplicate',
+          emailId: resendingEmail.id,
+          resetStatus: true,
+          updates: {
+            to: resendEmailData.to,
+            cc: resendEmailData.cc,
+            bcc: resendEmailData.bcc
+          }
+        }),
+      });
+      
+      if (response.ok) {
+        await fetchEmails();
+        setResendingEmail(null);
+        setResendEmailData({ to: [] });
+      }
+    } catch (error) {
+      console.error('Error resending email with edits:', error);
+    }
+    
+    setIsRefreshing(false);
+    await fetchStats();
+  };
+
   if (isLoading) {
     return (
       <div className="container mx-auto p-6">
@@ -336,6 +416,7 @@ function EmailQueueAdminContent() {
           <TabsTrigger value="queue">Email Queue</TabsTrigger>
           <TabsTrigger value="stats">Statistics</TabsTrigger>
           <TabsTrigger value="config">Configuration</TabsTrigger>
+          <TabsTrigger value="logs">Diagnostic Logs</TabsTrigger>
         </TabsList>
 
         <TabsContent value="queue" className="space-y-6">
@@ -568,7 +649,7 @@ function EmailQueueAdminContent() {
                                   <Label className="text-sm font-medium">Content:</Label>
                                   <div 
                                     className="mt-2 p-4 border rounded-md max-h-96 overflow-y-auto"
-                                    dangerouslySetInnerHTML={{ __html: email.htmlContent }}
+                                    dangerouslySetInnerHTML={{ __html: email.htmlContent || '' }}
                                   />
                                 </div>
                               </div>
@@ -601,6 +682,28 @@ function EmailQueueAdminContent() {
                             >
                               <Send className="h-4 w-4" />
                             </Button>
+                          )}
+                          
+                          {(email.status === 'sent' || email.status === 'failed') && (
+                            <>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleEmailAction(email.id, 'resend')}
+                                title="Resend email"
+                              >
+                                <RefreshCw className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleEditResend(email)}
+                                title="Edit recipients and resend"
+                              >
+                                <Edit className="h-3 w-3 mr-1" />
+                                <RefreshCw className="h-3 w-3" />
+                              </Button>
+                            </>
                           )}
                           
                           <AlertDialog>
@@ -798,6 +901,98 @@ function EmailQueueAdminContent() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="logs" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Diagnostic Logs
+              </CardTitle>
+              <CardDescription>
+                View email send operation history and diagnostic information
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Button onClick={fetchLogs} variant="outline" size="sm">
+                    <Activity className="h-4 w-4 mr-2" />
+                    Refresh Logs
+                  </Button>
+                </div>
+              </div>
+              
+              {isLoadingLogs ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Timestamp</TableHead>
+                        <TableHead>Email ID</TableHead>
+                        <TableHead>Subject</TableHead>
+                        <TableHead>Recipients</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Message</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {logs.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                            No logs available
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        logs.map((log) => (
+                          <TableRow key={log.id}>
+                            <TableCell className="font-mono text-sm">
+                              {new Date(log.timestamp).toLocaleString()}
+                            </TableCell>
+                            <TableCell className="font-mono text-sm">
+                              {log.emailId || 'N/A'}
+                            </TableCell>
+                            <TableCell className="max-w-xs truncate">
+                              {log.subject || 'N/A'}
+                            </TableCell>
+                            <TableCell>
+                              {Array.isArray(log.recipients) 
+                                ? log.recipients.length 
+                                : (log.recipients ? 1 : 0)
+                              } recipient(s)
+                            </TableCell>
+                            <TableCell>
+                              <Badge 
+                                variant={
+                                  log.status === 'success' ? 'default' :
+                                  log.status === 'error' ? 'destructive' :
+                                  log.status === 'retry' ? 'secondary' : 'outline'
+                                }
+                                className="flex items-center gap-1 w-fit"
+                              >
+                                {log.status === 'error' && <AlertCircle className="h-3 w-3" />}
+                                {log.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="max-w-md">
+                              <div className="truncate" title={log.message}>
+                                {log.message || 'No message'}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {/* Email Edit Dialog */}
@@ -837,6 +1032,67 @@ function EmailQueueAdminContent() {
                   saveEmailChanges();
                 }}>
                   Save Changes
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Edit & Resend Email Dialog */}
+      {resendingEmail && (
+        <Dialog open={!!resendingEmail} onOpenChange={() => setResendingEmail(null)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Edit Recipients & Resend</DialogTitle>
+              <DialogDescription>
+                Modify the email recipients and resend: {resendingEmail.subject}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="editTo">To (comma-separated)</Label>
+                <Input
+                  id="editTo"
+                  value={resendEmailData.to.join(', ')}
+                  onChange={(e) => setResendEmailData({
+                    ...resendEmailData, 
+                    to: e.target.value.split(',').map(email => email.trim()).filter(email => email)
+                  })}
+                  placeholder="recipient@example.com, another@example.com"
+                />
+              </div>
+              <div>
+                <Label htmlFor="editCc">CC (optional, comma-separated)</Label>
+                <Input
+                  id="editCc"
+                  value={(resendEmailData.cc || []).join(', ')}
+                  onChange={(e) => setResendEmailData({
+                    ...resendEmailData, 
+                    cc: e.target.value ? e.target.value.split(',').map(email => email.trim()).filter(email => email) : undefined
+                  })}
+                  placeholder="cc@example.com, another@example.com"
+                />
+              </div>
+              <div>
+                <Label htmlFor="editBcc">BCC (optional, comma-separated)</Label>
+                <Input
+                  id="editBcc"
+                  value={(resendEmailData.bcc || []).join(', ')}
+                  onChange={(e) => setResendEmailData({
+                    ...resendEmailData, 
+                    bcc: e.target.value ? e.target.value.split(',').map(email => email.trim()).filter(email => email) : undefined
+                  })}
+                  placeholder="bcc@example.com, another@example.com"
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setResendingEmail(null)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleResendWithEdits} disabled={resendEmailData.to.length === 0}>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Resend Email
                 </Button>
               </div>
             </div>

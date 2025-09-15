@@ -558,3 +558,16 @@ export interface EmailQueueStats {
   mostRecentFailure?: Date;
   oldestPendingEmail?: Date;
 }
+
+export interface EmailLog {
+  id: string;
+  emailId?: string;
+  timestamp: Date;
+  subject?: string;
+  recipients?: string[] | string;
+  status: 'success' | 'error' | 'retry' | 'pending';
+  message?: string;
+  errorDetails?: string;
+  processingTimeMs?: number;
+  retryAttempt?: number;
+}

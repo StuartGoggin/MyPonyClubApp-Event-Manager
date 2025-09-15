@@ -1,6 +1,71 @@
-# Email Queue Management System - Testing Guide
+# Email Queue Management & Notification System - Testing Guide
 
 ## 🚀 Quick Start Testing
+
+### 📧 **Phase 1 Notification System Testing** (NEW)
+
+#### 1. Test Event Request Notification Flow
+1. **Navigate to Event Request Form**: `http://localhost:9002/request-event`
+2. **Fill out complete form** with multiple events
+3. **Submit form** and watch for notification triggers
+4. **Check console output** for detailed email logs (development mode)
+
+#### 2. Development Mode Testing (No Resend API Key)
+- **Email Simulation**: All emails logged to browser console and server logs
+- **Multi-Recipient Testing**: See all three notification types:
+  - Requester confirmation email
+  - Zone approver notification
+  - Super user administrative email
+- **Attachment Verification**: Console shows PDF and JSON attachment details
+- **Template Testing**: View complete HTML and text email content
+
+#### 3. Production Mode Testing (With Resend API Key)
+```bash
+# Set your Resend API key in .env.local
+RESEND_API_KEY=re_your_actual_key_here
+```
+- **Real Email Delivery**: Actual emails sent to recipients
+- **PDF Attachments**: Verify PDF attachment delivery
+- **JSON Exports**: Super users receive administrative JSON data
+- **Error Handling**: Test with invalid email addresses
+
+#### 4. API Testing for Notification System
+```bash
+# Test notification endpoint directly
+curl -X POST "http://localhost:9002/api/send-event-request-email" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "formData": {
+      "clubId": "test-club",
+      "submittedByEmail": "test@example.com",
+      "submittedByName": "Test User",
+      "submittedByPhone": "0412345678",
+      "events": [{
+        "eventType": "Test Event",
+        "preferredDate": "2025-12-15",
+        "location": "Test Location",
+        "description": "Test event description",
+        "traditionalEvent": false,
+        "priority": 1
+      }]
+    },
+    "queue": false
+  }'
+
+# Test with queue=true to add to email queue instead of immediate send
+curl -X POST "http://localhost:9002/api/send-event-request-email" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "formData": {...},
+    "queue": true
+  }'
+```
+
+#### 5. Email Queue Integration Testing
+1. **Submit form with queue=true**: Emails added to queue instead of immediate send
+2. **Check Email Queue UI**: `http://localhost:9002/admin/email-queue`
+3. **Verify email details**: Recipients, attachments, and content
+4. **Test queue send**: Use "Send Email" button to deliver queued notifications
 
 ### 1. Access the Admin Interface
 1. Navigate to: `http://localhost:9002/admin/email-queue`
@@ -81,6 +146,48 @@ curl -X GET "http://localhost:9002/api/email-queue?status=draft" \
 - [ ] Test configuration with invalid values
 
 ## 🔧 Development Testing
+
+### 📧 **Notification System Testing Checklist**
+
+#### Core Notification Features
+- [ ] **Multi-Recipient Emails**: Test all three recipient types (requester, zone approver, super user)
+- [ ] **PDF Attachment Generation**: Verify PDF creation and attachment to emails
+- [ ] **JSON Export Attachment**: Confirm super users receive JSON data export
+- [ ] **Reference Number Generation**: Check unique reference number creation (ER-timestamp format)
+- [ ] **Zone Approver Lookup**: Test automatic zone coordinator identification based on club selection
+- [ ] **Professional Email Templates**: Verify HTML formatting and responsive design
+
+#### Development vs Production Mode
+- [ ] **Development Mode** (No `RESEND_API_KEY`):
+  - [ ] Email content logged to console
+  - [ ] No actual emails sent
+  - [ ] All attachments shown in logs
+  - [ ] Form submission completes successfully
+- [ ] **Production Mode** (With `RESEND_API_KEY`):
+  - [ ] Real emails delivered to recipients
+  - [ ] PDF attachments received correctly
+  - [ ] JSON exports delivered to super users
+  - [ ] Error handling for failed email delivery
+
+#### Queue Integration Testing
+- [ ] **Queue Mode** (`queue: true`): Emails added to queue for admin review
+- [ ] **Direct Mode** (`queue: false`): Immediate email delivery
+- [ ] **Queue Management**: Test send/edit/delete from email queue UI
+- [ ] **ID Compatibility**: Verify queue-generated IDs work with admin interface
+
+#### Error Scenarios
+- [ ] **Missing Zone Approvers**: Test clubs without configured approvers
+- [ ] **Invalid Email Addresses**: Test notification system with bad email data
+- [ ] **PDF Generation Failure**: Test fallback when PDF creation fails
+- [ ] **Network Issues**: Test behavior when Resend API unavailable
+- [ ] **Missing Club Data**: Test with invalid or non-existent club IDs
+
+#### Email Content Validation
+- [ ] **Requester Email**: Confirmation with PDF attachment and reference number
+- [ ] **Zone Approver Email**: Complete event details with club information
+- [ ] **Super User Email**: Administrative view with both PDF and JSON attachments
+- [ ] **Subject Lines**: Verify proper subject formatting with reference numbers
+- [ ] **Email Templates**: Check HTML rendering and text alternatives
 
 ### Mock Data Testing
 Use the browser console on the admin page to add test emails:

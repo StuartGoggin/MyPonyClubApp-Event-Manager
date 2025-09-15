@@ -3,6 +3,8 @@ import { Resend } from 'resend';
 import { generateEventRequestPDF } from '@/lib/event-request-pdf';
 import { getClubById, getZoneByClubId } from '@/lib/data';
 import { addEmailToQueue, getEmailQueueConfig } from '@/lib/email-queue-admin';
+import { exportEventRequestAsJSON, createJSONAttachment } from '@/lib/event-request-json-export';
+import { generateEventRequestEmailHTML, generateEventRequestEmailText } from '@/lib/event-request-email-template';
 import { QueuedEmail } from '@/lib/types';
 
 // Only initialize Resend if API key is available
@@ -15,6 +17,14 @@ const zoneApprovers = {
   // 'emz': ['emzsecretary@example.com'],
   // 'wmz': ['wmzsecretary@example.com'],
 };
+
+// Super user emails (will receive JSON exports)
+const superUserEmails = process.env.SUPER_USER_EMAILS 
+  ? process.env.SUPER_USER_EMAILS.split(',').map(email => email.trim())
+  : [
+      'admin@ponyclub.com.au',
+      // Add more super user emails as needed
+    ];
 
 interface EventRequestEmailData {
   formData: {
@@ -44,12 +54,12 @@ interface EventRequestEmailData {
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('Email API called');
+    console.log('Enhanced Email Notification API called');
     
     const data: EventRequestEmailData = await request.json();
     console.log('Received data:', { hasFormData: !!data.formData, hasPdfData: !!data.pdfData });
     
-    const { formData } = data;
+    const { formData, pdfData } = data;
 
     // Validate required data
     if (!formData) {
@@ -79,237 +89,286 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Generate reference number
+    const referenceNumber = `ER-${Date.now()}`;
+    console.log('Generated reference number:', referenceNumber);
+
+    // Generate JSON export for super users
+    const jsonExport = await exportEventRequestAsJSON(formData, referenceNumber);
+    const jsonAttachment = createJSONAttachment(jsonExport);
+
     // Get zone approver emails
-    // Generate a zone identifier for email prefix
     const zoneCode = zone.name.toLowerCase().replace(/[^a-z]/g, '').substring(0, 3);
-    const approverEmails = zoneApprovers[zoneCode as keyof typeof zoneApprovers];
+    const approverEmails = zoneApprovers[zoneCode as keyof typeof zoneApprovers] || [];
     
-    if (!approverEmails || approverEmails.length === 0) {
-      return NextResponse.json(
-        { error: 'No zone approver emails configured for this zone' },
-        { status: 404 }
-      );
+    if (approverEmails.length === 0) {
+      console.warn('No zone approver emails configured for zone:', zone.name);
     }
 
-    // Generate PDF attachment
-    const pdfBuffer = await generateEventRequestPDF({
-      formData: {
-        ...formData,
-        clubName: club.name,
-        events: formData.events.map(event => ({
-          ...event,
-          date: typeof event.date === 'string' ? new Date(event.date) : event.date,
-          coordinatorName: event.coordinatorName || '',
-          coordinatorContact: event.coordinatorContact || ''
-        }))
-      }
+    // Get PDF buffer from provided data or generate new one
+    let pdfBuffer: Buffer;
+    if (pdfData && pdfData.length > 0) {
+      pdfBuffer = Buffer.from(pdfData);
+      console.log('Using provided PDF data, size:', pdfBuffer.length);
+    } else {
+      console.log('Generating new PDF...');
+      pdfBuffer = await generateEventRequestPDF({
+        formData: {
+          ...formData,
+          clubName: club.name,
+          events: formData.events.map(event => ({
+            ...event,
+            date: typeof event.date === 'string' ? new Date(event.date) : event.date,
+            coordinatorName: event.coordinatorName || '',
+            coordinatorContact: event.coordinatorContact || ''
+          }))
+        }
+      });
+    }
+
+    // Prepare email template data
+    const emailTemplateData = {
+      requesterName: formData.submittedBy,
+      requesterEmail: formData.submittedByEmail,
+      requesterPhone: formData.submittedByPhone,
+      clubName: club.name,
+      zoneName: zone.name,
+      submissionDate: new Date().toISOString(),
+      referenceNumber,
+      events: formData.events.map(event => ({
+        priority: event.priority,
+        name: event.name,
+        eventTypeName: event.eventTypeName || 'Unknown Event Type',
+        date: typeof event.date === 'string' ? event.date : event.date.toISOString(),
+        location: event.location,
+        isQualifier: event.isQualifier,
+        isHistoricallyTraditional: event.isHistoricallyTraditional,
+        coordinatorName: event.coordinatorName,
+        coordinatorContact: event.coordinatorContact,
+        notes: event.notes,
+      })),
+      generalNotes: formData.generalNotes,
+    };
+
+    const pdfFilename = `event-request-${formData.submittedByEmail.replace(/[^a-zA-Z0-9]/g, '_')}-${new Date().toISOString().split('T')[0]}.pdf`;
+
+    // Check email queue configuration
+    const emailConfig = await getEmailQueueConfig();
+    const shouldQueue = emailConfig.requireApproval;
+
+    const emailResults = [];
+    const queuedEmails = [];
+
+    // Common email attachments
+    const pdfAttachment = {
+      filename: pdfFilename,
+      content: pdfBuffer.toString('base64'),
+      type: 'application/pdf',
+    };
+
+    // For queue system - create proper EmailAttachment objects
+    const createEmailAttachment = (filename: string, content: string, contentType: string): any => ({
+      id: `att-${Date.now()}-${Math.random().toString(36).substring(2)}`,
+      filename,
+      contentType,
+      size: Buffer.from(content, 'base64').length,
+      content,
+      createdAt: new Date(),
     });
 
-    // Format submission date
-    const submissionDate = new Date().toLocaleDateString('en-AU', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+    // 1. Send email to requesting user
+    console.log('Preparing email for requesting user:', formData.submittedByEmail);
+    
+    const requesterEmailData = {
+      ...emailTemplateData,
+      isForSuperUser: false,
+    };
 
-    // Format events list for email
-    const eventsList = formData.events
-      .sort((a, b) => a.priority - b.priority)
-      .map(event => {
-        const eventDate = new Date(event.date).toLocaleDateString('en-AU', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        });
-        return `${event.priority}${getOrdinalSuffix(event.priority)} Priority: ${event.name}
-   Date: ${eventDate}
-   Location: ${event.location}
-   Qualifier: ${event.isQualifier ? 'Yes' : 'No'}
-   Traditional: ${event.isHistoricallyTraditional ? 'Yes' : 'No'}`;
-      })
-      .join('\n\n');
-
-    // Create email subject
-    const subject = `Event Request Submission - ${club.name} (${formData.events.length} events)`;
-
-    // Create email HTML content
-    const emailHtml = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #2563eb; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">
-          Event Calendar Request Submission
-        </h2>
-        
-        <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
-          <h3 style="margin-top: 0; color: #374151;">Submission Details</h3>
-          <p><strong>Submitted:</strong> ${submissionDate}</p>
-          <p><strong>Club:</strong> ${club.name} (${zone.name})</p>
-          <p><strong>Submitted by:</strong> ${formData.submittedBy}</p>
-          <p><strong>Contact Email:</strong> ${formData.submittedByEmail}</p>
-          <p><strong>Contact Phone:</strong> ${formData.submittedByPhone}</p>
-        </div>
-
-        <h3 style="color: #374151;">Requested Events (${formData.events.length})</h3>
-        <div style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px;">
-          <pre style="font-family: 'Courier New', monospace; font-size: 14px; line-height: 1.6; margin: 0; white-space: pre-wrap;">${eventsList}</pre>
-        </div>
-
-        ${formData.generalNotes ? `
-        <h3 style="color: #374151;">Additional Notes</h3>
-        <div style="background-color: #fffbeb; border: 1px solid #fbbf24; border-radius: 8px; padding: 15px;">
-          <p style="margin: 0;">${formData.generalNotes}</p>
-        </div>
-        ` : ''}
-
-        <div style="margin: 30px 0; padding: 20px; background-color: #ecfdf5; border-radius: 8px; border-left: 4px solid #10b981;">
-          <p style="margin: 0;"><strong>Action Required:</strong> Please review this event request submission and respond to ${formData.submittedByEmail} with approval status.</p>
-        </div>
-
-        <div style="margin: 30px 0; padding: 15px; background-color: #f1f5f9; border-radius: 8px; font-size: 12px; color: #64748b;">
-          <p style="margin: 0;">This email was automatically generated by the MyPonyClub Event Manager system. The attached PDF contains the complete form for your records.</p>
-        </div>
-      </div>
-    `;
-
-    // Create text content for the email
-    const emailText = `
-Event Calendar Request Submission
-
-Submission Details:
-- Submitted: ${submissionDate}
-- Club: ${club.name} (${zone.name})
-- Submitted by: ${formData.submittedBy}
-- Contact Email: ${formData.submittedByEmail}
-- Contact Phone: ${formData.submittedByPhone}
-
-Requested Events (${formData.events.length}):
-${eventsList}
-
-${formData.generalNotes ? `Additional Notes:
-${formData.generalNotes}` : ''}
-
-Action Required: Please review this event request submission and respond to ${formData.submittedByEmail} with approval status.
-
-This email was automatically generated by the MyPonyClub Event Manager system.
-    `.trim();
-
-    // Check email queue configuration to determine if we should queue or send immediately
-    const config = await getEmailQueueConfig();
-    const shouldQueue = config?.requireApprovalForEventRequests ?? true;
+    const requesterEmail = {
+      from: 'noreply@ponyclub.com.au',
+      to: [formData.submittedByEmail],
+      subject: `Event Request Submitted - ${referenceNumber}`,
+      html: generateEventRequestEmailHTML(requesterEmailData),
+      text: generateEventRequestEmailText(requesterEmailData),
+      attachments: [pdfAttachment],
+    };
 
     if (shouldQueue) {
-      // Queue the email for admin review
-      console.log('Queueing email for admin review');
+      console.log('Queueing email for requesting user');
+      const queuedEmailData = {
+        to: requesterEmail.to,
+        subject: requesterEmail.subject,
+        htmlContent: requesterEmail.html,
+        textContent: requesterEmail.text,
+        attachments: [createEmailAttachment(pdfFilename, pdfBuffer.toString('base64'), 'application/pdf')],
+        status: 'pending' as const,
+        type: 'event_request' as const,
+        metadata: {
+          requesterId: formData.submittedByEmail,
+          clubId: formData.clubId,
+          referenceNumber,
+        },
+      };
+      const emailId = await addEmailToQueue(queuedEmailData);
+      console.log('Email queued with ID:', emailId);
+      queuedEmails.push('requester');
+    } else if (resend) {
+      try {
+        console.log('Sending immediate email to requesting user');
+        const result = await resend.emails.send(requesterEmail);
+        console.log('Requester email sent:', result);
+        emailResults.push({ type: 'requester', success: true, id: result.data?.id });
+      } catch (error) {
+        console.error('Failed to send requester email:', error);
+        emailResults.push({ type: 'requester', success: false, error });
+      }
+    }
 
-      const queuedEmail: Omit<QueuedEmail, 'id' | 'createdAt' | 'updatedAt'> = {
-        type: 'event_request',
-        status: 'draft',
-        to: approverEmails,
-        cc: [formData.submittedByEmail],
-        subject,
-        htmlContent: emailHtml,
-        textContent: emailText,
-        attachments: [
-          {
-            id: `pdf-${Date.now()}`,
-            filename: `event-request-${club.name.replace(/\s+/g, '-').toLowerCase()}-${new Date().toISOString().split('T')[0]}.pdf`,
-            contentType: 'application/pdf',
-            size: pdfBuffer.length,
-            content: pdfBuffer.toString('base64'),
-            createdAt: new Date(),
-          }
-        ],
-        createdBy: `${formData.submittedBy} (${formData.submittedByEmail})`,
-        relatedClubId: formData.clubId,
-        relatedZoneId: zone.id,
-        requiresApproval: true,
-        isPriority: false,
+    // 2. Send email to zone approvers
+    for (const approverEmail of approverEmails) {
+      console.log('Preparing email for zone approver:', approverEmail);
+      
+      const approverEmailData = {
+        ...emailTemplateData,
+        isForSuperUser: false,
       };
 
-      const emailId = await addEmailToQueue(queuedEmail);
+      const zoneApproverEmail = {
+        from: 'noreply@ponyclub.com.au',
+        to: [approverEmail],
+        subject: `Zone Approval Required - Event Request ${referenceNumber}`,
+        html: generateEventRequestEmailHTML(approverEmailData),
+        text: generateEventRequestEmailText(approverEmailData),
+        attachments: [pdfAttachment],
+      };
 
-      return NextResponse.json({
-        success: true,
-        message: 'Email queued for admin review',
-        emailId,
-        queuedForReview: true,
-        recipients: approverEmails,
-        submitterCc: formData.submittedByEmail
-      });
+      if (shouldQueue) {
+        console.log('Queueing email for zone approver:', approverEmail);
+        const queuedEmailData = {
+          to: zoneApproverEmail.to,
+          subject: zoneApproverEmail.subject,
+          htmlContent: zoneApproverEmail.html,
+          textContent: zoneApproverEmail.text,
+          attachments: [createEmailAttachment(pdfFilename, pdfBuffer.toString('base64'), 'application/pdf')],
+          status: 'pending' as const,
+          type: 'event_request' as const,
+          metadata: {
+            requesterId: formData.submittedByEmail,
+            clubId: formData.clubId,
+            referenceNumber,
+            approverEmail,
+          },
+        };
+        const emailId = await addEmailToQueue(queuedEmailData);
+        console.log('Zone approver email queued with ID:', emailId);
+        queuedEmails.push(`zone-approver-${approverEmail}`);
+      } else if (resend) {
+        try {
+          console.log('Sending immediate email to zone approver:', approverEmail);
+          const result = await resend.emails.send(zoneApproverEmail);
+          console.log('Zone approver email sent:', result);
+          emailResults.push({ type: 'zone-approver', success: true, id: result.data?.id, recipient: approverEmail });
+        } catch (error) {
+          console.error('Failed to send zone approver email:', error);
+          emailResults.push({ type: 'zone-approver', success: false, error, recipient: approverEmail });
+        }
+      }
     }
 
-    // Send immediately (original logic)
-    console.log('Sending email immediately');
-
-    // Check if Resend API key is configured
-    if (!process.env.RESEND_API_KEY || !resend) {
-      console.log('RESEND_API_KEY not configured, logging email instead of sending:');
-      console.log('Subject:', subject);
-      console.log('To:', approverEmails.join(', '));
-      console.log('CC:', formData.submittedByEmail);
-      console.log('PDF attachment size:', pdfBuffer.length, 'bytes');
-      console.log('Email HTML preview:', emailHtml.substring(0, 200) + '...');
+    // 3. Send email with JSON export to super users
+    for (const superUserEmail of superUserEmails) {
+      console.log('Preparing email for super user:', superUserEmail);
       
-      return NextResponse.json({
-        success: true,
-        message: 'Email simulation successful (no API key configured)',
-        recipients: approverEmails,
-        submitterCc: formData.submittedByEmail,
-        queuedForReview: false
-      });
-    }
+      const superUserEmailData = {
+        ...emailTemplateData,
+        isForSuperUser: true,
+      };
 
-    // Send email to all zone approvers
-    const emailPromises = approverEmails.map(email => 
-      resend.emails.send({
-        from: 'MyPonyClub Event Manager <noreply@myponyclub.com>',
-        to: [email],
-        cc: [formData.submittedByEmail], // CC the submitter
-        subject,
-        html: emailHtml,
+      const superUserEmailMessage = {
+        from: 'noreply@ponyclub.com.au',
+        to: [superUserEmail],
+        subject: `Super User Notification - Event Request ${referenceNumber}`,
+        html: generateEventRequestEmailHTML(superUserEmailData),
+        text: generateEventRequestEmailText(superUserEmailData),
         attachments: [
+          pdfAttachment,
           {
-            filename: `event-request-${club.name.replace(/\s+/g, '-').toLowerCase()}-${new Date().toISOString().split('T')[0]}.pdf`,
-            content: pdfBuffer,
+            filename: jsonAttachment.filename,
+            content: Buffer.from(jsonAttachment.content).toString('base64'),
+            type: jsonAttachment.mimeType,
           },
         ],
-      })
-    );
+      };
 
-    await Promise.all(emailPromises);
+      if (shouldQueue) {
+        console.log('Queueing email for super user:', superUserEmail);
+        const queuedEmailData = {
+          to: superUserEmailMessage.to,
+          subject: superUserEmailMessage.subject,
+          htmlContent: superUserEmailMessage.html,
+          textContent: superUserEmailMessage.text,
+          attachments: [
+            createEmailAttachment(pdfFilename, pdfBuffer.toString('base64'), 'application/pdf'),
+            createEmailAttachment(jsonAttachment.filename, Buffer.from(jsonAttachment.content).toString('base64'), jsonAttachment.mimeType),
+          ],
+          status: 'pending' as const,
+          type: 'event_request' as const,
+          metadata: {
+            requesterId: formData.submittedByEmail,
+            clubId: formData.clubId,
+            referenceNumber,
+            superUserEmail,
+            hasJsonExport: true,
+          },
+        };
+        const emailId = await addEmailToQueue(queuedEmailData);
+        console.log('Super user email queued with ID:', emailId);
+        queuedEmails.push(`super-user-${superUserEmail}`);
+      } else if (resend) {
+        try {
+          console.log('Sending immediate email to super user:', superUserEmail);
+          const result = await resend.emails.send(superUserEmailMessage);
+          console.log('Super user email sent:', result);
+          emailResults.push({ type: 'super-user', success: true, id: result.data?.id, recipient: superUserEmail });
+        } catch (error) {
+          console.error('Failed to send super user email:', error);
+          emailResults.push({ type: 'super-user', success: false, error, recipient: superUserEmail });
+        }
+      }
+    }
 
-    return NextResponse.json({
+    // Prepare response
+    const response = {
       success: true,
-      message: `Email sent successfully to ${approverEmails.length} zone approver(s)`,
-      recipients: approverEmails,
-      queuedForReview: false
-    });
+      message: 'Event request notifications processed successfully',
+      referenceNumber,
+      queuedForReview: shouldQueue,
+      recipients: {
+        requester: formData.submittedByEmail,
+        zoneApprovers: approverEmails,
+        superUsers: superUserEmails,
+      },
+      ...(shouldQueue 
+        ? { queuedEmails: queuedEmails.length }
+        : { 
+            emailResults,
+            successfulSends: emailResults.filter(r => r.success).length,
+            failedSends: emailResults.filter(r => !r.success).length,
+          }
+      ),
+    };
+
+    console.log('Email processing completed:', response);
+    return NextResponse.json(response);
 
   } catch (error) {
-    console.error('Email API error:', error);
+    console.error('Email sending error:', error);
     return NextResponse.json(
       { 
-        error: 'Failed to send email',
-        details: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined
+        error: 'Failed to send email notifications',
+        details: error instanceof Error ? error.message : 'Unknown error'
       },
       { status: 500 }
     );
   }
-}
-
-function getOrdinalSuffix(num: number): string {
-  const j = num % 10;
-  const k = num % 100;
-  if (j === 1 && k !== 11) {
-    return 'st';
-  }
-  if (j === 2 && k !== 12) {
-    return 'nd';
-  }
-  if (j === 3 && k !== 13) {
-    return 'rd';
-  }
-  return 'th';
 }

@@ -76,7 +76,7 @@ const multiEventRequestSchema = z.object({
   generalNotes: z.string().optional(),
 });
 
-type MultiEventRequestFormValues = z.infer<typeof multiEventRequestSchema>;
+export type MultiEventRequestFormValues = z.infer<typeof multiEventRequestSchema>;
 
 interface MultiEventRequestFormProps {
   clubs?: Club[];

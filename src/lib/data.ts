@@ -23,19 +23,97 @@ export const updateZone = async (zone: Zone) => {
 // For this example, we use mock data stored in memory.
 
 export let zonesMock: Zone[] = [
-    { id: '1', name: 'Barwon Zone' },
-    { id: '2', name: 'Central Zone' },
-    { id: '3', name: 'East Gippsland Zone' },
-    { id: '4', name: 'Gippsland Zone' },
-    { id: '5', name: 'Midland Zone' },
-    { id: '6', name: 'North Eastern Zone' },
-    { id: '7', name: 'North Metropolitan Zone' },
-    { id: '8', name: 'Northern Zone' },
-    { id: '9', name: 'Port Phillip Zone' },
-    { id: '10', name: 'South Metropolitan Zone' },
-    { id: '11', name: 'West Gippsland Zone' },
-    { id: '12', name: 'Western Zone' },
-    { id: '13', name: 'Wimmera Zone' },
+    { 
+        id: '1', 
+        name: 'Barwon Zone',
+        eventApprovers: [
+            { name: 'Sarah Johnson', email: 'sarah.johnson@example.com', mobile: '+61412345001' }
+        ]
+    },
+    { 
+        id: '2', 
+        name: 'Central Zone',
+        eventApprovers: [
+            { name: 'Michael Brown', email: 'michael.brown@example.com', mobile: '+61412345002' }
+        ]
+    },
+    { 
+        id: '3', 
+        name: 'East Gippsland Zone',
+        eventApprovers: [
+            { name: 'Emma Wilson', email: 'emma.wilson@example.com', mobile: '+61412345003' }
+        ]
+    },
+    { 
+        id: '4', 
+        name: 'Gippsland Zone',
+        eventApprovers: [
+            { name: 'David Miller', email: 'david.miller@example.com', mobile: '+61412345004' }
+        ]
+    },
+    { 
+        id: '5', 
+        name: 'Midland Zone',
+        eventApprovers: [
+            { name: 'Lisa Davis', email: 'lisa.davis@example.com', mobile: '+61412345005' }
+        ]
+    },
+    { 
+        id: '6', 
+        name: 'North Eastern Zone',
+        eventApprovers: [
+            { name: 'James Anderson', email: 'james.anderson@example.com', mobile: '+61412345006' }
+        ]
+    },
+    { 
+        id: '7', 
+        name: 'North Metropolitan Zone',
+        eventApprovers: [
+            { name: 'Rachel Thompson', email: 'rachel.thompson@example.com', mobile: '+61412345007' }
+        ]
+    },
+    { 
+        id: '8', 
+        name: 'Northern Zone',
+        eventApprovers: [
+            { name: 'Mark Garcia', email: 'mark.garcia@example.com', mobile: '+61412345008' }
+        ]
+    },
+    { 
+        id: '9', 
+        name: 'Port Phillip Zone',
+        eventApprovers: [
+            { name: 'Jennifer Martinez', email: 'jennifer.martinez@example.com', mobile: '+61412345009' }
+        ]
+    },
+    { 
+        id: '10', 
+        name: 'South Metropolitan Zone',
+        eventApprovers: [
+            { name: 'Christopher Lee', email: 'christopher.lee@example.com', mobile: '+61412345010' }
+        ]
+    },
+    { 
+        id: '11', 
+        name: 'West Gippsland Zone',
+        eventApprovers: [
+            { name: 'Amanda Taylor', email: 'amanda.taylor@example.com', mobile: '+61412345011' }
+        ]
+    },
+    { 
+        id: '12', 
+        name: 'Western Zone',
+        eventApprovers: [
+            { name: 'Daniel White', email: 'daniel.white@example.com', mobile: '+61412345012' }
+        ]
+    },
+    { 
+        id: '13', 
+        name: 'Wimmera Zone',
+        eventApprovers: [
+            { name: 'Michelle Harris', email: 'michelle.harris@example.com', mobile: '+61412345013' }
+        ]
+    },
 ];
 
 export let clubsMock: Club[] = [
@@ -282,11 +360,6 @@ export async function seedData() {
 }
 
 
-export const getZones = async (): Promise<Zone[]> => {
-    const querySnapshot = await getDocs(collection(db, 'zones'));
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Zone));
-};
-
 export const getClubs = async (): Promise<Club[]> => {
     const querySnapshot = await getDocs(collection(db, 'clubs'));
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Club));
@@ -356,5 +429,52 @@ export const updateEventStatus = async (id: string, status: 'approved' | 'reject
   return { success: true };
 };
 
+// Zone-related functions
+export const getZones = async (): Promise<Zone[]> => {
+  const zonesCollection = collection(db, 'zones');
+  const querySnapshot = await getDocs(zonesCollection);
+  
+  if (querySnapshot.empty) {
+    // If no zones in database, return mock data
+    return zonesMock;
+  }
+  
+  return querySnapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  })) as Zone[];
+};
 
+export const getZoneById = async (zoneId: string): Promise<Zone | null> => {
+  try {
+    const zoneRef = doc(db, 'zones', zoneId);
+    const docSnap = await getDoc(zoneRef);
     
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() } as Zone;
+    }
+    
+    // Fallback to mock data
+    return zonesMock.find(zone => zone.id === zoneId) || null;
+  } catch (error) {
+    console.error('Error fetching zone:', error);
+    // Fallback to mock data
+    return zonesMock.find(zone => zone.id === zoneId) || null;
+  }
+};
+
+export const getZoneByClubId = async (clubId: string): Promise<Zone | null> => {
+  try {
+    // First get the club to find its zoneId
+    const club = await getClubById(clubId);
+    if (!club) {
+      return null;
+    }
+    
+    // Then get the zone by zoneId
+    return await getZoneById(club.zoneId);
+  } catch (error) {
+    console.error('Error fetching zone by club ID:', error);
+    return null;
+  }
+};

@@ -1,5 +1,12 @@
 # MyPonyClub Event Manager
 
+## 🚀 **Quick Access Links**
+- **📧 Admin Email Queue**: [http://localhost:9002/admin/email-queue](http://localhost:9002/admin/email-queue)
+- **📝 Submit Event Request**: [http://localhost:9002/request-event](http://localhost:9002/request-event)
+- **🔍 System Health Check**: [http://localhost:9002/api/health](http://localhost:9002/api/health)
+- **📖 Complete Documentation**: [`SYSTEM_DOCUMENTATION.md`](./SYSTEM_DOCUMENTATION.md)
+- **🧪 Testing Guide**: Run `test-simple.ps1` for automated testing
+
 ## ✨ Latest Features (September 2025)
 
 ### 📄 Revolutionary PDF Event Request System (September 15, 2025)
@@ -34,6 +41,62 @@
   - **Dynamic Content Fitting**: Intelligent space allocation preventing content overflow
   - **Professional Signature Areas**: Enhanced "Who filled in this form" section with proper field sizing
   - **Consistent Margins**: 20mm margins throughout with optimized content width calculations
+
+### 📧 Automated Email Notification System (September 15, 2025)
+- **Zone-Based Email Routing**: Intelligent zone approver notification system with automatic club-to-zone mapping
+  - **Zone Lookup Integration**: Seamless connection between club selection and zone identification
+  - **Zone Approver Database**: Comprehensive zone coordinator contact management with mock data
+  - **Automatic Email Routing**: Event requests automatically sent to appropriate zone coordinators
+  - **Multi-Approver Support**: Zone can have multiple approvers with all receiving notifications
+- **Professional Email Templates**: HTML-formatted email notifications with comprehensive event request details
+  - **Responsive Email Design**: Mobile-friendly HTML templates with proper formatting
+  - **Event Summary Display**: Complete event listing with priorities, dates, locations, and qualifiers
+  - **Club and Submitter Information**: Clear contact details and club identification
+  - **PDF Attachment Integration**: Automatic attachment of generated PDF to email notifications
+  - **Professional Email Styling**: Brand-consistent email templates with proper typography
+- **Robust Email Infrastructure**: Enterprise-grade email delivery with Resend service integration
+
+### 🚀 **Email Queue Management System** (September 15, 2025) - **FULLY OPERATIONAL**
+- **Admin Review Interface**: Comprehensive email queue dashboard for managing all outgoing communications
+  - **Real-time Queue Monitoring**: Live view of all pending, sent, and failed emails with detailed statistics
+  - **Bulk Operations**: Multi-select email management with bulk approve, edit, and delete capabilities
+  - **Email Editing**: In-line editing of email content, recipients, and scheduling before sending
+  - **Status Management**: Complete email lifecycle tracking from draft to sent with retry mechanisms
+- **Authentication & Security**: Role-based access control with development and production authentication
+  - **Development Tokens**: `admin-token` and `dev-admin-token` for testing and development
+  - **Admin Middleware**: Secure API endpoint protection with authentication verification
+  - **Authorization Checks**: Granular permission system for different admin operations
+- **Database Integration**: Firebase Firestore backend with comprehensive email queue management
+  - **Admin SDK Implementation**: Server-side Firebase operations with proper error handling
+  - **Type-Safe Operations**: Full TypeScript integration with normalized data structures
+  - **Configuration Management**: Dynamic email queue settings with admin-configurable parameters
+- **Error Resolution & Bug Fixes**: Production-ready system with all critical issues resolved
+  - **✅ Fixed**: 500 Internal Server Errors from improper Firebase SDK usage
+  - **✅ Fixed**: Authentication failures and 401 Unauthorized errors
+  - **✅ Fixed**: Runtime TypeErrors from email field type mismatches
+  - **✅ Fixed**: Email recipient normalization (string vs array handling)
+- **API Endpoints**: Complete RESTful API for email queue operations
+  - **GET /api/email-queue**: List emails with filtering and statistics
+  - **POST /api/email-queue**: Create new emails with automatic field normalization
+  - **PUT /api/email-queue**: Update existing emails with validation
+  - **GET /api/email-queue/config**: Configuration management with admin settings
+  - **GET /api/health**: System health monitoring with database connectivity checks
+- **Testing & Documentation**: Comprehensive testing framework with automated validation
+  - **PowerShell Test Suite**: Automated testing scripts for full system validation
+  - **API Testing Scripts**: Complete endpoint testing with authentication and error scenarios
+  - **Health Monitoring**: Continuous system health checks with detailed status reporting
+  - **📖 Complete Documentation**: See `SYSTEM_DOCUMENTATION.md` for detailed testing and usage guide
+  - **Resend API Integration**: Professional email service for reliable delivery and tracking
+  - **Attachment Handling**: Secure PDF attachment processing with proper MIME types
+  - **Error Handling**: Graceful fallback when email sending fails (doesn't block form submission)
+  - **CC to Submitter**: Event request submitter receives copy of email for their records
+  - **Environment Configuration**: Secure API key management with environment variables
+- **Email Content Features**: Rich content design for comprehensive communication
+  - **Event Request Summary**: Complete form data formatted for easy review
+  - **Zone Coordinator Context**: Clear identification of receiving zone and contact information
+  - **Submission Timestamp**: Clear date/time stamps for tracking and record keeping
+  - **Contact Information**: Direct contact details for follow-up communication
+  - **Action Instructions**: Clear next steps for zone coordinators to approve/review requests
 
 ### 🎯 Enhanced Event Request System (September 15, 2025)
 - **Revolutionary User Experience Design**: Complete redesign focusing on progressive disclosure and user-centric workflow
@@ -374,6 +437,38 @@ The application will be available at http://localhost:9002
 
 ## 🔒 Environment Setup
 See [FIREBASE_SETUP.md](./FIREBASE_SETUP.md) for complete Firebase configuration instructions.
+
+### Email Configuration (Required for Event Request Notifications)
+The email notification system requires a Resend API key for production use:
+
+1. **Get Resend API Key** (Production Only):
+   - Sign up at [resend.com](https://resend.com)
+   - Navigate to API Keys section
+   - Create a new API key
+
+2. **Configure Environment Variable**:
+   ```env
+   RESEND_API_KEY=your_resend_api_key_here
+   ```
+
+3. **Development Mode**:
+   - If no `RESEND_API_KEY` is configured, the system runs in **development mode**
+   - Email content is logged to the console instead of being sent
+   - All functionality works normally, but emails are simulated
+   - Perfect for testing without requiring email service setup
+
+4. **Production Mode**:
+   - With `RESEND_API_KEY` configured, emails are actually sent
+   - Zone approvers receive professional email notifications
+   - PDF attachments are included automatically
+   - CC copies sent to form submitters
+
+5. **Email System Features**:
+   - Automatic zone approver notifications for event requests
+   - PDF attachment of submitted forms
+   - Professional HTML email templates
+   - CC to form submitter for their records
+   - Graceful fallback if email sending fails (doesn't block form submission)
 
 ## 🤖 AI Features
 This app includes AI-powered features using Google's Genkit:

@@ -2,10 +2,11 @@ import { Suspense } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, Users, MapPin, FileText, AlertTriangle, CheckCircle, Clock, Map, ExternalLink, Database, Upload, Settings, Globe, Download, Package, TestTube, FileUp, Factory, Trash2, UserCheck } from 'lucide-react';
+import { Calendar, Users, MapPin, FileText, AlertTriangle, CheckCircle, Clock, Map, ExternalLink, Database, Upload, Settings, Globe, Download, Package, TestTube, FileUp, Factory, Trash2, UserCheck, Mail } from 'lucide-react';
 import Link from 'next/link';
 import { getAllZones, getAllClubs, getAllEventTypes } from '@/lib/server-data';
 import { getDatabaseErrorMessage, isDatabaseConnected } from '@/lib/firebase-admin';
+import { getEmailQueueStats } from '@/lib/email-queue-admin';
 import { RouteGuard } from '@/components/auth/route-guard';
 
 async function AdminDashboardContent() {
@@ -17,6 +18,15 @@ async function AdminDashboardContent() {
   const clubs = await getAllClubs();
   const zones = await getAllZones();
   const eventTypes = await getAllEventTypes();
+
+  // Get email queue statistics
+  let emailStats = null;
+  try {
+    emailStats = await getEmailQueueStats();
+  } catch (error) {
+    console.log('Could not fetch email queue stats:', error);
+    // Continue without email stats - it's not critical for the admin page
+  }
 
   // Mock events for demo (this would eventually come from database too)
   const events = [
@@ -272,6 +282,49 @@ async function AdminDashboardContent() {
                   <Link href="/admin/users">
                     <UserCheck className="h-4 w-4 mr-2" />
                     Manage Users
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Email Queue Management */}
+          <div className="relative overflow-hidden rounded-2xl border border-purple-200/50 bg-gradient-to-br from-purple-50/80 via-purple-50/60 to-pink-50/40 dark:from-purple-950/40 dark:via-purple-950/30 dark:to-pink-950/20 shadow-xl backdrop-blur-sm hover:shadow-2xl transition-all duration-300 hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-400/5 to-pink-400/5"></div>
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-purple-400/10 to-transparent rounded-full blur-2xl"></div>
+            
+            <div className="relative p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="rounded-xl bg-purple-100 dark:bg-purple-900/50 p-3 border border-purple-200 dark:border-purple-700">
+                  <Mail className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">Email Queue</h3>
+                  <p className="text-sm text-muted-foreground">Manage email notifications</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                {emailStats ? (
+                  <div className="flex gap-2 flex-wrap">
+                    <Badge variant={emailStats.pending > 0 ? 'default' : 'outline'} className="text-xs">
+                      {emailStats.pending} Pending
+                    </Badge>
+                    <Badge variant={emailStats.failed > 0 ? 'destructive' : 'outline'} className="text-xs">
+                      {emailStats.failed} Failed
+                    </Badge>
+                    <Badge variant="outline" className="text-xs">
+                      {emailStats.sent} Sent
+                    </Badge>
+                  </div>
+                ) : (
+                  <Badge variant="outline" className="text-xs">
+                    Queue & approval system
+                  </Badge>
+                )}
+                <Button asChild variant="outline" className="w-full">
+                  <Link href="/admin/email-queue">
+                    <Mail className="h-4 w-4 mr-2" />
+                    Manage Email Queue
                   </Link>
                 </Button>
               </div>

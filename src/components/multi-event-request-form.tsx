@@ -405,12 +405,27 @@ export function MultiEventRequestForm({
 
   const generateAndDownloadPDF = async (data: MultiEventRequestFormValues) => {
     try {
-      const response = await fetch('/api/event-request/pdf', {
+      // Transform data to match EventRequestFormData interface
+      const formDataForPDF = {
+        ...data,
+        events: data.events.map(event => ({
+          ...event,
+          coordinatorName: event.coordinatorName || '',
+          coordinatorContact: event.coordinatorContact || '',
+        }))
+      };
+
+      const response = await fetch('/api/generate-event-request-pdf', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          formData: formDataForPDF,
+          title: 'Event Request Submission',
+          submissionDate: new Date().toISOString(),
+          referenceNumber: `ER-${Date.now()}`
+        }),
       });
 
       if (!response.ok) {
@@ -420,16 +435,8 @@ export function MultiEventRequestForm({
       // Get the PDF blob
       const blob = await response.blob();
       
-      // Get filename from response headers or create default
-      const contentDisposition = response.headers.get('content-disposition');
-      let filename = 'Event-Request-Form.pdf';
-      
-      if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename="([^"]+)"/);
-        if (filenameMatch) {
-          filename = filenameMatch[1];
-        }
-      }
+      // Create filename
+      const filename = `event-request-${data.submittedByEmail.replace(/[^a-zA-Z0-9]/g, '_')}-${new Date().toISOString().split('T')[0]}.pdf`;
 
       // Create download link
       const url = window.URL.createObjectURL(blob);
@@ -517,14 +524,102 @@ export function MultiEventRequestForm({
         
         if (result.success) {
           // Generate and download PDF
+          let pdfBuffer: ArrayBuffer | null = null;
           try {
-            await generateAndDownloadPDF(data);
+            // Transform data to match EventRequestFormData interface
+            const formDataForPDF: any = {
+              ...data,
+              events: data.events.map(event => ({
+                ...event,
+                coordinatorName: event.coordinatorName || '',
+                coordinatorContact: event.coordinatorContact || '',
+              }))
+            };
+            
+            // Call API endpoint to generate PDF
+            const pdfResponse = await fetch('/api/generate-event-request-pdf', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                formData: formDataForPDF,
+                title: 'Event Request Submission',
+                submissionDate: new Date().toISOString(),
+                referenceNumber: `ER-${Date.now()}`
+              }),
+            });
+
+            if (!pdfResponse.ok) {
+              throw new Error('Failed to generate PDF');
+            }
+
+            pdfBuffer = await pdfResponse.arrayBuffer();
+            
+            // Download PDF
+            const pdfBlob = new Blob([pdfBuffer], { type: 'application/pdf' });
+            const url = URL.createObjectURL(pdfBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `event-request-${data.submittedByEmail.replace(/[^a-zA-Z0-9]/g, '_')}-${new Date().toISOString().split('T')[0]}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
           } catch (pdfError) {
             console.error('PDF generation failed:', pdfError);
             // Don't fail the entire submission if PDF generation fails
             toast({
               title: 'PDF Generation Warning',
               description: 'Your request was submitted successfully, but the PDF could not be generated.',
+              variant: 'default',
+            });
+          }
+          
+          // Send email notification to zone approvers
+          try {
+            if (pdfBuffer) {
+              const emailResponse = await fetch('/api/send-event-request-email', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  formData: data,
+                  pdfData: Array.from(new Uint8Array(pdfBuffer)),
+                }),
+              });
+
+              if (!emailResponse.ok) {
+                const errorData = await emailResponse.json();
+                console.error('Email sending failed:', errorData);
+                toast({
+                  title: 'Email Notification Warning',
+                  description: 'Your request was submitted successfully, but the email notification could not be sent.',
+                  variant: 'default',
+                });
+              } else {
+                const emailResult = await emailResponse.json();
+                console.log('Email result:', emailResult);
+                
+                // Show different messages based on whether email was queued or sent
+                if (emailResult.queuedForReview) {
+                  toast({
+                    title: 'Email Queued for Review',
+                    description: 'Your request has been submitted and the notification email is queued for admin review before sending.',
+                    variant: 'default',
+                  });
+                } else if (emailResult.success) {
+                  // Email was sent immediately
+                  console.log('Email sent successfully to:', emailResult.recipients);
+                } // No additional toast needed for immediate send - the main success message covers it
+              }
+            }
+          } catch (emailError) {
+            console.error('Email sending failed:', emailError);
+            toast({
+              title: 'Email Notification Warning',
+              description: 'Your request was submitted successfully, but the email notification could not be sent.',
               variant: 'default',
             });
           }

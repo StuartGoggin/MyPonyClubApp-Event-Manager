@@ -72,6 +72,11 @@ export interface Club {
 }
 
 // Event related types
+export interface EventType {
+  id: string;
+  name: string;
+}
+
 export type EventStatus = 'proposed' | 'approved' | 'rejected' | 'public_holiday';
 export type EventSource = 'pca' | 'event_secretary' | 'zone' | 'public_holiday';
 export type EventScheduleStatus = 'missing' | 'pending' | 'approved' | 'rejected';
@@ -119,6 +124,186 @@ export interface Event {
 
   // Event schedule reference
   schedule?: EventSchedule;
+}
+
+// Email Queue Management Types
+export type EmailStatus = 'draft' | 'pending' | 'sent' | 'failed' | 'cancelled';
+
+export interface QueuedEmail {
+  id: string;
+  type?: 'event_request' | 'notification' | 'reminder' | 'general' | 'manual';
+  status: EmailStatus;
+  
+  // Email content
+  to: string[];
+  cc?: string[];
+  bcc?: string[];
+  subject: string;
+  html?: string; // For backward compatibility
+  htmlContent?: string;
+  textContent?: string;
+  
+  // Attachments
+  attachments?: EmailAttachment[];
+  
+  // Metadata
+  createdBy?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  scheduledFor?: Date;  // For delayed sending
+  
+  // Related data
+  relatedEventRequestId?: string;
+  relatedClubId?: string;
+  relatedZoneId?: string;
+  metadata?: Record<string, any>;
+  
+  // Approval workflow
+  lastEditedBy?: string;
+  lastEditedAt?: Date;
+  approvedBy?: string;
+  approvedAt?: Date;
+  rejectedBy?: string;
+  rejectedAt?: Date;
+  rejectionReason?: string;
+  
+  // Sending details
+  sentAt?: Date;
+  sentById?: string;  // Who actually sent it
+  emailProvider?: 'resend' | 'fallback';
+  externalEmailId?: string;  // Provider's email ID
+  
+  // Retry information
+  retryCount?: number;
+  lastRetryAt?: Date;
+  maxRetries?: number;
+  errorMessage?: string;
+  lastError?: string; // Additional error tracking
+  
+  // Configuration
+  priority?: 'low' | 'normal' | 'high';
+  isPriority?: boolean;
+  requiresApproval?: boolean;
+}
+
+export interface EmailAttachment {
+  id: string;
+  filename: string;
+  contentType: string;
+  size: number;
+  content?: string;  // Base64 encoded content
+  url?: string;      // URL to download content (for large files)
+  createdAt: Date;
+}
+
+export interface EmailQueueConfig {
+  id?: string;
+  
+  // Queue settings
+  maxRetries: number;
+  retryDelayMinutes: number;
+  maxQueueSize?: number;
+  defaultPriority?: 'low' | 'normal' | 'high';
+  
+  // Approval settings
+  requireApproval?: boolean; // General approval requirement
+  requireApprovalForEventRequests?: boolean;
+  requireApprovalForNotifications?: boolean;
+  requireApprovalForReminders?: boolean;
+  requireApprovalForGeneral?: boolean;
+  
+  // Feature settings
+  enableScheduling?: boolean;
+  emailTemplatesEnabled?: boolean;
+  adminNotificationEmails?: string[];
+  
+  // Auto-send settings
+  autoSendScheduledEmails?: boolean;
+  autoSendAfterApprovalMinutes?: number;
+  
+  // Notification settings
+  notifyAdminsOnFailure?: boolean;
+  notifyAdminsOnLargeQueue?: boolean;
+  largeQueueThreshold?: number;
+  
+  // Archive settings
+  archiveSuccessfulAfterDays?: number;
+  archiveFailedAfterDays?: number;
+  
+  // SMTP settings
+  smtpSettings?: {
+    host: string;
+    port: number;
+    secure: boolean;
+    auth: {
+      user: string;
+      pass: string;
+    };
+  };
+  
+  // Metadata
+  createdAt?: Date;
+  updatedAt?: Date;
+  
+  // Email provider settings
+  preferredProvider?: 'resend' | 'fallback';
+  fallbackOnFailure?: boolean;
+  
+  // Updated tracking
+  updatedBy?: string;
+}
+
+export interface EmailTemplate {
+  id: string;
+  name: string;
+  type: 'event_request' | 'notification' | 'reminder' | 'general';
+  subject: string;
+  htmlContent: string;
+  textContent: string;
+  
+  // Template variables available
+  variables: string[];  // e.g., ['{{clubName}}', '{{eventName}}', '{{date}}']
+  
+  // Metadata
+  isDefault: boolean;
+  isActive: boolean;
+  createdBy: string;
+  createdAt: Date;
+  updatedBy: string;
+  updatedAt: Date;
+}
+
+export interface EmailQueueStats {
+  total: number;
+  draft: number;
+  pending: number;
+  sent: number;
+  failed: number;
+  cancelled: number;
+  
+  // Time-based stats
+  sentToday: number;
+  sentThisWeek: number;
+  sentThisMonth: number;
+  
+  // Performance stats
+  averageProcessingTimeMinutes: number;
+  successRate: number;
+  mostRecentFailure?: Date;
+  oldestPendingEmail?: Date;
+}
+
+export interface EmailLog {
+  id: string;
+  emailId?: string;
+  timestamp: Date;
+  subject?: string;
+  recipients?: string[] | string;
+  status: 'success' | 'error' | 'retry' | 'pending';
+  message?: string;
+  errorDetails?: string;
+  processingTimeMs?: number;
+  retryAttempt?: number;
 }
 
 // Response types

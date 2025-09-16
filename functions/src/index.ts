@@ -1,32 +1,201 @@
 /**
- * Import function triggers from their respective submodules:
- *
- * import {onCall} from "firebase-functions/v2/https";
- * import {onDocumentWritten} from "firebase-functions/v2/firestore";
- *
- * See a full list of supported triggers at https://firebase.google.com/docs/functions
+ * Firebase Functions for PonyClub Event Manager
+ * 
+ * This file sets up the main Express application that handles all API routes
+ * for the PonyClub Event Manager system. All routes are prefixed with /api/
+ * and are served as Firebase Functions.
  */
 
-import {setGlobalOptions} from "firebase-functions";
-import {onRequest} from "firebase-functions/https";
-import * as logger from "firebase-functions/logger";
+import * as functions from 'firebase-functions/v1';
+import * as admin from 'firebase-admin';
+import express, { Request, Response, NextFunction } from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import compression from 'compression';
+import * as logger from 'firebase-functions/logger';
 
-// Start writing functions
-// https://firebase.google.com/docs/functions/typescript
+// Initialize Firebase Admin SDK
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
 
-// For cost control, you can set the maximum number of containers that can be
-// running at the same time. This helps mitigate the impact of unexpected
-// traffic spikes by instead downgrading performance. This limit is a
-// per-function limit. You can override the limit for each function using the
-// `maxInstances` option in the function's options, e.g.
-// `onRequest({ maxInstances: 5 }, (req, res) => { ... })`.
-// NOTE: setGlobalOptions does not apply to functions using the v1 API. V1
-// functions should each use functions.runWith({ maxInstances: 10 }) instead.
-// In the v1 API, each function can only serve one request per container, so
-// this will be the maximum concurrent request count.
-setGlobalOptions({ maxInstances: 10 });
+// Create Express application
+const app = express();
 
-// export const helloWorld = onRequest((request, response) => {
-//   logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
+// Security middleware
+app.use(helmet({
+  contentSecurityPolicy: false, // Disable CSP for API endpoints
+  crossOriginEmbedderPolicy: false
+}));
+
+// Compression middleware for better performance
+app.use(compression());
+
+// CORS configuration for cross-origin requests
+const corsOptions = {
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:9002',
+    'https://ponyclub-events.web.app',
+    'https://ponyclub-events.firebaseapp.com',
+    /\.web\.app$/,
+    /\.firebaseapp\.com$/
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'X-Requested-With',
+    'Accept',
+    'Origin'
+  ]
+};
+
+app.use(cors(corsOptions));
+
+// Body parsing middleware
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Request logging middleware
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const start = Date.now();
+  
+  // Log request details
+  logger.info('API Request', {
+    method: req.method,
+    path: req.path,
+    ip: req.ip,
+    userAgent: req.get('User-Agent'),
+    timestamp: new Date().toISOString()
+  });
+
+  // Log response details
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    logger.info('API Response', {
+      method: req.method,
+      path: req.path,
+      statusCode: res.statusCode,
+      duration: `${duration}ms`,
+      timestamp: new Date().toISOString()
+    });
+  });
+
+  next();
+});
+
+// Health check endpoint
+app.get('/health', (req: Request, res: Response) => {
+  res.status(200).json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    service: 'PonyClub Event Manager API',
+    version: '1.3.0',
+    environment: process.env.NODE_ENV || 'development',
+    region: process.env.FUNCTION_REGION || 'australia-southeast1'
+  });
+});
+
+// Root endpoint
+app.get('/', (req: Request, res: Response) => {
+  res.status(200).json({
+    message: 'PonyClub Event Manager API',
+    version: '1.3.0',
+    documentation: 'https://github.com/StuartGoggin/MyPonyClubApp-Event-Manager',
+    endpoints: [
+      'GET /health - Health check',
+      'GET /clubs - Get all clubs',
+      'GET /zones - Get all zones',
+      'GET /events - Get all events',
+      'POST /send-event-request-email - Send notification emails'
+    ],
+    timestamp: new Date().toISOString()
+  });
+});
+
+// API route imports (will be added as routes are migrated)
+// import { clubsRouter } from './api/clubs';
+// import { zonesRouter } from './api/zones';
+// import { eventsRouter } from './api/events';
+// import { emailRouter } from './api/send-event-request-email';
+
+// Register API routes (uncomment as routes are migrated)
+// app.use('/clubs', clubsRouter);
+// app.use('/zones', zonesRouter);
+// app.use('/events', eventsRouter);
+// app.use('/send-event-request-email', emailRouter);
+
+// Global error handling middleware
+app.use((error: Error, req: Request, res: Response, next: NextFunction) => {
+  logger.error('API Error', {
+    error: error.message,
+    stack: error.stack,
+    method: req.method,
+    path: req.path,
+    timestamp: new Date().toISOString()
+  });
+
+  // Don't expose internal errors in production
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  
+  res.status(500).json({
+    error: 'Internal Server Error',
+    message: isDevelopment ? error.message : 'Something went wrong',
+    timestamp: new Date().toISOString(),
+    ...(isDevelopment && { stack: error.stack })
+  });
+});
+
+// 404 handler for unknown routes
+app.use('*', (req: Request, res: Response) => {
+  logger.warn('Route not found', {
+    method: req.method,
+    path: req.path,
+    timestamp: new Date().toISOString()
+  });
+
+  res.status(404).json({
+    error: 'Not Found',
+    message: `Route ${req.method} ${req.path} not found`,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Export the Express app as a Firebase Function
+export const api = functions
+  .runWith({
+    memory: '1GB',
+    timeoutSeconds: 540,
+    maxInstances: 10
+  })
+  .https
+  .onRequest(app);
+
+// Export additional utility functions for Firebase Functions
+export const initializeApp = () => {
+  if (!admin.apps.length) {
+    admin.initializeApp();
+  }
+  return admin.app();
+};
+
+// Export database helper
+export const getFirestore = () => admin.firestore();
+
+// Export authentication helper
+export const getAuth = () => admin.auth();
+
+// Export storage helper
+export const getStorage = () => admin.storage();
+
+// Development server for local testing
+if (process.env.NODE_ENV === 'development') {
+  const port = process.env.PORT || 5001;
+  app.listen(port, () => {
+    logger.info(`Development server running on port ${port}`);
+    console.log(`🚀 PonyClub API Server running on http://localhost:${port}`);
+    console.log(`📋 Health check: http://localhost:${port}/health`);
+  });
+}

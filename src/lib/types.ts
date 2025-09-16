@@ -571,3 +571,115 @@ export interface EmailLog {
   processingTimeMs?: number;
   retryAttempt?: number;
 }
+
+// Notification System Types
+export type NotificationTrigger = 
+  | 'event_submitted' 
+  | 'event_approved' 
+  | 'event_rejected' 
+  | 'event_updated' 
+  | 'event_cancelled'
+  | 'schedule_conflict'
+  | 'approaching_deadline'
+  | 'manual';
+
+export type NotificationDeliveryMethod = 'email' | 'sms' | 'push' | 'webhook';
+
+export type NotificationRecipientType = 
+  | 'event_requester'
+  | 'club_contacts'
+  | 'zone_approvers'
+  | 'admin_users'
+  | 'custom_emails';
+
+export interface NotificationRule {
+  id: string;
+  name: string;
+  description?: string;
+  enabled: boolean;
+  
+  // Trigger configuration
+  trigger: string; // Using string instead of NotificationTrigger to be more flexible
+  conditions?: {
+    eventTypes?: string[];
+    zones?: string[];
+    clubs?: string[];
+    timeframe?: {
+      start?: string; // ISO time string like "09:00"
+      end?: string;   // ISO time string like "17:00"
+    };
+  };
+  
+  // Delivery configuration
+  deliveryMethods: string[]; // Using string array to be more flexible
+  recipients: {
+    type: string; // Using string to be more flexible
+    addresses?: string[]; // For custom emails
+  }[];
+  
+  // Attachments
+  attachments?: {
+    includePDF?: boolean;
+    includeJSON?: boolean;
+  };
+  
+  // Template and content
+  templateId?: string;
+  customSubject?: string;
+  customMessage?: string;
+  
+  // Timing
+  delay?: number; // Minutes to delay after trigger
+  retryAttempts?: number;
+  
+  // Metadata
+  createdAt: Date;
+  updatedAt: Date;
+  lastModifiedBy: string;
+}
+
+export interface NotificationTemplate {
+  id: string;
+  name: string;
+  type: string; // Using string to be more flexible
+  subject: string;
+  htmlContent: string;
+  textContent: string;
+  
+  // Available variables for this template
+  variables: string[];
+  
+  // Metadata
+  isDefault: boolean;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  lastModifiedBy: string;
+}
+
+export interface NotificationConfig {
+  id: string;
+  name: string;
+  description?: string;
+  
+  // Global settings
+  enabled: boolean;
+  defaultFromEmail: string;
+  defaultFromName: string;
+  replyToEmail?: string;
+  
+  // SMS settings
+  smsEnabled: boolean;
+  
+  // Admin settings
+  superUsers: string[];
+  
+  // Configuration data
+  rules: NotificationRule[];
+  templates: NotificationTemplate[];
+  
+  // Metadata
+  createdAt: Date;
+  updatedAt: Date;
+  lastModifiedBy: string;
+}

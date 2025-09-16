@@ -119,14 +119,14 @@ app.get('/', (req: Request, res: Response) => {
 // API route imports (will be added as routes are migrated)
 import healthRouter from './api/health';
 import clubsRouter from './api/clubs';
-// import { zonesRouter } from './api/zones';
+import zonesRouter from './api/zones';
 // import { eventsRouter } from './api/events';
 // import { emailRouter } from './api/send-event-request-email';
 
 // Register API routes (uncomment as routes are migrated)
 app.use('/health', healthRouter);
 app.use('/clubs', clubsRouter);
-// app.use('/zones', zonesRouter);
+app.use('/zones', zonesRouter);
 // app.use('/events', eventsRouter);
 // app.use('/send-event-request-email', emailRouter);
 

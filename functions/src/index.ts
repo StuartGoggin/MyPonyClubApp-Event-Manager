@@ -6,13 +6,14 @@
  * and are served as Firebase Functions.
  */
 
-import * as functions from 'firebase-functions/v1';
+import { onRequest } from 'firebase-functions/v2/https';
+import { setGlobalOptions } from 'firebase-functions/v2';
 import * as admin from 'firebase-admin';
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
-import * as logger from 'firebase-functions/logger';
+import { logger } from 'firebase-functions/v2';
 
 // Initialize Firebase Admin SDK
 if (!admin.apps.length) {
@@ -165,15 +166,18 @@ app.use('*', (req: Request, res: Response) => {
   });
 });
 
+// Set global options for all functions
+setGlobalOptions({
+  region: 'australia-southeast1',
+  maxInstances: 10,
+});
+
 // Export the Express app as a Firebase Function
-export const api = functions
-  .runWith({
-    memory: '1GB',
-    timeoutSeconds: 540,
-    maxInstances: 10
-  })
-  .https
-  .onRequest(app);
+export const api = onRequest({
+  timeoutSeconds: 540,
+  memory: '1GiB',
+  region: 'australia-southeast1',
+}, app);
 
 // Export additional utility functions for Firebase Functions
 export const initializeApp = () => {

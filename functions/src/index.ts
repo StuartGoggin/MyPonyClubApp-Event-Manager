@@ -120,14 +120,14 @@ app.get('/', (req: Request, res: Response) => {
 import healthRouter from './api/health';
 import clubsRouter from './api/clubs';
 import zonesRouter from './api/zones';
-// import { eventsRouter } from './api/events';
+import eventsRouter from './api/events';
 // import { emailRouter } from './api/send-event-request-email';
 
 // Register API routes (uncomment as routes are migrated)
 app.use('/health', healthRouter);
 app.use('/clubs', clubsRouter);
 app.use('/zones', zonesRouter);
-// app.use('/events', eventsRouter);
+app.use('/events', eventsRouter);
 // app.use('/send-event-request-email', emailRouter);
 
 // Global error handling middleware

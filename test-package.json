@@ -1,0 +1,15 @@
+{
+  "name": "api-migration-testing",
+  "version": "1.0.0",
+  "description": "Testing script for Firebase Functions API migration",
+  "main": "test-migrated-apis.js",
+  "scripts": {
+    "test": "node test-migrated-apis.js",
+    "test:local": "node test-migrated-apis.js --env=local --verbose",
+    "test:production": "node test-migrated-apis.js --env=production --verbose",
+    "test:verbose": "node test-migrated-apis.js --verbose"
+  },
+  "keywords": ["firebase", "functions", "api", "testing", "migration"],
+  "author": "PonyClub Event Manager",
+  "license": "MIT"
+}

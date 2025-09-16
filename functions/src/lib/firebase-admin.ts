@@ -52,5 +52,27 @@ export const getDatabaseStatus = (): DatabaseStatus => {
     return dbConnectionStatus;
 };
 
+// Helper function to check database connection
+export const isDatabaseConnected = () => {
+    return adminDb !== null && dbConnectionStatus === 'connected';
+};
+
+// Helper function to get database error message
+export const getDatabaseErrorMessage = (): string | null => {
+    const status = dbConnectionStatus as DatabaseStatus;
+    switch (status) {
+        case 'disconnected':
+            return 'Database connection not configured. Please check FIREBASE_SERVICE_ACCOUNT_KEY environment variable.';
+        case 'error':
+            return 'Database connection failed. Please check your Firebase configuration and network connectivity.';
+        case 'unknown':
+            return 'Database connection status unknown.';
+        case 'connected':
+            return null;
+        default:
+            return null;
+    }
+};
+
 export { adminDb, storageInstance };
 export default admin;

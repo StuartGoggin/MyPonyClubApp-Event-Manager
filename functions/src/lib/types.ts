@@ -71,18 +71,54 @@ export interface Club {
   updatedAt?: string;
 }
 
+// Event related types
+export type EventStatus = 'proposed' | 'approved' | 'rejected' | 'public_holiday';
+export type EventSource = 'pca' | 'event_secretary' | 'zone' | 'public_holiday';
+export type EventScheduleStatus = 'missing' | 'pending' | 'approved' | 'rejected';
+export type EventPriority = 1 | 2 | 3 | 4;
+
+export interface EventSchedule {
+  id: string;
+  eventId: string;
+  fileUrl: string; // URL to the uploaded document
+  fileType: string; // e.g., 'pdf', 'docx', 'doc', 'txt'
+  fileName: string; // The actual filename stored in storage
+  uploadedAt: Date;
+  updatedAt?: Date;
+  status: EventScheduleStatus;
+  submittedBy: string;
+  reviewedBy?: string;
+  reviewedAt?: Date;
+  reviewNotes?: string;
+}
+
 export interface Event {
   id: string;
-  title: string;
+  name: string;
+  date: Date;
+  // Event can be associated with either a club OR a zone
+  clubId?: string;        // For club-specific events
+  zoneId?: string;        // For zone-wide events
+  eventTypeId: string;
+  status: EventStatus;
+  location: string;
+  source: EventSource;
+
   description?: string;
-  startDate: string;
-  endDate: string;
-  clubId: string;
-  zoneId: string;
-  location?: string;
-  status?: 'draft' | 'submitted' | 'approved' | 'cancelled';
-  createdAt?: string;
-  updatedAt?: string;
+  // New fields from form
+  coordinatorName?: string;
+  coordinatorContact?: string;
+  isQualifier?: boolean;
+  notes?: string;
+  submittedBy?: string;
+  submittedByContact?: string;
+
+  // Priority and historical traditional event fields
+  priority?: EventPriority;
+  isHistoricallyTraditional?: boolean;
+
+  // Event schedule reference
+  schedule?: EventSchedule;
 }
 
 // Response types

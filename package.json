@@ -12,7 +12,11 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "seed-firestore": "npx ts-node src/lib/seed-firestore.ts",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "test:migration": "node test-core-migration.js",
+    "test:apis": "node test-migrated-apis.js",
+    "test:apis:verbose": "node test-migrated-apis.js --verbose",
+    "test:all": "npm run test:migration && npm run test:apis"
   },
   "dependencies": {
     "@genkit-ai/firebase": "^1.16.0",

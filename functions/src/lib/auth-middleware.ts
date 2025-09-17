@@ -1,5 +1,5 @@
-import { Request, Response, NextFunction } from 'express';
-import { logger } from 'firebase-functions/v2';
+import { Request, Response, NextFunction } from "express";
+import { logger } from "firebase-functions/v2";
 
 interface User {
   id: string;
@@ -16,20 +16,23 @@ async function getCurrentUser(req: Request): Promise<User | null> {
   // 2. Verify the token with your authentication system
   // 3. Fetch the user from your database
   // 4. Return the user object or null if not authenticated
-  
+
   // For now, return a mock admin user for development purposes
   // Remove this and implement real authentication
   const authHeader = req.headers.authorization;
-  
-  if (authHeader === 'Bearer admin-token' || authHeader === 'Bearer dev-admin-token') {
+
+  if (
+    authHeader === "Bearer admin-token" ||
+    authHeader === "Bearer dev-admin-token"
+  ) {
     return {
-      id: 'admin-user-1',
-      email: 'admin@example.com',
-      displayName: 'Admin User',
-      role: 'super_user'
+      id: "admin-user-1",
+      email: "admin@example.com",
+      displayName: "Admin User",
+      role: "super_user",
     };
   }
-  
+
   return null;
 }
 
@@ -39,32 +42,32 @@ export async function checkAdminAccess(req: Request): Promise<{
 }> {
   try {
     const user = await getCurrentUser(req);
-    
+
     if (!user) {
       return {
-        authorized: false
+        authorized: false,
       };
     }
 
     // Check if user has admin/super_user role
-    if (!user.role || !['admin', 'super_user'].includes(user.role)) {
-      logger.warn('Access denied - insufficient privileges', { 
-        userId: user.id, 
-        role: user.role 
+    if (!user.role || !["admin", "super_user"].includes(user.role)) {
+      logger.warn("Access denied - insufficient privileges", {
+        userId: user.id,
+        role: user.role,
       });
       return {
-        authorized: false
+        authorized: false,
       };
     }
 
     return {
       authorized: true,
-      user
+      user,
     };
   } catch (error) {
-    logger.error('Error checking admin access', error);
+    logger.error("Error checking admin access", error);
     return {
-      authorized: false
+      authorized: false,
     };
   }
 }
@@ -72,22 +75,28 @@ export async function checkAdminAccess(req: Request): Promise<{
 /**
  * Express middleware for admin authentication
  */
-export function withAdminAuth(handler: (req: Request, res: Response, user: User) => Promise<void>) {
-  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export function withAdminAuth(
+  handler: (req: Request, res: Response, user: User) => Promise<void>,
+) {
+  return async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
     const authResult = await checkAdminAccess(req);
-    
+
     if (!authResult.authorized) {
       res.status(401).json({
-        error: 'Authentication required',
-        message: 'Admin access required for this operation'
+        error: "Authentication required",
+        message: "Admin access required for this operation",
       });
       return;
     }
 
     if (!authResult.user) {
       res.status(401).json({
-        error: 'Authentication failed',
-        message: 'Unable to verify user credentials'
+        error: "Authentication failed",
+        message: "Unable to verify user credentials",
       });
       return;
     }
@@ -95,10 +104,10 @@ export function withAdminAuth(handler: (req: Request, res: Response, user: User)
     try {
       await handler(req, res, authResult.user);
     } catch (error) {
-      logger.error('Error in authenticated handler', error);
+      logger.error("Error in authenticated handler", error);
       res.status(500).json({
-        error: 'Internal server error',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : "Unknown error",
       });
     }
   };
@@ -107,24 +116,30 @@ export function withAdminAuth(handler: (req: Request, res: Response, user: User)
 /**
  * Simple admin authentication middleware without user parameter
  */
-export function requireAdminAuth(req: Request, res: Response, next: NextFunction): void {
-  checkAdminAccess(req).then(authResult => {
-    if (!authResult.authorized) {
-      res.status(401).json({
-        error: 'Authentication required',
-        message: 'Admin access required for this operation'
-      });
-      return;
-    }
+export function requireAdminAuth(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void {
+  checkAdminAccess(req)
+    .then((authResult) => {
+      if (!authResult.authorized) {
+        res.status(401).json({
+          error: "Authentication required",
+          message: "Admin access required for this operation",
+        });
+        return;
+      }
 
-    // Attach user to request for downstream handlers
-    (req as any).user = authResult.user;
-    next();
-  }).catch(error => {
-    logger.error('Error in admin auth middleware', error);
-    res.status(500).json({
-      error: 'Authentication error',
-      details: error instanceof Error ? error.message : 'Unknown error'
+      // Attach user to request for downstream handlers
+      (req as any).user = authResult.user;
+      next();
+    })
+    .catch((error) => {
+      logger.error("Error in admin auth middleware", error);
+      res.status(500).json({
+        error: "Authentication error",
+        details: error instanceof Error ? error.message : "Unknown error",
+      });
     });
-  });
 }

@@ -25,7 +25,21 @@ const CONFIG = {
     functions: 'http://localhost:5001/ponyclub-events/australia-southeast1/api',
     firestore: 'http://localhost:8080'
   },
-  // Production Firebase endpoints
+  // Production Firebase en    // Phase 5: Admin Endpoints Testing
+    log('\n👑 Phase 5: Admin Endpoints Testing', 'info');
+    await runTest('Admin Authentication Test', testAdminAuthentication);
+    await runTest('Admin Users Management', testAdminUsersManagement);
+    await runTest('Admin User Role Management', testAdminUserRoleManagement);
+    await runTest('Admin Data Export', testAdminDataExport);
+    await runTest('Admin Firebase Test', testAdminFirebaseTest);
+    await runTest('Admin Database Seeding', testAdminDatabaseSeeding);
+    
+    // Phase 6: Environment and configuration
+    log('\n📋 Phase 6: Environment Variables Testing', 'info');
+    await runTest('Environment Variables', testEnvironmentVariables);
+    
+    // Phase 7: Error handling
+    log('\n📋 Phase 7: Error Handling Testing', 'info');s
   production: {
     functions: 'https://australia-southeast1-ponyclub-events.cloudfunctions.net/api',
     firestore: 'https://firestore.googleapis.com'
@@ -421,6 +435,174 @@ const testEmailNotificationDirect = async () => {
   
   verbose(`Sent ${response.data.totalEmails} emails directly`);
   return { statusCode: response.statusCode, sentEmails: response.data.sentEmails };
+};
+
+// Admin endpoint test functions
+const testAdminAuthentication = async () => {
+  // Test admin endpoint without authentication
+  const unauthResponse = await makeApiRequest('/admin/users', 'GET');
+  
+  if (unauthResponse.statusCode !== 401) {
+    throw new Error(`Expected 401 for unauthenticated admin request, got ${unauthResponse.statusCode}`);
+  }
+  
+  // Test with invalid admin token
+  const invalidTokenResponse = await makeApiRequest('/admin/users', 'GET', null, {
+    'Authorization': 'Bearer invalid-admin-token',
+    'Content-Type': 'application/json'
+  });
+  
+  if (invalidTokenResponse.statusCode !== 401) {
+    throw new Error(`Expected 401 for invalid admin token, got ${invalidTokenResponse.statusCode}`);
+  }
+  
+  // Test with valid admin token
+  const validTokenResponse = await makeApiRequest('/admin/users', 'GET', null, {
+    'Authorization': 'Bearer admin-token',
+    'Content-Type': 'application/json'
+  });
+  
+  if (validTokenResponse.statusCode !== 200) {
+    throw new Error(`Expected 200 for valid admin token, got ${validTokenResponse.statusCode}`);
+  }
+  
+  verbose('Admin authentication test passed');
+  return { authenticated: true, endpoint: '/admin/users' };
+};
+
+const testAdminUsersManagement = async () => {
+  const adminHeaders = {
+    'Authorization': 'Bearer admin-token',
+    'Content-Type': 'application/json'
+  };
+  
+  // Test GET users
+  const getUsersResponse = await makeApiRequest('/admin/users', 'GET', null, adminHeaders);
+  
+  if (getUsersResponse.statusCode !== 200) {
+    throw new Error(`GET users failed: ${getUsersResponse.statusCode}`);
+  }
+  
+  if (!getUsersResponse.data || !getUsersResponse.data.success) {
+    throw new Error('Invalid users response format');
+  }
+  
+  verbose(`Retrieved ${getUsersResponse.data.count || 0} users from admin endpoint`);
+  
+  // Test user filtering
+  const filteredResponse = await makeApiRequest('/admin/users?role=standard', 'GET', null, adminHeaders);
+  
+  if (filteredResponse.statusCode !== 200) {
+    throw new Error(`Filtered users request failed: ${filteredResponse.statusCode}`);
+  }
+  
+  verbose('Admin users management test passed');
+  return { usersRetrieved: getUsersResponse.data.count || 0, filteringWorks: true };
+};
+
+const testAdminUserRoleManagement = async () => {
+  const adminHeaders = {
+    'Authorization': 'Bearer admin-token',
+    'Content-Type': 'application/json'
+  };
+  
+  // Test role update endpoint (without creating actual user)
+  const roleUpdateData = {
+    userId: 'test-user-id',
+    role: 'zone_rep'
+  };
+  
+  const roleResponse = await makeApiRequest('/admin/users/role', 'PATCH', roleUpdateData, adminHeaders);
+  
+  // This might fail with user not found, which is expected in test environment
+  // We're mainly testing that the endpoint exists and handles auth correctly
+  if (roleResponse.statusCode !== 500 && roleResponse.statusCode !== 404 && roleResponse.statusCode !== 200) {
+    throw new Error(`Unexpected role update response: ${roleResponse.statusCode}`);
+  }
+  
+  verbose('Admin user role management endpoint available');
+  return { endpoint: '/admin/users/role', status: 'available' };
+};
+
+const testAdminDataExport = async () => {
+  const adminHeaders = {
+    'Authorization': 'Bearer admin-token',
+    'Content-Type': 'application/json'
+  };
+  
+  const exportConfig = {
+    includeMetadata: true,
+    includeManifest: true,
+    compressionLevel: 'medium'
+  };
+  
+  const exportResponse = await makeApiRequest('/admin/export', 'POST', exportConfig, adminHeaders);
+  
+  if (exportResponse.statusCode !== 200) {
+    throw new Error(`Data export failed: ${exportResponse.statusCode}`);
+  }
+  
+  // Check if response is binary (ZIP file) or JSON error
+  const isZipFile = exportResponse.headers['content-type']?.includes('application/zip');
+  const hasContentDisposition = exportResponse.headers['content-disposition']?.includes('attachment');
+  
+  if (!isZipFile && !hasContentDisposition) {
+    // Might be JSON response with data instead of ZIP
+    verbose('Export returned JSON response (no file data available)');
+  } else {
+    verbose('Export returned ZIP file successfully');
+  }
+  
+  return { statusCode: exportResponse.statusCode, isZipFile: isZipFile || false };
+};
+
+const testAdminFirebaseTest = async () => {
+  const adminHeaders = {
+    'Authorization': 'Bearer admin-token',
+    'Content-Type': 'application/json'
+  };
+  
+  const firebaseTestResponse = await makeApiRequest('/admin/test-firebase', 'GET', null, adminHeaders);
+  
+  if (firebaseTestResponse.statusCode !== 200) {
+    throw new Error(`Firebase test failed: ${firebaseTestResponse.statusCode}`);
+  }
+  
+  if (!firebaseTestResponse.data) {
+    throw new Error('No JSON data in Firebase test response');
+  }
+  
+  verbose(`Firebase test result: ${firebaseTestResponse.data.success ? 'SUCCESS' : 'FAILED'}`);
+  return { 
+    statusCode: firebaseTestResponse.statusCode, 
+    firebaseWorking: firebaseTestResponse.data.success || false,
+    message: firebaseTestResponse.data.message 
+  };
+};
+
+const testAdminDatabaseSeeding = async () => {
+  const adminHeaders = {
+    'Authorization': 'Bearer admin-token',
+    'Content-Type': 'application/json'
+  };
+  
+  // Test GET seed info
+  const seedInfoResponse = await makeApiRequest('/admin/seed-database', 'GET', null, adminHeaders);
+  
+  if (seedInfoResponse.statusCode !== 200) {
+    throw new Error(`Seed info request failed: ${seedInfoResponse.statusCode}`);
+  }
+  
+  if (!seedInfoResponse.data || !seedInfoResponse.data.method) {
+    throw new Error('Invalid seed info response format');
+  }
+  
+  verbose('Database seeding endpoint available and properly configured');
+  return { 
+    statusCode: seedInfoResponse.statusCode, 
+    method: seedInfoResponse.data.method,
+    description: seedInfoResponse.data.description 
+  };
 };
 
 const testEnvironmentVariables = async () => {

@@ -1,6 +1,10 @@
-import { getClubById, getEventTypeById, getZoneByClubId } from './data-functions';
+import {
+  getClubById,
+  getEventTypeById,
+  getZoneByClubId,
+} from "./data-functions";
 
-// Define the API request type to match what's used in the email API
+// Define the API request type to match what"s used in the email API
 interface EventRequestFormData {
   clubId: string;
   clubName?: string;
@@ -62,28 +66,29 @@ export interface EventRequestExport {
 
 export async function exportEventRequestAsJSON(
   formData: EventRequestFormData,
-  referenceNumber?: string
+  referenceNumber?: string,
 ): Promise<EventRequestExport> {
   try {
     // Get additional data from database
     const club = await getClubById(formData.clubId);
     const zone = club ? await getZoneByClubId(formData.clubId) : null;
-    
+
     // Prepare events with full type information
     const eventsWithDetails = await Promise.all(
       formData.events.map(async (event) => {
         const eventType = await getEventTypeById(event.eventTypeId);
-        
+
         // Ensure date is converted to string consistently
-        const dateString = typeof event.date === 'string' 
-          ? event.date 
-          : event.date.toISOString();
-        
+        const dateString =
+          typeof event.date === "string"
+            ? event.date
+            : event.date.toISOString();
+
         return {
           priority: event.priority,
           name: event.name,
           eventTypeId: event.eventTypeId,
-          eventTypeName: eventType?.name || 'Unknown Event Type',
+          eventTypeName: eventType?.name || "Unknown Event Type",
           date: dateString,
           location: event.location,
           isQualifier: event.isQualifier,
@@ -93,14 +98,14 @@ export async function exportEventRequestAsJSON(
           coordinatorContact: event.coordinatorContact,
           notes: event.notes,
         };
-      })
+      }),
     );
 
     const exportData: EventRequestExport = {
       metadata: {
         exportedAt: new Date().toISOString(),
         referenceNumber: referenceNumber || `ER-${Date.now()}`,
-        exportVersion: '1.0.0'
+        exportVersion: "1.0.0",
       },
       submissionDetails: {
         submittedBy: formData.submittedBy,
@@ -108,21 +113,21 @@ export async function exportEventRequestAsJSON(
         submittedByPhone: formData.submittedByPhone,
         submissionDate: new Date().toISOString(),
         clubId: formData.clubId,
-        clubName: club?.name || 'Unknown Club',
-        zoneName: zone?.name || 'Unknown Zone',
+        clubName: club?.name || "Unknown Club",
+        zoneName: zone?.name || "Unknown Zone",
       },
       events: eventsWithDetails,
       generalNotes: formData.generalNotes,
       attachments: {
         pdfGenerated: true,
-        pdfFilename: `event-request-${formData.submittedByEmail.replace(/[^a-zA-Z0-9]/g, '_')}-${new Date().toISOString().split('T')[0]}.pdf`
-      }
+        pdfFilename: `event-request-${formData.submittedByEmail.replace(/[^a-zA-Z0-9]/g, "_")}-${new Date().toISOString().split("T")[0]}.pdf`,
+      },
     };
 
     return exportData;
   } catch (error) {
-    console.error('Error exporting event request as JSON:', error);
-    throw new Error('Failed to export event request data');
+    console.error("Error exporting event request as JSON:", error);
+    throw new Error("Failed to export event request data");
   }
 }
 
@@ -131,11 +136,11 @@ export function createJSONAttachment(exportData: EventRequestExport): {
   content: string;
   mimeType: string;
 } {
-  const filename = `event-request-${exportData.submissionDetails.submittedByEmail.replace(/[^a-zA-Z0-9]/g, '_')}-${new Date().toISOString().split('T')[0]}.json`;
-  
+  const filename = `event-request-${exportData.submissionDetails.submittedByEmail.replace(/[^a-zA-Z0-9]/g, "_")}-${new Date().toISOString().split("T")[0]}.json`;
+
   return {
     filename,
     content: JSON.stringify(exportData, null, 2),
-    mimeType: 'application/json'
+    mimeType: "application/json",
   };
 }

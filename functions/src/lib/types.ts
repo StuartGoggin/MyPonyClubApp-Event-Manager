@@ -5,16 +5,16 @@ export interface Approver {
   mobile: string;
 }
 
-export type UserRole = 'standard' | 'zone_rep' | 'super_user';
+export type UserRole = "standard" | "zone_rep" | "super_user";
 
 export interface User {
-  id: string;                      // Firestore document ID
-  ponyClubId: string;             // Unique Pony Club identifier
-  mobileNumber: string;           // Registered mobile phone number
-  role: UserRole;                 // User's access level
-  clubId: string;                 // Associated club ID
-  zoneId: string;                 // Associated zone ID
-  
+  id: string; // Firestore document ID
+  ponyClubId: string; // Unique Pony Club identifier
+  mobileNumber: string; // Registered mobile phone number
+  role: UserRole; // User"s access level
+  clubId: string; // Associated club ID
+  zoneId: string; // Associated zone ID
+
   // Additional user information
   firstName?: string;
   lastName?: string;
@@ -23,16 +23,16 @@ export interface User {
   emergencyContact?: string;
   membershipNumber?: string;
   dateOfBirth?: string;
-  
+
   // Audit fields
   createdAt: string;
   updatedAt: string;
   lastLoginAt?: string;
   isActive: boolean;
-  
+
   // Import tracking
   importedAt?: string;
-  importBatch?: string;           // Track which import batch this user came from
+  importBatch?: string; // Track which import batch this user came from
 }
 
 export interface Zone {
@@ -49,29 +49,29 @@ export interface Club {
   id: string;
   name: string;
   zoneId: string;
-  zoneName?: string;               // Optional zone name for display purposes
+  zoneName?: string; // Optional zone name for display purposes
   clubId?: number;
-  
+
   // Address information
   physicalAddress?: string;
   postalAddress?: string;
   latitude?: number;
   longitude?: number;
-  
+
   // Contact information
   email?: string;
   phone?: string;
   website?: string;
   websiteUrl?: string;
-  
+
   // Social media
   socialMediaUrl?: string;
-  
+
   // Images
   logoUrl?: string;
   imageUrl?: string;
   images?: string[];
-  
+
   // Contact details
   contactDetails?: {
     primaryContact?: {
@@ -94,7 +94,7 @@ export interface Club {
       qualifications?: string[];
     };
   };
-  
+
   // Status fields
   isActive?: boolean;
   lastUpdated?: string;
@@ -112,16 +112,24 @@ export interface EventType {
   defaultDuration?: number;
 }
 
-export type EventStatus = 'proposed' | 'approved' | 'rejected' | 'public_holiday';
-export type EventSource = 'pca' | 'event_secretary' | 'zone' | 'public_holiday';
-export type EventScheduleStatus = 'missing' | 'pending' | 'approved' | 'rejected';
+export type EventStatus =
+  | "proposed"
+  | "approved"
+  | "rejected"
+  | "public_holiday";
+export type EventSource = "pca" | "event_secretary" | "zone" | "public_holiday";
+export type EventScheduleStatus =
+  | "missing"
+  | "pending"
+  | "approved"
+  | "rejected";
 export type EventPriority = 1 | 2 | 3 | 4;
 
 export interface EventSchedule {
   id: string;
   eventId: string;
   fileUrl: string; // URL to the uploaded document
-  fileType: string; // e.g., 'pdf', 'docx', 'doc', 'txt'
+  fileType: string; // e.g., "pdf", "docx", "doc", "txt"
   fileName: string; // The actual filename stored in storage
   uploadedAt: Date;
   updatedAt?: Date;
@@ -137,8 +145,8 @@ export interface Event {
   name: string;
   date: Date;
   // Event can be associated with either a club OR a zone
-  clubId?: string;        // For club-specific events
-  zoneId?: string;        // For zone-wide events
+  clubId?: string; // For club-specific events
+  zoneId?: string; // For zone-wide events
   eventTypeId: string;
   status: EventStatus;
   location: string;
@@ -162,13 +170,13 @@ export interface Event {
 }
 
 // Email Queue Management Types
-export type EmailStatus = 'draft' | 'pending' | 'sent' | 'failed' | 'cancelled';
+export type EmailStatus = "draft" | "pending" | "sent" | "failed" | "cancelled";
 
 export interface QueuedEmail {
   id: string;
-  type?: 'event_request' | 'notification' | 'reminder' | 'general' | 'manual';
+  type?: "event_request" | "notification" | "reminder" | "general" | "manual";
   status: EmailStatus;
-  
+
   // Email content
   to: string[];
   cc?: string[];
@@ -177,22 +185,22 @@ export interface QueuedEmail {
   html?: string; // For backward compatibility
   htmlContent?: string;
   textContent?: string;
-  
+
   // Attachments
   attachments?: EmailAttachment[];
-  
+
   // Metadata
   createdBy?: string;
   createdAt: Date;
   updatedAt: Date;
-  scheduledFor?: Date;  // For delayed sending
-  
+  scheduledFor?: Date; // For delayed sending
+
   // Related data
   relatedEventRequestId?: string;
   relatedClubId?: string;
   relatedZoneId?: string;
   metadata?: Record<string, any>;
-  
+
   // Approval workflow
   lastEditedBy?: string;
   lastEditedAt?: Date;
@@ -201,22 +209,22 @@ export interface QueuedEmail {
   rejectedBy?: string;
   rejectedAt?: Date;
   rejectionReason?: string;
-  
+
   // Sending details
   sentAt?: Date;
-  sentById?: string;  // Who actually sent it
-  emailProvider?: 'resend' | 'fallback';
-  externalEmailId?: string;  // Provider's email ID
-  
+  sentById?: string; // Who actually sent it
+  emailProvider?: "resend" | "fallback";
+  externalEmailId?: string; // Provider"s email ID
+
   // Retry information
   retryCount?: number;
   lastRetryAt?: Date;
   maxRetries?: number;
   errorMessage?: string;
   lastError?: string; // Additional error tracking
-  
+
   // Configuration
-  priority?: 'low' | 'normal' | 'high';
+  priority?: "low" | "normal" | "high";
   isPriority?: boolean;
   requiresApproval?: boolean;
 }
@@ -226,45 +234,45 @@ export interface EmailAttachment {
   filename: string;
   contentType: string;
   size: number;
-  content?: string;  // Base64 encoded content
-  url?: string;      // URL to download content (for large files)
+  content?: string; // Base64 encoded content
+  url?: string; // URL to download content (for large files)
   createdAt: Date;
 }
 
 export interface EmailQueueConfig {
   id?: string;
-  
+
   // Queue settings
   maxRetries: number;
   retryDelayMinutes: number;
   maxQueueSize?: number;
-  defaultPriority?: 'low' | 'normal' | 'high';
-  
+  defaultPriority?: "low" | "normal" | "high";
+
   // Approval settings
   requireApproval?: boolean; // General approval requirement
   requireApprovalForEventRequests?: boolean;
   requireApprovalForNotifications?: boolean;
   requireApprovalForReminders?: boolean;
   requireApprovalForGeneral?: boolean;
-  
+
   // Feature settings
   enableScheduling?: boolean;
   emailTemplatesEnabled?: boolean;
   adminNotificationEmails?: string[];
-  
+
   // Auto-send settings
   autoSendScheduledEmails?: boolean;
   autoSendAfterApprovalMinutes?: number;
-  
+
   // Notification settings
   notifyAdminsOnFailure?: boolean;
   notifyAdminsOnLargeQueue?: boolean;
   largeQueueThreshold?: number;
-  
+
   // Archive settings
   archiveSuccessfulAfterDays?: number;
   archiveFailedAfterDays?: number;
-  
+
   // SMTP settings
   smtpSettings?: {
     host: string;
@@ -275,15 +283,15 @@ export interface EmailQueueConfig {
       pass: string;
     };
   };
-  
+
   // Metadata
   createdAt?: Date;
   updatedAt?: Date;
-  
+
   // Email provider settings
-  preferredProvider?: 'resend' | 'fallback';
+  preferredProvider?: "resend" | "fallback";
   fallbackOnFailure?: boolean;
-  
+
   // Updated tracking
   updatedBy?: string;
 }
@@ -291,14 +299,14 @@ export interface EmailQueueConfig {
 export interface EmailTemplate {
   id: string;
   name: string;
-  type: 'event_request' | 'notification' | 'reminder' | 'general';
+  type: "event_request" | "notification" | "reminder" | "general";
   subject: string;
   htmlContent: string;
   textContent: string;
-  
+
   // Template variables available
-  variables: string[];  // e.g., ['{{clubName}}', '{{eventName}}', '{{date}}']
-  
+  variables: string[]; // e.g., ["{{clubName}}", "{{eventName}}", "{{date}}"]
+
   // Metadata
   isDefault: boolean;
   isActive: boolean;
@@ -315,12 +323,12 @@ export interface EmailQueueStats {
   sent: number;
   failed: number;
   cancelled: number;
-  
+
   // Time-based stats
   sentToday: number;
   sentThisWeek: number;
   sentThisMonth: number;
-  
+
   // Performance stats
   averageProcessingTimeMinutes: number;
   successRate: number;
@@ -334,7 +342,7 @@ export interface EmailLog {
   timestamp: Date;
   subject?: string;
   recipients?: string[] | string;
-  status: 'success' | 'error' | 'retry' | 'pending';
+  status: "success" | "error" | "retry" | "pending";
   message?: string;
   errorDetails?: string;
   processingTimeMs?: number;

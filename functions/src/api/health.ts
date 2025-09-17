@@ -1,41 +1,41 @@
-import { Router } from 'express';
-import { adminDb, getDatabaseStatus } from '../lib/firebase-admin';
+import { Router } from "express";
+import { adminDb, getDatabaseStatus } from "../lib/firebase-admin";
 
 const router = Router();
 
-router.get('/', async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const status = getDatabaseStatus();
-    
+
     // Try a simple database operation
-    let dbTest = 'not tested';
-    if (adminDb && status === 'connected') {
+    let dbTest = "not tested";
+    if (adminDb && status === "connected") {
       try {
-        const testCollection = adminDb.collection('test');
+        const testCollection = adminDb.collection("test");
         await testCollection.limit(1).get();
-        dbTest = 'success';
+        dbTest = "success";
       } catch (error) {
         dbTest = `error: ${error}`;
       }
     }
 
     res.json({
-      status: 'ok',
+      status: "ok",
       timestamp: new Date().toISOString(),
       database: {
         status,
-        test: dbTest
+        test: dbTest,
       },
       environment: {
         hasServiceAccount: !!process.env.FIREBASE_SERVICE_ACCOUNT_KEY,
-        nodeEnv: process.env.NODE_ENV
-      }
+        nodeEnv: process.env.NODE_ENV,
+      },
     });
   } catch (error) {
     res.status(500).json({
-      status: 'error',
-      error: error instanceof Error ? error.message : 'Unknown error',
-      timestamp: new Date().toISOString()
+      status: "error",
+      error: error instanceof Error ? error.message : "Unknown error",
+      timestamp: new Date().toISOString(),
     });
   }
 });

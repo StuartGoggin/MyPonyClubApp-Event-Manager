@@ -1,5 +1,5 @@
-import { adminDb } from './firebase-admin';
-import { Club, Zone, EventType } from './types';
+import { adminDb } from "./firebase-admin";
+import { Club, Zone, EventType } from "./types";
 
 /**
  * Get club by ID using Firebase Admin SDK
@@ -7,18 +7,18 @@ import { Club, Zone, EventType } from './types';
 export const getClubById = async (id: string): Promise<Club | undefined> => {
   try {
     if (!adminDb) {
-      console.error('Admin database not initialized');
+      console.error("Admin database not initialized");
       return undefined;
     }
 
-    const clubDoc = await adminDb.collection('clubs').doc(id).get();
+    const clubDoc = await adminDb.collection("clubs").doc(id).get();
     if (!clubDoc.exists) {
       return undefined;
     }
-    
+
     return { id: clubDoc.id, ...clubDoc.data() } as Club;
   } catch (error) {
-    console.error('Error fetching club by ID:', error);
+    console.error("Error fetching club by ID:", error);
     return undefined;
   }
 };
@@ -29,18 +29,18 @@ export const getClubById = async (id: string): Promise<Club | undefined> => {
 export const getZoneById = async (zoneId: string): Promise<Zone | null> => {
   try {
     if (!adminDb) {
-      console.error('Admin database not initialized');
+      console.error("Admin database not initialized");
       return null;
     }
 
-    const zoneDoc = await adminDb.collection('zones').doc(zoneId).get();
+    const zoneDoc = await adminDb.collection("zones").doc(zoneId).get();
     if (!zoneDoc.exists) {
       return null;
     }
-    
+
     return { id: zoneDoc.id, ...zoneDoc.data() } as Zone;
   } catch (error) {
-    console.error('Error fetching zone by ID:', error);
+    console.error("Error fetching zone by ID:", error);
     return null;
   }
 };
@@ -55,11 +55,11 @@ export const getZoneByClubId = async (clubId: string): Promise<Zone | null> => {
     if (!club) {
       return null;
     }
-    
+
     // Then get the zone by zoneId
     return await getZoneById(club.zoneId);
   } catch (error) {
-    console.error('Error fetching zone by club ID:', error);
+    console.error("Error fetching zone by club ID:", error);
     return null;
   }
 };
@@ -67,21 +67,23 @@ export const getZoneByClubId = async (clubId: string): Promise<Zone | null> => {
 /**
  * Get event type by ID using Firebase Admin SDK
  */
-export const getEventTypeById = async (id: string): Promise<EventType | undefined> => {
+export const getEventTypeById = async (
+  id: string,
+): Promise<EventType | undefined> => {
   try {
     if (!adminDb) {
-      console.error('Admin database not initialized');
+      console.error("Admin database not initialized");
       return undefined;
     }
 
-    const eventTypeDoc = await adminDb.collection('eventTypes').doc(id).get();
+    const eventTypeDoc = await adminDb.collection("eventTypes").doc(id).get();
     if (!eventTypeDoc.exists) {
       return undefined;
     }
-    
+
     return { id: eventTypeDoc.id, ...eventTypeDoc.data() } as EventType;
   } catch (error) {
-    console.error('Error fetching event type by ID:', error);
+    console.error("Error fetching event type by ID:", error);
     return undefined;
   }
 };

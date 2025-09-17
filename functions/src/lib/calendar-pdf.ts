@@ -1,4 +1,4 @@
-import jsPDF from 'jspdf';
+import jsPDF from "jspdf";
 
 export interface CalendarPDFOptions {
   title?: string;
@@ -17,19 +17,29 @@ export interface CalendarPDFOptions {
 
 function getMonthName(month: number): string {
   const months = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
   ];
-  return months[month - 1] || 'Unknown';
+  return months[month - 1] || "Unknown";
 }
 
 export function generateCalendarPDF(options: CalendarPDFOptions): Buffer {
   try {
     // Create a new jsPDF instance
     const doc = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4'
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4",
     });
 
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -39,7 +49,7 @@ export function generateCalendarPDF(options: CalendarPDFOptions): Buffer {
 
     // Generate a page for each month
     let isFirstPage = true;
-    
+
     for (const { year, month } of options.months) {
       if (!isFirstPage) {
         doc.addPage();
@@ -49,7 +59,7 @@ export function generateCalendarPDF(options: CalendarPDFOptions): Buffer {
       // Title
       doc.setFontSize(20);
       doc.setTextColor(37, 99, 235); // Blue color
-      const title = options.title || 'PonyClub Events Calendar';
+      const title = options.title || "PonyClub Events Calendar";
       const titleWidth = doc.getTextWidth(title);
       doc.text(title, (pageWidth - titleWidth) / 2, margin + 10);
 
@@ -66,21 +76,23 @@ export function generateCalendarPDF(options: CalendarPDFOptions): Buffer {
       const cellHeight = 15;
 
       // Day headers
-      const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const dayHeaders = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
       doc.setFontSize(10);
       doc.setTextColor(0, 0, 0);
-      doc.setFont('helvetica', 'bold');
+      doc.setFont("helvetica", "bold");
 
       for (let i = 0; i < 7; i++) {
         const x = margin + i * cellWidth;
         doc.rect(x, currentY, cellWidth, cellHeight);
-        doc.text(dayHeaders[i], x + cellWidth / 2, currentY + 10, { align: 'center' });
+        doc.text(dayHeaders[i], x + cellWidth / 2, currentY + 10, {
+          align: "center",
+        });
       }
 
       currentY += cellHeight;
 
       // Calendar days
-      doc.setFont('helvetica', 'normal');
+      doc.setFont("helvetica", "normal");
       const firstDay = new Date(year, month - 1, 1);
       const lastDay = new Date(year, month, 0);
       const startDayOfWeek = firstDay.getDay();
@@ -106,19 +118,21 @@ export function generateCalendarPDF(options: CalendarPDFOptions): Buffer {
           }
 
           // Check if this day has events
-          const dayDate = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-          const dayEvents = options.events.filter(event => event.date === dayDate);
+          const dayDate = `${year}-${month.toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
+          const dayEvents = options.events.filter(
+            (event) => event.date === dayDate,
+          );
 
           // Highlight weekend days with light gray background
           if (col === 0 || col === 6) {
             doc.setFillColor(245, 245, 245);
-            doc.rect(x, y, cellWidth, cellHeight, 'F');
+            doc.rect(x, y, cellWidth, cellHeight, "F");
           }
 
           // Highlight days with events
           if (dayEvents.length > 0) {
             doc.setFillColor(147, 197, 253); // Light blue for event days
-            doc.rect(x, y, cellWidth, cellHeight, 'F');
+            doc.rect(x, y, cellWidth, cellHeight, "F");
           }
 
           // Draw cell border
@@ -132,7 +146,11 @@ export function generateCalendarPDF(options: CalendarPDFOptions): Buffer {
           if (dayEvents.length > 0) {
             doc.setFontSize(6);
             doc.setTextColor(59, 130, 246);
-            doc.text(`${dayEvents.length} event${dayEvents.length > 1 ? 's' : ''}`, x + 2, y + 12);
+            doc.text(
+              `${dayEvents.length} event${dayEvents.length > 1 ? "s" : ""}`,
+              x + 2,
+              y + 12,
+            );
             doc.setFontSize(10);
           }
 
@@ -142,26 +160,28 @@ export function generateCalendarPDF(options: CalendarPDFOptions): Buffer {
       }
 
       // Event list for this month
-      const monthEvents = options.events.filter(event => {
+      const monthEvents = options.events.filter((event) => {
         const eventDate = new Date(event.date);
-        return eventDate.getFullYear() === year && eventDate.getMonth() + 1 === month;
+        return (
+          eventDate.getFullYear() === year && eventDate.getMonth() + 1 === month
+        );
       });
 
       if (monthEvents.length > 0) {
         const eventListY = currentY + (row + 1) * cellHeight + 10;
-        
+
         doc.setFontSize(12);
         doc.setTextColor(0, 0, 0);
-        doc.text('Events this month:', margin, eventListY);
-        
+        doc.text("Events this month:", margin, eventListY);
+
         doc.setFontSize(10);
         let listY = eventListY + 10;
         for (const event of monthEvents) {
           const eventDate = new Date(event.date);
-          const dateStr = eventDate.getDate().toString().padStart(2, '0');
+          const dateStr = eventDate.getDate().toString().padStart(2, "0");
           doc.text(`${dateStr}: ${event.name}`, margin + 5, listY);
           listY += 6;
-          
+
           if (listY > pageHeight - margin - 20) break; // Prevent overflow
         }
       }
@@ -173,29 +193,28 @@ export function generateCalendarPDF(options: CalendarPDFOptions): Buffer {
       doc.setPage(i);
       doc.setFontSize(8);
       doc.setTextColor(156, 163, 175);
-      
+
       const footer = `Generated on ${new Date().toLocaleDateString()} | PonyClub Event Manager | Page ${i} of ${totalPages}`;
       const footerWidth = doc.getTextWidth(footer);
       doc.text(footer, (pageWidth - footerWidth) / 2, pageHeight - 10);
     }
 
     // Return the PDF as a Buffer
-    const pdfOutput = doc.output('arraybuffer');
+    const pdfOutput = doc.output("arraybuffer");
     return Buffer.from(pdfOutput);
-    
   } catch (error) {
-    console.error('jsPDF generation error:', error);
-    
+    console.error("jsPDF generation error:", error);
+
     // Return a simple error PDF
     const doc = new jsPDF();
-    
+
     doc.setFontSize(16);
-    doc.text('PDF Generation Error', 20, 30);
+    doc.text("PDF Generation Error", 20, 30);
     doc.setFontSize(12);
-    doc.text('Unable to generate calendar PDF at this time.', 20, 50);
-    doc.text('Please try again later or contact support.', 20, 65);
-    
-    const pdfOutput = doc.output('arraybuffer');
+    doc.text("Unable to generate calendar PDF at this time.", 20, 50);
+    doc.text("Please try again later or contact support.", 20, 65);
+
+    const pdfOutput = doc.output("arraybuffer");
     return Buffer.from(pdfOutput);
   }
 }

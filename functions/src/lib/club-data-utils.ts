@@ -1,4 +1,4 @@
-import { Club } from './types';
+import { Club } from "./types";
 
 /**
  * Interface for the club data from JSON file
@@ -18,7 +18,10 @@ export interface ClubJsonData {
 /**
  * Transform club data from JSON format to Club interface
  */
-export function transformClubData(jsonClub: ClubJsonData, zoneId: string): Omit<Club, 'id'> {
+export function transformClubData(
+  jsonClub: ClubJsonData,
+  zoneId: string,
+): Omit<Club, "id"> {
   return {
     name: jsonClub.club_name,
     zoneId: zoneId,
@@ -36,31 +39,37 @@ export function transformClubData(jsonClub: ClubJsonData, zoneId: string): Omit<
 /**
  * Validate required fields for club data
  */
-export function validateClubData(club: ClubJsonData): { isValid: boolean; errors: string[] } {
+export function validateClubData(club: ClubJsonData): {
+  isValid: boolean;
+  errors: string[];
+} {
   const errors: string[] = [];
-  
+
   if (!club.club_name?.trim()) {
-    errors.push('Club name is required');
+    errors.push("Club name is required");
   }
-  
+
   if (!club.zone?.trim()) {
-    errors.push('Zone is required');
+    errors.push("Zone is required");
   }
-  
+
   return {
     isValid: errors.length === 0,
-    errors
+    errors,
   };
 }
 
 /**
  * Find zone ID by name
  */
-export async function findZoneIdByName(zoneName: string, zones: { id: string; name: string }[]): Promise<string | null> {
-  const zone = zones.find(z => 
-    z.name.toLowerCase().trim() === zoneName.toLowerCase().trim()
+export async function findZoneIdByName(
+  zoneName: string,
+  zones: { id: string; name: string }[],
+): Promise<string | null> {
+  const zone = zones.find(
+    (z) => z.name.toLowerCase().trim() === zoneName.toLowerCase().trim(),
   );
-  
+
   return zone?.id || null;
 }
 
@@ -68,44 +77,44 @@ export async function findZoneIdByName(zoneName: string, zones: { id: string; na
  * Process multiple clubs from JSON data
  */
 export async function processClubsFromJson(
-  clubsData: ClubJsonData[], 
-  zones: { id: string; name: string }[]
+  clubsData: ClubJsonData[],
+  zones: { id: string; name: string }[],
 ): Promise<{
-  validClubs: (Omit<Club, 'id'> & { originalData: ClubJsonData })[];
+  validClubs: (Omit<Club, "id"> & { originalData: ClubJsonData })[];
   invalidClubs: { data: ClubJsonData; errors: string[] }[];
   missingZones: string[];
 }> {
-  const validClubs: (Omit<Club, 'id'> & { originalData: ClubJsonData })[] = [];
+  const validClubs: (Omit<Club, "id"> & { originalData: ClubJsonData })[] = [];
   const invalidClubs: { data: ClubJsonData; errors: string[] }[] = [];
   const missingZones: string[] = [];
-  
+
   for (const clubData of clubsData) {
     // Validate the data
     const validation = validateClubData(clubData);
-    
+
     if (!validation.isValid) {
       invalidClubs.push({ data: clubData, errors: validation.errors });
       continue;
     }
-    
+
     // Find the zone ID
     const zoneId = await findZoneIdByName(clubData.zone, zones);
-    
+
     if (!zoneId) {
       if (!missingZones.includes(clubData.zone)) {
         missingZones.push(clubData.zone);
       }
-      invalidClubs.push({ 
-        data: clubData, 
-        errors: [`Zone '${clubData.zone}' not found`] 
+      invalidClubs.push({
+        data: clubData,
+        errors: [`Zone "${clubData.zone}" not found`],
       });
       continue;
     }
-    
+
     // Transform the data
     const clubRecord = transformClubData(clubData, zoneId);
     validClubs.push({ ...clubRecord, originalData: clubData });
   }
-  
+
   return { validClubs, invalidClubs, missingZones };
 }

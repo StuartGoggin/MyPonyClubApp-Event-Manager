@@ -5,6 +5,36 @@ export interface Approver {
   mobile: string;
 }
 
+export type UserRole = 'standard' | 'zone_rep' | 'super_user';
+
+export interface User {
+  id: string;                      // Firestore document ID
+  ponyClubId: string;             // Unique Pony Club identifier
+  mobileNumber: string;           // Registered mobile phone number
+  role: UserRole;                 // User's access level
+  clubId: string;                 // Associated club ID
+  zoneId: string;                 // Associated zone ID
+  
+  // Additional user information
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  address?: string;
+  emergencyContact?: string;
+  membershipNumber?: string;
+  dateOfBirth?: string;
+  
+  // Audit fields
+  createdAt: string;
+  updatedAt: string;
+  lastLoginAt?: string;
+  isActive: boolean;
+  
+  // Import tracking
+  importedAt?: string;
+  importBatch?: string;           // Track which import batch this user came from
+}
+
 export interface Zone {
   id: string;
   name: string;
@@ -19,6 +49,7 @@ export interface Club {
   id: string;
   name: string;
   zoneId: string;
+  zoneName?: string;               // Optional zone name for display purposes
   clubId?: number;
   
   // Address information
@@ -75,6 +106,10 @@ export interface Club {
 export interface EventType {
   id: string;
   name: string;
+  description?: string;
+  color?: string;
+  requiresApproval?: boolean;
+  defaultDuration?: number;
 }
 
 export type EventStatus = 'proposed' | 'approved' | 'rejected' | 'public_holiday';

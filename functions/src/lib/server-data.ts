@@ -149,3 +149,60 @@ export async function getAllZones(): Promise<Zone[]> {
     return [];
   }
 }
+
+/**
+ * Get all events from the database
+ */
+export async function getAllEvents(): Promise<any[]> {
+  try {
+    if (!isDatabaseConnected()) {
+      console.warn('Database not connected, returning empty events array');
+      return [];
+    }
+    
+    const eventsSnapshot = await adminDb.collection('events').get();
+    const events: any[] = [];
+    
+    eventsSnapshot.forEach((doc: any) => {
+      if (doc.exists) {
+        const data = doc.data();
+        // Convert Firestore timestamp to Date if needed
+        if (data.date && typeof data.date.toDate === 'function') {
+          data.date = data.date.toDate();
+        }
+        events.push({ id: doc.id, ...data });
+      }
+    });
+    
+    return events;
+  } catch (error: any) {
+    console.error('Error fetching events:', error);
+    return [];
+  }
+}
+
+/**
+ * Get all event types from the database
+ */
+export async function getAllEventTypes(): Promise<any[]> {
+  try {
+    if (!isDatabaseConnected()) {
+      console.warn('Database not connected, returning empty event types array');
+      return [];
+    }
+    
+    const eventTypesSnapshot = await adminDb.collection('eventTypes').get();
+    const eventTypes: any[] = [];
+    
+    eventTypesSnapshot.forEach((doc: any) => {
+      if (doc.exists) {
+        eventTypes.push({ id: doc.id, ...doc.data() });
+      }
+    });
+    
+    return eventTypes;
+  } catch (error: any) {
+    console.error('Error fetching event types:', error);
+    return [];
+  }
+}

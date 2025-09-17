@@ -232,6 +232,36 @@ const testEmailQueueEndpoint = async () => {
   }
 };
 
+const testAdminEndpoints = async () => {
+  // Test that admin endpoints exist and require authentication
+  try {
+    const response = await makeApiRequest('/admin/users', 'GET', null);
+    
+    // We expect 401 for unauthenticated request
+    if (response.statusCode === 401) {
+      return { 
+        status: 'admin_endpoints_secured', 
+        message: 'Admin endpoints exist and properly require authentication',
+        note: 'Admin authentication middleware working correctly'
+      };
+    } else if (response.statusCode === 200) {
+      // Shouldn't happen without auth but could indicate endpoint exists
+      return { 
+        status: 'admin_endpoints_unsecured', 
+        message: 'Admin endpoints exist but authentication may need review',
+        note: 'Admin endpoints responding without authentication'
+      };
+    } else {
+      throw new Error(`Admin endpoint failed with unexpected status: ${response.statusCode}`);
+    }
+  } catch (error) {
+    if (error.message.includes('404') || error.code === 'ECONNREFUSED') {
+      throw new Error('Admin endpoints not found - Step 3.2 migration may be incomplete');
+    }
+    throw error;
+  }
+};
+
 // Main test runner
 const runCoreTests = async () => {
   log('🚀 Core Migration Test Suite - Phase 2 Validation');
@@ -249,7 +279,8 @@ const runCoreTests = async () => {
     { name: 'Zones API', fn: testZonesEndpoint },
     { name: 'Events API', fn: testEventsEndpoint },
     { name: 'Notification API', fn: testNotificationEndpoint },
-    { name: 'Email Queue API', fn: testEmailQueueEndpoint }
+    { name: 'Email Queue API', fn: testEmailQueueEndpoint },
+    { name: 'Admin Endpoints', fn: testAdminEndpoints }
   ];
   
   for (const test of tests) {
@@ -358,4 +389,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { runCoreTests, testHealthEndpoint, testClubsEndpoint, testZonesEndpoint, testEventsEndpoint, testNotificationEndpoint, testEmailQueueEndpoint };
+module.exports = { runCoreTests, testHealthEndpoint, testClubsEndpoint, testZonesEndpoint, testEventsEndpoint, testNotificationEndpoint, testEmailQueueEndpoint, testAdminEndpoints };

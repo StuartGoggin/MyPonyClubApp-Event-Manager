@@ -32,9 +32,10 @@ router.post('/', withAdminAuth(async (req: Request, res: Response, user: User) =
 
     if (!emailId) {
       logger.warn('Email Queue Send API: No email ID provided');
-      return res.status(400).json({
+      res.status(400).json({
         error: 'Email ID is required'
       });
+      return;
     }
 
     // Get the email from the queue
@@ -57,9 +58,10 @@ router.post('/', withAdminAuth(async (req: Request, res: Response, user: User) =
         message: 'Email not found in database',
         errorDetails: `Email ID: ${emailId}`
       });
-      return res.status(404).json({
+      res.status(404).json({
         error: 'Email not found'
       });
+      return;
     }
 
     if (email.status !== 'pending') {
@@ -79,9 +81,10 @@ router.post('/', withAdminAuth(async (req: Request, res: Response, user: User) =
         errorDetails: `Email status: ${email.status || 'undefined/null'}`
       });
       
-      return res.status(400).json({
+      res.status(400).json({
         error: 'Email is not in pending status'
       });
+      return;
     }
 
     logger.info('Email Queue Send API: Email status check passed - proceeding to send');
@@ -112,11 +115,12 @@ router.post('/', withAdminAuth(async (req: Request, res: Response, user: User) =
         errorDetails: 'RESEND_API_KEY not configured - simulated send'
       });
       
-      return res.json({
+      res.json({
         success: true,
         message: 'Email sent successfully (simulation mode)',
         emailId: 'simulated-email-id'
       });
+      return;
     }
 
     try {
@@ -188,11 +192,12 @@ router.post('/', withAdminAuth(async (req: Request, res: Response, user: User) =
         resendId: result.data?.id
       });
       
-      return res.json({
+      res.json({
         success: true,
         message: 'Email sent successfully',
         emailId: result.data?.id
       });
+      return;
 
     } catch (sendError) {
       logger.error('Email Queue Send API: Error sending email', { 
@@ -214,10 +219,11 @@ router.post('/', withAdminAuth(async (req: Request, res: Response, user: User) =
         errorDetails: errorMessage
       });
 
-      return res.status(500).json({
+      res.status(500).json({
         error: 'Failed to send email',
         details: errorMessage
       });
+      return;
     }
 
   } catch (error: any) {

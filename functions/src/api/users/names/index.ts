@@ -1,4 +1,4 @@
-import { Request, Response, Router } from "express";
+import { Router } from "express";
 import { logger } from "firebase-functions/v2";
 import { UserService } from "../../../lib/user-service";
 
@@ -11,7 +11,7 @@ const router = Router();
  *   - search: Optional search term to filter names
  *   - limit: Optional limit on number of results (default: 20)
  */
-router.get("/", async (req: Request, res: Response) => {
+router.get("/", async (req: any, res: any) => {
   try {
     const search = (req.query.search as string) || "";
     const limit = Math.min(parseInt(req.query.limit as string) || 20, 50); // Cap at 50 results
@@ -74,26 +74,26 @@ router.get("/", async (req: Request, res: Response) => {
 
     // Filter by search term and convert to array
     let namesList = Array.from(namesWithData.entries()).filter(
-      ([name]) => name.length > 0,
+      (entry: any) => entry[0].length > 0,
     );
 
     if (search) {
-      namesList = namesList.filter(([name]) =>
-        name.toLowerCase().includes(search.toLowerCase()),
+      namesList = namesList.filter((entry: any) =>
+        entry[0].toLowerCase().includes(search.toLowerCase()),
       );
     }
 
     // Sort alphabetically and apply limit
     namesList = namesList
-      .sort(([a], [b]) => a.localeCompare(b))
+      .sort((a: any, b: any) => a[0].localeCompare(b[0]))
       .slice(0, limit);
 
     // Convert to response format
-    const results = namesList.map(([name, data]) => ({
-      name,
-      clubId: data.clubId,
-      zoneId: data.zoneId,
-      user: data.user,
+    const results = namesList.map((entry: any) => ({
+      name: entry[0],
+      clubId: entry[1].clubId,
+      zoneId: entry[1].zoneId,
+      user: entry[1].user,
     }));
 
     logger.info("User names search completed", {

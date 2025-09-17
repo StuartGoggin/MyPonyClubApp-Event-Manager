@@ -1,5 +1,5 @@
-import express, { Express } from "express";
-import request from "supertest";
+import express from "express";
+const request = require("supertest");
 import userNamesRouter from "../../api/users/names";
 import { UserService } from "../../lib/user-service";
 import { User, UserRole } from "../../lib/types";
@@ -19,10 +19,11 @@ jest.mock("../../lib/firebase-admin", () => ({
   adminDb: {},
 }));
 
-const MockedUserService = UserService as jest.Mocked<typeof UserService>;
+// Get mocked UserService
+const MockedUserService = jest.mocked(UserService);
 
 describe("User Names API", () => {
-  let app: Express;
+  let app: ReturnType<typeof express>;
 
   beforeEach(() => {
     app = express();

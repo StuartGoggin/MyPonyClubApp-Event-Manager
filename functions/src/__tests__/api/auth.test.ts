@@ -1,5 +1,5 @@
-import express, { Express } from "express";
-import request from "supertest";
+import express from "express";
+const request = require("supertest");
 import authRouter from "../../api/auth";
 import { UserService } from "../../lib/user-service";
 import { User, UserRole } from "../../lib/types";
@@ -20,11 +20,12 @@ jest.mock("../../lib/firebase-admin", () => ({
   adminDb: {},
 }));
 
-const MockedUserService = UserService as jest.Mocked<typeof UserService>;
+// Get mocked UserService
+const MockedUserService = jest.mocked(UserService);
 
 describe("Authentication API", () => {
-  let app: Express;
-  const JWT_SECRET = new TextEncoder().encode("test-secret-key");
+  let app: ReturnType<typeof express>;
+  const JWT_SECRET = new (global as any).TextEncoder().encode("test-secret-key");
 
   beforeEach(() => {
     app = express();

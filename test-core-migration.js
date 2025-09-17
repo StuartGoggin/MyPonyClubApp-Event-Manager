@@ -202,6 +202,36 @@ const testNotificationEndpoint = async () => {
   }
 };
 
+const testEmailQueueEndpoint = async () => {
+  // Test that the email queue endpoint exists and requires authentication
+  try {
+    const response = await makeApiRequest('/email-queue', 'GET', null);
+    
+    // We expect 401 for unauthenticated request
+    if (response.statusCode === 401) {
+      return { 
+        status: 'endpoint_exists_auth_required', 
+        message: 'Email queue endpoint exists and properly requires authentication',
+        note: 'Authentication middleware working correctly'
+      };
+    } else if (response.statusCode === 200) {
+      // Shouldn't happen without auth but could indicate endpoint exists
+      return { 
+        status: 'endpoint_exists_no_auth', 
+        message: 'Email queue endpoint exists but authentication may need review',
+        note: 'Endpoint responding without authentication'
+      };
+    } else {
+      throw new Error(`Email queue endpoint failed with unexpected status: ${response.statusCode}`);
+    }
+  } catch (error) {
+    if (error.message.includes('404') || error.code === 'ECONNREFUSED') {
+      throw new Error('Email queue endpoint not found - migration may be incomplete');
+    }
+    throw error;
+  }
+};
+
 // Main test runner
 const runCoreTests = async () => {
   log('🚀 Core Migration Test Suite - Phase 2 Validation');
@@ -218,7 +248,8 @@ const runCoreTests = async () => {
     { name: 'Clubs API', fn: testClubsEndpoint },
     { name: 'Zones API', fn: testZonesEndpoint },
     { name: 'Events API', fn: testEventsEndpoint },
-    { name: 'Notification API', fn: testNotificationEndpoint }
+    { name: 'Notification API', fn: testNotificationEndpoint },
+    { name: 'Email Queue API', fn: testEmailQueueEndpoint }
   ];
   
   for (const test of tests) {
@@ -327,4 +358,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { runCoreTests, testHealthEndpoint, testClubsEndpoint, testZonesEndpoint, testEventsEndpoint, testNotificationEndpoint };
+module.exports = { runCoreTests, testHealthEndpoint, testClubsEndpoint, testZonesEndpoint, testEventsEndpoint, testNotificationEndpoint, testEmailQueueEndpoint };

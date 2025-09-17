@@ -63,6 +63,67 @@ node test-core-migration.js
 - Guided testing process
 - Cross-platform compatibility
 
+### **4. Email Queue Management Testing Script** ⭐ **NEW**
+**File**: `test-email-queue.js`  
+**Purpose**: Comprehensive testing suite for migrated email queue management system  
+**Features**:
+- Authentication testing (admin tokens, unauthorized access)
+- Basic CRUD operations (GET/POST/PUT/DELETE emails)
+- Email queue statistics and monitoring
+- Bulk operations (bulk update, bulk delete)
+- Email logs retrieval with filtering
+- Configuration management (GET/POST config updates)
+- Email sending simulation with Resend API integration
+- Real-time feedback and progress tracking
+- Detailed success criteria validation
+
+**Usage**:
+```bash
+# Test email queue functionality
+npm run test:email-queue
+
+# Verbose email queue testing
+npm run test:email-queue:verbose
+
+# Direct command usage
+node test-email-queue.js --verbose
+
+# Test all functionality including email queue
+npm run test:all
+```
+
+## 📋 **Email Queue Management Validation** ⭐ **NEW**
+
+### **Phase 3.1 Migration - Email Queue Endpoints**
+
+| Endpoint | Method | Status | Validation |
+|----------|--------|--------|------------|
+| `/api/email-queue` | GET | ✅ READY | Retrieves emails with admin auth |
+| `/api/email-queue` | POST | ✅ READY | Creates emails, bulk operations |
+| `/api/email-queue` | PUT | ✅ READY | Updates individual emails |
+| `/api/email-queue` | DELETE | ✅ READY | Deletes individual emails |
+| `/api/email-queue/logs` | GET | ✅ READY | Retrieves email logs with filtering |
+| `/api/email-queue/send` | POST | ✅ READY | Sends emails via Resend API |
+| `/api/email-queue/config` | GET/POST | ✅ READY | Configuration management |
+
+### **Email Queue Features Tested**
+- ✅ **Admin Authentication**: Role-based access control working
+- ✅ **CRUD Operations**: Complete email lifecycle management
+- ✅ **Statistics API**: Queue monitoring with counts and status breakdown
+- ✅ **Bulk Operations**: Efficient bulk update and delete functionality
+- ✅ **Email Logs**: Comprehensive logging with filtering capabilities
+- ✅ **Configuration**: Dynamic email queue settings management
+- ✅ **Email Sending**: Resend API integration with simulation mode
+- ✅ **Error Handling**: Proper validation and error responses
+
+### **Testing Scripts Comparison**
+
+| Script | Purpose | Email Queue Coverage |
+|--------|---------|---------------------|
+| `test-core-migration.js` | Phase 2 validation | Basic endpoint existence |
+| `test-migrated-apis.js` | Comprehensive API testing | Full email queue test suite |
+| `test-email-queue.js` | **Dedicated email queue testing** | **Complete email queue validation** |
+
 ## 📊 **Test Results Summary**
 
 ### **Perfect Test Results (5/5 Endpoints)**

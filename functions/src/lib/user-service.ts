@@ -7,6 +7,45 @@ const USERS_COLLECTION = 'users';
 export class UserService {
   
   /**
+   * Get user by Pony Club ID and mobile number (for login)
+   */
+  static async getUserByCredentials(ponyClubId: string, mobileNumber: string): Promise<User | null> {
+    try {
+      let query = adminDb
+        .collection(USERS_COLLECTION)
+        .where('ponyClubId', '==', ponyClubId.toUpperCase())
+        .where('mobileNumber', '==', mobileNumber)
+        .where('isActive', '==', true)
+        .limit(1);
+
+      const snapshot = await query.get();
+      
+      if (snapshot.empty) {
+        return null;
+      }
+      
+      const doc = snapshot.docs[0];
+      const userData = doc.data();
+      
+      // Update last login timestamp
+      await doc.ref.update({
+        lastLoginAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+      
+      return {
+        id: doc.id,
+        ...userData,
+        lastLoginAt: new Date().toISOString()
+      } as User;
+      
+    } catch (error) {
+      console.error('Error getting user by credentials:', error);
+      throw new Error('Failed to authenticate user');
+    }
+  }
+  
+  /**
    * Get users with optional filtering
    */
   static async getUsers(options: {

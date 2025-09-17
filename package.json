@@ -16,7 +16,9 @@
     "test:migration": "node test-core-migration.js",
     "test:apis": "node test-migrated-apis.js",
     "test:apis:verbose": "node test-migrated-apis.js --verbose",
-    "test:all": "npm run test:migration && npm run test:apis"
+    "test:email-queue": "node test-email-queue.js",
+    "test:email-queue:verbose": "node test-email-queue.js --verbose",
+    "test:all": "npm run test:migration && npm run test:apis && npm run test:email-queue"
   },
   "dependencies": {
     "@genkit-ai/firebase": "^1.16.0",

@@ -81,6 +81,27 @@ const TEST_DATA = {
       }
     ],
     notes: 'Testing email notification system'
+  },
+  emailQueue: {
+    sampleEmail: {
+      to: ['test@example.com'],
+      subject: 'Test Email Queue Message',
+      html: '<p>This is a test email from the queue system</p>',
+      from: 'noreply@ponyclub.com',
+      status: 'queued',
+      priority: 'normal',
+      metadata: {
+        source: 'api_test',
+        testId: Date.now()
+      }
+    },
+    configUpdate: {
+      maxRetries: 3,
+      retryDelay: 300000,
+      batchSize: 10,
+      enableNotifications: true,
+      fallbackOnFailure: true
+    }
   }
 };
 
@@ -483,6 +504,278 @@ const testErrorHandling = async () => {
   return { errorTests: passedTests };
 };
 
+// Email Queue Management Test Functions
+const testEmailQueueGet = async () => {
+  // Test basic email queue retrieval
+  const response = await makeApiRequest('/email-queue', 'GET', null, {
+    'Authorization': 'Bearer admin-token',
+    'Content-Type': 'application/json'
+  });
+  
+  if (response.statusCode !== 200) {
+    throw new Error(`Expected 200, got ${response.statusCode}: ${response.body}`);
+  }
+  
+  if (!response.data || !response.data.success) {
+    throw new Error('Invalid response format - missing success field');
+  }
+  
+  verbose(`Email queue GET test passed - returned ${response.data.data?.length || 0} emails`);
+  return { emailCount: response.data.data?.length || 0 };
+};
+
+const testEmailQueueStats = async () => {
+  // Test email queue statistics
+  const response = await makeApiRequest('/email-queue?includeStats=true', 'GET', null, {
+    'Authorization': 'Bearer admin-token',
+    'Content-Type': 'application/json'
+  });
+  
+  if (response.statusCode !== 200) {
+    throw new Error(`Expected 200, got ${response.statusCode}: ${response.body}`);
+  }
+  
+  if (!response.data || !response.data.success || !response.data.data) {
+    throw new Error('Invalid response format - missing statistics data');
+  }
+  
+  const stats = response.data.data;
+  const expectedFields = ['total', 'queued', 'sent', 'failed', 'processing'];
+  const missingFields = expectedFields.filter(field => typeof stats[field] === 'undefined');
+  
+  if (missingFields.length > 0) {
+    throw new Error(`Missing statistics fields: ${missingFields.join(', ')}`);
+  }
+  
+  verbose(`Email queue statistics test passed - Total: ${stats.total}, Queued: ${stats.queued}`);
+  return { stats };
+};
+
+const testEmailQueuePost = async () => {
+  // Test adding email to queue
+  const testEmail = {
+    ...TEST_DATA.emailQueue.sampleEmail,
+    subject: `${TEST_DATA.emailQueue.sampleEmail.subject} - ${Date.now()}`,
+    metadata: {
+      ...TEST_DATA.emailQueue.sampleEmail.metadata,
+      testId: Date.now()
+    }
+  };
+  
+  const response = await makeApiRequest('/email-queue', 'POST', testEmail, {
+    'Authorization': 'Bearer admin-token',
+    'Content-Type': 'application/json'
+  });
+  
+  if (response.statusCode !== 200) {
+    throw new Error(`Expected 200, got ${response.statusCode}: ${response.body}`);
+  }
+  
+  if (!response.data || !response.data.success || !response.data.id) {
+    throw new Error('Invalid response format - missing email ID');
+  }
+  
+  verbose(`Email queue POST test passed - Created email with ID: ${response.data.id}`);
+  return { emailId: response.data.id };
+};
+
+const testEmailQueueBulkOperations = async () => {
+  // First, create some test emails
+  const testEmails = [];
+  for (let i = 0; i < 3; i++) {
+    const testEmail = {
+      ...TEST_DATA.emailQueue.sampleEmail,
+      subject: `Bulk Test Email ${i + 1} - ${Date.now()}`,
+      to: [`bulk-test-${i + 1}@example.com`]
+    };
+    
+    const response = await makeApiRequest('/email-queue', 'POST', testEmail, {
+      'Authorization': 'Bearer admin-token',
+      'Content-Type': 'application/json'
+    });
+    
+    if (response.statusCode === 200 && response.data?.id) {
+      testEmails.push(response.data.id);
+    }
+  }
+  
+  if (testEmails.length === 0) {
+    throw new Error('Failed to create test emails for bulk operations');
+  }
+  
+  // Test bulk update
+  const bulkUpdateResponse = await makeApiRequest('/email-queue', 'POST', {
+    action: 'bulk-update',
+    emailIds: testEmails,
+    updates: { priority: 'high' }
+  }, {
+    'Authorization': 'Bearer admin-token',
+    'Content-Type': 'application/json'
+  });
+  
+  if (bulkUpdateResponse.statusCode !== 200) {
+    throw new Error(`Bulk update failed: ${bulkUpdateResponse.statusCode}: ${bulkUpdateResponse.body}`);
+  }
+  
+  // Test bulk delete
+  const bulkDeleteResponse = await makeApiRequest('/email-queue', 'POST', {
+    action: 'bulk-delete',
+    emailIds: testEmails
+  }, {
+    'Authorization': 'Bearer admin-token',
+    'Content-Type': 'application/json'
+  });
+  
+  if (bulkDeleteResponse.statusCode !== 200) {
+    throw new Error(`Bulk delete failed: ${bulkDeleteResponse.statusCode}: ${bulkDeleteResponse.body}`);
+  }
+  
+  verbose(`Email queue bulk operations test passed - Updated and deleted ${testEmails.length} emails`);
+  return { processedEmails: testEmails.length };
+};
+
+const testEmailQueueLogs = async () => {
+  // Test email queue logs endpoint
+  const response = await makeApiRequest('/email-queue/logs', 'GET', null, {
+    'Authorization': 'Bearer admin-token',
+    'Content-Type': 'application/json'
+  });
+  
+  if (response.statusCode !== 200) {
+    throw new Error(`Expected 200, got ${response.statusCode}: ${response.body}`);
+  }
+  
+  if (!response.data || !response.data.success) {
+    throw new Error('Invalid response format - missing success field');
+  }
+  
+  // Test with filters
+  const filteredResponse = await makeApiRequest('/email-queue/logs?limit=5&status=sent', 'GET', null, {
+    'Authorization': 'Bearer admin-token',
+    'Content-Type': 'application/json'
+  });
+  
+  if (filteredResponse.statusCode !== 200) {
+    throw new Error(`Filtered logs request failed: ${filteredResponse.statusCode}`);
+  }
+  
+  verbose(`Email queue logs test passed - Retrieved ${response.data.data?.length || 0} log entries`);
+  return { logCount: response.data.data?.length || 0 };
+};
+
+const testEmailQueueConfig = async () => {
+  // Test getting current configuration
+  const getResponse = await makeApiRequest('/email-queue/config', 'GET', null, {
+    'Authorization': 'Bearer admin-token',
+    'Content-Type': 'application/json'
+  });
+  
+  if (getResponse.statusCode !== 200) {
+    throw new Error(`Config GET failed: ${getResponse.statusCode}: ${getResponse.body}`);
+  }
+  
+  if (!getResponse.data || !getResponse.data.success || !getResponse.data.data) {
+    throw new Error('Invalid config response format');
+  }
+  
+  // Test updating configuration
+  const updateData = {
+    ...TEST_DATA.emailQueue.configUpdate,
+    updatedAt: new Date().toISOString()
+  };
+  
+  const updateResponse = await makeApiRequest('/email-queue/config', 'POST', updateData, {
+    'Authorization': 'Bearer admin-token',
+    'Content-Type': 'application/json'
+  });
+  
+  if (updateResponse.statusCode !== 200) {
+    throw new Error(`Config update failed: ${updateResponse.statusCode}: ${updateResponse.body}`);
+  }
+  
+  if (!updateResponse.data || !updateResponse.data.success) {
+    throw new Error('Invalid config update response format');
+  }
+  
+  verbose('Email queue configuration test passed - GET and POST operations successful');
+  return { configUpdated: true };
+};
+
+const testEmailQueueSend = async () => {
+  // First create a test email
+  const testEmail = {
+    ...TEST_DATA.emailQueue.sampleEmail,
+    subject: `Send Test Email - ${Date.now()}`,
+    metadata: {
+      ...TEST_DATA.emailQueue.sampleEmail.metadata,
+      testSend: true
+    }
+  };
+  
+  const createResponse = await makeApiRequest('/email-queue', 'POST', testEmail, {
+    'Authorization': 'Bearer admin-token',
+    'Content-Type': 'application/json'
+  });
+  
+  if (createResponse.statusCode !== 200 || !createResponse.data?.id) {
+    throw new Error('Failed to create test email for send test');
+  }
+  
+  const emailId = createResponse.data.id;
+  
+  // Test sending the email (in simulation mode)
+  const sendResponse = await makeApiRequest('/email-queue/send', 'POST', {
+    emailIds: [emailId],
+    simulate: true // Use simulation mode to avoid actually sending
+  }, {
+    'Authorization': 'Bearer admin-token',
+    'Content-Type': 'application/json'
+  });
+  
+  if (sendResponse.statusCode !== 200) {
+    throw new Error(`Email send failed: ${sendResponse.statusCode}: ${sendResponse.body}`);
+  }
+  
+  if (!sendResponse.data || !sendResponse.data.success) {
+    throw new Error('Invalid send response format');
+  }
+  
+  verbose(`Email queue send test passed - Processed email ID: ${emailId}`);
+  return { emailsSent: 1, simulationMode: true };
+};
+
+const testEmailQueueAuthentication = async () => {
+  // Test without authentication
+  const unauthResponse = await makeApiRequest('/email-queue', 'GET');
+  
+  if (unauthResponse.statusCode !== 401) {
+    throw new Error(`Expected 401 for unauthenticated request, got ${unauthResponse.statusCode}`);
+  }
+  
+  // Test with invalid token
+  const invalidTokenResponse = await makeApiRequest('/email-queue', 'GET', null, {
+    'Authorization': 'Bearer invalid-token',
+    'Content-Type': 'application/json'
+  });
+  
+  if (invalidTokenResponse.statusCode !== 401) {
+    throw new Error(`Expected 401 for invalid token, got ${invalidTokenResponse.statusCode}`);
+  }
+  
+  // Test with valid admin token
+  const validTokenResponse = await makeApiRequest('/email-queue', 'GET', null, {
+    'Authorization': 'Bearer admin-token',
+    'Content-Type': 'application/json'
+  });
+  
+  if (validTokenResponse.statusCode !== 200) {
+    throw new Error(`Valid token should work, got ${validTokenResponse.statusCode}`);
+  }
+  
+  verbose('Email queue authentication test passed - Proper access control working');
+  return { authenticationWorking: true };
+};
+
 // Main test suite
 const runTestSuite = async () => {
   log('🚀 Starting Comprehensive API Testing for Firebase Functions Migration', 'info');
@@ -510,12 +803,23 @@ const runTestSuite = async () => {
     await runTest('Email Notification - Queue Mode', testEmailNotificationQueue);
     await runTest('Email Notification - Direct Mode', testEmailNotificationDirect);
     
-    // Phase 4: Environment and configuration
-    log('\n📋 Phase 4: Environment Variables Testing', 'info');
+    // Phase 4: Email Queue Management Testing
+    log('\n📋 Phase 4: Email Queue Management Testing', 'info');
+    await runTest('Email Queue Authentication', testEmailQueueAuthentication);
+    await runTest('Email Queue GET Operations', testEmailQueueGet);
+    await runTest('Email Queue Statistics', testEmailQueueStats);
+    await runTest('Email Queue POST Operations', testEmailQueuePost);
+    await runTest('Email Queue Bulk Operations', testEmailQueueBulkOperations);
+    await runTest('Email Queue Logs', testEmailQueueLogs);
+    await runTest('Email Queue Configuration', testEmailQueueConfig);
+    await runTest('Email Queue Send Operations', testEmailQueueSend);
+    
+    // Phase 5: Environment and configuration
+    log('\n📋 Phase 5: Environment Variables Testing', 'info');
     await runTest('Environment Variables Access', testEnvironmentVariables);
     
-    // Phase 5: Error handling
-    log('\n📋 Phase 5: Error Handling Testing', 'info');
+    // Phase 6: Error handling
+    log('\n📋 Phase 6: Error Handling Testing', 'info');
     await runTest('Error Handling', testErrorHandling);
     
   } catch (error) {

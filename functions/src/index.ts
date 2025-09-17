@@ -122,6 +122,10 @@ import clubsRouter from './api/clubs';
 import zonesRouter from './api/zones';
 import eventsRouter from './api/events';
 import emailRouter from './api/send-event-request-email';
+import emailQueueRouter from './api/email-queue';
+import emailQueueLogsRouter from './api/email-queue/logs';
+import emailQueueSendRouter from './api/email-queue/send';
+import emailQueueConfigRouter from './api/email-queue/config';
 
 // Register API routes (uncomment as routes are migrated)
 app.use('/health', healthRouter);
@@ -129,6 +133,10 @@ app.use('/clubs', clubsRouter);
 app.use('/zones', zonesRouter);
 app.use('/events', eventsRouter);
 app.use('/send-event-request-email', emailRouter);
+app.use('/email-queue', emailQueueRouter);
+app.use('/email-queue/logs', emailQueueLogsRouter);
+app.use('/email-queue/send', emailQueueSendRouter);
+app.use('/email-queue/config', emailQueueConfigRouter);
 
 // Global error handling middleware
 app.use((error: Error, req: Request, res: Response, next: NextFunction) => {

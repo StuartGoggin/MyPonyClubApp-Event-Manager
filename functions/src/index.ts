@@ -134,6 +134,12 @@ import emailQueueConfigRouter from './api/email-queue/config';
 // PDF generation routes
 import pdfRouter from './api/pdf';
 
+// Authentication routes
+import authRouter from './api/auth';
+
+// User management routes
+import userNamesRouter from './api/users/names';
+
 // Admin route imports
 import { Router } from 'express';
 import { getUsers, createUser, updateUser, deleteUser } from './api/admin/users';
@@ -154,6 +160,8 @@ app.use('/email-queue/logs', emailQueueLogsRouter);
 app.use('/email-queue/send', emailQueueSendRouter);
 app.use('/email-queue/config', emailQueueConfigRouter);
 app.use('/pdf', pdfRouter);
+app.use('/auth', authRouter);
+app.use('/users/names', userNamesRouter);
 
 // Create admin router
 const adminRouter = Router();

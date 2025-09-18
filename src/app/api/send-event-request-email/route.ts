@@ -3,6 +3,8 @@ import { Resend } from 'resend';
 import { generateEventRequestPDF } from '@/lib/event-request-pdf';
 import { getClubById, getZoneByClubId } from '@/lib/data';
 import { addEmailToQueue, getEmailQueueConfig } from '@/lib/email-queue-admin';
+import { requiresApproval, getInitialEmailStatus, shouldAutoSend } from '@/lib/email-approval-utils';
+import { autoSendQueuedEmail } from '@/lib/auto-send-email';
 import { exportEventRequestAsJSON, createJSONAttachment } from '@/lib/event-request-json-export';
 import { generateEventRequestEmailHTML, generateEventRequestEmailText } from '@/lib/event-request-email-template';
 import { QueuedEmail } from '@/lib/types';
@@ -154,7 +156,9 @@ export async function POST(request: NextRequest) {
 
     // Check email queue configuration
     const emailConfig = await getEmailQueueConfig();
-    const shouldQueue = emailConfig.requireApproval;
+    const shouldQueue = requiresApproval('event_request', emailConfig);
+    const emailType = 'event_request' as const;
+    const initialStatus = getInitialEmailStatus(emailType, emailConfig);
 
     const emailResults = [];
     const queuedEmails = [];
@@ -201,8 +205,8 @@ export async function POST(request: NextRequest) {
         htmlContent: requesterEmail.html,
         textContent: requesterEmail.text,
         attachments: [createEmailAttachment(pdfFilename, pdfBuffer.toString('base64'), 'application/pdf')],
-        status: 'pending' as const,
-        type: 'event_request' as const,
+        status: initialStatus,
+        type: emailType,
         metadata: {
           requesterId: formData.submittedByEmail,
           clubId: formData.clubId,
@@ -210,7 +214,25 @@ export async function POST(request: NextRequest) {
         },
       };
       const emailId = await addEmailToQueue(queuedEmailData);
-      console.log('Email queued with ID:', emailId);
+      console.log('Email queued with ID:', emailId, 'Status:', initialStatus);
+      
+      // If email doesn't require approval, auto-send it
+      if (shouldAutoSend(emailType, emailConfig)) {
+        console.log('Auto-sending email (no approval required)');
+        try {
+          const autoSendResult = await autoSendQueuedEmail(emailId);
+          if (autoSendResult.success) {
+            console.log('Email auto-sent successfully');
+          } else {
+            console.error('Auto-send failed:', autoSendResult.error);
+          }
+        } catch (autoSendError) {
+          console.error('Auto-send error:', autoSendError);
+        }
+      } else {
+        console.log('Email requires approval - waiting for manual approval');
+      }
+      
       queuedEmails.push('requester');
     } else if (resend) {
       try {
@@ -250,8 +272,8 @@ export async function POST(request: NextRequest) {
           htmlContent: zoneApproverEmail.html,
           textContent: zoneApproverEmail.text,
           attachments: [createEmailAttachment(pdfFilename, pdfBuffer.toString('base64'), 'application/pdf')],
-          status: 'pending' as const,
-          type: 'event_request' as const,
+          status: initialStatus,
+          type: emailType,
           metadata: {
             requesterId: formData.submittedByEmail,
             clubId: formData.clubId,
@@ -260,7 +282,25 @@ export async function POST(request: NextRequest) {
           },
         };
         const emailId = await addEmailToQueue(queuedEmailData);
-        console.log('Zone approver email queued with ID:', emailId);
+        console.log('Zone approver email queued with ID:', emailId, 'Status:', initialStatus);
+        
+        // If email doesn't require approval, auto-send it
+        if (shouldAutoSend(emailType, emailConfig)) {
+          console.log('Auto-sending zone approver email (no approval required)');
+          try {
+            const autoSendResult = await autoSendQueuedEmail(emailId);
+            if (autoSendResult.success) {
+              console.log('Zone approver email auto-sent successfully');
+            } else {
+              console.error('Zone approver auto-send failed:', autoSendResult.error);
+            }
+          } catch (autoSendError) {
+            console.error('Zone approver auto-send error:', autoSendError);
+          }
+        } else {
+          console.log('Zone approver email requires approval - waiting for manual approval');
+        }
+        
         queuedEmails.push(`zone-approver-${approverEmail}`);
       } else if (resend) {
         try {
@@ -311,8 +351,8 @@ export async function POST(request: NextRequest) {
             createEmailAttachment(pdfFilename, pdfBuffer.toString('base64'), 'application/pdf'),
             createEmailAttachment(jsonAttachment.filename, Buffer.from(jsonAttachment.content).toString('base64'), jsonAttachment.mimeType),
           ],
-          status: 'pending' as const,
-          type: 'event_request' as const,
+          status: initialStatus,
+          type: emailType,
           metadata: {
             requesterId: formData.submittedByEmail,
             clubId: formData.clubId,
@@ -322,7 +362,25 @@ export async function POST(request: NextRequest) {
           },
         };
         const emailId = await addEmailToQueue(queuedEmailData);
-        console.log('Super user email queued with ID:', emailId);
+        console.log('Super user email queued with ID:', emailId, 'Status:', initialStatus);
+        
+        // If email doesn't require approval, auto-send it
+        if (shouldAutoSend(emailType, emailConfig)) {
+          console.log('Auto-sending super user email (no approval required)');
+          try {
+            const autoSendResult = await autoSendQueuedEmail(emailId);
+            if (autoSendResult.success) {
+              console.log('Super user email auto-sent successfully');
+            } else {
+              console.error('Super user auto-send failed:', autoSendResult.error);
+            }
+          } catch (autoSendError) {
+            console.error('Super user auto-send error:', autoSendError);
+          }
+        } else {
+          console.log('Super user email requires approval - waiting for manual approval');
+        }
+        
         queuedEmails.push(`super-user-${superUserEmail}`);
       } else if (resend) {
         try {

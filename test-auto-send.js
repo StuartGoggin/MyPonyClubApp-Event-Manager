@@ -1,6 +1,6 @@
 // Test script to diagnose auto-send issues
 const TEST_CONFIG = {
-  baseUrl: 'http://localhost:5001/ponyclub-events/australia-southeast1/api',
+  baseUrl: 'http://localhost:3000/api',  // Next.js dev server
   authToken: 'admin-token'
 };
 

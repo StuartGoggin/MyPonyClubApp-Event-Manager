@@ -10,8 +10,42 @@ let dbConnectionStatus: DatabaseStatus = "unknown";
 
 // Initialize Firebase Admin SDK
 const serviceAccountStr = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+const isEmulator = process.env.FUNCTIONS_EMULATOR === 'true' || process.env.NODE_ENV === 'development';
 
-if (serviceAccountStr) {
+// Check if we're running in emulator environment
+if (isEmulator) {
+  try {
+    if (!admin.apps.length) {
+      console.log("🧪 Initializing Firebase Admin SDK for emulator environment");
+      
+      admin.initializeApp({
+        projectId: "demo-project",
+        storageBucket: "demo-project.appspot.com",
+      });
+
+      adminDb = getFirestore();
+      adminDb.settings({ 
+        ignoreUndefinedProperties: true,
+        host: "127.0.0.1:8081",
+        ssl: false
+      });
+      
+      // Set emulator host for Firestore
+      process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8081";
+      
+      storageInstance = getStorage();
+      dbConnectionStatus = "connected";
+      console.log("✅ Firebase Admin SDK initialized for emulator");
+    } else {
+      adminDb = getFirestore();
+      storageInstance = getStorage();
+      dbConnectionStatus = "connected";
+    }
+  } catch (error) {
+    console.error("❌ Firebase Admin SDK emulator initialization failed:", error);
+    dbConnectionStatus = "error";
+  }
+} else if (serviceAccountStr) {
   try {
     if (!admin.apps.length) {
       const serviceAccount = JSON.parse(serviceAccountStr);

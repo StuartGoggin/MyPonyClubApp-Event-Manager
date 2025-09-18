@@ -67,7 +67,7 @@ router.delete("/users/:id", (req, res) => {
       message: "Cannot delete self",
     });
   }
-  res.json({
+  return res.json({
     success: true,
     message: "User deactivated",
   });

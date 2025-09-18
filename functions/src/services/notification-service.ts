@@ -4,10 +4,7 @@
  */
 
 export class NotificationService {
-  constructor(
-    private emailService?: any,
-    private smsService?: any
-  ) {}
+  constructor() {}
 
   async sendEventNotification(data: any): Promise<any> {
     return { success: true, messageId: "mock-notification-id" };

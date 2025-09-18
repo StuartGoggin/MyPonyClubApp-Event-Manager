@@ -12,6 +12,7 @@ import {
 } from '@/lib/email-queue-admin';
 import { EmailStatus } from '@/lib/types';
 import { withAdminAuth } from '@/lib/auth-middleware';
+import { autoSendQueuedEmail } from '@/lib/auto-send-email';
 
 export const GET = withAdminAuth(async (request: NextRequest) => {
   try {
@@ -62,6 +63,27 @@ export const POST = withAdminAuth(async (request: NextRequest) => {
     // Handle email duplication (for resend functionality)
     if (action === 'duplicate' && emailId) {
       const newEmailId = await duplicateEmail(emailId, updates, resetStatus);
+      
+      // If the duplicated email has pending status, try to auto-send it
+      if (resetStatus) {
+        try {
+          // Get the duplicated email to check if it should auto-send
+          const duplicatedEmail = await getQueuedEmailById(newEmailId);
+          if (duplicatedEmail && duplicatedEmail.status === 'pending') {
+            console.log('Duplicated email has pending status, attempting auto-send:', newEmailId);
+            const autoSendResult = await autoSendQueuedEmail(newEmailId);
+            if (autoSendResult.success) {
+              console.log('Duplicated email auto-sent successfully:', newEmailId);
+            } else {
+              console.error('Duplicated email auto-send failed:', autoSendResult.error);
+            }
+          }
+        } catch (autoSendError) {
+          console.error('Auto-send error for duplicated email:', autoSendError);
+          // Don't fail the duplication if auto-send fails
+        }
+      }
+      
       return NextResponse.json({ 
         success: true, 
         id: newEmailId, 
@@ -103,7 +125,34 @@ export const PUT = withAdminAuth(async (request: NextRequest) => {
       );
     }
 
+    // Get the current email before updating
+    const currentEmail = await getQueuedEmailById(emailId);
+    if (!currentEmail) {
+      return NextResponse.json(
+        { error: 'Email not found' },
+        { status: 404 }
+      );
+    }
+
+    // Update the email
     await updateQueuedEmail(emailId, updates);
+    
+    // If the email status was changed to 'pending' (approved), try to auto-send it
+    if (updates.status === 'pending' && currentEmail.status !== 'pending') {
+      console.log('Email approved and status changed to pending, attempting auto-send:', emailId);
+      try {
+        const autoSendResult = await autoSendQueuedEmail(emailId);
+        if (autoSendResult.success) {
+          console.log('Email auto-sent successfully after approval:', emailId);
+        } else {
+          console.error('Auto-send failed after approval:', autoSendResult.error);
+        }
+      } catch (autoSendError) {
+        console.error('Auto-send error after approval:', autoSendError);
+        // Don't fail the approval process if auto-send fails
+      }
+    }
+    
     return NextResponse.json({ success: true, message: 'Email updated successfully' });
   } catch (error) {
     console.error('Error updating email:', error);

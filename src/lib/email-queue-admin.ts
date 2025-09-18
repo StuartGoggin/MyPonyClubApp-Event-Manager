@@ -24,7 +24,12 @@ export async function addEmailToQueue(email: Omit<QueuedEmail, 'id' | 'createdAt
     };
 
     const docRef = await adminDb.collection(EMAIL_QUEUE_COLLECTION).add(emailData);
-    return docRef.id;
+    const emailId = docRef.id;
+    
+    // Note: Auto-send logic is handled in the calling function to avoid circular imports
+    // This keeps the queue admin functions focused on data management
+    
+    return emailId;
   } catch (error) {
     console.error('Error adding email to queue:', error);
     throw error;

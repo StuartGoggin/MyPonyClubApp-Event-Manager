@@ -61,7 +61,7 @@ export class EmailDeliveryService {
         return { success: true, deliveryAttempts: attempts };
       } catch (error) {
         if (attempts >= maxRetries) {
-          return { success: false, error: error.message, deliveryAttempts: attempts };
+          return { success: false, error: error instanceof Error ? error.message : String(error), deliveryAttempts: attempts };
         }
         // Wait before retry
         await new Promise(resolve => setTimeout(resolve, options.initialDelay || 100));

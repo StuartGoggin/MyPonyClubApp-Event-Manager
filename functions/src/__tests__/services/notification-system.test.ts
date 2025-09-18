@@ -8,7 +8,6 @@ import { NotificationService } from "../../services/notification-service";
 import { EmailService } from "../../services/email-service";
 import { SMSService } from "../../services/sms-service";
 import { timeouts } from "../utils/test-helpers";
-import { NotificationService } from "../../services/notification-service";
 
 // Mock the external services
 jest.mock("../../services/email-service");
@@ -31,7 +30,7 @@ describe("Notification System", () => {
     mockSMSService = new MockedSMSService() as any;
 
     // Create notification service with mocked dependencies
-    notificationService = new NotificationService(mockEmailService, mockSMSService);
+    notificationService = new NotificationService();
 
     // Setup default mock responses
     mockEmailService.sendEmail.mockResolvedValue({ success: true, messageId: "test-message-id" });

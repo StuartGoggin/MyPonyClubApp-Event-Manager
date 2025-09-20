@@ -1,6 +1,6 @@
-import { Router } from "express";
-import { logger } from "firebase-functions/v2";
-import { UserService } from "../../../lib/user-service";
+import {Router} from "express";
+import {logger} from "firebase-functions/v2";
+import {UserService} from "../../../lib/user-service";
 
 const router = Router();
 
@@ -22,7 +22,7 @@ router.get("/", async (req: any, res: any) => {
     });
 
     // Get all active users
-    const users = await UserService.getUsers({ isActive: true });
+    const users = await UserService.getUsers({isActive: true});
 
     // Create names list with associated user data
     const namesWithData = new Map<

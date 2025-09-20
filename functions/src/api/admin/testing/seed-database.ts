@@ -1,12 +1,12 @@
-import { Request, Response } from "express";
-import { logger } from "firebase-functions/v2";
-import { checkAdminAccess } from "../../../lib/auth-middleware";
-import { callSeedData } from "../../../lib/serverActions";
+import {Request, Response} from "express";
+import {logger} from "firebase-functions/v2";
+import {checkAdminAccess} from "../../../lib/auth-middleware";
+import {callSeedData} from "../../../lib/serverActions";
 
 export async function seedDatabase(req: Request, res: Response) {
   try {
     // Check admin authentication
-    const { authorized, user } = await checkAdminAccess(req);
+    const {authorized, user} = await checkAdminAccess(req);
     if (!authorized) {
       logger.warn("Unauthorized access attempt to admin database seeding");
       return res.status(401).json({
@@ -60,7 +60,7 @@ export async function seedDatabase(req: Request, res: Response) {
 export async function getSeedInfo(req: Request, res: Response) {
   try {
     // Check admin authentication
-    const { authorized } = await checkAdminAccess(req);
+    const {authorized} = await checkAdminAccess(req);
     if (!authorized) {
       logger.warn("Unauthorized access attempt to admin seed info");
       return res.status(401).json({

@@ -1,11 +1,11 @@
-import { Request, Response } from "express";
-import { logger } from "firebase-functions/v2";
+import {Request, Response} from "express";
+import {logger} from "firebase-functions/v2";
 import {
   generateEventRequestPDF,
   generateReferenceNumber,
   type EventRequestFormData,
 } from "../../../lib/event-request-pdf";
-import { getAllClubs, getAllEventTypes } from "../../../lib/server-data";
+import {getAllClubs, getAllEventTypes} from "../../../lib/server-data";
 
 /**
  * Generate Event Request PDF

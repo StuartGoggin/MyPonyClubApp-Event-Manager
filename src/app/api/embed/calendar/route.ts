@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
         clubName: club?.name || 'Unknown Club',
         zoneName: zone?.name || 'Unknown Zone',
         eventTypeName: eventType?.name || 'Unknown Event Type',
-        clubLocation: club?.physicalAddress || club?.address?.street || null,
+        clubLocation: club?.physicalAddress || (club?.address ? ((Object.prototype.hasOwnProperty.call(club.address, 'street') ? (club.address as any).street : (club.address as any).address1) || null) : null),
         coordinates: club?.latitude && club?.longitude ? {
           lat: club.latitude,
           lng: club.longitude

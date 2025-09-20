@@ -1,12 +1,12 @@
-import { Request, Response } from "express";
-import { logger } from "firebase-functions/v2";
-import { checkAdminAccess } from "../../../lib/auth-middleware";
-import { adminDb } from "../../../lib/firebase-admin";
+import {Request, Response} from "express";
+import {logger} from "firebase-functions/v2";
+import {checkAdminAccess} from "../../../lib/auth-middleware";
+import {adminDb} from "../../../lib/firebase-admin";
 
 export async function testFirebase(req: Request, res: Response) {
   try {
     // Check admin authentication
-    const { authorized, user } = await checkAdminAccess(req);
+    const {authorized, user} = await checkAdminAccess(req);
     if (!authorized) {
       logger.warn("Unauthorized access attempt to admin Firebase test");
       return res.status(401).json({

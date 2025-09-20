@@ -119,23 +119,30 @@ export default function AdminClubsPage() {
 
   const handleEdit = (club: Club) => {
     setEditingClub(club);
+    // Helper to extract address fields safely
+    const getAddressField = (address: any, legacy: string, modern: string) => {
+      if (!address) return '';
+      return Object.prototype.hasOwnProperty.call(address, legacy)
+        ? address[legacy] || ''
+        : address[modern] || '';
+    };
     setFormData({ 
       name: club.name,
       zoneId: club.zoneId,
       latitude: club.latitude?.toString() || '',
       longitude: club.longitude?.toString() || '',
-      street: club.address?.street || '',
-      suburb: club.address?.suburb || '',
-      postcode: club.address?.postcode || '',
-      state: club.address?.state || 'VIC',
-      country: club.address?.country || 'Australia',
-      email: club.email || '',
+      street: getAddressField(club.address, 'street', 'address1'),
+      suburb: getAddressField(club.address, 'suburb', 'town'),
+      postcode: getAddressField(club.address, 'postcode', 'postcode'),
+      state: getAddressField(club.address, 'state', 'county') || 'VIC',
+      country: getAddressField(club.address, 'country', 'country'),
+      email: club.email || club.emailAddress || '',
       website: club.website || '',
       facebook: club.socialMedia?.facebook || '',
       instagram: club.socialMedia?.instagram || '',
       twitter: club.socialMedia?.twitter || '',
       youtube: club.socialMedia?.youtube || '',
-      logoUrl: club.logoUrl || ''
+      logoUrl: club.logoUrl || club.image || ''
     });
     setValidationErrors({});
     setIsDialogOpen(true);
@@ -174,11 +181,11 @@ export default function AdminClubsPage() {
       latitude: formData.latitude ? parseFloat(formData.latitude) : undefined,
       longitude: formData.longitude ? parseFloat(formData.longitude) : undefined,
       address: {
-        street: formData.street || undefined,
-        suburb: formData.suburb || undefined,
-        postcode: formData.postcode || undefined,
-        state: formData.state || undefined,
-        country: formData.country || undefined,
+  ...(formData.street ? { address1: formData.street } : {}),
+  ...(formData.suburb ? { town: formData.suburb } : {}),
+  ...(formData.postcode ? { postcode: formData.postcode } : {}),
+  ...(formData.state ? { county: formData.state } : {}),
+  ...(formData.country ? { country: formData.country } : {}),
       },
       email: formData.email || undefined,
       website: formData.website || undefined,

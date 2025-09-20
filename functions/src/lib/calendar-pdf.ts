@@ -50,7 +50,7 @@ export function generateCalendarPDF(options: CalendarPDFOptions): Buffer {
     // Generate a page for each month
     let isFirstPage = true;
 
-    for (const { year, month } of options.months) {
+    for (const {year, month} of options.months) {
       if (!isFirstPage) {
         doc.addPage();
       }

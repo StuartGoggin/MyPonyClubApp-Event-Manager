@@ -1,4 +1,4 @@
-import { adminDb } from "./firebase-admin";
+import {adminDb} from "./firebase-admin";
 import {
   QueuedEmail,
   EmailStatus,
@@ -22,16 +22,16 @@ export async function addEmailToQueue(
       // Ensure "to" is always an array
       to: Array.isArray(email.to) ? email.to : [email.to],
       // Ensure other optional array fields are arrays if present
-      cc: email.cc
-        ? Array.isArray(email.cc)
-          ? email.cc
-          : [email.cc]
-        : undefined,
-      bcc: email.bcc
-        ? Array.isArray(email.bcc)
-          ? email.bcc
-          : [email.bcc]
-        : undefined,
+      cc: email.cc ?
+        Array.isArray(email.cc) ?
+          email.cc :
+          [email.cc] :
+        undefined,
+      bcc: email.bcc ?
+        Array.isArray(email.bcc) ?
+          email.bcc :
+          [email.bcc] :
+        undefined,
       createdAt: new Date(),
       updatedAt: new Date(),
       retryCount: 0,

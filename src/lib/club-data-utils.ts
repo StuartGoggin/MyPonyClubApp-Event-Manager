@@ -22,7 +22,7 @@ export function transformClubData(jsonClub: ClubJsonData, zoneId: string): Omit<
   return {
     name: jsonClub.club_name,
     zoneId: zoneId,
-    clubId: jsonClub.club_id,
+    clubId: String(jsonClub.club_id),
     physicalAddress: jsonClub.physical_address,
     postalAddress: jsonClub.postal_address,
     email: jsonClub.email,

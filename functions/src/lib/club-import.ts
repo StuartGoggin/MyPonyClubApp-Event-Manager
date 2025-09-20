@@ -1,6 +1,6 @@
-import { ClubJsonData, processClubsFromJson } from "./club-data-utils";
-import { getAllZones } from "./server-data";
-import { adminDb } from "./firebase-admin";
+import {ClubJsonData, processClubsFromJson} from "./club-data-utils";
+import {getAllZones} from "./server-data";
+import {adminDb} from "./firebase-admin";
 
 /**
  * Import clubs from JSON data and add them to the database
@@ -16,7 +16,7 @@ export async function importClubsFromJson(jsonData: ClubJsonData[]) {
     // Process the club data
     const result = await processClubsFromJson(jsonData, zones);
 
-    console.log(`📊 Processing results:`);
+    console.log("📊 Processing results:");
     console.log(`  ✅ Valid clubs: ${result.validClubs.length}`);
     console.log(`  ❌ Invalid clubs: ${result.invalidClubs.length}`);
     console.log(
@@ -25,15 +25,15 @@ export async function importClubsFromJson(jsonData: ClubJsonData[]) {
 
     // Report invalid clubs
     if (result.invalidClubs.length > 0) {
-      console.log(`\n❌ Invalid clubs:`);
-      result.invalidClubs.forEach(({ data, errors }) => {
+      console.log("\n❌ Invalid clubs:");
+      result.invalidClubs.forEach(({data, errors}) => {
         console.log(`  - ${data.club_name}: ${errors.join(", ")}`);
       });
     }
 
     // Report missing zones
     if (result.missingZones.length > 0) {
-      console.log(`\n🔍 Missing zones that need to be created:`);
+      console.log("\n🔍 Missing zones that need to be created:");
       result.missingZones.forEach((zoneName) => {
         console.log(`  - ${zoneName}`);
       });
@@ -72,7 +72,7 @@ export async function importClubsFromJson(jsonData: ClubJsonData[]) {
       }
     }
 
-    console.log(`\n🎉 Import completed:`);
+    console.log("\n🎉 Import completed:");
     console.log(`  ✅ Imported: ${imported} clubs`);
     console.log(`  ⏭️  Skipped: ${skipped} clubs (already exist)`);
     console.log(`  ❌ Failed: ${result.invalidClubs.length} clubs`);

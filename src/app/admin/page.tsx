@@ -536,6 +536,35 @@ async function AdminDashboardContent() {
               </div>
             </div>
           </div>
+
+          {/* Import PCA Club Data */}
+          <div className="relative overflow-hidden rounded-2xl border border-orange-200/50 bg-gradient-to-br from-orange-50/80 via-orange-50/60 to-red-50/40 dark:from-orange-950/40 dark:via-orange-950/30 dark:to-red-950/20 shadow-xl backdrop-blur-sm hover:shadow-2xl transition-all duration-300 hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-r from-orange-400/5 to-red-400/5"></div>
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-orange-400/10 to-transparent rounded-full blur-2xl"></div>
+            
+            <div className="relative p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="rounded-xl bg-orange-100 dark:bg-orange-900/50 p-3 border border-orange-200 dark:border-orange-700">
+                  <Upload className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">Import PCA Club Data</h3>
+                  <p className="text-sm text-muted-foreground">Extract club information</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs text-orange-700 dark:text-orange-300">
+                  Import club data from PCA website including logos, addresses and contacts
+                </p>
+                <Button asChild variant="outline" className="w-full">
+                  <Link href="/admin/import-pca-data">
+                    <Upload className="h-4 w-4 mr-2" />
+                    Import Data
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

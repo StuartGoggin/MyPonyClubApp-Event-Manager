@@ -6,18 +6,29 @@
  * and are served as Firebase Functions.
  */
 
-import { onRequest } from "firebase-functions/v2/https";
-import { setGlobalOptions } from "firebase-functions/v2";
+import {onRequest} from "firebase-functions/v2/https";
+import {setGlobalOptions, logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
-import express, { Request, Response, NextFunction } from "express";
+import express, {Request, Response, NextFunction} from "express";
 import cors from "cors";
 import helmet from "helmet";
 import compression from "compression";
-import { logger } from "firebase-functions/v2";
 
 // Initialize Firebase Admin SDK
-if (!admin.apps.length) {
+
+// Only initialize Firebase Admin if credentials are available
+function hasServiceAccountKey() {
+  return (
+    process.env.GOOGLE_APPLICATION_CREDENTIALS &&
+    require("fs").existsSync(process.env.GOOGLE_APPLICATION_CREDENTIALS)
+  );
+}
+
+if (!admin.apps.length && hasServiceAccountKey()) {
   admin.initializeApp();
+} else if (!hasServiceAccountKey()) {
+  // Warn and skip initialization in local/dev if no key
+  console.warn("⚠️ Firebase service account key not found. Skipping admin initialization.");
 }
 
 // Create Express application
@@ -58,8 +69,8 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // Body parsing middleware
-app.use(express.json({ limit: "50mb" }));
-app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+app.use(express.json({limit: "50mb"}));
+app.use(express.urlencoded({extended: true, limit: "50mb"}));
 
 // Request logging middleware
 app.use((req: Request, res: Response, next: NextFunction) => {
@@ -144,18 +155,18 @@ import authRouter from "./api/auth";
 import userNamesRouter from "./api/users/names";
 
 // Admin route imports
-import { Router } from "express";
+import {Router} from "express";
 import {
   getUsers,
   createUser,
   updateUser,
   deleteUser,
 } from "./api/admin/users";
-import { updateUserRole } from "./api/admin/users/role";
-import { importData } from "./api/admin/import";
-import { exportData } from "./api/admin/export";
-import { testFirebase } from "./api/admin/testing/test-firebase";
-import { seedDatabase, getSeedInfo } from "./api/admin/testing/seed-database";
+import {updateUserRole} from "./api/admin/users/role";
+import {importData} from "./api/admin/import";
+import {exportData} from "./api/admin/export";
+import {testFirebase} from "./api/admin/testing/test-firebase";
+import {seedDatabase, getSeedInfo} from "./api/admin/testing/seed-database";
 
 // Register API routes (uncomment as routes are migrated)
 app.use("/health", healthRouter);
@@ -210,7 +221,7 @@ app.use((error: Error, req: Request, res: Response, next: NextFunction) => {
     error: "Internal Server Error",
     message: isDevelopment ? error.message : "Something went wrong",
     timestamp: new Date().toISOString(),
-    ...(isDevelopment && { stack: error.stack }),
+    ...(isDevelopment && {stack: error.stack}),
   });
 });
 
@@ -254,13 +265,28 @@ export const initializeApp = () => {
 };
 
 // Export database helper
-export const getFirestore = () => admin.firestore();
+export const getFirestore = () => {
+  if (!admin.apps.length) {
+    throw new Error('Firebase Admin SDK not initialized. Firestore is unavailable.');
+  }
+  return admin.firestore();
+};
 
 // Export authentication helper
-export const getAuth = () => admin.auth();
+export const getAuth = () => {
+  if (!admin.apps.length) {
+    throw new Error('Firebase Admin SDK not initialized. Auth is unavailable.');
+  }
+  return admin.auth();
+};
 
 // Export storage helper
-export const getStorage = () => admin.storage();
+export const getStorage = () => {
+  if (!admin.apps.length) {
+    throw new Error('Firebase Admin SDK not initialized. Storage is unavailable.');
+  }
+  return admin.storage();
+};
 
 // Development server for local testing
 if (process.env.NODE_ENV === "development") {

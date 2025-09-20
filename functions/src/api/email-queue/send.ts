@@ -1,13 +1,13 @@
-import express, { Request, Response } from "express";
-import { logger } from "firebase-functions/v2";
-import { Resend } from "resend";
+import express, {Request, Response} from "express";
+import {logger} from "firebase-functions/v2";
+import {Resend} from "resend";
 import {
   getQueuedEmailById,
   markEmailAsSent,
   markEmailAsFailed,
   addEmailLog,
 } from "../../lib/email-queue-admin";
-import { withAdminAuth } from "../../lib/auth-middleware";
+import {withAdminAuth} from "../../lib/auth-middleware";
 
 interface User {
   id: string;
@@ -19,9 +19,9 @@ interface User {
 const router = express.Router();
 
 // Initialize Resend with environment variable
-const resend = process.env.RESEND_API_KEY
-  ? new Resend(process.env.RESEND_API_KEY)
-  : null;
+const resend = process.env.RESEND_API_KEY ?
+  new Resend(process.env.RESEND_API_KEY) :
+  null;
 
 /**
  * POST /email-queue/send
@@ -36,7 +36,7 @@ router.post(
         userEmail: user.email,
       });
 
-      const { emailId } = req.body;
+      const {emailId} = req.body;
       const sentById = user.email || user.id;
 
       logger.info("Email Queue Send API: Request details", {
@@ -65,7 +65,7 @@ router.post(
       });
 
       if (!email) {
-        logger.warn("Email Queue Send API: Email not found", { emailId });
+        logger.warn("Email Queue Send API: Email not found", {emailId});
         await addEmailLog({
           emailId: emailId,
           subject: "Unknown",
@@ -223,9 +223,9 @@ router.post(
       } catch (sendError) {
         logger.error("Email Queue Send API: Error sending email", {
           error:
-            sendError instanceof Error
-              ? sendError.message
-              : "Unknown send error",
+            sendError instanceof Error ?
+              sendError.message :
+              "Unknown send error",
           emailId,
         });
 

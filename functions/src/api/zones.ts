@@ -1,6 +1,6 @@
-import { Router } from "express";
-import { getAllZones } from "../lib/server-data";
-import { logger } from "firebase-functions/v2";
+import {Router} from "express";
+import {getAllZones} from "../lib/server-data";
+import {logger} from "firebase-functions/v2";
 
 const router = Router();
 
@@ -18,7 +18,7 @@ router.get("/", async (req, res) => {
       count: zones.length,
     });
 
-    return res.json({ zones });
+    return res.json({zones});
   } catch (error: any) {
     logger.error("Zones API: Error fetching zones", {
       error: error.message,

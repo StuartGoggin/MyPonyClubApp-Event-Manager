@@ -8,8 +8,8 @@ export class EmailTemplateProcessor {
     return {
       success: true,
       subject: `${data.eventName} - Notification`,
-      htmlBody: `<h1>${data.eventName}</h1><p>Dear ${data.recipientName || 'Member'},</p><p>Event details...</p>`,
-      textBody: `${data.eventName}\n\nDear ${data.recipientName || 'Member'},\n\nEvent details...`,
+      htmlBody: `<h1>${data.eventName}</h1><p>Dear ${data.recipientName || "Member"},</p><p>Event details...</p>`,
+      textBody: `${data.eventName}\n\nDear ${data.recipientName || "Member"},\n\nEvent details...`,
     };
   }
 

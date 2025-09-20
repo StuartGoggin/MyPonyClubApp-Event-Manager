@@ -1,5 +1,5 @@
-import { adminDb } from "./firebase-admin";
-import { Club, Zone, EventType } from "./types";
+import {adminDb} from "./firebase-admin";
+import {Club, Zone, EventType} from "./types";
 
 /**
  * Get club by ID using Firebase Admin SDK
@@ -16,7 +16,7 @@ export const getClubById = async (id: string): Promise<Club | undefined> => {
       return undefined;
     }
 
-    return { id: clubDoc.id, ...clubDoc.data() } as Club;
+    return {id: clubDoc.id, ...clubDoc.data()} as Club;
   } catch (error) {
     console.error("Error fetching club by ID:", error);
     return undefined;
@@ -38,7 +38,7 @@ export const getZoneById = async (zoneId: string): Promise<Zone | null> => {
       return null;
     }
 
-    return { id: zoneDoc.id, ...zoneDoc.data() } as Zone;
+    return {id: zoneDoc.id, ...zoneDoc.data()} as Zone;
   } catch (error) {
     console.error("Error fetching zone by ID:", error);
     return null;
@@ -81,7 +81,7 @@ export const getEventTypeById = async (
       return undefined;
     }
 
-    return { id: eventTypeDoc.id, ...eventTypeDoc.data() } as EventType;
+    return {id: eventTypeDoc.id, ...eventTypeDoc.data()} as EventType;
   } catch (error) {
     console.error("Error fetching event type by ID:", error);
     return undefined;

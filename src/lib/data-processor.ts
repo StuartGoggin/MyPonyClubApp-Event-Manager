@@ -127,7 +127,7 @@ export class DataProcessor {
       id: clubId,
       name: clubData.club_name,
       zoneId: zoneId,
-      clubId: clubData.club_id,
+      clubId: clubData.club_id !== undefined ? String(clubData.club_id) : undefined,
       physicalAddress: clubData.physical_address,
       postalAddress: clubData.postal_address,
       email: clubData.email,
@@ -173,7 +173,10 @@ export class DataProcessor {
       for (const clubData of zoneData.clubs) {
         const club = this.transformClubData(clubData, zone.id);
         if (club) {
-          clubs.push(club);
+          clubs.push({
+            ...club,
+            clubId: club.clubId !== undefined ? String(club.clubId) : undefined
+          });
           validClubs++;
         } else {
           invalidClubs++;

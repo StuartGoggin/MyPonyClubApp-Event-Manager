@@ -1,6 +1,6 @@
-import { adminDb } from "./firebase-admin";
-import { User } from "./types";
-import { v4 as uuidv4 } from "uuid";
+import {adminDb} from "./firebase-admin";
+import {User} from "./types";
+import {v4 as uuidv4} from "uuid";
 
 const USERS_COLLECTION = "users";
 
@@ -13,7 +13,7 @@ export class UserService {
     mobileNumber: string,
   ): Promise<User | null> {
     try {
-      let query = adminDb
+      const query = adminDb
         .collection(USERS_COLLECTION)
         .where("ponyClubId", "==", ponyClubId.toUpperCase())
         .where("mobileNumber", "==", mobileNumber)
@@ -105,7 +105,7 @@ export class UserService {
     excludeUserId?: string,
   ): Promise<boolean> {
     try {
-      let query = adminDb
+      const query = adminDb
         .collection(USERS_COLLECTION)
         .where("ponyClubId", "==", ponyClubId.toUpperCase());
 
@@ -174,7 +174,7 @@ export class UserService {
       const timestamp = new Date().toISOString();
 
       // Remove fields that shouldn"t be updated
-      const { id, createdAt, ...safeUpdateData } = updateData;
+      const {id, createdAt, ...safeUpdateData} = updateData;
 
       const updatedData = {
         ...safeUpdateData,

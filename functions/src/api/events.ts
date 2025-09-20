@@ -1,12 +1,12 @@
-import { Router } from "express";
+import {Router} from "express";
 import {
   adminDb,
   isDatabaseConnected,
   getDatabaseErrorMessage,
 } from "../lib/firebase-admin";
-import { Timestamp } from "firebase-admin/firestore";
-import { Event } from "../lib/types";
-import { logger } from "firebase-functions/v2";
+import {Timestamp} from "firebase-admin/firestore";
+import {Event} from "../lib/types";
+import {logger} from "firebase-functions/v2";
 
 const router = Router();
 
@@ -33,7 +33,7 @@ router.get("/", async (req, res) => {
       });
     }
 
-    const { zoneId, status, clubId } = req.query;
+    const {zoneId, status, clubId} = req.query;
 
     logger.info("Events API: Fetching events", {
       zoneId: zoneId as string,
@@ -53,8 +53,8 @@ router.get("/", async (req, res) => {
       const clubIds = clubsSnapshot.docs.map((doc: any) => doc.id);
 
       if (clubIds.length === 0) {
-        logger.info("Events API: No clubs found for zone", { zoneId });
-        return res.json({ events: [] });
+        logger.info("Events API: No clubs found for zone", {zoneId});
+        return res.json({events: []});
       }
 
       // Filter events by clubs in the zone
@@ -128,7 +128,7 @@ router.get("/", async (req, res) => {
     logger.info("Events API: Successfully retrieved events", {
       count: events.length,
     });
-    return res.json({ events });
+    return res.json({events});
   } catch (error: any) {
     logger.error("Events API: Error fetching events", {
       error: error.message,

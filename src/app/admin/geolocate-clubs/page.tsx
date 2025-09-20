@@ -29,6 +29,14 @@ interface GeolocationResult {
 }
 
 export default function GeolocateClubsPage() {
+  // Helper to extract address fields safely
+  const getAddressField = (address: any, legacy: string, modern: string) => {
+    if (!address) return '';
+    const addr: any = address;
+    return Object.prototype.hasOwnProperty.call(addr, legacy)
+      ? addr[legacy] || ''
+      : addr[modern] || '';
+  };
   const [clubs, setClubs] = useState<Club[]>([]);
   const [zones, setZones] = useState<Zone[]>([]);
   const [selectedZone, setSelectedZone] = useState<string>('all');
@@ -99,7 +107,14 @@ export default function GeolocateClubsPage() {
       
       const club = filteredClubs[i];
       console.log(`\n🏇 Processing club ${i + 1}/${filteredClubs.length}: ${club.name} (ID: ${club.id})`);
-      console.log(`📍 Existing address: ${club.physicalAddress || club.address?.street || 'None'}`);
+      const getAddressField = (address: any, legacy: string, modern: string) => {
+        if (!address) return '';
+        const addr: any = address;
+        return Object.prototype.hasOwnProperty.call(addr, legacy)
+          ? addr[legacy] || ''
+          : addr[modern] || '';
+      };
+      console.log(`📍 Existing address: ${club.physicalAddress || getAddressField(club.address, 'street', 'address1') || 'None'}`);
       
       setCurrentClub(club);
       
@@ -110,7 +125,7 @@ export default function GeolocateClubsPage() {
         const requestBody = { 
           clubId: club.id,
           clubName: club.name,
-          existingAddress: club.physicalAddress || club.address?.street
+          existingAddress: club.physicalAddress || getAddressField(club.address, 'street', 'address1')
         };
         console.log('📤 Request body:', requestBody);
         
@@ -352,7 +367,7 @@ export default function GeolocateClubsPage() {
                           body: JSON.stringify({
                             clubId: testClub.id,
                             clubName: testClub.name,
-                            existingAddress: testClub.physicalAddress || testClub.address?.street
+                            existingAddress: testClub.physicalAddress || getAddressField(testClub.address, 'street', 'address1')
                           })
                         });
                         console.log('🧪 Test response status:', testResponse.status);

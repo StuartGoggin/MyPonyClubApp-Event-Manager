@@ -12,11 +12,11 @@ export class EmailDeliveryService {
 
   async prepareEmail(emailData: any): Promise<any> {
     // Check size limits
-    const totalSize = (emailData.htmlBody?.length || 0) + 
+    const totalSize = (emailData.htmlBody?.length || 0) +
                      (emailData.attachments?.reduce((sum: number, att: any) => sum + (att.content?.length || 0), 0) || 0);
-    
+
     if (totalSize > 20 * 1024 * 1024) { // 20MB limit
-      return { success: false, error: "Email exceeds size limit" };
+      return {success: false, error: "Email exceeds size limit"};
     }
 
     return {
@@ -58,17 +58,17 @@ export class EmailDeliveryService {
         if (attempts < 3) {
           throw new Error("Temporary failure");
         }
-        return { success: true, deliveryAttempts: attempts };
+        return {success: true, deliveryAttempts: attempts};
       } catch (error) {
         if (attempts >= maxRetries) {
-          return { success: false, error: error instanceof Error ? error.message : String(error), deliveryAttempts: attempts };
+          return {success: false, error: error instanceof Error ? error.message : String(error), deliveryAttempts: attempts};
         }
         // Wait before retry
-        await new Promise(resolve => setTimeout(resolve, options.initialDelay || 100));
+        await new Promise((resolve) => setTimeout(resolve, options.initialDelay || 100));
       }
     }
 
-    return { success: false, deliveryAttempts: attempts };
+    return {success: false, deliveryAttempts: attempts};
   }
 
   setDeliveryProvider(mockDelivery: any): void {
@@ -107,7 +107,7 @@ export class EmailDeliveryService {
     const delay = 1000 / rateLimit;
 
     // Simulate rate limiting
-    await new Promise(resolve => setTimeout(resolve, delay * emails.length));
+    await new Promise((resolve) => setTimeout(resolve, delay * emails.length));
 
     return {
       success: true,
@@ -117,7 +117,7 @@ export class EmailDeliveryService {
   }
 
   async mockDelivery(email: any): Promise<any> {
-    return { success: true, messageId: email.messageId };
+    return {success: true, messageId: email.messageId};
   }
 
   async createEmailCampaign(campaignData: any): Promise<any> {

@@ -1,10 +1,10 @@
-import express, { Request, Response } from "express";
-import { logger } from "firebase-functions/v2";
+import express, {Request, Response} from "express";
+import {logger} from "firebase-functions/v2";
 import {
   getEmailQueueConfig,
   updateEmailQueueConfig,
 } from "../../lib/email-queue-admin";
-import { withAdminAuth, requireAdminAuth } from "../../lib/auth-middleware";
+import {withAdminAuth, requireAdminAuth} from "../../lib/auth-middleware";
 
 interface User {
   id: string;
@@ -50,7 +50,7 @@ router.get("/", requireAdminAuth, async (req: Request, res: Response) => {
       };
 
       logger.info("Email Queue Config API: Returning default configuration");
-      res.json({ success: true, data: defaultConfig });
+      res.json({success: true, data: defaultConfig});
       return;
     }
 
@@ -62,7 +62,7 @@ router.get("/", requireAdminAuth, async (req: Request, res: Response) => {
       },
     );
 
-    res.json({ success: true, data: config });
+    res.json({success: true, data: config});
   } catch (error: any) {
     logger.error("Email Queue Config API: Error fetching configuration", {
       error: error.message,
@@ -92,7 +92,7 @@ router.post(
       });
 
       // Add updatedBy from authenticated user
-      const { id, updatedAt, ...configWithoutIdAndDate } = config;
+      const {id, updatedAt, ...configWithoutIdAndDate} = config;
       const configToSave = {
         ...configWithoutIdAndDate,
         updatedBy: user.email || user.id,

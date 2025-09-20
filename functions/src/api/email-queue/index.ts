@@ -1,5 +1,5 @@
-import express, { Request, Response } from "express";
-import { logger } from "firebase-functions/v2";
+import express, {Request, Response} from "express";
+import {logger} from "firebase-functions/v2";
 import {
   getQueuedEmails,
   updateQueuedEmail,
@@ -10,8 +10,8 @@ import {
   addEmailToQueue,
   duplicateEmail,
 } from "../../lib/email-queue-admin";
-import { EmailStatus } from "../../lib/types";
-import { withAdminAuth, requireAdminAuth } from "../../lib/auth-middleware";
+import {EmailStatus} from "../../lib/types";
+import {withAdminAuth, requireAdminAuth} from "../../lib/auth-middleware";
 
 interface User {
   id: string;
@@ -33,7 +33,7 @@ const router = express.Router();
  */
 router.get("/", requireAdminAuth, async (req: Request, res: Response) => {
   try {
-    const { status, includeStats } = req.query;
+    const {status, includeStats} = req.query;
 
     // Get queue statistics if requested
     if (includeStats === "true") {
@@ -42,7 +42,7 @@ router.get("/", requireAdminAuth, async (req: Request, res: Response) => {
         stats,
         userId: (req as any).user?.id,
       });
-      res.json({ success: true, data: stats });
+      res.json({success: true, data: stats});
       return;
     }
 
@@ -55,7 +55,7 @@ router.get("/", requireAdminAuth, async (req: Request, res: Response) => {
       userId: (req as any).user?.id,
     });
 
-    res.json({ success: true, data: emails });
+    res.json({success: true, data: emails});
   } catch (error) {
     logger.error("Error retrieving queued emails", {
       error: error instanceof Error ? error.message : "Unknown error",
@@ -79,7 +79,7 @@ router.post(
   "/",
   withAdminAuth(async (req: Request, res: Response, user: User) => {
     try {
-      const { action, emailIds, updates, emailId, resetStatus } = req.body;
+      const {action, emailIds, updates, emailId, resetStatus} = req.body;
 
       // Handle bulk update action
       if (action === "bulk-update") {
@@ -97,7 +97,7 @@ router.post(
           updates,
           userId: user.id,
         });
-        res.json({ success: true, message: "Emails updated successfully" });
+        res.json({success: true, message: "Emails updated successfully"});
         return;
       }
 
@@ -116,7 +116,7 @@ router.post(
           emailIds,
           userId: user.id,
         });
-        res.json({ success: true, message: "Emails deleted successfully" });
+        res.json({success: true, message: "Emails deleted successfully"});
         return;
       }
 
@@ -146,7 +146,7 @@ router.post(
       }
 
       // Handle regular email creation
-      const emailData = { ...req.body };
+      const emailData = {...req.body};
       delete emailData.action; // Remove action field if present
 
       const newEmailId = await addEmailToQueue(emailData);
@@ -183,7 +183,7 @@ router.put(
   "/",
   withAdminAuth(async (req: Request, res: Response, user: User) => {
     try {
-      const { id, ...updates } = req.body;
+      const {id, ...updates} = req.body;
 
       if (!id) {
         res.status(400).json({
@@ -200,7 +200,7 @@ router.put(
         userId: user.id,
       });
 
-      res.json({ success: true, message: "Email updated successfully" });
+      res.json({success: true, message: "Email updated successfully"});
     } catch (error) {
       logger.error("Error updating queued email", {
         error: error instanceof Error ? error.message : "Unknown error",
@@ -223,7 +223,7 @@ router.delete(
   "/",
   withAdminAuth(async (req: Request, res: Response, user: User) => {
     try {
-      const { id } = req.body;
+      const {id} = req.body;
 
       if (!id) {
         res.status(400).json({
@@ -239,7 +239,7 @@ router.delete(
         userId: user.id,
       });
 
-      res.json({ success: true, message: "Email deleted successfully" });
+      res.json({success: true, message: "Email deleted successfully"});
     } catch (error) {
       logger.error("Error deleting queued email", {
         error: error instanceof Error ? error.message : "Unknown error",

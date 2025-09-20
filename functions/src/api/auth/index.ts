@@ -1,8 +1,8 @@
-import { Request, Response, Router } from "express";
-import { logger } from "firebase-functions/v2";
-import { SignJWT, jwtVerify } from "jose";
-import { UserService } from "../../lib/user-service";
-import { validateLoginCredentials } from "../../lib/user-validation";
+import {Request, Response, Router} from "express";
+import {logger} from "firebase-functions/v2";
+import {SignJWT, jwtVerify} from "jose";
+import {UserService} from "../../lib/user-service";
+import {validateLoginCredentials} from "../../lib/user-validation";
 
 const router = Router();
 
@@ -75,13 +75,13 @@ router.post("/login", async (req: Request, res: Response) => {
       clubId: user.clubId,
       zoneId: user.zoneId,
     })
-      .setProtectedHeader({ alg: "HS256" })
+      .setProtectedHeader({alg: "HS256"})
       .setIssuedAt()
       .setExpirationTime("24h")
       .sign(JWT_SECRET);
 
     // Remove sensitive fields from user object
-    const { mobileNumber, ...userResponse } = user;
+    const {mobileNumber, ...userResponse} = user;
 
     logger.info("User authenticated successfully", {
       userId: user.id,
@@ -127,7 +127,7 @@ router.get("/verify", async (req: Request, res: Response) => {
     const token = authHeader.substring(7);
 
     // Verify JWT token
-    const { payload } = await jwtVerify(token, JWT_SECRET);
+    const {payload} = await jwtVerify(token, JWT_SECRET);
 
     // Get current user data
     const user = await UserService.getUserById(payload.userId as string);
@@ -143,7 +143,7 @@ router.get("/verify", async (req: Request, res: Response) => {
     }
 
     // Remove sensitive fields
-    const { mobileNumber, ...userResponse } = user;
+    const {mobileNumber, ...userResponse} = user;
 
     logger.info("Token verified successfully", {
       userId: user.id,
@@ -181,7 +181,7 @@ router.post("/logout", async (req: Request, res: Response) => {
       const token = authHeader.substring(7);
 
       try {
-        const { payload } = await jwtVerify(token, JWT_SECRET);
+        const {payload} = await jwtVerify(token, JWT_SECRET);
         logger.info("User logged out", {
           userId: payload.userId,
           ponyClubId: payload.ponyClubId,

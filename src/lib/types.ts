@@ -18,20 +18,35 @@ export interface Club {
   id: string;
   name: string;
   zoneId: string;
-  clubId?: number; // For external club IDs like from your JSON
-  
+  // New fields for external import
+  docId?: number;
+  syncGuid?: string;
+  clubId?: string; // Now string to match new format
+  image?: string;
+  phoneNumber?: string;
+  emailAddress?: string;
+  totalRows?: number;
+  distance?: number;
   // Address information
-  physicalAddress?: string; // Single field for full address like "Park Lane, Bealiba VIC 3475"
-  postalAddress?: string; // Separate postal address if different
-  latitude?: number;
-  longitude?: number;
-  address?: { // Legacy structured address - keep for backward compatibility
-    street?: string;
-    suburb?: string;
+  address?: {
+    address1?: string;
+    address2?: string;
+    address3?: string;
+    town?: string;
     postcode?: string;
-    state?: string;
+    county?: string;
     country?: string;
   };
+  latlng?: {
+    lat?: string;
+    lng?: string;
+  };
+  // Legacy/compatibility fields
+  physicalAddress?: string;
+  postalAddress?: string;
+  latitude?: number;
+  longitude?: number;
+  // ...existing code...
   
   // Contact information
   email?: string;

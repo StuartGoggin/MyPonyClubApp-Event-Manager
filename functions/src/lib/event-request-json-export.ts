@@ -80,9 +80,9 @@ export async function exportEventRequestAsJSON(
 
         // Ensure date is converted to string consistently
         const dateString =
-          typeof event.date === "string"
-            ? event.date
-            : event.date.toISOString();
+          typeof event.date === "string" ?
+            event.date :
+            event.date.toISOString();
 
         return {
           priority: event.priority,

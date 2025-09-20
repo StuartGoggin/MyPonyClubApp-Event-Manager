@@ -1,13 +1,13 @@
-import { Request, Response } from "express";
-import { logger } from "firebase-functions/v2";
-import { checkAdminAccess } from "../../../lib/auth-middleware";
-import { UserService } from "../../../lib/user-service";
+import {Request, Response} from "express";
+import {logger} from "firebase-functions/v2";
+import {checkAdminAccess} from "../../../lib/auth-middleware";
+import {UserService} from "../../../lib/user-service";
 
 // PATCH: Update user role
 export async function updateUserRole(req: Request, res: Response) {
   try {
     // Check admin authentication
-    const { authorized, user } = await checkAdminAccess(req);
+    const {authorized, user} = await checkAdminAccess(req);
     if (!authorized) {
       logger.warn("Unauthorized access attempt to admin user role update");
       return res.status(401).json({
@@ -16,7 +16,7 @@ export async function updateUserRole(req: Request, res: Response) {
       });
     }
 
-    const { userId, role } = req.body;
+    const {userId, role} = req.body;
 
     if (!userId || !role) {
       return res.status(400).json({
@@ -38,7 +38,7 @@ export async function updateUserRole(req: Request, res: Response) {
       adminUser: user?.email,
     });
 
-    const updatedUser = await UserService.updateUser(userId, { role });
+    const updatedUser = await UserService.updateUser(userId, {role});
 
     logger.info("User role updated successfully", {
       userId,

@@ -1,8 +1,8 @@
-import { Router } from "express";
-import { Resend } from "resend";
-import { generateEventRequestPDF } from "../lib/event-request-pdf";
-import { getClubById, getZoneByClubId } from "../lib/data-functions";
-import { addEmailToQueue, getEmailQueueConfig } from "../lib/email-queue-admin";
+import {Router} from "express";
+import {Resend} from "resend";
+import {generateEventRequestPDF} from "../lib/event-request-pdf";
+import {getClubById, getZoneByClubId} from "../lib/data-functions";
+import {addEmailToQueue, getEmailQueueConfig} from "../lib/email-queue-admin";
 import {
   exportEventRequestAsJSON,
   createJSONAttachment,
@@ -11,15 +11,15 @@ import {
   generateEventRequestEmailHTML,
   generateEventRequestEmailText,
 } from "../lib/event-request-email-template";
-import { QueuedEmail } from "../lib/types";
-import { logger } from "firebase-functions/v2";
+import {QueuedEmail} from "../lib/types";
+import {logger} from "firebase-functions/v2";
 
 const router = Router();
 
 // Only initialize Resend if API key is available
-const resend = process.env.RESEND_API_KEY
-  ? new Resend(process.env.RESEND_API_KEY)
-  : null;
+const resend = process.env.RESEND_API_KEY ?
+  new Resend(process.env.RESEND_API_KEY) :
+  null;
 
 // Zone approver email configuration
 const zoneApprovers = {
@@ -30,12 +30,12 @@ const zoneApprovers = {
 };
 
 // Super user emails (will receive JSON exports)
-const superUserEmails = process.env.SUPER_USER_EMAILS
-  ? process.env.SUPER_USER_EMAILS.split(",").map((email) => email.trim())
-  : [
-      "admin@ponyclub.com.au",
-      // Add more super user emails as needed
-    ];
+const superUserEmails = process.env.SUPER_USER_EMAILS ?
+  process.env.SUPER_USER_EMAILS.split(",").map((email) => email.trim()) :
+  [
+    "admin@ponyclub.com.au",
+    // Add more super user emails as needed
+  ];
 
 interface EventRequestEmailData {
   formData: {
@@ -78,7 +78,7 @@ router.post("/", async (req, res) => {
       hasPdfData: !!data.pdfData,
     });
 
-    const { formData, pdfData } = data;
+    const {formData, pdfData} = data;
 
     // Validate required data
     if (!formData) {
@@ -89,10 +89,10 @@ router.post("/", async (req, res) => {
     }
 
     // Get club and zone information
-    logger.info("Getting club info", { clubId: formData.clubId });
+    logger.info("Getting club info", {clubId: formData.clubId});
     const club = await getClubById(formData.clubId);
     if (!club) {
-      logger.error("Club not found", { clubId: formData.clubId });
+      logger.error("Club not found", {clubId: formData.clubId});
       return res.status(404).json({
         error: "Club not found",
       });
@@ -100,7 +100,7 @@ router.post("/", async (req, res) => {
 
     const zone = await getZoneByClubId(formData.clubId);
     if (!zone) {
-      logger.error("Zone not found for club", { clubId: formData.clubId });
+      logger.error("Zone not found for club", {clubId: formData.clubId});
       return res.status(404).json({
         error: "Zone not found for this club",
       });
@@ -108,7 +108,7 @@ router.post("/", async (req, res) => {
 
     // Generate reference number
     const referenceNumber = `ER-${Date.now()}`;
-    logger.info("Generated reference number", { referenceNumber });
+    logger.info("Generated reference number", {referenceNumber});
 
     // Generate JSON export for super users
     const jsonExport = await exportEventRequestAsJSON(
@@ -136,7 +136,7 @@ router.post("/", async (req, res) => {
     let pdfBuffer: Buffer;
     if (pdfData && pdfData.length > 0) {
       pdfBuffer = Buffer.from(pdfData);
-      logger.info("Using provided PDF data", { size: pdfBuffer.length });
+      logger.info("Using provided PDF data", {size: pdfBuffer.length});
     } else {
       logger.info("Generating new PDF...");
       pdfBuffer = await generateEventRequestPDF({
@@ -146,9 +146,9 @@ router.post("/", async (req, res) => {
           events: formData.events.map((event) => ({
             ...event,
             date:
-              typeof event.date === "string"
-                ? new Date(event.date)
-                : event.date,
+              typeof event.date === "string" ?
+                new Date(event.date) :
+                event.date,
             coordinatorName: event.coordinatorName || "",
             coordinatorContact: event.coordinatorContact || "",
           })),
@@ -170,9 +170,9 @@ router.post("/", async (req, res) => {
         name: event.name,
         eventTypeName: event.eventTypeName || "Unknown Event Type",
         date:
-          typeof event.date === "string"
-            ? event.date
-            : event.date.toISOString(),
+          typeof event.date === "string" ?
+            event.date :
+            event.date.toISOString(),
         location: event.location,
         isQualifier: event.isQualifier,
         isHistoricallyTraditional: event.isHistoricallyTraditional,
@@ -258,7 +258,7 @@ router.post("/", async (req, res) => {
         },
       };
       const emailId = await addEmailToQueue(queuedEmailData);
-      logger.info("Email queued for requesting user", { emailId });
+      logger.info("Email queued for requesting user", {emailId});
       queuedEmails.push("requester");
     } else if (resend) {
       try {
@@ -273,8 +273,8 @@ router.post("/", async (req, res) => {
           id: result.data?.id,
         });
       } catch (error) {
-        logger.error("Failed to send requester email", { error });
-        emailResults.push({ type: "requester", success: false, error });
+        logger.error("Failed to send requester email", {error});
+        emailResults.push({type: "requester", success: false, error});
       }
     }
 
@@ -324,7 +324,7 @@ router.post("/", async (req, res) => {
           },
         };
         const emailId = await addEmailToQueue(queuedEmailData);
-        logger.info("Zone approver email queued", { emailId, approverEmail });
+        logger.info("Zone approver email queued", {emailId, approverEmail});
         queuedEmails.push(`zone-approver-${approverEmail}`);
       } else if (resend) {
         try {
@@ -359,7 +359,7 @@ router.post("/", async (req, res) => {
 
     // 3. Send email with JSON export to super users
     for (const superUserEmail of superUserEmails) {
-      logger.info("Preparing email for super user", { email: superUserEmail });
+      logger.info("Preparing email for super user", {email: superUserEmail});
 
       const superUserEmailData = {
         ...emailTemplateData,
@@ -383,7 +383,7 @@ router.post("/", async (req, res) => {
       };
 
       if (shouldQueue) {
-        logger.info("Queueing email for super user", { email: superUserEmail });
+        logger.info("Queueing email for super user", {email: superUserEmail});
         const queuedEmailData = {
           to: superUserEmailMessage.to,
           subject: superUserEmailMessage.subject,
@@ -412,7 +412,7 @@ router.post("/", async (req, res) => {
           },
         };
         const emailId = await addEmailToQueue(queuedEmailData);
-        logger.info("Super user email queued", { emailId, superUserEmail });
+        logger.info("Super user email queued", {emailId, superUserEmail});
         queuedEmails.push(`super-user-${superUserEmail}`);
       } else if (resend) {
         try {
@@ -456,13 +456,13 @@ router.post("/", async (req, res) => {
         zoneApprovers: approverEmails,
         superUsers: superUserEmails,
       },
-      ...(shouldQueue
-        ? { queuedEmails: queuedEmails.length }
-        : {
-            emailResults,
-            successfulSends: emailResults.filter((r) => r.success).length,
-            failedSends: emailResults.filter((r) => !r.success).length,
-          }),
+      ...(shouldQueue ?
+        {queuedEmails: queuedEmails.length} :
+        {
+          emailResults,
+          successfulSends: emailResults.filter((r) => r.success).length,
+          failedSends: emailResults.filter((r) => !r.success).length,
+        }),
     };
 
     logger.info("Email processing completed", {

@@ -1,4 +1,4 @@
-import { Club } from "./types";
+import {Club} from "./types";
 
 /**
  * Interface for the club data from JSON file
@@ -93,7 +93,7 @@ export async function processClubsFromJson(
     const validation = validateClubData(clubData);
 
     if (!validation.isValid) {
-      invalidClubs.push({ data: clubData, errors: validation.errors });
+      invalidClubs.push({data: clubData, errors: validation.errors});
       continue;
     }
 
@@ -113,8 +113,8 @@ export async function processClubsFromJson(
 
     // Transform the data
     const clubRecord = transformClubData(clubData, zoneId);
-    validClubs.push({ ...clubRecord, originalData: clubData });
+    validClubs.push({...clubRecord, originalData: clubData});
   }
 
-  return { validClubs, invalidClubs, missingZones };
+  return {validClubs, invalidClubs, missingZones};
 }

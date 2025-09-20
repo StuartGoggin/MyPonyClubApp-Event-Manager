@@ -1,5 +1,5 @@
 import jsPDF from "jspdf";
-import { PDFDocument } from "pdf-lib";
+import {PDFDocument} from "pdf-lib";
 import fs from "fs";
 import path from "path";
 
@@ -51,7 +51,7 @@ export async function generateEventRequestPDF(
   options: EventRequestPDFOptions,
 ): Promise<Buffer> {
   try {
-    const { formData } = options;
+    const {formData} = options;
 
     // Load the original Process.pdf file
     const processPdfPath = path.join(process.cwd(), "docs", "Process.pdf");
@@ -293,7 +293,7 @@ function generateFormPage(formData: EventRequestFormData): Buffer {
           `${event.priority}${getOrdinalSuffix(event.priority)}`,
           currentX + colWidths[0] / 2,
           yPosition + 13,
-          { align: "center" },
+          {align: "center"},
         );
         doc.setFont("helvetica", "normal");
         doc.setFontSize(10);
@@ -304,7 +304,7 @@ function generateFormPage(formData: EventRequestFormData): Buffer {
           `${i + 1}${getOrdinalSuffix(i + 1)}`,
           currentX + colWidths[0] / 2,
           yPosition + 13,
-          { align: "center" },
+          {align: "center"},
         );
         doc.setFont("helvetica", "normal");
         doc.setFontSize(10);
@@ -365,7 +365,7 @@ function generateFormPage(formData: EventRequestFormData): Buffer {
             line,
             currentX + colWidths[3] / 2,
             yPosition + 9 + index * 4,
-            { align: "center" },
+            {align: "center"},
           );
         });
         doc.setFontSize(10);
@@ -486,8 +486,8 @@ function generateFormPage(formData: EventRequestFormData): Buffer {
     const footerY2 = pageHeight - 10; // 10mm from bottom
 
     // Center the text at the bottom
-    doc.text(clubsText1, pageWidth / 2, footerY1, { align: "center" });
-    doc.text(clubsText2, pageWidth / 2, footerY2, { align: "center" });
+    doc.text(clubsText1, pageWidth / 2, footerY1, {align: "center"});
+    doc.text(clubsText2, pageWidth / 2, footerY2, {align: "center"});
     doc.setTextColor(0, 0, 0); // Reset text color
 
     // Generate PDF buffer
@@ -500,7 +500,7 @@ function generateFormPage(formData: EventRequestFormData): Buffer {
     const doc = new jsPDF();
     doc.setFont("times", "bold");
     doc.setFontSize(16);
-    doc.text("PDF Generation Error", 105, 50, { align: "center" });
+    doc.text("PDF Generation Error", 105, 50, {align: "center"});
 
     doc.setFont("times", "normal");
     doc.setFontSize(12);
@@ -522,7 +522,7 @@ function generateFallbackPDF(options: EventRequestPDFOptions): Buffer {
     const doc = new jsPDF();
     doc.setFont("times", "bold");
     doc.setFontSize(16);
-    doc.text("Event Request Form", 105, 50, { align: "center" });
+    doc.text("Event Request Form", 105, 50, {align: "center"});
 
     doc.setFont("times", "normal");
     doc.setFontSize(12);

@@ -1,6 +1,6 @@
-import { Router } from "express";
-import { getAllClubs, updateClub, createClub } from "../lib/server-data";
-import { importClubsFromJson } from "../lib/club-import";
+import {Router} from "express";
+import {getAllClubs, updateClub, createClub} from "../lib/server-data";
+import {importClubsFromJson} from "../lib/club-import";
 
 // Define the interface locally to avoid import issues
 interface ClubJsonData {
@@ -21,7 +21,7 @@ const router = Router();
 router.get("/", async (req, res) => {
   try {
     const clubs = await getAllClubs();
-    return res.json({ clubs });
+    return res.json({clubs});
   } catch (error: any) {
     console.error("Error fetching clubs:", error);
 
@@ -71,7 +71,7 @@ router.post("/", async (req, res) => {
 // PUT /clubs - Update an existing club
 router.put("/", async (req, res) => {
   try {
-    const { id, ...clubData } = req.body;
+    const {id, ...clubData} = req.body;
 
     if (!id) {
       return res.status(400).json({
@@ -99,7 +99,7 @@ router.put("/", async (req, res) => {
 // POST /clubs/import - Import clubs from JSON data
 router.post("/import", async (req, res) => {
   try {
-    const { clubs }: { clubs: ClubJsonData[] } = req.body;
+    const {clubs}: { clubs: ClubJsonData[] } = req.body;
 
     if (!clubs || !Array.isArray(clubs)) {
       return res.status(400).json({

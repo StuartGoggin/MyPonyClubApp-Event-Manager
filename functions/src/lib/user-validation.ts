@@ -1,4 +1,4 @@
-import { User } from "./types";
+import {User} from "./types";
 
 /**
  * Basic user validation for Firebase Functions

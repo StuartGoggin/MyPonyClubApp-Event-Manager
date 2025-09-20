@@ -1,5 +1,5 @@
-import { adminDb } from "./firebase-admin";
-import type { Zone, Club, EventType } from "./types";
+import {adminDb} from "./firebase-admin";
+import type {Zone, Club, EventType} from "./types";
 
 // Basic seed data for development
 const basicZonesSeedData: Zone[] = [

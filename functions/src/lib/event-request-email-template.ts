@@ -220,8 +220,8 @@ export function generateEventRequestEmailHTML(data: EmailTemplateData): string {
             margin-top: 20px;
         }
         ${
-          data.isForSuperUser
-            ? `
+  data.isForSuperUser ?
+    `
         .super-user-notice {
             background: #fef2f2;
             border: 1px solid #ef4444;
@@ -231,9 +231,9 @@ export function generateEventRequestEmailHTML(data: EmailTemplateData): string {
             color: #dc2626;
             font-weight: 600;
         }
-        `
-            : ""
-        }
+        ` :
+    ""
+}
         @media (max-width: 600px) {
             .summary-grid {
                 grid-template-columns: 1fr;
@@ -259,14 +259,14 @@ export function generateEventRequestEmailHTML(data: EmailTemplateData): string {
         
         <div class="content">
             ${
-              data.isForSuperUser
-                ? `
+  data.isForSuperUser ?
+    `
             <div class="super-user-notice">
                 🔒 SUPER USER NOTIFICATION: This email includes JSON export data for administrative purposes.
             </div>
-            `
-                : ""
-            }
+            ` :
+    ""
+}
             
             <div class="summary-section">
                 <h2 style="margin: 0 0 16px 0; color: #1e293b;">📋 Submission Summary</h2>
@@ -302,8 +302,8 @@ export function generateEventRequestEmailHTML(data: EmailTemplateData): string {
                 <h2>🎯 Requested Events (${data.events.length} event${data.events.length !== 1 ? "s" : ""})</h2>
                 
                 ${data.events
-                  .map(
-                    (event) => `
+    .map(
+      (event) => `
                 <div class="event-card">
                     <div class="event-header">
                         <h3 style="margin: 0; color: #1e293b;">${event.name}</h3>
@@ -326,49 +326,49 @@ export function generateEventRequestEmailHTML(data: EmailTemplateData): string {
                         </div>
                         
                         <div class="special-badges">
-                            ${event.isQualifier ? '<span class="badge qualifier-badge">🏅 Qualifier Event</span>' : ""}
-                            ${event.isHistoricallyTraditional ? '<span class="badge traditional-badge">🏛️ Traditional Event</span>' : ""}
+                            ${event.isQualifier ? "<span class=\"badge qualifier-badge\">🏅 Qualifier Event</span>" : ""}
+                            ${event.isHistoricallyTraditional ? "<span class=\"badge traditional-badge\">🏛️ Traditional Event</span>" : ""}
                         </div>
                         
                         ${
-                          event.coordinatorName || event.coordinatorContact
-                            ? `
+  event.coordinatorName || event.coordinatorContact ?
+    `
                         <div class="coordinator-info">
                             <strong>📞 Event Coordinator:</strong><br>
                             ${event.coordinatorName ? `Name: ${event.coordinatorName}<br>` : ""}
                             ${event.coordinatorContact ? `Contact: ${event.coordinatorContact}` : ""}
                         </div>
-                        `
-                            : ""
-                        }
+                        ` :
+    ""
+}
                         
                         ${
-                          event.notes
-                            ? `
+  event.notes ?
+    `
                         <div style="margin-top: 12px;">
                             <strong>📝 Event Notes:</strong><br>
                             <em>${event.notes}</em>
                         </div>
-                        `
-                            : ""
-                        }
+                        ` :
+    ""
+}
                     </div>
                 </div>
                 `,
-                  )
-                  .join("")}
+    )
+    .join("")}
             </div>
 
             ${
-              data.generalNotes
-                ? `
+  data.generalNotes ?
+    `
             <div class="notes-section">
                 <h3 style="margin: 0 0 12px 0; color: #92400e;">💬 General Notes</h3>
                 <p style="margin: 0;">${data.generalNotes}</p>
             </div>
-            `
-                : ""
-            }
+            ` :
+    ""
+}
 
             <div class="attachments-info">
                 <h3 style="margin: 0 0 8px 0; color: #059669;">📎 Attachments</h3>
@@ -384,10 +384,10 @@ export function generateEventRequestEmailHTML(data: EmailTemplateData): string {
             <p><strong>Next Steps:</strong></p>
             <p>
                 ${
-                  data.isForSuperUser
-                    ? "As a super user, please review this submission and coordinate with the zone approver for processing."
-                    : "Your zone coordinator will review this request and contact you regarding approval status and any additional requirements."
-                }
+  data.isForSuperUser ?
+    "As a super user, please review this submission and coordinate with the zone approver for processing." :
+    "Your zone coordinator will review this request and contact you regarding approval status and any additional requirements."
+}
             </p>
             <p style="margin-top: 16px; font-size: 12px; color: #9ca3af;">
                 This is an automated notification from the Pony Club Event Management System.<br>
@@ -437,8 +437,8 @@ REQUESTED EVENTS (${data.events.length} event${data.events.length !== 1 ? "s" : 
 ================
 
 ${data.events
-  .map(
-    (event) => `
+    .map(
+      (event) => `
 ${priorityLabels[event.priority]} - ${event.name}
 Date: ${formatDate(event.date)}
 Location: ${event.location}
@@ -449,17 +449,17 @@ ${event.coordinatorName ? `Coordinator: ${event.coordinatorName}` : ""}
 ${event.coordinatorContact ? `Contact: ${event.coordinatorContact}` : ""}
 ${event.notes ? `Notes: ${event.notes}` : ""}
 `,
-  )
-  .join("\n---\n")}
+    )
+    .join("\n---\n")}
 
 ${
-  data.generalNotes
-    ? `
+  data.generalNotes ?
+    `
 GENERAL NOTES
 =============
 ${data.generalNotes}
-`
-    : ""
+` :
+    ""
 }
 
 ATTACHMENTS
@@ -471,9 +471,9 @@ ${data.isForSuperUser ? "- JSON Export (administrative data)" : ""}
 NEXT STEPS
 ==========
 ${
-  data.isForSuperUser
-    ? "As a super user, please review this submission and coordinate with the zone approver for processing."
-    : "Your zone coordinator will review this request and contact you regarding approval status and any additional requirements."
+  data.isForSuperUser ?
+    "As a super user, please review this submission and coordinate with the zone approver for processing." :
+    "Your zone coordinator will review this request and contact you regarding approval status and any additional requirements."
 }
 
 ---

@@ -71,14 +71,14 @@ export async function GET(request: NextRequest) {
       const eventType = eventTypes.find(et => et.id === event.eventTypeId);
       
       return {
-        name: event.name || eventType?.name || 'Event',
-        date: event.date.toISOString().split('T')[0], // Convert Date to YYYY-MM-DD string
-        status: event.status || 'pending',
-        club: club?.name,
-        eventType: eventType?.name,
-        location: event.location || club?.physicalAddress || club?.address?.suburb,
-        contact: event.coordinatorContact || club?.email || club?.phone,
-        coordinator: event.coordinatorName
+  name: event.name || eventType?.name || 'Event',
+  date: event.date.toISOString().split('T')[0], // Convert Date to YYYY-MM-DD string
+  status: event.status || 'pending',
+  club: club?.name,
+  eventType: eventType?.name,
+  location: event.location || club?.physicalAddress || (club?.address ? ((Object.prototype.hasOwnProperty.call(club.address, 'suburb') ? (club.address as any).suburb : (club.address as any).town) || '') : ''),
+  contact: event.coordinatorContact || club?.email || club?.phone,
+  coordinator: event.coordinatorName
       };
     });
 

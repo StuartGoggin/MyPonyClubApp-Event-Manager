@@ -3,7 +3,7 @@
  * Handles admin-specific endpoints
  */
 
-import { Router } from "express";
+import {Router} from "express";
 
 const router = Router();
 
@@ -76,10 +76,10 @@ router.delete("/users/:id", (req, res) => {
 router.get("/system-health", (req, res) => {
   res.json({
     success: true,
-    database: { status: "healthy", responseTime: 50 },
-    emailService: { status: "healthy", queueLength: 5 },
-    storage: { status: "healthy" },
-    performance: { responseTime: 150, throughput: 1000, errorRate: 0.1 },
+    database: {status: "healthy", responseTime: 50},
+    emailService: {status: "healthy", queueLength: 5},
+    storage: {status: "healthy"},
+    performance: {responseTime: 150, throughput: 1000, errorRate: 0.1},
   });
 });
 
@@ -87,8 +87,8 @@ router.get("/settings", (req, res) => {
   res.json({
     success: true,
     settings: {
-      notifications: { emailEnabled: true, smsEnabled: false },
-      registration: { allowSelfRegistration: true, requireApproval: false },
+      notifications: {emailEnabled: true, smsEnabled: false},
+      registration: {allowSelfRegistration: true, requireApproval: false},
       events: {},
     },
   });
@@ -98,7 +98,7 @@ router.put("/settings", (req, res) => {
   res.json({
     success: true,
     settings: req.body,
-    auditLog: { action: "settings_updated" },
+    auditLog: {action: "settings_updated"},
   });
 });
 

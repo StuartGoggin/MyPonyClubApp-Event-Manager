@@ -1,13 +1,13 @@
-import { Request, Response } from "express";
-import { logger } from "firebase-functions/v2";
-import { checkAdminAccess } from "../../../lib/auth-middleware";
-import { UserService } from "../../../lib/user-service";
+import {Request, Response} from "express";
+import {logger} from "firebase-functions/v2";
+import {checkAdminAccess} from "../../../lib/auth-middleware";
+import {UserService} from "../../../lib/user-service";
 
 // GET: Retrieve users with optional filtering
 export async function getUsers(req: Request, res: Response) {
   try {
     // Check admin authentication
-    const { authorized, user } = await checkAdminAccess(req);
+    const {authorized, user} = await checkAdminAccess(req);
     if (!authorized) {
       logger.warn("Unauthorized access attempt to admin users endpoint");
       return res.status(401).json({
@@ -58,7 +58,7 @@ export async function getUsers(req: Request, res: Response) {
 export async function createUser(req: Request, res: Response) {
   try {
     // Check admin authentication
-    const { authorized, user } = await checkAdminAccess(req);
+    const {authorized, user} = await checkAdminAccess(req);
     if (!authorized) {
       logger.warn("Unauthorized access attempt to admin user creation");
       return res.status(401).json({
@@ -69,13 +69,13 @@ export async function createUser(req: Request, res: Response) {
 
     logger.info("Admin user creation requested", {
       adminUser: user?.email,
-      targetUserData: { ...req.body, password: "[REDACTED]" },
+      targetUserData: {...req.body, password: "[REDACTED]"},
     });
 
     const userData = req.body;
 
     // Validate user data (excluding ID and timestamps)
-    const { id, createdAt, updatedAt, ...userDataToValidate } = userData;
+    const {id, createdAt, updatedAt, ...userDataToValidate} = userData;
 
     // Check if Pony Club ID already exists
     const exists = await UserService.ponyClubIdExists(userData.ponyClubId);
@@ -120,7 +120,7 @@ export async function createUser(req: Request, res: Response) {
 export async function updateUser(req: Request, res: Response) {
   try {
     // Check admin authentication
-    const { authorized, user } = await checkAdminAccess(req);
+    const {authorized, user} = await checkAdminAccess(req);
     if (!authorized) {
       logger.warn("Unauthorized access attempt to admin user update");
       return res.status(401).json({
@@ -140,7 +140,7 @@ export async function updateUser(req: Request, res: Response) {
     logger.info("Admin user update requested", {
       userId,
       adminUser: user?.email,
-      updateData: { ...req.body, password: "[REDACTED]" },
+      updateData: {...req.body, password: "[REDACTED]"},
     });
 
     const updateData = req.body;
@@ -194,7 +194,7 @@ export async function updateUser(req: Request, res: Response) {
 export async function deleteUser(req: Request, res: Response) {
   try {
     // Check admin authentication
-    const { authorized, user } = await checkAdminAccess(req);
+    const {authorized, user} = await checkAdminAccess(req);
     if (!authorized) {
       logger.warn("Unauthorized access attempt to admin user deletion");
       return res.status(401).json({

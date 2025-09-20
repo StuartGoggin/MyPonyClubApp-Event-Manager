@@ -406,6 +406,12 @@ export const getClubById = async (id: string) => {
     return { id: docSnap.id, ...docSnap.data() } as Club;
 };
 
+export const updateClub = async (id: string, updateData: Partial<Club>) => {
+  const clubRef = doc(db, 'clubs', id);
+  await updateDoc(clubRef, updateData);
+  return { success: true };
+};
+
 export const getEventTypeById = async (id: string) => {
     const eventTypeDocRef = doc(db, 'eventTypes', id);
     const docSnap = await getDoc(eventTypeDocRef);

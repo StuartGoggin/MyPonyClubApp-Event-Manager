@@ -1,6 +1,6 @@
-import { Request, Response } from "express";
-import { logger } from "firebase-functions/v2";
-import { generateCalendarPDF } from "../../../lib/calendar-pdf";
+import {Request, Response} from "express";
+import {logger} from "firebase-functions/v2";
+import {generateCalendarPDF} from "../../../lib/calendar-pdf";
 import {
   getAllEvents,
   getAllClubs,
@@ -134,18 +134,18 @@ export async function generateCalendarPdfHandler(req: Request, res: Response) {
     // Prepare months array for PDF utility
     const months = [];
     if (scope === "month") {
-      months.push({ year: yearNum, month: monthNum });
+      months.push({year: yearNum, month: monthNum});
     } else if (scope === "year") {
-      for (let m = 1; m <= 12; m++) months.push({ year: yearNum, month: m });
+      for (let m = 1; m <= 12; m++) months.push({year: yearNum, month: m});
     } else if (scope === "custom" && startDate && endDate) {
       const start = new Date(startDate as string);
       const end = new Date(endDate as string);
-      let y = start.getFullYear(),
-        m = start.getMonth() + 1;
-      const endY = end.getFullYear(),
-        endM = end.getMonth() + 1;
+      let y = start.getFullYear();
+      let m = start.getMonth() + 1;
+      const endY = end.getFullYear();
+      const endM = end.getMonth() + 1;
       while (y < endY || (y === endY && m <= endM)) {
-        months.push({ year: y, month: m });
+        months.push({year: y, month: m});
         m++;
         if (m > 12) {
           m = 1;
@@ -182,11 +182,11 @@ export async function generateCalendarPdfHandler(req: Request, res: Response) {
     });
 
     const filename =
-      scope === "month"
-        ? `calendar_month_${yearNum}_${monthNum.toString().padStart(2, "0")}.pdf`
-        : scope === "year"
-          ? `calendar_year_${yearNum}.pdf`
-          : `calendar_custom_${startDate}_to_${endDate}.pdf`;
+      scope === "month" ?
+        `calendar_month_${yearNum}_${monthNum.toString().padStart(2, "0")}.pdf` :
+        scope === "year" ?
+          `calendar_year_${yearNum}.pdf` :
+          `calendar_custom_${startDate}_to_${endDate}.pdf`;
 
     logger.info("Calendar PDF: Generation successful", {
       filename,
@@ -220,7 +220,7 @@ export async function generateCalendarPdfHandler(req: Request, res: Response) {
  */
 export async function postCalendarPdfHandler(req: Request, res: Response) {
   try {
-    logger.info("Calendar PDF POST generation started", { body: req.body });
+    logger.info("Calendar PDF POST generation started", {body: req.body});
 
     // Extract parameters from body instead of query
     const {

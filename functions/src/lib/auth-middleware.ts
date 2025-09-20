@@ -1,5 +1,5 @@
-import { Request, Response, NextFunction } from "express";
-import { logger } from "firebase-functions/v2";
+import {Request, Response, NextFunction} from "express";
+import {logger} from "firebase-functions/v2";
 
 interface User {
   id: string;

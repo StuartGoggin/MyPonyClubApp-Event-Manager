@@ -5,28 +5,28 @@
 
 export class EmailValidator {
   validateEmail(email: any, options: any = {}): any {
-    if (!email || typeof email !== 'string') {
-      return { isValid: false, error: "Email is required" };
+    if (!email || typeof email !== "string") {
+      return {isValid: false, error: "Email is required"};
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return { isValid: false, error: "Invalid email format" };
+      return {isValid: false, error: "Invalid email format"};
     }
 
-    const disposableDomains = ['10minutemail.com', 'tempmail.org', 'guerrillamail.com'];
-    const domain = email.split('@')[1];
+    const disposableDomains = ["10minutemail.com", "tempmail.org", "guerrillamail.com"];
+    const domain = email.split("@")[1];
     if (options.checkDisposable && disposableDomains.includes(domain)) {
-      return { isValid: false, error: "Disposable email not allowed" };
+      return {isValid: false, error: "Disposable email not allowed"};
     }
 
-    const roleEmails = ['admin', 'support', 'noreply', 'info'];
-    const localPart = email.split('@')[0];
+    const roleEmails = ["admin", "support", "noreply", "info"];
+    const localPart = email.split("@")[0];
     if (options.allowRoleEmails === false && roleEmails.includes(localPart)) {
-      return { isValid: false, error: "Role-based email not allowed" };
+      return {isValid: false, error: "Role-based email not allowed"};
     }
 
-    return { isValid: true, email: email.toLowerCase() };
+    return {isValid: true, email: email.toLowerCase()};
   }
 
   validateEmailList(emails: string[]): any {
@@ -42,18 +42,18 @@ export class EmailValidator {
       }
     }
 
-    return { validEmails, invalidEmails };
+    return {validEmails, invalidEmails};
   }
 
   async validateEmailWithMX(email: string): Promise<any> {
     const basicValidation = this.validateEmail(email);
     if (!basicValidation.isValid) {
-      return { ...basicValidation, mxExists: false };
+      return {...basicValidation, mxExists: false};
     }
 
-    const domain = email.split('@')[1];
+    const domain = email.split("@")[1];
     // Mock MX record check
-    const knownGoodDomains = ['gmail.com', 'yahoo.com', 'outlook.com'];
+    const knownGoodDomains = ["gmail.com", "yahoo.com", "outlook.com"];
     const mxExists = knownGoodDomains.includes(domain);
 
     return {

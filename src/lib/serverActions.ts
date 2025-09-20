@@ -107,11 +107,11 @@ const clubsSeedData: Club[] = [
     latitude: -37.8136,
     longitude: 144.9631,
     address: {
-      street: '123 Horse Lane',
-      suburb: 'Bundoora',
-      postcode: '3083',
-      state: 'VIC',
-      country: 'Australia'
+  address1: '123 Horse Lane',
+  town: 'Bundoora',
+  postcode: '3083',
+  county: 'VIC',
+  country: 'Australia'
     },
     email: 'info@melbourneponyclub.com.au',
     website: 'https://www.melbourneponyclub.com.au',
@@ -195,11 +195,11 @@ const clubsSeedData: Club[] = [
     latitude: -38.1499,
     longitude: 144.3617,
     address: {
-      street: '456 Country Road',
-      suburb: 'Geelong West',
-      postcode: '3218',
-      state: 'VIC',
-      country: 'Australia'
+  address1: '456 Country Road',
+  town: 'Geelong West',
+  postcode: '3218',
+  county: 'VIC',
+  country: 'Australia'
     },
     email: 'contact@geelongponyclub.org.au',
     website: 'https://www.geelongponyclub.org.au',

@@ -1,7 +1,7 @@
 import express from "express";
-import { logger } from "firebase-functions/v2";
-import { getEmailLogs } from "../../lib/email-queue-admin";
-import { requireAdminAuth } from "../../lib/auth-middleware";
+import {logger} from "firebase-functions/v2";
+import {getEmailLogs} from "../../lib/email-queue-admin";
+import {requireAdminAuth} from "../../lib/auth-middleware";
 
 const router = express.Router();
 
@@ -14,7 +14,7 @@ const router = express.Router();
  */
 router.get("/", requireAdminAuth, async (req, res) => {
   try {
-    const { limit, status } = req.query;
+    const {limit, status} = req.query;
     const parsedLimit = parseInt((limit as string) || "100");
 
     logger.info("Email Queue Logs API: GET request", {

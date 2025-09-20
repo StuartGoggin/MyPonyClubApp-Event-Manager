@@ -1,5 +1,5 @@
-import { Router } from "express";
-import { adminDb, getDatabaseStatus } from "../lib/firebase-admin";
+import {Router} from "express";
+import {adminDb, getDatabaseStatus} from "../lib/firebase-admin";
 
 const router = Router();
 

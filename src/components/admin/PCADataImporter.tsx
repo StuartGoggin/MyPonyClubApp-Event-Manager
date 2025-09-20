@@ -1,0 +1,515 @@
+'use client';
+
+import React, { useState, useRef, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
+import { Checkbox } from '@/components/ui/checkbox';
+import { 
+  Upload, 
+  FileText, 
+  CheckCircle, 
+  AlertCircle, 
+  XCircle, 
+  Eye, 
+  Download,
+  Loader2,
+  Globe,
+  Phone,
+  Mail,
+  MapPin,
+  User
+} from 'lucide-react';
+
+interface ExtractedClubData {
+  name: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  website?: string;
+  logoUrl?: string;
+  contactPerson?: string;
+  contactRole?: string;
+  additionalInfo?: string;
+}
+
+interface ClubMatch {
+  clubId: string;
+  existingClubName: string;
+  extractedData: ExtractedClubData;
+  matchConfidence: number;
+  matchType: 'exact' | 'high' | 'medium' | 'low' | 'none';
+  suggestedAction: 'update' | 'review' | 'skip';
+}
+
+export function PCADataImporter() {
+  const [file, setFile] = useState<File | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importResult, setImportResult] = useState<any>(null);
+  const [selectedMatches, setSelectedMatches] = useState<Set<string>>(new Set());
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [logSessionId, setLogSessionId] = useState<string | null>(null);
+  const [logLines, setLogLines] = useState<string[]>([]);
+  const logRef = useRef<HTMLDivElement>(null);
+
+  // NOTE: You will need to implement the following functions for the component to be fully operational.
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setFile(e.target.files[0]);
+      setImportResult(null); // Reset previous results
+    }
+  };
+
+  const processFile = async (mode: 'preview' | 'import') => {
+    if (!file) return;
+    if (mode === 'preview') setIsProcessing(true);
+    if (mode === 'import') setIsImporting(true);
+    try {
+      const fileContent = await file.text();
+      // Send to API for processing
+      const response = await fetch('/api/admin/import-pca-data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          jsonContent: fileContent,
+          mode,
+          selectedMatches: mode === 'import' ? Array.from(selectedMatches) : undefined
+        }),
+      });
+      const result = await response.json();
+      setImportResult(result);
+      // Auto-select high confidence matches for preview
+      if (mode === 'preview' && result.success) {
+        const autoSelected = new Set<string>();
+        result.matches
+          .filter((match: ClubMatch) => match.matchType === 'exact' || match.matchType === 'high')
+          .forEach((match: ClubMatch) => autoSelected.add(match.clubId));
+        setSelectedMatches(autoSelected);
+      }
+    } catch (error) {
+      setImportResult({
+        success: false,
+        mode,
+        error: 'Failed to process file',
+        matches: [],
+        summary: {
+          totalExtracted: 0,
+          highConfidenceMatches: 0,
+          mediumConfidenceMatches: 0,
+          lowConfidenceMatches: 0,
+          noMatches: 0
+        }
+      });
+    } finally {
+      setIsProcessing(false);
+      setIsImporting(false);
+    }
+  };
+  
+  const handleMatchSelection = (clubId: string, checked: boolean) => {
+    setSelectedMatches(prev => {
+      const newSet = new Set(prev);
+      if (checked) {
+        newSet.add(clubId);
+      } else {
+        newSet.delete(clubId);
+      }
+      return newSet;
+    });
+  };
+
+  useEffect(() => {
+    // Scroll to the bottom of the log output when new lines are added
+    if (logRef.current) {
+      logRef.current.scrollTop = logRef.current.scrollHeight;
+    }
+  }, [logLines]);
+
+
+  const getMatchBadge = (match: ClubMatch) => {
+    const confidence = Math.round(match.matchConfidence * 100);
+    switch (match.matchType) {
+      case 'exact':
+        return (
+          <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+            <CheckCircle className="w-3 h-3 mr-1" />
+            Exact Match ({confidence}%)
+          </Badge>
+        );
+      case 'high':
+        return (
+          <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
+            <CheckCircle className="w-3 h-3 mr-1" />
+            High Match ({confidence}%)
+          </Badge>
+        );
+      case 'medium':
+        return (
+          <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+            <AlertCircle className="w-3 h-3 mr-1" />
+            Medium Match ({confidence}%)
+          </Badge>
+        );
+      case 'low':
+        return (
+          <Badge className="bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200">
+            <AlertCircle className="w-3 h-3 mr-1" />
+            Low Match ({confidence}%)
+          </Badge>
+        );
+      default:
+        return (
+          <Badge className="bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200">
+            <XCircle className="w-3 h-3 mr-1" />
+            No Match
+          </Badge>
+        );
+    }
+  }
+  const selectAllHighConfidence = () => {
+    if (!importResult) return;
+    
+    const highConfidenceClubs = new Set<string>();
+    importResult.matches
+      .filter((match: ClubMatch) => match.matchType === 'exact' || match.matchType === 'high')
+      .forEach((match: ClubMatch) => highConfidenceClubs.add(match.clubId));
+    
+    setSelectedMatches(highConfidenceClubs);
+  };
+
+  const selectAll = () => {
+    if (!importResult) return;
+    
+    const allClubs = new Set<string>();
+    importResult.matches.forEach((match: ClubMatch) => allClubs.add(match.clubId));
+    setSelectedMatches(allClubs);
+  };
+
+  const selectNone = () => {
+    setSelectedMatches(new Set());
+  }
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Upload className="h-5 w-5 text-blue-600" />
+            Import PCA Club Data
+          </CardTitle>
+          <CardDescription>
+            Upload a JSON file containing Pony Club Australia club data to extract and update club information including logos, addresses, and contact details.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="upload" className="w-full">
+            <TabsList>
+              <TabsTrigger value="upload">Upload & Preview</TabsTrigger>
+              {importResult && <TabsTrigger value="results">Import Results</TabsTrigger>}
+            </TabsList>
+
+            <TabsContent value="upload" className="space-y-4">
+              {/* File Upload */}
+              <div className="border-2 border-dashed border-border rounded-lg p-6">
+                <div className="flex flex-col items-center gap-4">
+                  <FileText className="h-12 w-12 text-muted-foreground" />
+                  <div className="text-center">
+                    <h3 className="text-lg font-semibold">Upload JSON File</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Select the JSON file containing Pony Club Australia club data
+                    </p>
+                  </div>
+                  <input
+                    type="file"
+                    accept=".json"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    id="file-upload"
+                  />
+                  <label htmlFor="file-upload">
+                    <Button asChild>
+                      <span className="cursor-pointer">
+                        <Upload className="h-4 w-4 mr-2" />
+                        Choose File
+                      </span>
+                    </Button>
+                  </label>
+                  {file && (
+                    <div className="text-sm text-muted-foreground">
+                      Selected: {file.name} ({Math.round(file.size / 1024)} KB)
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Processing Progress & Cool Log Output */}
+              {(isProcessing || isImporting || uploadProgress > 0) && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span className="text-sm">Processing JSON file...</span>
+                  </div>
+                  <Progress value={uploadProgress} className="w-full" />
+                  {/* Cool scrolling log output */}
+                  <div
+                    ref={logRef}
+                    className="mt-2 max-h-48 overflow-y-auto rounded bg-black/80 text-xs font-mono text-white p-2 border border-gray-700 animate-fade-in"
+                    style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }}
+                  >
+                    {logLines.length === 0 ? (
+                      <span className="text-gray-400">Waiting for log output...</span>
+                    ) : (
+                      logLines.map((line, idx) => {
+                        let color = 'text-gray-200';
+                        if (line.includes('✅')) color = 'text-green-400';
+                        if (line.includes('❌')) color = 'text-red-400';
+                        if (line.includes('🕷️')) color = 'text-pink-400';
+                        if (line.includes('📄') || line.includes('📊')) color = 'text-blue-400';
+                        return (
+                          <div key={idx} className={color + ' transition-all'}>
+                            {line}
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Preview Button */}
+              {file && !isProcessing && (
+                <Button 
+                  onClick={() => processFile('preview')} 
+                  className="w-full"
+                  disabled={isProcessing}
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  Preview Data Extraction
+                </Button>
+              )}
+
+              {/* Preview Results */}
+              {importResult && importResult.mode === 'preview' && (
+                <div className="space-y-4">
+                  {importResult.success ? (
+                    <>
+                      {/* Summary Statistics */}
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-lg">Extraction Summary</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                            <div className="text-center p-3 bg-blue-50 dark:bg-blue-950 rounded">
+                              <div className="text-2xl font-bold text-blue-600">{importResult.summary.totalExtracted}</div>
+                              <div className="text-sm text-blue-600">Extracted</div>
+                            </div>
+                            <div className="text-center p-3 bg-green-50 dark:bg-green-950 rounded">
+                              <div className="text-2xl font-bold text-green-600">{importResult.summary.highConfidenceMatches}</div>
+                              <div className="text-sm text-green-600">High Match</div>
+                            </div>
+                            <div className="text-center p-3 bg-yellow-50 dark:bg-yellow-950 rounded">
+                              <div className="text-2xl font-bold text-yellow-600">{importResult.summary.mediumConfidenceMatches}</div>
+                              <div className="text-sm text-yellow-600">Medium Match</div>
+                            </div>
+                            <div className="text-center p-3 bg-orange-50 dark:bg-orange-950 rounded">
+                              <div className="text-2xl font-bold text-orange-600">{importResult.summary.lowConfidenceMatches}</div>
+                              <div className="text-sm text-orange-600">Low Match</div>
+                            </div>
+                            <div className="text-center p-3 bg-gray-50 dark:bg-gray-950 rounded">
+                              <div className="text-2xl font-bold text-gray-600">{importResult.summary.noMatches}</div>
+                              <div className="text-sm text-gray-600">No Match</div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Selection Controls */}
+                      <div className="flex gap-2 flex-wrap">
+                        <Button variant="outline" size="sm" onClick={selectAllHighConfidence}>
+                          Select High Confidence
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={selectAll}>
+                          Select All
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={selectNone}>
+                          Select None
+                        </Button>
+                        <div className="text-sm text-muted-foreground flex items-center">
+                          {selectedMatches.size} of {importResult.matches.length} selected
+                        </div>
+                      </div>
+
+                      {/* Matches Table */}
+                      <div className="space-y-3">
+                        <h3 className="text-lg font-semibold">Club Matches</h3>
+                        {importResult.matches.map((match: ClubMatch) => (
+                          <Card key={match.clubId} className="relative">
+                            <CardContent className="p-4">
+                              <div className="flex items-start gap-4">
+                                <Checkbox
+                                  checked={selectedMatches.has(match.clubId)}
+                                  onCheckedChange={(checked) => 
+                                    handleMatchSelection(match.clubId, checked as boolean)
+                                  }
+                                  className="mt-1"
+                                />
+                                <div className="flex-1 space-y-3">
+                                  <div className="flex items-center justify-between">
+                                    <div>
+                                      <h4 className="font-semibold">{match.existingClubName}</h4>
+                                      <p className="text-sm text-muted-foreground">
+                                        Extracted as: {match.extractedData.name}
+                                      </p>
+                                    </div>
+                                    {getMatchBadge(match)}
+                                  </div>
+                                  
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                      <h5 className="font-medium text-sm mb-2">Extracted Data:</h5>
+                                      <div className="space-y-1 text-sm">
+                                        {match.extractedData.address && (
+                                          <div className="flex items-center gap-2">
+                                            <MapPin className="h-3 w-3 text-muted-foreground" />
+                                            <span>{match.extractedData.address}</span>
+                                          </div>
+                                        )}
+                                        {match.extractedData.phone && (
+                                          <div className="flex items-center gap-2">
+                                            <Phone className="h-3 w-3 text-muted-foreground" />
+                                            <span>{match.extractedData.phone}</span>
+                                          </div>
+                                        )}
+                                        {match.extractedData.email && (
+                                          <div className="flex items-center gap-2">
+                                            <Mail className="h-3 w-3 text-muted-foreground" />
+                                            <span>{match.extractedData.email}</span>
+                                          </div>
+                                        )}
+                                        {match.extractedData.website && (
+                                          <div className="flex items-center gap-2">
+                                            <Globe className="h-3 w-3 text-muted-foreground" />
+                                            <a 
+                                              href={match.extractedData.website} 
+                                              target="_blank" 
+                                              rel="noopener noreferrer"
+                                              className="text-blue-600 hover:underline"
+                                            >
+                                              Website
+                                            </a>
+                                          </div>
+                                        )}
+                                        {match.extractedData.logoUrl && (
+                                          <div className="flex items-center gap-2">
+                                            <Eye className="h-3 w-3 text-muted-foreground" />
+                                            <a 
+                                              href={match.extractedData.logoUrl} 
+                                              target="_blank" 
+                                              rel="noopener noreferrer"
+                                              className="text-blue-600 hover:underline"
+                                            >
+                                              Logo Image
+                                            </a>
+                                          </div>
+                                        )}
+                                        {match.extractedData.contactPerson && (
+                                          <div className="flex items-center gap-2">
+                                            <User className="h-3 w-3 text-muted-foreground" />
+                                            <span>{match.extractedData.contactPerson} 
+                                              {match.extractedData.contactRole && ` (${match.extractedData.contactRole})`}
+                                            </span>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                    
+                                    {match.extractedData.logoUrl && (
+                                      <div>
+                                        <h5 className="font-medium text-sm mb-2">Club Logo:</h5>
+                                        <img 
+                                          src={match.extractedData.logoUrl} 
+                                          alt={`${match.extractedData.name} logo`}
+                                          className="max-w-24 max-h-24 object-contain border rounded"
+                                          onError={(e) => {
+                                            const target = e.target as HTMLImageElement;
+                                            target.style.display = 'none';
+                                          }}
+                                        />
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+
+                      {/* Import Button */}
+                      {selectedMatches.size > 0 && (
+                        <Button 
+                          onClick={() => processFile('import')} 
+                          className="w-full"
+                          disabled={isImporting}
+                        >
+                          {isImporting ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Importing {selectedMatches.size} Clubs...
+                            </>
+                          ) : (
+                            <>
+                              <Download className="h-4 w-4 mr-2" />
+                              Import {selectedMatches.size} Selected Clubs
+                            </>
+                          )}
+                        </Button>
+                      )}
+                    </>
+                  ) : (
+                    <Alert>
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        {importResult.error || 'Failed to extract club data from the file'}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="results" className="space-y-4">
+              {importResult && importResult.mode === 'import' && (
+                <div className="space-y-4">
+                  {importResult.success ? (
+                    <Alert className="border-green-200 bg-green-50 dark:bg-green-950">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <AlertDescription className="text-green-800 dark:text-green-200">
+                        Successfully imported club data! Updated {importResult.summary.imported} clubs.
+                        {importResult.summary.skipped! > 0 && ` Skipped ${importResult.summary.skipped} clubs.`}
+                      </AlertDescription>
+                    </Alert>
+                  ) : (
+                    <Alert>
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        Import failed: {importResult.error}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

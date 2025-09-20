@@ -1,9 +1,9 @@
-import { Router } from "express";
+import {Router} from "express";
 import {
   generateEventRequestPdfHandler,
   getEventRequestPdfInfo,
 } from "./event-request";
-import { postCalendarPdfHandler, getCalendarPdfInfo } from "./calendar";
+import {postCalendarPdfHandler, getCalendarPdfInfo} from "./calendar";
 
 const router = Router();
 

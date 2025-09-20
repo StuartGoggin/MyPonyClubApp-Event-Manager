@@ -1,5 +1,5 @@
-import { adminDb, getDatabaseStatus } from "./firebase-admin";
-import type { Club, Zone } from "./types";
+import {adminDb, getDatabaseStatus} from "./firebase-admin";
+import type {Club, Zone} from "./types";
 
 /**
  * Check if database is connected
@@ -14,14 +14,14 @@ function isDatabaseConnected(): boolean {
 function getDatabaseErrorMessage(): string {
   const status = getDatabaseStatus();
   switch (status) {
-    case "disconnected":
-      return "Database not connected";
-    case "error":
-      return "Database connection error";
-    case "unknown":
-      return "Database status unknown";
-    default:
-      return "Database connection issue";
+  case "disconnected":
+    return "Database not connected";
+  case "error":
+    return "Database connection error";
+  case "unknown":
+    return "Database status unknown";
+  default:
+    return "Database connection issue";
   }
 }
 
@@ -41,7 +41,7 @@ export async function getAllClubs(): Promise<Club[]> {
 
     clubsSnapshot.forEach((doc: any) => {
       if (doc.exists) {
-        clubs.push({ id: doc.id, ...doc.data() } as Club);
+        clubs.push({id: doc.id, ...doc.data()} as Club);
       }
     });
 
@@ -76,7 +76,7 @@ export async function getClubById(id: string): Promise<Club | null> {
     const doc = await adminDb.collection("clubs").doc(id).get();
 
     if (doc.exists) {
-      return { id: doc.id, ...doc.data() } as Club;
+      return {id: doc.id, ...doc.data()} as Club;
     }
 
     return null;
@@ -100,7 +100,7 @@ export async function updateClub(
     }
 
     // Remove the id from the data if it exists to avoid overwriting it
-    const { id: _, ...dataToUpdate } = clubData as Club;
+    const {id: _, ...dataToUpdate} = clubData as Club;
 
     await adminDb.collection("clubs").doc(id).update(dataToUpdate);
 
@@ -127,7 +127,7 @@ export async function createClub(
     const docRef = await adminDb.collection("clubs").add(clubData);
 
     // Return the created club with its new ID
-    return { id: docRef.id, ...clubData };
+    return {id: docRef.id, ...clubData};
   } catch (error) {
     console.error("Error creating club:", error);
     return null;
@@ -150,7 +150,7 @@ export async function getAllZones(): Promise<Zone[]> {
 
     zonesSnapshot.forEach((doc: any) => {
       if (doc.exists) {
-        zones.push({ id: doc.id, ...doc.data() } as Zone);
+        zones.push({id: doc.id, ...doc.data()} as Zone);
       }
     });
 
@@ -181,7 +181,7 @@ export async function getAllEvents(): Promise<any[]> {
         if (data.date && typeof data.date.toDate === "function") {
           data.date = data.date.toDate();
         }
-        events.push({ id: doc.id, ...data });
+        events.push({id: doc.id, ...data});
       }
     });
 
@@ -207,7 +207,7 @@ export async function getAllEventTypes(): Promise<any[]> {
 
     eventTypesSnapshot.forEach((doc: any) => {
       if (doc.exists) {
-        eventTypes.push({ id: doc.id, ...doc.data() });
+        eventTypes.push({id: doc.id, ...doc.data()});
       }
     });
 

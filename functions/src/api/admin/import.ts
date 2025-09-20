@@ -1,13 +1,13 @@
-import { Request, Response } from "express";
-import { logger } from "firebase-functions/v2";
-import { checkAdminAccess } from "../../lib/auth-middleware";
+import {Request, Response} from "express";
+import {logger} from "firebase-functions/v2";
+import {checkAdminAccess} from "../../lib/auth-middleware";
 
 // Data import functionality for bulk operations
 
 export async function importData(req: Request, res: Response) {
   try {
     // Check admin authentication
-    const { authorized, user } = await checkAdminAccess(req);
+    const {authorized, user} = await checkAdminAccess(req);
     if (!authorized) {
       logger.warn("Unauthorized access attempt to admin data import");
       return res.status(401).json({

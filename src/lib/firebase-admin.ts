@@ -4,24 +4,34 @@ import * as admin from 'firebase-admin';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 
-// Don't initialize during build time or if env var is missing
-const serviceAccountStr = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-
 export type DatabaseStatus = 'connected' | 'disconnected' | 'error' | 'unknown';
 
 let adminDb: any = null;
 let storageInstance: any = null;
 let dbConnectionStatus: DatabaseStatus = 'unknown';
 
-// Only initialize if we have credentials and we're not in a build context
-if (serviceAccountStr) {
+// Initialize Firebase Admin SDK
+function initializeFirebaseAdmin() {
+    if (admin.apps.length > 0) {
+        // Already initialized
+        adminDb = getFirestore();
+        storageInstance = getStorage();
+        dbConnectionStatus = 'connected';
+        return;
+    }
+
     try {
-        if (!admin.apps.length) {
+        // Check for service account key (for local development)
+        const serviceAccountStr = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+        
+        if (serviceAccountStr) {
+            // Local development with explicit service account
+            console.log('🔑 Using explicit service account credentials');
             const serviceAccount = JSON.parse(serviceAccountStr);
+            
             // Handle private key formatting - check if it needs newline replacement
             let formattedPrivateKey = serviceAccount.private_key;
             if (formattedPrivateKey.includes('\\n')) {
-                // The private_key has escaped newlines, replace with actual newlines
                 formattedPrivateKey = formattedPrivateKey.replace(/\\n/g, '\n');
             }
 
@@ -32,40 +42,42 @@ if (serviceAccountStr) {
                 }),
                 storageBucket: `${serviceAccount.project_id}.firebasestorage.app`,
             });
-            
-            // Get Firestore instance and configure it only when first initializing
-            adminDb = getFirestore();
-            adminDb.settings({ ignoreUndefinedProperties: true });
-            
-            // Get Storage instance
-            storageInstance = getStorage();
-            
-            dbConnectionStatus = 'connected';
-            console.log('✅ Firebase Admin SDK initialized successfully');
         } else {
-            // If app already exists, just get the existing Firestore instance
-            // Don't call settings() again as it can only be called once
-            adminDb = getFirestore();
-            storageInstance = getStorage();
-            dbConnectionStatus = 'connected';
-            console.log('✅ Using existing Firebase Admin SDK instance');
+            // Production environment (Firebase App Hosting) - use default credentials
+            console.log('🏠 Using Firebase App Hosting default credentials');
+            admin.initializeApp({
+                // Firebase App Hosting automatically provides credentials
+                storageBucket: 'ponyclub-events.firebasestorage.app',
+            });
         }
+        
+        // Get Firestore instance and configure it
+        adminDb = getFirestore();
+        adminDb.settings({ ignoreUndefinedProperties: true });
+        
+        // Get Storage instance
+        storageInstance = getStorage();
+        
+        dbConnectionStatus = 'connected';
+        console.log('✅ Firebase Admin SDK initialized successfully');
+        
     } catch (error: any) {
-        console.error('❌ Failed to initialize Firebase Admin SDK:', error.message);
+        console.error('❌ Firebase Admin SDK initialization failed:', error.message);
         console.error('❌ Full error:', error);
         dbConnectionStatus = 'error';
-        // Only throw in development or when we're supposed to have credentials
-        if (process.env.NODE_ENV === 'development') {
+        
+        // Only throw in development
+        if (process.env.NODE_ENV === 'development' && process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
             throw new Error(`Failed to parse FIREBASE_SERVICE_ACCOUNT_KEY: ${error.message}`);
         }
+        
         // In production, just log the error and continue
         console.log('⚠️ Continuing without Firebase Admin SDK in production build environment');
     }
-} else {
-    console.log('⚠️ Firebase Admin SDK not initialized: Missing FIREBASE_SERVICE_ACCOUNT_KEY');
-    console.log('ℹ️  This is expected during build time or when credentials are not configured');
-    dbConnectionStatus = 'disconnected';
 }
+
+// Initialize immediately
+initializeFirebaseAdmin();
 
 // Helper function to check database connection
 export const isDatabaseConnected = () => {

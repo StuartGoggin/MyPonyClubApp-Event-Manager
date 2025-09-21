@@ -45,6 +45,243 @@ interface ClubMatch {
   suggestedAction: 'update' | 'review' | 'skip';
 }
 
+// Club Logos Tab Component
+function ClubLogosTab() {
+  const [logoStats, setLogoStats] = useState<{
+    totalClubs: number;
+    clubsWithLogoIds: number;
+    clubsWithPcaIds: number;
+  } | null>(null);
+  const [downloadedLogos, setDownloadedLogos] = useState<any[]>([]);
+  const [selectedLogos, setSelectedLogos] = useState<Set<string>>(new Set());
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isStoring, setIsStoring] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
+
+  // Fetch logo statistics on component mount
+  useEffect(() => {
+    fetchLogoStats();
+  }, []);
+
+  const fetchLogoStats = async () => {
+    try {
+      const response = await fetch('/api/admin/download-club-logos');
+      if (response.ok) {
+        const data = await response.json();
+        setLogoStats({
+          totalClubs: data.summary.totalClubs,
+          clubsWithLogoIds: data.summary.clubsWithPcaIds,
+          clubsWithPcaIds: data.summary.clubsWithPcaIds
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching logo stats:', error);
+    }
+  };
+
+  const downloadAllLogos = async () => {
+    setIsDownloading(true);
+    setDownloadProgress(0);
+    try {
+      const response = await fetch('/api/admin/download-club-logos?download=true');
+      if (response.ok) {
+        const data = await response.json();
+        setDownloadedLogos(data.downloads || []);
+        setDownloadProgress(100);
+      }
+    } catch (error) {
+      console.error('Error downloading logos:', error);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const storeSelectedLogos = async () => {
+    const selectedLogoData = downloadedLogos.filter(logo => 
+      selectedLogos.has(logo.clubId)
+    );
+
+    setIsStoring(true);
+    try {
+      const response = await fetch('/api/admin/store-club-logos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ selectedLogos: selectedLogoData })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        alert(`Successfully stored ${result.summary.successfulStores} logos`);
+        setSelectedLogos(new Set());
+      }
+    } catch (error) {
+      console.error('Error storing logos:', error);
+      alert('Error storing logos');
+    } finally {
+      setIsStoring(false);
+    }
+  };
+
+  const toggleLogoSelection = (clubId: string) => {
+    const newSelected = new Set(selectedLogos);
+    if (newSelected.has(clubId)) {
+      newSelected.delete(clubId);
+    } else {
+      newSelected.add(clubId);
+    }
+    setSelectedLogos(newSelected);
+  };
+
+  const selectAllLogos = () => {
+    setSelectedLogos(new Set(downloadedLogos.map(logo => logo.clubId)));
+  };
+
+  const deselectAllLogos = () => {
+    setSelectedLogos(new Set());
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Logo Statistics */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Globe className="h-5 w-5 text-blue-600" />
+            Club Logo Statistics
+          </CardTitle>
+          <CardDescription>
+            Overview of clubs with PCA logo IDs available for download
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {logoStats ? (
+            <div className="grid grid-cols-3 gap-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold">{logoStats.totalClubs}</div>
+                <div className="text-sm text-muted-foreground">Total Clubs</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-600">{logoStats.clubsWithLogoIds}</div>
+                <div className="text-sm text-muted-foreground">With Logo IDs</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-600">{logoStats.clubsWithPcaIds}</div>
+                <div className="text-sm text-muted-foreground">Available for Download</div>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-4">
+              <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+              <p>Loading statistics...</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Download Controls */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Download Club Logos</CardTitle>
+          <CardDescription>
+            Download club logos from Pony Club Australia system
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex gap-2">
+            <Button 
+              onClick={downloadAllLogos} 
+              disabled={isDownloading || !logoStats?.clubsWithPcaIds}
+            >
+              {isDownloading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Downloading...
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4 mr-2" />
+                  Download All Logos
+                </>
+              )}
+            </Button>
+          </div>
+
+          {isDownloading && downloadProgress > 0 && (
+            <Progress value={downloadProgress} className="w-full" />
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Downloaded Logos Preview */}
+      {downloadedLogos.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span>Downloaded Logos ({downloadedLogos.length})</span>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={selectAllLogos}>
+                  Select All
+                </Button>
+                <Button variant="outline" size="sm" onClick={deselectAllLogos}>
+                  Deselect All
+                </Button>
+                <Button 
+                  onClick={storeSelectedLogos}
+                  disabled={selectedLogos.size === 0 || isStoring}
+                  size="sm"
+                >
+                  {isStoring ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Storing...
+                    </>
+                  ) : (
+                    `Store Selected (${selectedLogos.size})`
+                  )}
+                </Button>
+              </div>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {downloadedLogos.map((logo) => (
+                <Card key={logo.clubId} className="overflow-hidden">
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <Checkbox
+                        checked={selectedLogos.has(logo.clubId)}
+                        onCheckedChange={() => toggleLogoSelection(logo.clubId)}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-sm truncate">
+                          {logo.clubName}
+                        </div>
+                        <div className="mt-2">
+                          <img
+                            src={logo.logoData}
+                            alt={`${logo.clubName} logo`}
+                            className="w-16 h-16 object-contain border rounded"
+                            onError={(e) => {
+                              e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0yMS4zMzMzIDIxLjMzMzNIMzJWMzJIMjEuMzMzM1YyMS4zMzMzWiIgZmlsbD0iIzlDQTNBRiIvPgo8cGF0aCBkPSJNMzIgMjEuMzMzM0g0Mi42NjY3VjMySDMyVjIxLjMzMzNaIiBmaWxsPSIjOUNBM0FGIi8+CjxwYXRoIGQ9Ik0yMS4zMzMzIDMySDMyVjQyLjY2NjdIMjEuMzMzM1YzMloiIGZpbGw9IiM5Q0EzQUYiLz4KPHA+';
+                            }}
+                          />
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {logo.contentType}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
 export function PCADataImporter() {
   const [file, setFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -249,6 +486,7 @@ export function PCADataImporter() {
           <Tabs defaultValue="upload" className="w-full">
             <TabsList>
               <TabsTrigger value="upload">Upload & Preview</TabsTrigger>
+              <TabsTrigger value="clublogos">Club Logos</TabsTrigger>
               {importResult && <TabsTrigger value="results">Import Results</TabsTrigger>}
             </TabsList>
 
@@ -585,6 +823,10 @@ export function PCADataImporter() {
                   )}
                 </div>
               )}
+            </TabsContent>
+
+            <TabsContent value="clublogos" className="space-y-4">
+              <ClubLogosTab />
             </TabsContent>
 
             <TabsContent value="results" className="space-y-4">

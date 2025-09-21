@@ -68,8 +68,14 @@ export function PCADataImporter() {
     if (!file) return;
     if (mode === 'preview') setIsProcessing(true);
     if (mode === 'import') setIsImporting(true);
+    
     try {
+      console.log(`[PCADataImporter] Starting ${mode} for file:`, file.name, `(${file.size} bytes)`);
+      
       const fileContent = await file.text();
+      console.log(`[PCADataImporter] File content length: ${fileContent.length} characters`);
+      console.log(`[PCADataImporter] Content preview:`, fileContent.substring(0, 200));
+      
       // Send to API for processing
       const response = await fetch('/api/admin/import-pca-data', {
         method: 'POST',
@@ -82,8 +88,20 @@ export function PCADataImporter() {
           selectedMatches: mode === 'import' ? Array.from(selectedMatches) : undefined
         }),
       });
+      
+      console.log(`[PCADataImporter] API response status:`, response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[PCADataImporter] API request failed:`, response.status, errorText);
+        throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+      }
+      
       const result = await response.json();
+      console.log(`[PCADataImporter] API result:`, result);
+      
       setImportResult(result);
+      
       // Auto-select high confidence matches for preview
       if (mode === 'preview' && result.success) {
         const autoSelected = new Set<string>();
@@ -93,10 +111,29 @@ export function PCADataImporter() {
         setSelectedMatches(autoSelected);
       }
     } catch (error) {
+      console.error(`[PCADataImporter] Error during ${mode}:`, error);
+      
+      // Create detailed error information
+      const errorDetails = [];
+      if (error instanceof Error) {
+        errorDetails.push(`Error: ${error.message}`);
+      }
+      
+      // Add file information to help with debugging
+      errorDetails.push(`File: ${file.name} (${file.size} bytes)`);
+      errorDetails.push(`File type: ${file.type || 'unknown'}`);
+      
+      // Add troubleshooting tips
+      errorDetails.push('Troubleshooting tips:');
+      errorDetails.push('• Ensure the file is valid JSON format');
+      errorDetails.push('• Check that the JSON contains an array of club objects');
+      errorDetails.push('• Verify club objects have "Name", "club_name", or "name" fields');
+      errorDetails.push('• Make sure the file is not corrupted or truncated');
+      
       setImportResult({
         success: false,
         mode,
-        error: 'Failed to process file',
+        error: error instanceof Error ? error.message : 'Failed to process file',
         matches: [],
         summary: {
           totalExtracted: 0,
@@ -104,7 +141,8 @@ export function PCADataImporter() {
           mediumConfidenceMatches: 0,
           lowConfidenceMatches: 0,
           noMatches: 0
-        }
+        },
+        diagnostics: errorDetails
       });
     } finally {
       setIsProcessing(false);
@@ -243,6 +281,11 @@ export function PCADataImporter() {
                   {file && (
                     <div className="text-sm text-muted-foreground">
                       Selected: {file.name} ({Math.round(file.size / 1024)} KB)
+                      {file.size > 0 && (
+                        <div className="mt-1 text-xs">
+                          Last modified: {new Date(file.lastModified).toLocaleString()}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -474,12 +517,71 @@ export function PCADataImporter() {
                       )}
                     </>
                   ) : (
-                    <Alert>
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>
-                        {importResult.error || 'Failed to extract club data from the file'}
-                      </AlertDescription>
-                    </Alert>
+                    <div className="space-y-4">
+                      <Alert>
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>
+                          {importResult.error || 'Failed to extract club data from the file'}
+                        </AlertDescription>
+                      </Alert>
+                      
+                      {/* Enhanced Diagnostics */}
+                      {(importResult as any).diagnostics && (
+                        <Card className="border-orange-200 bg-orange-50 dark:bg-orange-950">
+                          <CardHeader className="pb-3">
+                            <CardTitle className="text-orange-800 dark:text-orange-200 flex items-center gap-2">
+                              <AlertCircle className="h-5 w-5" />
+                              Diagnostic Information
+                            </CardTitle>
+                            <CardDescription className="text-orange-700 dark:text-orange-300">
+                              Detailed information to help troubleshoot the import issue
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="space-y-2">
+                              {(importResult as any).diagnostics.map((diagnostic: string, index: number) => (
+                                <div key={index} className="flex items-start gap-2 text-sm">
+                                  <div className="text-orange-600 dark:text-orange-400 font-mono">•</div>
+                                  <div className="text-orange-800 dark:text-orange-200">{diagnostic}</div>
+                                </div>
+                              ))}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+                      
+                      {/* File Information */}
+                      {file && (
+                        <Card className="border-blue-200 bg-blue-50 dark:bg-blue-950">
+                          <CardHeader className="pb-3">
+                            <CardTitle className="text-blue-800 dark:text-blue-200 flex items-center gap-2">
+                              <FileText className="h-5 w-5" />
+                              File Information
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="space-y-2 text-sm">
+                              <div className="flex justify-between">
+                                <span className="font-medium text-blue-700 dark:text-blue-300">Name:</span>
+                                <span className="text-blue-800 dark:text-blue-200">{file.name}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="font-medium text-blue-700 dark:text-blue-300">Size:</span>
+                                <span className="text-blue-800 dark:text-blue-200">{Math.round(file.size / 1024)} KB</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="font-medium text-blue-700 dark:text-blue-300">Type:</span>
+                                <span className="text-blue-800 dark:text-blue-200">{file.type || 'unknown'}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="font-medium text-blue-700 dark:text-blue-300">Last Modified:</span>
+                                <span className="text-blue-800 dark:text-blue-200">{new Date(file.lastModified).toLocaleString()}</span>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+                    </div>
                   )}
                 </div>
               )}
@@ -497,12 +599,39 @@ export function PCADataImporter() {
                       </AlertDescription>
                     </Alert>
                   ) : (
-                    <Alert>
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>
-                        Import failed: {importResult.error}
-                      </AlertDescription>
-                    </Alert>
+                    <div className="space-y-4">
+                      <Alert>
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>
+                          Import failed: {importResult.error}
+                        </AlertDescription>
+                      </Alert>
+                      
+                      {/* Enhanced Diagnostics for Import Failures */}
+                      {(importResult as any).diagnostics && (
+                        <Card className="border-red-200 bg-red-50 dark:bg-red-950">
+                          <CardHeader className="pb-3">
+                            <CardTitle className="text-red-800 dark:text-red-200 flex items-center gap-2">
+                              <XCircle className="h-5 w-5" />
+                              Import Failure Details
+                            </CardTitle>
+                            <CardDescription className="text-red-700 dark:text-red-300">
+                              Information about what went wrong during the import process
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="space-y-2">
+                              {(importResult as any).diagnostics.map((diagnostic: string, index: number) => (
+                                <div key={index} className="flex items-start gap-2 text-sm">
+                                  <div className="text-red-600 dark:text-red-400 font-mono">•</div>
+                                  <div className="text-red-800 dark:text-red-200">{diagnostic}</div>
+                                </div>
+                              ))}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+                    </div>
                   )}
                 </div>
               )}

@@ -16,7 +16,7 @@ import { ImportPreviewDialog } from '@/components/admin/import-preview-dialog';
 import { UserActionsDialog } from '@/components/admin/user-actions-dialog';
 import AdvancedUserImport from '@/components/admin/advanced-user-import';
 import ImportTemplateCard from '@/components/admin/import-template-card';
-import { ImportPreviewResult } from '@/app/api/admin/users/import/preview/route';
+import { ImportPreviewResult } from '@/types/import';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   DropdownMenu,

@@ -2,7 +2,12 @@
 'use client';
 
 import { useState } from 'react';
-import { callSeedData } from '@/lib/serverActions';
+// import { callSeedData } from '@/lib/serverActions';
+
+// Stub for static export
+const callSeedData = async () => {
+  throw new Error('Server Actions not available in static export mode');
+};
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle, AlertTriangle, Trash2, Database, Download, FileText } from 'lucide-react';

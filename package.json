@@ -8,6 +8,7 @@
     "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
     "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
     "build": "next build",
+    "build:export": "next build && next export",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
@@ -18,7 +19,9 @@
     "test:apis:verbose": "node test-migrated-apis.js --verbose",
     "test:email-queue": "node test-email-queue.js",
     "test:email-queue:verbose": "node test-email-queue.js --verbose",
-    "test:all": "npm run test:migration && npm run test:apis && npm run test:email-queue"
+    "test:all": "npm run test:migration && npm run test:apis && npm run test:email-queue",
+    "predeploy": "npm run build",
+    "deploy": "npm run predeploy && firebase deploy"
   },
   "dependencies": {
     "@genkit-ai/firebase": "^1.16.0",

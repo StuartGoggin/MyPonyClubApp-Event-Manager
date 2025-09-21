@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle, AlertTriangle, X, FileText, Users, AlertCircle } from 'lucide-react';
-import { ImportPreviewResult } from '@/app/api/admin/users/import/preview/route';
+import { ImportPreviewResult } from '@/types/import';
 
 interface ImportPreviewDialogProps {
   isOpen: boolean;

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { loadFromClubZoneData } from '@/lib/serverActions';
+import { loadFromClubZoneData } from '@/lib/actions';
 import { type ZoneData } from '@/lib/data-processor';
 
 export async function POST(request: NextRequest) {

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { callSeedData } from '@/lib/serverActions';
+import { callSeedData } from '@/lib/actions';
 
 export async function POST() {
   try {

@@ -1,7 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  /* config options here */
+  // Restored for full Next.js functionality with Firebase App Hosting
+  // output: 'export', // Removed - using server-side rendering
+  // trailingSlash: true, // Removed - using default Next.js routing
+  
+  // Enable image optimization for server deployment
   images: {
+    unoptimized: false, // Re-enable optimization
     remotePatterns: [
       {
         protocol: 'https',
@@ -11,18 +16,25 @@ const nextConfig = {
       },
     ],
   },
+  
+  // Environment variables for build-time only (non-sensitive)
+  env: {
+    NEXT_PUBLIC_FIREBASE_PROJECT_ID: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  },
+  
+  // Webpack configuration
   webpack: (config, { isServer }) => {
-    if (isServer) {
-      config.externals.push('firebase-admin');
-    }
-
     config.experiments = {
       ...config.experiments,
       asyncWebAssembly: true,
-      // If you need syncWebAssembly, add: syncWebAssembly: true
     };
     
     return config;
+  },
+  
+  // TypeScript configuration
+  typescript: {
+    ignoreBuildErrors: false,
   },
 };
 

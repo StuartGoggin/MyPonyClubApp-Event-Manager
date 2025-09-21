@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 
+// Force dynamic rendering
+export const runtime = 'nodejs';
+
 interface ClubWithPcaId {
   id: string;
   name: string;

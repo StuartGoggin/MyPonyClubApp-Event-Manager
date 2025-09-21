@@ -164,12 +164,17 @@ export async function GET(request: Request) {
         // Use logoUrl field if it has PCA ID, otherwise use image field
         const logoUrlField = club.logoUrl;
         const imageField = club.image;
-        const docId = club.DocId;
+        const docId = club.docId; // Note: docId is lowercase in the club data
         
         const hasLogoUrl = logoUrlField && typeof logoUrlField === 'string' && 
                           logoUrlField.match(/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\.png/i);
         
         const logoId = hasLogoUrl ? logoUrlField : imageField;
+        
+        // Only include clubs that have both logoId and docId
+        if (!logoId || !docId) {
+          return null;
+        }
         
         return {
           id: club.id,
@@ -178,7 +183,8 @@ export async function GET(request: Request) {
           docId: docId,
           fullUrl: formatPcaLogoUrl(logoId, docId)
         };
-      });
+      })
+      .filter((club: any) => club !== null); // Remove null entries
 
     console.log(`Found ${clubsWithPcaIds.length} clubs with PCA logo IDs`);
 

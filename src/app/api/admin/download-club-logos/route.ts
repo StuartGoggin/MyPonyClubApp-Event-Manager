@@ -5,6 +5,7 @@ interface ClubWithPcaId {
   id: string;
   name: string;
   logoUrlId: string;
+  docId: number;
   fullUrl: string;
 }
 
@@ -28,11 +29,11 @@ interface DownloadClubLogosResponse {
 }
 
 // Function to format PCA logo URL
-function formatPcaLogoUrl(logoId: string): string {
-  // Remove any existing URL parts if logoId contains them
-  const cleanId = logoId.replace(/^.*[\/\\]/, ''); // Remove any path prefix
+function formatPcaLogoUrl(logoId: string, docId: number): string {
+  // Extract GUID from logoId (remove .png extension if present)
+  const cleanId = logoId.replace(/\.png$/i, '');
   
-  return `https://pca.justgo.com/Store/DownloadPublic?f=${cleanId}&t=repo&p=248547&p1=&p2=2`;
+  return `https://pca.justgo.com/Store/DownloadPublic?f=${cleanId}&t=repo&p=${docId}&p1=&p2=2`;
 }
 
 // Function to download a single logo
@@ -137,11 +138,17 @@ export async function GET(request: Request) {
 
     console.log(`Found ${clubs.length} total clubs`);
 
-    // Find clubs with PCA logo IDs - check both logoUrl and image fields
+    // Find clubs with PCA logo IDs - check both logoUrl and image fields, and ensure DocId exists
     const clubsWithPcaIds: ClubWithPcaId[] = clubs
       .filter((club: any) => {
         const logoUrl = club.logoUrl;
         const imageField = club.image;
+        const docId = club.DocId;
+        
+        // Must have a DocId to construct the URL
+        if (!docId || typeof docId !== 'number') {
+          return false;
+        }
         
         // Check if logoUrl field contains a PCA logo ID (GUID.png format)
         const hasLogoUrl = logoUrl && typeof logoUrl === 'string' && 
@@ -157,6 +164,7 @@ export async function GET(request: Request) {
         // Use logoUrl field if it has PCA ID, otherwise use image field
         const logoUrlField = club.logoUrl;
         const imageField = club.image;
+        const docId = club.DocId;
         
         const hasLogoUrl = logoUrlField && typeof logoUrlField === 'string' && 
                           logoUrlField.match(/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\.png/i);
@@ -167,7 +175,8 @@ export async function GET(request: Request) {
           id: club.id,
           name: club.name || 'Unknown Club',
           logoUrlId: logoId,
-          fullUrl: formatPcaLogoUrl(logoId)
+          docId: docId,
+          fullUrl: formatPcaLogoUrl(logoId, docId)
         };
       });
 

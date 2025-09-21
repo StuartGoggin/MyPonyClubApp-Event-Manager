@@ -8,14 +8,10 @@ runConfig:
   # memoryMiB: 512
 
 # Environment variables and secrets.
-# env:
+env:
   # Configure environment variables.
-  # See https://firebase.google.com/docs/app-hosting/configure#user-defined-environment
-  # - variable: MESSAGE
-  #   value: Hello world!
-  #   availability:
-  #     - BUILD
-  #     - RUNTIME
+  # Note: Firebase Admin SDK credentials are automatically provided by App Hosting
+  # when running in the Firebase environment. No manual configuration needed.
 
   # Grant access to secrets in Cloud Secret Manager.
   # See https://firebase.google.com/docs/app-hosting/configure#secret-parameters

@@ -138,14 +138,14 @@ export async function GET(request: Request) {
 
     console.log(`Found ${clubs.length} total clubs`);
 
-    // Find clubs with PCA logo IDs - check both logoUrl and image fields, and ensure DocId exists
+    // Find clubs with PCA logo IDs - check both logoUrl and image fields, and ensure docId exists
     const clubsWithPcaIds: ClubWithPcaId[] = clubs
       .filter((club: any) => {
         const logoUrl = club.logoUrl;
         const imageField = club.image;
-        const docId = club.DocId;
+        const docId = club.docId; // Note: docId is lowercase in the club data
         
-        // Must have a DocId to construct the URL
+        // Must have a docId to construct the URL
         if (!docId || typeof docId !== 'number') {
           return false;
         }

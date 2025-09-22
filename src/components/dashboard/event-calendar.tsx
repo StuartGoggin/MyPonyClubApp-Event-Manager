@@ -629,6 +629,12 @@ const CalendarGrid = ({
     if (!clubId) return 'Unknown Club';
     return clubs.find(club => club.id === clubId)?.name || 'Unknown Club';
   };
+
+  // Helper function to get club logo URL from clubId
+  const getClubLogo = (clubId: string | undefined) => {
+    if (!clubId) return null;
+    return clubs.find(club => club.id === clubId)?.logoUrl || null;
+  };
   
   const weeks: Date[][] = [];
   let day = start;
@@ -766,6 +772,23 @@ const CalendarGrid = ({
                                     )}
                                   </div>
                                 </div>
+                                {/* Club Logo */}
+                                {event.source !== 'public_holiday' && getClubLogo(event.clubId) && (
+                                  <div className="flex-shrink-0">
+                                    <img 
+                                      src={getClubLogo(event.clubId)!} 
+                                      alt={`${getClubName(event.clubId)} logo`}
+                                      className={cn(
+                                        "rounded object-contain bg-white border border-gray-200",
+                                        isYearView ? "w-4 h-4" : "w-6 h-6"
+                                      )}
+                                      onError={(e) => {
+                                        // Hide the image if it fails to load
+                                        (e.target as HTMLImageElement).style.display = 'none';
+                                      }}
+                                    />
+                                  </div>
+                                )}
                               </div>
                             </button>
                           ))}

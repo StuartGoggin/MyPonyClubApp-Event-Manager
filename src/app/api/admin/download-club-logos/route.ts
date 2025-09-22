@@ -39,10 +39,8 @@ interface DownloadClubLogosResponse {
 
 // Function to format PCA logo URL
 function formatPcaLogoUrl(logoId: string, docId: number): string {
-  // Extract GUID from logoId (remove .png extension if present)
-  const cleanId = logoId.replace(/\.png$/i, '');
-  
-  return `https://pca.justgo.com/Store/DownloadPublic?f=${cleanId}&t=repo&p=${docId}&p1=&p2=2`;
+  // Use the logoId as-is, including the .png extension
+  return `https://pca.justgo.com/Store/DownloadPublic?f=${logoId}&t=repo&p=${docId}&p1=&p2=2`;
 }
 
 // Function to download a single logo

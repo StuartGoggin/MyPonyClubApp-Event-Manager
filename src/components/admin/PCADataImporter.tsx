@@ -21,7 +21,9 @@ import {
   Phone,
   Mail,
   MapPin,
-  User
+  User,
+  Link as LinkIcon,
+  ExternalLink
 } from 'lucide-react';
 
 interface ExtractedClubData {
@@ -52,6 +54,7 @@ function ClubLogosTab() {
     clubsWithLogoIds: number;
     clubsWithPcaIds: number;
   } | null>(null);
+  const [clubsWithPcaIds, setClubsWithPcaIds] = useState<any[]>([]);
   const [downloadedLogos, setDownloadedLogos] = useState<any[]>([]);
   const [selectedLogos, setSelectedLogos] = useState<Set<string>>(new Set());
   const [isDownloading, setIsDownloading] = useState(false);
@@ -73,6 +76,7 @@ function ClubLogosTab() {
           clubsWithLogoIds: data.summary.clubsWithPcaIds,
           clubsWithPcaIds: data.summary.clubsWithPcaIds
         });
+        setClubsWithPcaIds(data.clubsWithPcaIds || []);
       }
     } catch (error) {
       console.error('Error fetching logo stats:', error);
@@ -211,6 +215,57 @@ function ClubLogosTab() {
           )}
         </CardContent>
       </Card>
+
+      {/* Clubs with PCA IDs and URLs */}
+      {clubsWithPcaIds.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <LinkIcon className="h-5 w-5 text-blue-600" />
+              Clubs with PCA Logo URLs ({clubsWithPcaIds.length})
+            </CardTitle>
+            <CardDescription>
+              Clubs that have valid PCA logo IDs and constructed download URLs
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {clubsWithPcaIds.map((club) => (
+                <div key={club.id} className="border rounded-lg p-3 bg-gray-50">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="font-medium text-sm">{club.name}</div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Logo ID: <code className="bg-gray-200 px-1 rounded">{club.logoUrlId}</code>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Doc ID: <code className="bg-gray-200 px-1 rounded">{club.docId}</code>
+                      </div>
+                    </div>
+                    <div className="flex-shrink-0 ml-4">
+                      <a 
+                        href={club.fullUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200 transition-colors"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        View URL
+                      </a>
+                    </div>
+                  </div>
+                  <div className="mt-2 text-xs">
+                    <div className="text-muted-foreground mb-1">Constructed URL:</div>
+                    <code className="text-xs bg-white border rounded p-2 block break-all font-mono">
+                      {club.fullUrl}
+                    </code>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Downloaded Logos Preview */}
       {downloadedLogos.length > 0 && (

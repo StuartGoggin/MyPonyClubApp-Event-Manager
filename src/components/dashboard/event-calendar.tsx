@@ -724,63 +724,67 @@ const CalendarGrid = ({
                               )}
                               onClick={() => onEventClick(event.id)}
                             >
-                              <div className={cn("flex items-start gap-1.5")}> 
-                                <div className="flex-shrink-0 pt-0.5">
-                                  {event.status === 'approved' ? <CheckCircle className={cn("h-3 w-3 text-primary flex-shrink-0", { "h-2 w-2": isYearView })}/> :
-                                   event.status === 'proposed' ? <AlertCircle className={cn("h-3 w-3 text-amber-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
-                                   event.status === 'public_holiday' ? <FerrisWheel className={cn("h-3 w-3 text-green-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
-                                   event.status === 'rejected' ? <Clock className={cn("h-3 w-3 text-red-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
-                                   <Clock className={cn("h-3 w-3 text-accent flex-shrink-0", { "h-2 w-2": isYearView })}/>}
-                                </div>
-                                <div className="flex-1 min-w-0 space-y-0.5">
-                                  <div className={cn("font-medium leading-tight", 
-                                    isYearView ? "text-[10px]" : "text-xs",
-                                    event.status === 'approved' ? 'text-primary' : 
-                                    event.status === 'proposed' ? 'text-amber-800' :
-                                    event.status === 'public_holiday' ? 'text-green-700' :
-                                    event.status === 'rejected' ? 'text-red-700' :
-                                    'text-accent'
-                                  )}>{event.name}</div>
-                                  {event.source !== 'public_holiday' && (
-                                    <div className={cn("text-muted-foreground font-medium leading-tight",
-                                      isYearView ? "text-[8px]" : "text-[9px]"
-                                    )}>
-                                      {getClubName(event.clubId)}
+                              <div className={cn("flex items-stretch gap-2 h-full")}> 
+                                {/* Left side content */}
+                                <div className="flex-1 min-w-0 flex items-start gap-1.5">
+                                  <div className="flex-shrink-0 pt-0.5">
+                                    {event.status === 'approved' ? <CheckCircle className={cn("h-3 w-3 text-primary flex-shrink-0", { "h-2 w-2": isYearView })}/> :
+                                     event.status === 'proposed' ? <AlertCircle className={cn("h-3 w-3 text-amber-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
+                                     event.status === 'public_holiday' ? <FerrisWheel className={cn("h-3 w-3 text-green-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
+                                     event.status === 'rejected' ? <Clock className={cn("h-3 w-3 text-red-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
+                                     <Clock className={cn("h-3 w-3 text-accent flex-shrink-0", { "h-2 w-2": isYearView })}/>}
+                                  </div>
+                                  <div className="flex-1 min-w-0 space-y-0.5">
+                                    <div className={cn("font-medium leading-tight", 
+                                      isYearView ? "text-[10px]" : "text-xs",
+                                      event.status === 'approved' ? 'text-primary' : 
+                                      event.status === 'proposed' ? 'text-amber-800' :
+                                      event.status === 'public_holiday' ? 'text-green-700' :
+                                      event.status === 'rejected' ? 'text-red-700' :
+                                      'text-accent'
+                                    )}>{event.name}</div>
+                                    {event.source !== 'public_holiday' && (
+                                      <div className={cn("text-muted-foreground font-medium leading-tight",
+                                        isYearView ? "text-[8px]" : "text-[9px]"
+                                      )}>
+                                        {getClubName(event.clubId)}
+                                      </div>
+                                    )}
+                                    <div className="flex">
+                                      {event.status === 'proposed' && (
+                                        <span className={cn("inline-flex items-center rounded-full font-medium bg-amber-100 text-amber-700 border border-amber-200",
+                                          isYearView ? "px-1 py-0.5 text-[7px]" : "px-1.5 py-0.5 text-[8px]"
+                                        )}>
+                                          Pending
+                                        </span>
+                                      )}
+                                      {event.status === 'approved' && (
+                                        <span className={cn("inline-flex items-center rounded-full font-medium bg-green-100 text-green-700 border border-green-200",
+                                          isYearView ? "px-1 py-0.5 text-[7px]" : "px-1.5 py-0.5 text-[8px]"
+                                        )}>
+                                          Approved
+                                        </span>
+                                      )}
+                                      {event.status === 'rejected' && (
+                                        <span className={cn("inline-flex items-center rounded-full font-medium bg-red-100 text-red-700 border border-red-200",
+                                          isYearView ? "px-1 py-0.5 text-[7px]" : "px-1.5 py-0.5 text-[8px]"
+                                        )}>
+                                          Rejected
+                                        </span>
+                                      )}
                                     </div>
-                                  )}
-                                  <div className="flex">
-                                    {event.status === 'proposed' && (
-                                      <span className={cn("inline-flex items-center rounded-full font-medium bg-amber-100 text-amber-700 border border-amber-200",
-                                        isYearView ? "px-1 py-0.5 text-[7px]" : "px-1.5 py-0.5 text-[8px]"
-                                      )}>
-                                        Pending
-                                      </span>
-                                    )}
-                                    {event.status === 'approved' && (
-                                      <span className={cn("inline-flex items-center rounded-full font-medium bg-green-100 text-green-700 border border-green-200",
-                                        isYearView ? "px-1 py-0.5 text-[7px]" : "px-1.5 py-0.5 text-[8px]"
-                                      )}>
-                                        Approved
-                                      </span>
-                                    )}
-                                    {event.status === 'rejected' && (
-                                      <span className={cn("inline-flex items-center rounded-full font-medium bg-red-100 text-red-700 border border-red-200",
-                                        isYearView ? "px-1 py-0.5 text-[7px]" : "px-1.5 py-0.5 text-[8px]"
-                                      )}>
-                                        Rejected
-                                      </span>
-                                    )}
                                   </div>
                                 </div>
-                                {/* Club Logo */}
+                                
+                                {/* Club Logo - Full height right side */}
                                 {event.source !== 'public_holiday' && getClubLogo(event.clubId) && (
-                                  <div className="flex-shrink-0">
+                                  <div className="flex-shrink-0 flex items-center">
                                     <img 
                                       src={getClubLogo(event.clubId)!} 
                                       alt={`${getClubName(event.clubId)} logo`}
                                       className={cn(
                                         "rounded object-contain bg-white border border-gray-200",
-                                        isYearView ? "w-4 h-4" : "w-6 h-6"
+                                        isYearView ? "w-12 h-12" : "w-18 h-18"
                                       )}
                                       onError={(e) => {
                                         // Hide the image if it fails to load

@@ -707,7 +707,18 @@ const CalendarGrid = ({
                   const isSaturday = getDay(day) === 6;
                   const isSunday = getDay(day) === 0;
                   const isCurrentDayToday = isSameDay(day, today);
-                  const dayEvents = Array.isArray(events) ? events.filter(event => isSameDay(new Date(event.date), day)) : [];
+                  const dayEvents = Array.isArray(events) ? 
+                    events
+                      .filter(event => isSameDay(new Date(event.date), day))
+                      .sort((a, b) => {
+                        // Public holidays come first
+                        if ((a.source === 'public_holiday' || a.status === 'public_holiday') && 
+                            !(b.source === 'public_holiday' || b.status === 'public_holiday')) return -1;
+                        if (!(a.source === 'public_holiday' || a.status === 'public_holiday') && 
+                            (b.source === 'public_holiday' || b.status === 'public_holiday')) return 1;
+                        return 0;
+                      }) 
+                    : [];
                   const isDayActiveInMonth = activeDaysOfMonth.has(dayIdx);
                   const isDayInCurrentMonth = isSameMonth(day, month);
                   return (
@@ -732,7 +743,9 @@ const CalendarGrid = ({
                             <button
                               key={event.id || i}
                               className={cn(
-                                "rounded-xl shadow-sm border bg-white p-2 text-left transition hover:ring-2 hover:ring-primary max-w-xs w-full",
+                                "rounded-xl shadow-sm border p-2 text-left transition hover:ring-2 hover:ring-primary max-w-xs w-full",
+                                // Only apply bg-white for non-public holidays
+                                !(event.status === 'public_holiday' || event.source === 'public_holiday') && "bg-white",
                                 event.status === 'approved' ? 'event-approved' :
                                 event.status === 'proposed' ? 'event-proposed' :
                                 (event.status === 'public_holiday' || event.source === 'public_holiday') ? 'event-holiday' :
@@ -748,7 +761,7 @@ const CalendarGrid = ({
                                   <div className="flex-shrink-0 pt-0.5">
                                     {event.status === 'approved' ? <CheckCircle className={cn("h-3 w-3 text-primary flex-shrink-0", { "h-2 w-2": isYearView })}/> :
                                      event.status === 'proposed' ? <AlertCircle className={cn("h-3 w-3 text-amber-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
-                                     (event.status === 'public_holiday' || event.source === 'public_holiday') ? <FerrisWheel className={cn("h-3 w-3 text-green-700 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
+                                     (event.status === 'public_holiday' || event.source === 'public_holiday') ? <FerrisWheel className={cn("h-3 w-3 text-white flex-shrink-0", { "h-2 w-2": isYearView })}/> :
                                      event.status === 'rejected' ? <Clock className={cn("h-3 w-3 text-red-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
                                      <Clock className={cn("h-3 w-3 text-accent flex-shrink-0", { "h-2 w-2": isYearView })}/>}
                                   </div>
@@ -757,7 +770,7 @@ const CalendarGrid = ({
                                       isYearView ? "text-[10px]" : "text-xs",
                                       event.status === 'approved' ? 'text-primary' : 
                                       event.status === 'proposed' ? 'text-amber-800' :
-                                      (event.status === 'public_holiday' || event.source === 'public_holiday') ? 'text-green-800' :
+                                      (event.status === 'public_holiday' || event.source === 'public_holiday') ? 'text-white font-bold' :
                                       event.status === 'rejected' ? 'text-red-700' :
                                       'text-accent'
                                     )}>{event.name}</div>

@@ -8,6 +8,7 @@ import { getAllZones, getAllClubs, getAllEventTypes } from '@/lib/server-data';
 import { getDatabaseErrorMessage, isDatabaseConnected } from '@/lib/firebase-admin';
 import { getEmailQueueStats } from '@/lib/email-queue-admin';
 import { RouteGuard } from '@/components/auth/route-guard';
+import { DataExportTile } from '@/components/admin/data-export-tile';
 
 async function AdminDashboardContent() {
   // Check database connection
@@ -373,6 +374,9 @@ async function AdminDashboardContent() {
               </div>
             </div>
           </div>
+
+          {/* Data Export */}
+          <DataExportTile />
         </div>
       </div>
 

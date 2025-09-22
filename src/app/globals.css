@@ -155,7 +155,7 @@
   }
   
   .event-holiday {
-    @apply bg-green-500 border-green-600 text-green-800 shadow-green-200/50;
+    @apply bg-green-500 border-green-600 text-white font-bold shadow-green-200/50 !important;
   }
   
   .event-default {

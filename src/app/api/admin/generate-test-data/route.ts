@@ -297,7 +297,7 @@ export async function POST(request: NextRequest) {
           clubId: club.id,
           eventTypeId: eventType.id,
           status: getApprovalStatus(config.approvalDistribution),
-          source: 'event_secretary' as EventSource,
+          source: 'zone' as EventSource,
           coordinatorName: `Test Coordinator ${Math.floor(Math.random() * 100)}`,
           coordinatorContact: `coordinator${Math.floor(Math.random() * 100)}@example.com`,
           isQualifier: Math.random() < 0.3,

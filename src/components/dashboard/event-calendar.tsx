@@ -156,11 +156,14 @@ export function EventCalendar({
   const filteredEvents = useMemo(() => {
     const eventsFromSource = sourceFilteredEvents;
     if (!Array.isArray(eventsFromSource)) return [];
+    
+    let filtered: Event[] = [];
+    
     if (filterMode === 'distance' && homeClubId) {
       const homeClub = clubs.find(c => c.id === homeClubId);
       if (!homeClub || homeClub.latitude === undefined || homeClub.longitude === undefined) return eventsFromSource.filter(e => e.source === 'public_holiday');
       const homeCoords = { lat: homeClub.latitude, lon: homeClub.longitude };
-      return eventsFromSource.filter(event => {
+      filtered = eventsFromSource.filter(event => {
         if (event.source === 'public_holiday') return true;
         const eventClub = clubs.find(c => c.id === event.clubId);
         if (!eventClub || eventClub.latitude === undefined || eventClub.longitude === undefined) return false;
@@ -168,18 +171,33 @@ export function EventCalendar({
         const dist = haversineDistance(homeCoords, eventCoords);
         return dist <= distance;
       });
+    } else {
+      // Location-based filtering
+      filtered = eventsFromSource.filter(event => {
+        if (event.source === 'public_holiday') return true;
+        if (selectedClubId !== 'all') {
+          return event.clubId === selectedClubId;
+        }
+        if (selectedZoneId !== 'all') {
+          const clubIsInZone = clubs.find(c => c.id === event.clubId)?.zoneId === selectedZoneId;
+          return clubIsInZone;
+        }
+        return true;
+      });
     }
-    // Location-based filtering
-    return eventsFromSource.filter(event => {
-      if (event.source === 'public_holiday') return true;
-      if (selectedClubId !== 'all') {
-        return event.clubId === selectedClubId;
-      }
-      if (selectedZoneId !== 'all') {
-        const clubIsInZone = clubs.find(c => c.id === event.clubId)?.zoneId === selectedZoneId;
-        return clubIsInZone;
-      }
-      return true;
+
+    // Sort events to prioritize public holidays first, then by date
+    return filtered.sort((a, b) => {
+      // First, sort by date
+      const dateComparison = new Date(a.date).getTime() - new Date(b.date).getTime();
+      if (dateComparison !== 0) return dateComparison;
+      
+      // For events on the same day, public holidays come first
+      if (a.source === 'public_holiday' && b.source !== 'public_holiday') return -1;
+      if (a.source !== 'public_holiday' && b.source === 'public_holiday') return 1;
+      
+      // For non-public holidays on the same day, maintain original order
+      return 0;
     });
   }, [sourceFilteredEvents, clubs, filterMode, homeClubId, distance, selectedZoneId, selectedClubId]);
 
@@ -556,7 +574,7 @@ export function EventCalendar({
     )}
       
       {view === 'year' && (
-        <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="p-4 grid grid-cols-1 gap-8">
           {yearMonths.map(month => (
             <div
               key={month.toString()}
@@ -717,7 +735,7 @@ const CalendarGrid = ({
                                 "rounded-xl shadow-sm border bg-white p-2 text-left transition hover:ring-2 hover:ring-primary max-w-xs w-full",
                                 event.status === 'approved' ? 'event-approved' :
                                 event.status === 'proposed' ? 'event-proposed' :
-                                event.status === 'public_holiday' ? 'event-holiday' :
+                                (event.status === 'public_holiday' || event.source === 'public_holiday') ? 'event-holiday' :
                                 event.status === 'rejected' ? 'event-rejected' :
                                 'event-default',
                                 isYearView ? "text-xs" : "text-sm"
@@ -730,7 +748,7 @@ const CalendarGrid = ({
                                   <div className="flex-shrink-0 pt-0.5">
                                     {event.status === 'approved' ? <CheckCircle className={cn("h-3 w-3 text-primary flex-shrink-0", { "h-2 w-2": isYearView })}/> :
                                      event.status === 'proposed' ? <AlertCircle className={cn("h-3 w-3 text-amber-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
-                                     event.status === 'public_holiday' ? <FerrisWheel className={cn("h-3 w-3 text-green-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
+                                     (event.status === 'public_holiday' || event.source === 'public_holiday') ? <FerrisWheel className={cn("h-3 w-3 text-green-700 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
                                      event.status === 'rejected' ? <Clock className={cn("h-3 w-3 text-red-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
                                      <Clock className={cn("h-3 w-3 text-accent flex-shrink-0", { "h-2 w-2": isYearView })}/>}
                                   </div>
@@ -739,7 +757,7 @@ const CalendarGrid = ({
                                       isYearView ? "text-[10px]" : "text-xs",
                                       event.status === 'approved' ? 'text-primary' : 
                                       event.status === 'proposed' ? 'text-amber-800' :
-                                      event.status === 'public_holiday' ? 'text-green-700' :
+                                      (event.status === 'public_holiday' || event.source === 'public_holiday') ? 'text-green-800' :
                                       event.status === 'rejected' ? 'text-red-700' :
                                       'text-accent'
                                     )}>{event.name}</div>
@@ -783,8 +801,8 @@ const CalendarGrid = ({
                                       src={getClubLogo(event.clubId)!} 
                                       alt={`${getClubName(event.clubId)} logo`}
                                       className={cn(
-                                        "rounded object-contain bg-white border border-gray-200",
-                                        isYearView ? "w-12 h-12" : "w-18 h-18"
+                                        "rounded object-contain bg-white border border-gray-200 max-w-full max-h-full",
+                                        isYearView ? "w-10 h-10" : "w-14 h-14"
                                       )}
                                       onError={(e) => {
                                         // Hide the image if it fails to load

@@ -155,7 +155,7 @@
   }
   
   .event-holiday {
-    @apply bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 text-green-900 shadow-green-100/50;
+    @apply bg-green-500 border-green-600 text-green-800 shadow-green-200/50;
   }
   
   .event-default {

@@ -57,7 +57,7 @@ export function ClubEventSubmission({
         ...formData,
         clubId,
         status: 'proposed',
-        source: 'event_secretary',
+        source: 'zone',
         submittedBy: formData.coordinatorName,
         submittedByContact: formData.coordinatorContact
       };

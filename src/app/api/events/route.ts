@@ -2,6 +2,42 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminDb, isDatabaseConnected, getDatabaseErrorMessage } from '@/lib/firebase-admin';
 import { Timestamp } from 'firebase-admin/firestore';
 import { Event } from '@/lib/types';
+import { getYear } from 'date-fns';
+
+interface PublicHoliday {
+  date: string;
+  localName: string;
+  name: string;
+  countryCode: string;
+  counties?: string[] | null;
+}
+
+const getPublicHolidays = async (year: number): Promise<Event[]> => {
+  try {
+    const response = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/AU`);
+    if (!response.ok) {
+        return [];
+    }
+    const holidays: PublicHoliday[] = await response.json();
+    
+    // Filter for Victorian holidays (AU-VIC)
+    return holidays
+        .filter(holiday => holiday.counties === null || holiday.counties?.includes('AU-VIC'))
+        .map((holiday, index) => ({
+            id: `ph-${year}-${index}`,
+            name: holiday.localName,
+            date: new Date(holiday.date),
+            clubId: 'N/A',
+            eventTypeId: 'ph', 
+            status: 'public_holiday',
+            location: 'Victoria',
+            source: 'public_holiday',
+        }));
+  } catch (error) {
+    console.error('Error fetching public holidays:', error);
+    return [];
+  }
+};
 
 export async function GET(request: NextRequest) {
   try {
@@ -97,7 +133,12 @@ export async function GET(request: NextRequest) {
       });
     });
 
-    return NextResponse.json({ events });
+    // Add public holidays for the current year
+    const currentYear = getYear(new Date());
+    const publicHolidays = await getPublicHolidays(currentYear);
+    const allEvents = [...events, ...publicHolidays];
+
+    return NextResponse.json({ events: allEvents });
   } catch (error: any) {
     console.error('Error fetching events:', error);
     

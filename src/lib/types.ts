@@ -198,7 +198,7 @@ export interface EventType {
 }
 
 export type EventStatus = 'proposed' | 'approved' | 'rejected' | 'public_holiday';
-export type EventSource = 'pca' | 'event_secretary' | 'zone' | 'public_holiday';
+export type EventSource = 'pca' | 'zone' | 'public_holiday';
 export type EventScheduleStatus = 'missing' | 'pending' | 'approved' | 'rejected';
 
 export interface EventSchedule {

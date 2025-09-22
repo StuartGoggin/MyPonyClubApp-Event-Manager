@@ -161,14 +161,6 @@ export function AppLayout({ children }: PropsWithChildren) {
                   </div>
                   <div className="flex items-center space-x-2">
                     <Checkbox 
-                      id="event_secretary" 
-                      onCheckedChange={(checked) => handleSourceChange('event_secretary', !!checked)} 
-                      checked={eventSources.includes('event_secretary')} 
-                    />
-                    <Label htmlFor="event_secretary" className="text-sm font-medium leading-none">Event Secretary</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
                       id="zone" 
                       onCheckedChange={(checked) => handleSourceChange('zone', !!checked)} 
                       checked={eventSources.includes('zone')} 

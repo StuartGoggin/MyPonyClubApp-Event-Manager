@@ -422,7 +422,7 @@ export const getEventTypeById = async (id: string) => {
 export const addEvent = async (event: Omit<Event, 'id' | 'source'>) => {
   const newEventData = {
     ...event,
-    source: 'event_secretary', // Default source for new events
+    source: 'zone', // Default source for new events
   };
   const eventsCollection = collection(db, 'events');
   const docRef = await addDoc(eventsCollection, newEventData);

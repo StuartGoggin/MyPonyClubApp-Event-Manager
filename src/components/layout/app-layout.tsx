@@ -34,8 +34,7 @@ export function AppLayout({ children }: PropsWithChildren) {
       title: 'Request Event',
       icon: PlusCircle,
       label: 'Request Event',
-      requireAuth: true,
-      // All authenticated users can request events
+      // Public access - no authentication required
     },
     {
       href: '/manage-events',

@@ -516,6 +516,7 @@ function EmailQueueAdminContent() {
                       <SelectItem value="notification">Notification</SelectItem>
                       <SelectItem value="reminder">Reminder</SelectItem>
                       <SelectItem value="general">General</SelectItem>
+                      <SelectItem value="backup">Backup</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

@@ -26,6 +26,9 @@ export function requiresApproval(
     case 'reminder':
       return config.requireApprovalForReminders ?? config.requireApproval ?? true;
     
+    case 'backup':
+      return config.requireApprovalForBackups ?? false; // Backup emails don't require approval by default
+    
     case 'general':
     case 'manual':
     default:

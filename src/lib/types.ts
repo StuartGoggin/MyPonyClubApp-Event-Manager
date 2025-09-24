@@ -412,7 +412,7 @@ export type EmailStatus = 'draft' | 'pending' | 'sent' | 'failed' | 'cancelled';
 
 export interface QueuedEmail {
   id: string;
-  type?: 'event_request' | 'notification' | 'reminder' | 'general' | 'manual';
+  type?: 'event_request' | 'notification' | 'reminder' | 'general' | 'manual' | 'backup';
   status: EmailStatus;
   
   // Email content
@@ -492,6 +492,7 @@ export interface EmailQueueConfig {
   requireApprovalForNotifications?: boolean;
   requireApprovalForReminders?: boolean;
   requireApprovalForGeneral?: boolean;
+  requireApprovalForBackups?: boolean;
   
   // Feature settings
   enableScheduling?: boolean;
@@ -537,7 +538,7 @@ export interface EmailQueueConfig {
 export interface EmailTemplate {
   id: string;
   name: string;
-  type: 'event_request' | 'notification' | 'reminder' | 'general';
+  type: 'event_request' | 'notification' | 'reminder' | 'general' | 'backup';
   subject: string;
   htmlContent: string;
   textContent: string;

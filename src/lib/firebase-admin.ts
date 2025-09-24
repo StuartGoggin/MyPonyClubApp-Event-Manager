@@ -43,12 +43,36 @@ function initializeFirebaseAdmin() {
                 storageBucket: `${serviceAccount.project_id}.firebasestorage.app`,
             });
         } else {
-            // Production environment (Firebase App Hosting) - use default credentials
-            console.log('🏠 Using Firebase App Hosting default credentials');
-            admin.initializeApp({
-                // Firebase App Hosting automatically provides credentials
-                storageBucket: 'ponyclub-events.firebasestorage.app',
-            });
+            // Try to load from service account file (fallback)
+            try {
+                console.log('🔑 Attempting to load service account from file');
+                const fs = require('fs');
+                const path = require('path');
+                const serviceAccountPath = path.join(process.cwd(), 'ponyclub-events-firebase-adminsdk-fbsvc-8c2550360b.json');
+                
+                if (fs.existsSync(serviceAccountPath)) {
+                    console.log('📁 Found service account file, using it');
+                    admin.initializeApp({
+                        credential: admin.credential.cert(serviceAccountPath),
+                        storageBucket: 'ponyclub-events.firebasestorage.app',
+                    });
+                } else {
+                    // Production environment (Firebase App Hosting) - use default credentials
+                    console.log('🏠 Using Firebase App Hosting default credentials');
+                    admin.initializeApp({
+                        // Firebase App Hosting automatically provides credentials
+                        storageBucket: 'ponyclub-events.firebasestorage.app',
+                    });
+                }
+            } catch (fileError) {
+                console.error('Failed to load from file, trying default credentials:', fileError);
+                // Production environment (Firebase App Hosting) - use default credentials
+                console.log('🏠 Using Firebase App Hosting default credentials');
+                admin.initializeApp({
+                    // Firebase App Hosting automatically provides credentials
+                    storageBucket: 'ponyclub-events.firebasestorage.app',
+                });
+            }
         }
         
         // Get Firestore instance and configure it

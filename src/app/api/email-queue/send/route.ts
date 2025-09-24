@@ -86,15 +86,50 @@ export const POST = withAdminAuth(async (request: NextRequest, user) => {
 
     try {
       console.log('Preparing email for Resend API...');
-      // Prepare attachments for Resend
-      const attachments = email.attachments?.map(attachment => ({
-        filename: attachment.filename,
-        content: Buffer.from(attachment.content || '', 'base64'),
-      })) || [];
+      
+      // Prepare attachments for Resend - handle both inline content and URLs
+      const attachments = [];
+      if (email.attachments && email.attachments.length > 0) {
+        console.log(`Processing ${email.attachments.length} attachment(s)...`);
+        
+        for (const attachment of email.attachments) {
+          if (attachment.content) {
+            // Inline content (base64)
+            console.log(`📎 Processing inline attachment: ${attachment.filename}`);
+            attachments.push({
+              filename: attachment.filename,
+              content: Buffer.from(attachment.content, 'base64'),
+            });
+          } else if (attachment.url) {
+            // External URL - download the file
+            console.log(`📎 Downloading attachment from URL: ${attachment.filename}`);
+            try {
+              const response = await fetch(attachment.url);
+              if (!response.ok) {
+                throw new Error(`Failed to download attachment: ${response.status} ${response.statusText}`);
+              }
+              const arrayBuffer = await response.arrayBuffer();
+              const buffer = Buffer.from(arrayBuffer);
+              
+              console.log(`✅ Downloaded attachment: ${attachment.filename} (${(buffer.length / 1024 / 1024).toFixed(2)} MB)`);
+              
+              attachments.push({
+                filename: attachment.filename,
+                content: buffer,
+              });
+            } catch (downloadError) {
+              console.error(`❌ Failed to download attachment ${attachment.filename}:`, downloadError);
+              throw new Error(`Failed to download attachment ${attachment.filename}: ${downloadError instanceof Error ? downloadError.message : 'Unknown error'}`);
+            }
+          } else {
+            console.warn(`⚠️ Attachment ${attachment.filename} has no content or URL - skipping`);
+          }
+        }
+      }
 
       // Send email using Resend
       const emailData: any = {
-        from: 'MyPonyClub Event Manager <onboarding@resend.dev>',
+        from: 'MyPonyClub Event Manager <noreply@myponyclub.com>',
         to: email.to,
         subject: email.subject,
       };

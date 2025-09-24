@@ -9,6 +9,7 @@ import { getDatabaseErrorMessage, isDatabaseConnected } from '@/lib/firebase-adm
 import { getEmailQueueStats } from '@/lib/email-queue-admin';
 import { RouteGuard } from '@/components/auth/route-guard';
 import { DataExportTile } from '@/components/admin/data-export-tile';
+import { BackupScheduleTile } from '@/components/admin/backup-schedule-tile';
 
 async function AdminDashboardContent() {
   // Check database connection
@@ -377,6 +378,9 @@ async function AdminDashboardContent() {
 
           {/* Data Export */}
           <DataExportTile />
+
+          {/* Automatic Backup Scheduling */}
+          <BackupScheduleTile />
         </div>
       </div>
 

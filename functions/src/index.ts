@@ -288,6 +288,9 @@ export const getStorage = () => {
   return admin.storage();
 };
 
+// Export backup functions
+export { runBackups, triggerBackup } from './backup-functions';
+
 // Development server for local testing
 if (process.env.NODE_ENV === "development") {
   const port = process.env.PORT || 5001;

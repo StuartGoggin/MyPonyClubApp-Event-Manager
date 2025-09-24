@@ -54,7 +54,7 @@ export async function autoSendQueuedEmail(emailId: string): Promise<{
 
     // Prepare email content
     const emailContent: any = {
-      from: 'noreply@ponyclub.com.au',
+      from: 'MyPonyClub Event Manager <noreply@myponyclub.com>',
       to: email.to,
       subject: email.subject,
       html: email.htmlContent || email.html,
@@ -71,13 +71,46 @@ export async function autoSendQueuedEmail(emailId: string): Promise<{
       emailContent.bcc = email.bcc;
     }
 
-    // Add attachments if present
+    // Add attachments if present - handle both inline content and URLs
     if (email.attachments && email.attachments.length > 0) {
-      emailContent.attachments = email.attachments.map(attachment => ({
-        filename: attachment.filename,
-        content: attachment.content,
-        type: attachment.contentType,
-      }));
+      console.log(`Processing ${email.attachments.length} attachment(s) for auto-send...`);
+      emailContent.attachments = [];
+      
+      for (const attachment of email.attachments) {
+        if (attachment.content) {
+          // Inline content (base64)
+          console.log(`📎 Processing inline attachment: ${attachment.filename}`);
+          emailContent.attachments.push({
+            filename: attachment.filename,
+            content: attachment.content,
+            type: attachment.contentType,
+          });
+        } else if (attachment.url) {
+          // External URL - download the file
+          console.log(`📎 Downloading attachment from URL: ${attachment.filename}`);
+          try {
+            const response = await fetch(attachment.url);
+            if (!response.ok) {
+              throw new Error(`Failed to download attachment: ${response.status} ${response.statusText}`);
+            }
+            const arrayBuffer = await response.arrayBuffer();
+            const buffer = Buffer.from(arrayBuffer);
+            
+            console.log(`✅ Downloaded attachment: ${attachment.filename} (${(buffer.length / 1024 / 1024).toFixed(2)} MB)`);
+            
+            emailContent.attachments.push({
+              filename: attachment.filename,
+              content: buffer.toString('base64'),
+              type: attachment.contentType,
+            });
+          } catch (downloadError) {
+            console.error(`❌ Failed to download attachment ${attachment.filename}:`, downloadError);
+            throw new Error(`Failed to download attachment ${attachment.filename}: ${downloadError instanceof Error ? downloadError.message : 'Unknown error'}`);
+          }
+        } else {
+          console.warn(`⚠️ Attachment ${attachment.filename} has no content or URL - skipping`);
+        }
+      }
     }
 
     console.log('Sending email via Resend...', {

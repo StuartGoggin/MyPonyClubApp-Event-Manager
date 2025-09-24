@@ -47,3 +47,5 @@ firestore-debug.log
 # service account files
 service-account*.json
 temp-service-account.json
+*firebase-adminsdk*.json
+ponyclub-events-firebase-adminsdk-fbsvc-8c2550360b.json

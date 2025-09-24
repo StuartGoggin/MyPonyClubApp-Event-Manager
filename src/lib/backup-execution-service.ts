@@ -259,33 +259,50 @@ export class BackupExecutionService {
     execution: Omit<BackupExecution, 'id'>
   ): Promise<void> {
     const { deliveryOptions } = schedule;
+    let emailSuccess = false;
+    let storageSuccess = false;
+    let errors: string[] = [];
 
-    try {
-      // Email delivery
-      if (deliveryOptions.method === 'email' || deliveryOptions.method === 'both') {
+    // Email delivery
+    if (deliveryOptions.method === 'email' || deliveryOptions.method === 'both') {
+      try {
         execution.deliveryStatus.email = 'pending';
         await this.sendBackupEmail(backupBuffer, schedule);
         execution.deliveryStatus.email = 'sent';
+        emailSuccess = true;
+      } catch (error) {
+        console.error('Error sending backup email:', error);
+        execution.deliveryStatus.email = 'failed';
+        errors.push(`Email delivery failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
+    }
 
-      // Storage delivery
-      if (deliveryOptions.method === 'storage' || deliveryOptions.method === 'both') {
+    // Storage delivery
+    if (deliveryOptions.method === 'storage' || deliveryOptions.method === 'both') {
+      try {
         execution.deliveryStatus.storage = 'pending';
         await this.uploadToStorage(backupBuffer, schedule);
         execution.deliveryStatus.storage = 'uploaded';
-      }
-    } catch (error) {
-      console.error('Error delivering backup:', error);
-      
-      // Update delivery status based on error
-      if (deliveryOptions.method === 'email' || deliveryOptions.method === 'both') {
-        execution.deliveryStatus.email = 'failed';
-      }
-      if (deliveryOptions.method === 'storage' || deliveryOptions.method === 'both') {
+        storageSuccess = true;
+      } catch (error) {
+        console.error('Error uploading backup to storage:', error);
         execution.deliveryStatus.storage = 'failed';
+        errors.push(`Storage delivery failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
-      
-      throw error;
+    }
+
+    // Determine if backup delivery was successful
+    const isEmailOnlyAndSucceeded = deliveryOptions.method === 'email' && emailSuccess;
+    const isStorageOnlyAndSucceeded = deliveryOptions.method === 'storage' && storageSuccess;
+    const isBothAndAtLeastOneSucceeded = deliveryOptions.method === 'both' && (emailSuccess || storageSuccess);
+
+    if (!isEmailOnlyAndSucceeded && !isStorageOnlyAndSucceeded && !isBothAndAtLeastOneSucceeded) {
+      throw new Error(`All delivery methods failed: ${errors.join('; ')}`);
+    }
+
+    // Log warnings for partial failures in 'both' mode
+    if (deliveryOptions.method === 'both' && errors.length > 0) {
+      console.warn(`⚠️ Partial backup delivery success: ${errors.join('; ')}`);
     }
   }
 
@@ -300,6 +317,15 @@ export class BackupExecutionService {
       throw new Error('Email configuration not found');
     }
 
+    // Validate recipients
+    const validRecipients = emailConfig.recipients.filter(email => 
+      email && email.trim() !== '' && email.includes('@')
+    );
+    
+    if (validRecipients.length === 0) {
+      throw new Error('No valid email recipients found. Please configure email recipients for this backup schedule.');
+    }
+
     try {
       // Check file size limit (default 25MB for most email providers)
       const fileSizeMB = backupBuffer.length / (1024 * 1024);
@@ -311,14 +337,14 @@ export class BackupExecutionService {
       const subject = emailConfig.subject?.replace('{date}', timestamp) || `Automated Backup - ${timestamp}`;
       
       console.log('=== SENDING BACKUP EMAIL VIA QUEUE ===');
-      console.log(`To: ${emailConfig.recipients.join(', ')}`);
+      console.log(`To: ${validRecipients.join(', ')}`);
       console.log(`Subject: ${subject}`);
       console.log(`File Size: ${fileSizeMB.toFixed(2)} MB`);
       console.log('=====================================');
 
-      // Use the new backup email service to queue the email
+      // Use the new backup email service to queue the email with validated recipients
       await sendBackupEmail(
-        emailConfig.recipients,
+        validRecipients,
         subject,
         schedule.name,
         backupBuffer,
@@ -326,7 +352,7 @@ export class BackupExecutionService {
         schedule.exportConfig
       );
       
-      console.log(`✅ Backup email queued successfully for ${emailConfig.recipients.length} recipient(s)`);
+      console.log(`✅ Backup email queued successfully for ${validRecipients.length} recipient(s)`);
       
     } catch (error) {
       console.error('Error sending backup email:', error);

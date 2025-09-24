@@ -1,6 +1,7 @@
 import { onRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { adminDb } from './lib/firebase-admin';
+import type { QueryDocumentSnapshot, DocumentData } from 'firebase-admin/firestore';
 
 /**
  * HTTP function to run scheduled backups
@@ -17,6 +18,16 @@ export const runBackups = onRequest({
 }, async (req, res) => {
   logger.info('🕐 Backup runner started');
 
+  // Health check endpoint
+  if (req.method === 'GET' && req.path === '/health') {
+    res.status(200).json({
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      service: 'runBackups'
+    });
+    return;
+  }
+
   try {
     // Get all active schedules that are due
     const now = new Date();
@@ -26,14 +37,17 @@ export const runBackups = onRequest({
       .where('nextRun', '<=', now)
       .get();
 
-    const dueSchedules = schedulesSnapshot.docs.map((doc: any) => ({
-      id: doc.id,
-      ...doc.data(),
-      nextRun: doc.data().nextRun?.toDate(),
-      lastRun: doc.data().lastRun?.toDate(),
-      createdAt: doc.data().createdAt?.toDate(),
-      updatedAt: doc.data().updatedAt?.toDate()
-    }));
+    const dueSchedules = schedulesSnapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        nextRun: data.nextRun?.toDate(),
+        lastRun: data.lastRun?.toDate(),
+        createdAt: data.createdAt?.toDate(),
+        updatedAt: data.updatedAt?.toDate()
+      };
+    });
 
     logger.info(`📅 Found ${dueSchedules.length} schedules due for execution`);
 
@@ -104,6 +118,16 @@ export const triggerBackup = onRequest({
   timeoutSeconds: 300,
   cors: true
 }, async (req, res) => {
+  // Health check endpoint
+  if (req.method === 'GET' && req.path === '/health') {
+    res.status(200).json({
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      service: 'triggerBackup'
+    });
+    return;
+  }
+
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
     return;

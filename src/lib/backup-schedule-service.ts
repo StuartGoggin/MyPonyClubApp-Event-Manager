@@ -149,7 +149,7 @@ export class BackupScheduleService {
         .where('nextRun', '<=', now)
         .get();
 
-      return snapshot.docs.map(doc => {
+      return snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => {
         const data = doc.data();
         return {
           ...data,
@@ -228,7 +228,7 @@ export class BackupScheduleService {
 
       const snapshot = await query.get();
 
-      return snapshot.docs.map(doc => {
+      return snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => {
         const data = doc.data();
         return {
           ...data,

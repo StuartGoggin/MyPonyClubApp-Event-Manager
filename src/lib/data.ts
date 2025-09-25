@@ -282,32 +282,45 @@ interface PublicHoliday {
     types: string[];
 }
 
-const getPublicHolidays = async (year: number): Promise<Event[]> => {
-    try {
-        const response = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/AU`);
-        if (!response.ok) {
-            console.error('Failed to fetch public holidays:', response.statusText);
-            return [];
-        }
-        const holidays: PublicHoliday[] = await response.json();
+const getPublicHolidays = async (startYear: number, yearsAhead: number = 5): Promise<Event[]> => {
+    const allHolidays: Event[] = [];
+    
+    // Fetch holidays for current year and next 5 years (6 years total)
+    for (let i = 0; i <= yearsAhead; i++) {
+        const year = startYear + i;
         
-        // Filter for Victorian holidays (AU-VIC)
-        return holidays
-            .filter(holiday => holiday.counties === null || holiday.counties?.includes('AU-VIC'))
-            .map((holiday, index) => ({
-                id: `ph-${year}-${index}`,
-                name: holiday.localName,
-                date: new Date(holiday.date),
-                clubId: 'N/A',
-                eventTypeId: 'ph', 
-                status: 'public_holiday',
-                location: 'Victoria',
-                source: 'public_holiday',
-            }));
-    } catch (error) {
-        console.error('Error fetching public holidays:', error);
-        return [];
+        try {
+            const response = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/AU`);
+            if (!response.ok) {
+                console.warn(`Failed to fetch public holidays for ${year}:`, response.statusText);
+                continue; // Skip this year but continue with others
+            }
+            
+            const holidays: PublicHoliday[] = await response.json();
+            
+            // Filter for Victorian holidays (AU-VIC) and convert to Event format
+            const yearHolidays = holidays
+                .filter(holiday => holiday.counties === null || holiday.counties?.includes('AU-VIC'))
+                .map((holiday, index) => ({
+                    id: `ph-${year}-${index}`,
+                    name: holiday.localName,
+                    date: new Date(holiday.date),
+                    clubId: 'N/A',
+                    eventTypeId: 'ph', 
+                    status: 'public_holiday' as const,
+                    location: 'Victoria',
+                    source: 'public_holiday' as const,
+                }));
+            
+            allHolidays.push(...yearHolidays);
+            
+        } catch (error) {
+            console.error(`Error fetching public holidays for ${year}:`, error);
+            // Continue with other years even if one fails
+        }
     }
+    
+    return allHolidays;
 };
 
 

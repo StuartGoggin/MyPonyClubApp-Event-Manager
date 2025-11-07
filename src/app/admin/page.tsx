@@ -699,6 +699,39 @@ async function AdminDashboardContent() {
             </div>
           </div>
 
+          {/* Production Event Cleanup Tool */}
+          <div className="relative overflow-hidden rounded-2xl border border-green-200/50 bg-gradient-to-br from-green-50/80 via-green-50/60 to-emerald-50/40 dark:from-green-950/40 dark:via-green-950/30 dark:to-emerald-950/20 shadow-xl backdrop-blur-sm hover:shadow-2xl transition-all duration-300 hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-r from-green-400/5 to-emerald-400/5"></div>
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-green-400/10 to-transparent rounded-full blur-2xl"></div>
+            
+            <div className="relative p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="rounded-xl bg-green-100 dark:bg-green-900/50 p-3 border border-green-200 dark:border-green-700">
+                  <svg className="h-5 w-5 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.59 14.37a6 6 0 0 1-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 0 0 6.16-12.12A14.98 14.98 0 0 0 9.631 8.41m5.96 5.96a14.926 14.926 0 0 1-5.841 2.58m-.119-8.54a6 6 0 0 0-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 0 0-2.58 5.84m2.58-5.84a14.98 14.98 0 0 1 12.12 6.16A14.98 14.98 0 0 1 6.16 20.26M12.37 15.59a14.926 14.926 0 0 0 5.84-2.58" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">Production Event Cleanup</h3>
+                  <p className="text-sm text-muted-foreground">🚀 Prepare for Production</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs text-green-700 dark:text-green-300">
+                  Safely remove test events while preserving production data, public holidays, and setup configuration
+                </p>
+                <Button asChild className="w-full bg-green-600 hover:bg-green-700 text-white">
+                  <Link href="/admin/testing/purge-test-events">
+                    <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.59 14.37a6 6 0 0 1-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 0 0 6.16-12.12A14.98 14.98 0 0 0 9.631 8.41m5.96 5.96a14.926 14.926 0 0 1-5.841 2.58m-.119-8.54a6 6 0 0 0-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 0 0-2.58 5.84m2.58-5.84a14.98 14.98 0 0 1 12.12 6.16A14.98 14.98 0 0 1 6.16 20.26M12.37 15.59a14.926 14.926 0 0 0 5.84-2.58" />
+                    </svg>
+                    Prepare for Production
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+
           {/* User Data Deletion Tool */}
           <div className="relative overflow-hidden rounded-2xl border border-red-300/60 bg-gradient-to-br from-red-100/90 via-red-50/70 to-orange-50/50 dark:from-red-950/50 dark:via-red-950/40 dark:to-orange-950/30 shadow-xl backdrop-blur-sm hover:shadow-2xl transition-all duration-300 hover:scale-105">
             <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-orange-500/10"></div>

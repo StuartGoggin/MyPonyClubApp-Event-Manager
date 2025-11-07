@@ -319,7 +319,7 @@ export function ClubEventSubmission({
                   onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isQualifier: !!checked }))}
                 />
                 <Label htmlFor="isQualifier" className="text-sm font-medium leading-none">
-                  This is a qualifier event
+                  This is a Zone Qualifier Event
                 </Label>
               </div>
 

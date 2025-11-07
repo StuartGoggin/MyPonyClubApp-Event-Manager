@@ -312,7 +312,7 @@ export function generateEventRequestEmailHTML(data: EmailTemplateData): string {
                         </div>
                         
                         <div class="special-badges">
-                            ${event.isQualifier ? '<span class="badge qualifier-badge">🏅 Qualifier Event</span>' : ''}
+                            ${event.isQualifier ? '<span class="badge qualifier-badge">🏅 Zone Qualifier Event</span>' : ''}
                             ${event.isHistoricallyTraditional ? '<span class="badge traditional-badge">🏛️ Traditional Event</span>' : ''}
                         </div>
                         
@@ -406,7 +406,7 @@ ${priorityLabels[event.priority]} - ${event.name}
 Date: ${formatDate(event.date)}
 Location: ${event.location}
 Type: ${event.eventTypeName}
-${event.isQualifier ? 'Qualifier Event' : ''}
+${event.isQualifier ? 'Zone Qualifier Event' : ''}
 ${event.isHistoricallyTraditional ? 'Traditional Event' : ''}
 ${event.coordinatorName ? `Coordinator: ${event.coordinatorName}` : ''}
 ${event.coordinatorContact ? `Contact: ${event.coordinatorContact}` : ''}

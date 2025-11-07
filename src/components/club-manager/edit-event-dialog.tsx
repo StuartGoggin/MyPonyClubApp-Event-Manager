@@ -290,7 +290,7 @@ export function EditEventDialog({
               checked={formData.isQualifier}
               onCheckedChange={(checked) => handleInputChange('isQualifier', checked)}
             />
-            <Label htmlFor="qualifier">This is a qualifying event</Label>
+            <Label htmlFor="qualifier">This is a Zone Qualifier Event</Label>
           </div>
 
           {/* Notes */}

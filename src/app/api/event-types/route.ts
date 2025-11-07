@@ -54,24 +54,38 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    if (!adminDb) {
+    if (!adminDb || !isDatabaseConnected()) {
+      const errorMessage = getDatabaseErrorMessage() || 'Database connection not available';
       return NextResponse.json(
-        { error: 'Database not available' },
+        { error: 'Database not available', message: errorMessage },
         { status: 503 }
       );
     }
 
     const { name } = await request.json();
     
-    if (!name) {
+    if (!name || !name.trim()) {
       return NextResponse.json(
         { error: 'Event type name is required' },
         { status: 400 }
       );
     }
 
+    // Check if event type with same name already exists
+    const existingSnapshot = await adminDb
+      .collection('eventTypes')
+      .where('name', '==', name.trim())
+      .get();
+
+    if (!existingSnapshot.empty) {
+      return NextResponse.json(
+        { error: 'Event type with this name already exists' },
+        { status: 409 }
+      );
+    }
+
     const newEventType = {
-      name,
+      name: name.trim(),
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -83,7 +97,7 @@ export async function POST(request: NextRequest) {
       eventTypeId: docRef.id,
       eventType: {
         id: docRef.id,
-        name
+        name: name.trim()
       }
     });
   } catch (error) {

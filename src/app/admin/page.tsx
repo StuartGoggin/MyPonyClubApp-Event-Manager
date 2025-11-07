@@ -10,13 +10,18 @@ import { getEmailQueueStats } from '@/lib/email-queue-admin';
 import { RouteGuard } from '@/components/auth/route-guard';
 import { DataExportTile } from '@/components/admin/data-export-tile';
 import { BackupScheduleTile } from '@/components/admin/backup-schedule-tile';
+import { DashboardStatsCards } from '@/components/admin/dashboard-stats-cards';
+
+// Force dynamic rendering to ensure fresh data
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 async function AdminDashboardContent() {
   // Check database connection
   const isDatabaseAvailable = isDatabaseConnected();
   const databaseErrorMessage = getDatabaseErrorMessage();
   
-  // Use server data instead of mock data
+  // Use server data instead of mock data - force fresh data
   const clubs = await getAllClubs();
   const zones = await getAllZones();
   const eventTypes = await getAllEventTypes();
@@ -133,39 +138,8 @@ async function AdminDashboardContent() {
         </div>
       )}
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <StatsCard
-          title="Pending Events"
-          value={pendingEvents}
-          icon={<Clock className="h-4 w-4" />}
-          variant="warning"
-        />
-        <StatsCard
-          title="Approved Events"
-          value={approvedEvents}
-          icon={<CheckCircle className="h-4 w-4" />}
-          variant="success"
-        />
-        <StatsCard
-          title="Total Clubs"
-          value={clubs.length}
-          icon={<Users className="h-4 w-4" />}
-          variant="default"
-        />
-        <StatsCard
-          title="Total Zones"
-          value={zones.length}
-          icon={<MapPin className="h-4 w-4" />}
-          variant="default"
-        />
-        <StatsCard
-          title="Event Types"
-          value={eventTypes.length}
-          icon={<FileText className="h-4 w-4" />}
-          variant="default"
-        />
-      </div>
+      {/* Quick Stats - Now with real-time data */}
+      <DashboardStatsCards />
 
       {/* System Configuration Section */}
       <div className="space-y-4">

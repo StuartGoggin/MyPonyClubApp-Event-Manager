@@ -129,19 +129,7 @@ export function MultiEventRequestForm({
       submittedBy: '',
       submittedByEmail: '',
       submittedByPhone: '',
-      events: [{
-        priority: 1,
-        name: '',
-        eventTypeId: '',
-        location: '',
-        isQualifier: false,
-        isHistoricallyTraditional: false,
-        date: new Date(),
-        description: '',
-        coordinatorName: '',
-        coordinatorContact: '',
-        notes: '',
-      }],
+      events: [],
       generalNotes: '',
     },
   });
@@ -282,6 +270,25 @@ export function MultiEventRequestForm({
       return () => clearTimeout(timer);
     }
   }, []);
+
+  // Initialize first event after component mounts (hydration-safe)
+  useEffect(() => {
+    if (eventFields.length === 0) {
+      appendEvent({
+        priority: 1,
+        name: '',
+        eventTypeId: '',
+        location: '',
+        isQualifier: false,
+        isHistoricallyTraditional: false,
+        date: new Date(),
+        description: '',
+        coordinatorName: '',
+        coordinatorContact: '',
+        notes: '',
+      });
+    }
+  }, [eventFields.length, appendEvent]);
 
   const filteredClubs = useMemo(() => {
     if (!selectedZoneId) {
@@ -731,12 +738,12 @@ export function MultiEventRequestForm({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 pb-8 sm:pb-4">
       {/* Policy Information */}
       <EventRequestPolicyInfo />
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmitForm)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmitForm)} className="space-y-4 sm:space-y-6">
           {/* Your Details */}
           <Card>
             <CardHeader>
@@ -1084,7 +1091,7 @@ export function MultiEventRequestForm({
 
           {/* Submit Button */}
           <Card className="bg-gradient-to-r from-primary/5 to-accent/5 border-primary/20">
-            <CardContent className="pt-6">
+            <CardContent className="pt-4 sm:pt-6 px-4 sm:px-6 pb-6">
               <div className="space-y-4">
                 <div className="text-center space-y-2">
                   <h3 className="font-medium text-lg">Ready to Submit?</h3>
@@ -1094,7 +1101,7 @@ export function MultiEventRequestForm({
                 </div>
                 
                 {/* Submission checklist */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 text-xs px-2 sm:px-0">
                   <div className="flex items-center gap-2">
                     <div className={`w-2 h-2 rounded-full ${form.watch('submittedBy') ? 'bg-green-500' : 'bg-gray-300'}`}></div>
                     <span className={form.watch('submittedBy') ? 'text-green-700' : 'text-muted-foreground'}>
@@ -1115,15 +1122,15 @@ export function MultiEventRequestForm({
                   </div>
                 </div>
 
-                <div className="flex justify-center gap-4">
-                  <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
+                  <div className="flex items-center gap-2 justify-center">
                     <Button 
                       type="button"
                       variant="outline"
                       onClick={generatePDFPreview}
                       disabled={isGeneratingPDF || isSubmitting || eventFields.length === 0}
                       size="lg"
-                      className="min-w-[160px]"
+                      className="w-full sm:min-w-[160px] sm:w-auto"
                     >
                       {isGeneratingPDF ? (
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
@@ -1135,6 +1142,7 @@ export function MultiEventRequestForm({
                     <HelpTooltip 
                       content="Generate and download a PDF preview of your request form using the current data. You can review this before submitting your final request."
                       side="top"
+                      className="hidden sm:block"
                     />
                   </div>
                   
@@ -1142,7 +1150,7 @@ export function MultiEventRequestForm({
                     type="submit" 
                     disabled={isSubmitting || isGeneratingPDF || eventFields.length === 0}
                     size="lg"
-                    className="min-w-[200px]"
+                    className="w-full sm:min-w-[200px] sm:w-auto"
                   >
                     {isSubmitting ? (
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>

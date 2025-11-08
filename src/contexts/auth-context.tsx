@@ -28,10 +28,18 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isHydrated, setIsHydrated] = useState(false);
   const router = useRouter();
 
-  // Check for existing token on mount
+  // Hydration-safe initialization
   useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+
+  // Check for existing token after hydration
+  useEffect(() => {
+    if (!isHydrated) return;
+    
     const token = localStorage.getItem('auth_token');
     const userData = localStorage.getItem('user_data');
     
@@ -47,7 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     
     setLoading(false);
-  }, []);
+  }, [isHydrated]);
 
   const login = async (credentials: { ponyClubId: string; mobileNumber: string }) => {
     setLoading(true);

@@ -2,11 +2,11 @@
 
 import type { PropsWithChildren } from 'react';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AppHeader } from '@/components/layout/app-header';
 import { useAuth } from '@/contexts/auth-context';
 import Link from 'next/link';
-import { Calendar, PlusCircle, Database, FerrisWheel, Shield, Settings, MapPin, Building, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar, PlusCircle, Database, FerrisWheel, Shield, Settings, MapPin, Building, ChevronLeft, ChevronRight, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -17,8 +17,37 @@ import { NavigationItem, filterNavigationByRole, UserRole } from '@/lib/access-c
 export function AppLayout({ children }: PropsWithChildren) {
   const pathname = usePathname();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const [eventSources, setEventSources] = useAtom(eventSourceAtom);
   const { user, isAuthenticated } = useAuth();
+
+  // Hydration-safe client detection
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Detect mobile screen size only after hydration
+  useEffect(() => {
+    if (!isClient) return;
+    
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768); // md breakpoint
+      if (window.innerWidth < 768) {
+        setSidebarCollapsed(true); // Auto-collapse on mobile
+      }
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, [isClient]);
+
+  // Close mobile menu when route changes
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
   
   // Navigation items with role-based access control
   const navigationItems: NavigationItem[] = [
@@ -91,27 +120,67 @@ export function AppLayout({ children }: PropsWithChildren) {
       {/* Beautiful full-width header */}
       <AppHeader />
       
+      {/* Mobile Menu Button - only show after hydration */}
+      {isClient && isMobile && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="fixed top-20 left-4 z-50 h-10 w-10 bg-background/95 backdrop-blur-sm border border-border/40 shadow-lg hover:bg-primary/10 md:hidden"
+        >
+          {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </Button>
+      )}
+
+      {/* Mobile Overlay - only show after hydration */}
+      {isClient && isMobile && mobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Content area below header */}
       <div className="h-[calc(100vh-5rem)] flex">
-        {/* Custom Sidebar - No overlay, stays in place */}
-        <div className={`transition-all duration-300 border-r border-border/40 bg-background/95 backdrop-blur-sm ${
-          sidebarCollapsed ? 'w-16' : 'w-64'
-        }`}>
+        {/* Sidebar */}
+        <div className={`
+          transition-all duration-300 border-r border-border/40 bg-background/95 backdrop-blur-sm
+          ${!isClient || !isMobile 
+            ? sidebarCollapsed 
+              ? 'w-16' 
+              : 'w-64'
+            : mobileMenuOpen 
+              ? 'fixed inset-y-0 left-0 top-20 w-64 z-40' 
+              : 'w-0 overflow-hidden'
+          }
+        `}>
           {/* Sidebar Header with toggle */}
           <div className="p-4 border-b border-border/40 flex items-center justify-between">
-            {!sidebarCollapsed && (
+            {(!sidebarCollapsed || (isClient && mobileMenuOpen)) && (
               <h2 className="text-lg font-semibold tracking-tight text-muted-foreground">
                 Navigation
               </h2>
             )}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="h-8 w-8 hover:bg-primary/10"
-            >
-              {sidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-            </Button>
+            {(!isClient || !isMobile) && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                className="h-8 w-8 hover:bg-primary/10"
+              >
+                {sidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+              </Button>
+            )}
+            {isClient && isMobile && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setMobileMenuOpen(false)}
+                className="h-8 w-8 hover:bg-primary/10"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
           </div>
           
           {/* Sidebar Content */}
@@ -126,7 +195,7 @@ export function AppLayout({ children }: PropsWithChildren) {
                   title={item.title}
                 >
                   <item.icon className="h-4 w-4" />
-                  {!sidebarCollapsed && <span>{item.label}</span>}
+                  {(!sidebarCollapsed || (isClient && mobileMenuOpen)) && <span>{item.label}</span>}
                 </Link>
               ))}
             </div>
@@ -135,7 +204,7 @@ export function AppLayout({ children }: PropsWithChildren) {
             <div className="border-t border-border/40 my-4"></div>
             
             {/* Event Sources - only show when expanded */}
-            {!sidebarCollapsed && (
+            {(!sidebarCollapsed || (isClient && mobileMenuOpen)) && (
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-muted-foreground font-medium">
                   <Database className="text-primary h-4 w-4" />
@@ -175,8 +244,8 @@ export function AppLayout({ children }: PropsWithChildren) {
         </div>
         
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col">
-          <div className="flex-1 p-6">
+        <div className={`flex-1 flex flex-col ${isClient && isMobile ? 'w-full' : ''}`}>
+          <div className={`flex-1 p-4 md:p-6 ${isClient && isMobile ? 'pt-16' : ''}`}>
             <div className="max-w-7xl mx-auto">
               {children}
             </div>

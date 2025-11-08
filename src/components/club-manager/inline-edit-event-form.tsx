@@ -45,18 +45,50 @@ export function InlineEditEventForm({
   const [originalDate, setOriginalDate] = useState('');
   const [dateChanged, setDateChanged] = useState(false);
 
+  // Helper function to find correct event type ID that matches available options
+  const findMatchingEventTypeId = (eventTypeId: string, availableEventTypes: EventType[]): string => {
+    if (!eventTypeId) return '';
+    
+    // First try exact match
+    if (availableEventTypes.find(type => type.id === eventTypeId)) {
+      return eventTypeId;
+    }
+    
+    // If not found and ID doesn't have 'event-type-' prefix, try adding it
+    if (!eventTypeId.startsWith('event-type-')) {
+      const prefixedId = `event-type-${eventTypeId}`;
+      if (availableEventTypes.find(type => type.id === prefixedId)) {
+        return prefixedId;
+      }
+    }
+    
+    // If not found and ID has 'event-type-' prefix, try without it
+    if (eventTypeId.startsWith('event-type-')) {
+      const simpleId = eventTypeId.replace('event-type-', '');
+      if (availableEventTypes.find(type => type.id === simpleId)) {
+        return simpleId;
+      }
+    }
+    
+    // Event type not found - this could happen with legacy data or missing event types
+    return '';
+  };
+
   // Initialize form data when component mounts
   useEffect(() => {
-    if (event) {
+    if (event && eventTypes.length > 0) {
       const eventDate = event.date instanceof Date 
         ? event.date.toISOString().split('T')[0]
         : new Date(event.date).toISOString().split('T')[0];
+      
+      // Find the matching event type ID from available options
+      const matchingEventTypeId = findMatchingEventTypeId(event.eventTypeId || '', eventTypes);
       
       setOriginalDate(eventDate);
       setFormData({
         name: event.name || '',
         date: eventDate,
-        eventTypeId: event.eventTypeId || '',
+        eventTypeId: matchingEventTypeId,
         location: event.location || '',
         coordinatorName: event.coordinatorName || '',
         coordinatorContact: event.coordinatorContact || '',
@@ -65,8 +97,10 @@ export function InlineEditEventForm({
         isHistoricallyTraditional: event.isHistoricallyTraditional || false,
         notes: event.notes || ''
       });
+      
+
     }
-  }, [event]);
+  }, [event, eventTypes]);
 
   // Check if date was changed
   useEffect(() => {
@@ -86,12 +120,7 @@ export function InlineEditEventForm({
         ...(dateChanged && event.status === 'approved' && { status: 'proposed' })
       };
 
-      console.log('Form Data before submission:', formData);
-      console.log('Priority field specifically:', formData.priority, 'type:', typeof formData.priority);
-      console.log('Traditional field specifically:', formData.isHistoricallyTraditional, 'type:', typeof formData.isHistoricallyTraditional);
-      console.log('Update Data being sent:', updateData);
-      console.log('Priority in update data:', updateData.priority);
-      console.log('Traditional in update data:', updateData.isHistoricallyTraditional);
+
 
       const response = await fetch(`/api/events/${event.id}`, {
         method: 'PATCH',
@@ -101,9 +130,7 @@ export function InlineEditEventForm({
         body: JSON.stringify(updateData),
       });
 
-      console.log('Response status:', response.status);
       const responseData = await response.json();
-      console.log('Response data:', responseData);
 
       if (!response.ok) {
         throw new Error(`Failed to update event: ${responseData.error || 'Unknown error'}`);
@@ -179,18 +206,31 @@ export function InlineEditEventForm({
           {/* Event Type */}
           <div>
             <Label htmlFor="eventType" className="text-sm font-medium">Event Type</Label>
-            <Select value={formData.eventTypeId} onValueChange={(value) => setFormData(prev => ({ ...prev, eventTypeId: value }))}>
-              <SelectTrigger className="mt-1">
-                <SelectValue placeholder="Select event type" />
-              </SelectTrigger>
-              <SelectContent>
-                {eventTypes.map((type) => (
-                  <SelectItem key={type.id} value={type.id}>
-                    {type.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+{eventTypes.length > 0 ? (
+              <Select 
+                key={`eventType-${formData.eventTypeId}-${eventTypes.length}`} 
+                value={formData.eventTypeId} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, eventTypeId: value }))}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue 
+                    placeholder="Select event type"
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {eventTypes.map((type) => (
+                    <SelectItem key={type.id} value={type.id}>
+                      {type.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <div className="mt-1 p-2 border border-border rounded-md text-muted-foreground">
+                Loading event types...
+              </div>
+            )}
+
           </div>
 
           {/* Location */}

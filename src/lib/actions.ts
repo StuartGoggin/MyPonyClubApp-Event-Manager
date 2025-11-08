@@ -158,6 +158,8 @@ export async function createMultiEventRequestAction(data: any): Promise<FormStat
                 eventTypeId,
                 location,
                 isQualifier,
+                priority: priority as 1 | 2 | 3 | 4,
+                isHistoricallyTraditional,
                 status: 'proposed',
                 description,
                 coordinatorName,

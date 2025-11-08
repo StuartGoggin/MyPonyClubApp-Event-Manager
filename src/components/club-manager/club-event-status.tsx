@@ -127,7 +127,28 @@ export function ClubEventStatus({
   };
 
   const getEventTypeName = (eventTypeId: string) => {
-    return eventTypes.find(type => type.id === eventTypeId)?.name || 'Unknown Type';
+    if (!eventTypeId || eventTypeId.trim() === '') {
+      return 'No Event Type';
+    }
+    
+    // First try to find exact match
+    let found = eventTypes.find(type => type.id === eventTypeId);
+    
+    // If not found and ID doesn't have 'event-type-' prefix, try adding it (backward compatibility)
+    if (!found && !eventTypeId.startsWith('event-type-')) {
+      found = eventTypes.find(type => type.id === `event-type-${eventTypeId}`);
+    }
+    
+    // If still not found and ID has 'event-type-' prefix, try without it (forward compatibility)
+    if (!found && eventTypeId.startsWith('event-type-')) {
+      const simpleId = eventTypeId.replace('event-type-', '');
+      found = eventTypes.find(type => type.id === simpleId);
+    }
+    
+    if (!found) {
+      console.warn(`Event type not found for ID: ${eventTypeId}. Available types:`, eventTypes.map(t => ({ id: t.id, name: t.name })));
+    }
+    return found?.name || 'Unknown Type';
   };
 
   const getStatusBadge = (status: string) => {

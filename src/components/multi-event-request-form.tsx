@@ -28,7 +28,7 @@ import { type Club, type EventType, type Event, type Zone } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { SingleEventForm } from '@/components/single-event-form';
-import { EventRequestPolicyInfo } from '@/components/event-request-policy-info';
+
 import { createMultiEventRequestAction } from '@/lib/actions';
 import { useRouter } from 'next/navigation';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
@@ -739,9 +739,6 @@ export function MultiEventRequestForm({
 
   return (
     <div className="space-y-4 sm:space-y-6 pb-8 sm:pb-4">
-      {/* Policy Information */}
-      <EventRequestPolicyInfo />
-
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmitForm)} className="space-y-4 sm:space-y-6">
           {/* Your Details */}

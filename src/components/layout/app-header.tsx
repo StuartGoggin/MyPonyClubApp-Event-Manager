@@ -31,24 +31,25 @@ export function AppHeader() {
         <div className="absolute bottom-0 right-1/3 w-24 h-24 bg-gradient-to-br from-accent/30 to-transparent rounded-full blur-2xl animate-pulse delay-1000"></div>
         
         {/* Main header content */}
-        <div className="relative flex items-center justify-between px-6 py-4 h-20">
+        <div className="relative flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 h-16 sm:h-20">
           {/* Left side - Logo and App Name */}
-          <div className="flex items-center gap-4">
-            <Link href="/" className="flex items-center gap-3 group">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+            <Link href="/" className="flex items-center gap-2 sm:gap-3 group min-w-0 flex-1">
               {/* Logo with beautiful effects */}
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent rounded-2xl opacity-30 blur-lg animate-pulse group-hover:opacity-50 transition-opacity duration-300"></div>
-                <div className="relative rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 p-3 border-2 border-primary/40 backdrop-blur-sm group-hover:border-primary/60 transition-all duration-300 group-hover:scale-105">
-                  <PonyIcon className="h-8 w-8 text-primary drop-shadow-lg group-hover:text-accent transition-colors duration-300" />
+              <div className="relative flex-shrink-0">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent rounded-xl sm:rounded-2xl opacity-30 blur-lg animate-pulse group-hover:opacity-50 transition-opacity duration-300"></div>
+                <div className="relative rounded-xl sm:rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 p-2 sm:p-3 border-2 border-primary/40 backdrop-blur-sm group-hover:border-primary/60 transition-all duration-300 group-hover:scale-105">
+                  <PonyIcon className="h-6 w-6 sm:h-8 sm:w-8 text-primary drop-shadow-lg group-hover:text-accent transition-colors duration-300" />
                 </div>
               </div>
               
               {/* App name with gradient text */}
-              <div className="flex flex-col">
-                <h1 className="text-2xl xl:text-3xl font-bold bg-gradient-to-r from-primary via-purple-600 to-accent bg-clip-text text-transparent group-hover:from-accent group-hover:via-primary group-hover:to-purple-600 transition-all duration-500">
-                  PonyClub Events
+              <div className="flex flex-col min-w-0 flex-1">
+                <h1 className="text-lg sm:text-xl md:text-2xl xl:text-3xl font-bold bg-gradient-to-r from-primary via-purple-600 to-accent bg-clip-text text-transparent group-hover:from-accent group-hover:via-primary group-hover:to-purple-600 transition-all duration-500 truncate">
+                  <span className="hidden sm:inline">PonyClub Events</span>
+                  <span className="sm:hidden">Events</span>
                 </h1>
-                <p className="text-sm text-muted-foreground font-medium">
+                <p className="text-xs sm:text-sm text-muted-foreground font-medium truncate hidden sm:block">
                   Event Management System
                 </p>
               </div>
@@ -56,24 +57,24 @@ export function AppHeader() {
           </div>
 
           {/* Right side - Status indicators and user info */}
-          <div className="flex items-center gap-4">
-            {/* Notifications */}
+          <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+            {/* Notifications - smaller on mobile */}
             <Button
               variant="ghost"
               size="icon"
-              className="relative h-10 w-10 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 hover:border-white/30 transition-all duration-300 hover:scale-105"
+              className="relative h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 hover:border-white/30 transition-all duration-300 hover:scale-105"
             >
-              <Bell className="h-4 w-4 text-muted-foreground" />
-              <div className="absolute -top-1 -right-1 h-3 w-3 bg-gradient-to-br from-red-400 to-pink-500 rounded-full border-2 border-background animate-pulse"></div>
+              <Bell className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+              <div className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 h-2 w-2 sm:h-3 sm:w-3 bg-gradient-to-br from-red-400 to-pink-500 rounded-full border border-background animate-pulse"></div>
             </Button>
 
-            {/* Settings */}
+            {/* Settings - smaller on mobile */}
             <Button
               variant="ghost"
               size="icon"
-              className="h-10 w-10 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 hover:border-white/30 transition-all duration-300 hover:scale-105"
+              className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 hover:border-white/30 transition-all duration-300 hover:scale-105"
             >
-              <Settings className="h-4 w-4 text-muted-foreground" />
+              <Settings className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
             </Button>
 
             {/* User account menu */}

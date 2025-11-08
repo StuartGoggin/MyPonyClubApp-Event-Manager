@@ -698,18 +698,6 @@ export const ENDPOINTS: APIEndpointDefinition[] = [
     isPage: true
   },
   {
-    id: 'manage-events-page',
-    path: '/manage-events',
-    method: 'GET',
-    category: 'pages',
-    name: 'Manage Events',
-    description: 'General event management interface',
-    enabled: true,
-    requiresAuth: true,
-    icon: 'Calendar',
-    isPage: true
-  },
-  {
     id: 'admin-dashboard-page',
     path: '/admin',
     method: 'GET',

@@ -37,14 +37,6 @@ export function AppLayout({ children }: PropsWithChildren) {
       // Public access - no authentication required
     },
     {
-      href: '/manage-events',
-      title: 'Manage my Events',
-      icon: Settings,
-      label: 'Manage my Events',
-      requireAuth: true,
-      // All authenticated users can manage their own events
-    },
-    {
       href: '/admin',
       title: 'Admin Dashboard',
       icon: Shield,

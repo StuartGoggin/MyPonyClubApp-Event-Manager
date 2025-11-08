@@ -162,21 +162,38 @@ export default function ClubEventManagerDashboard() {
   const selectedZone = zones.find(zone => zone.id === selectedClub?.zoneId);
   const clubEvents = Array.isArray(events) ? events.filter(event => event.clubId === selectedClubId) : [];
 
-  // Filter events based on time
-  const filteredClubEvents = clubEvents.filter(event => {
-    if (eventFilter === 'all') return true;
-    
-    const currentDate = new Date();
-    const eventDate = new Date(event.date);
-    
-    if (eventFilter === 'upcoming') {
-      return eventDate >= currentDate;
-    } else if (eventFilter === 'past') {
-      return eventDate < currentDate;
-    }
-    
-    return true;
-  });
+  // Filter events based on time and sort by date (nearest first)
+  const filteredClubEvents = clubEvents
+    .filter(event => {
+      if (eventFilter === 'all') return true;
+      
+      const currentDate = new Date();
+      const eventDate = new Date(event.date);
+      
+      if (eventFilter === 'upcoming') {
+        return eventDate >= currentDate;
+      } else if (eventFilter === 'past') {
+        return eventDate < currentDate;
+      }
+      
+      return true;
+    })
+    .sort((a, b) => {
+      // Convert dates to Date objects for comparison, handling various date formats
+      const getValidDate = (date: any): Date => {
+        if (date instanceof Date) return date;
+        if (typeof date === 'string') return new Date(date);
+        if (date && typeof date === 'object' && date.toDate) return date.toDate(); // Firestore timestamp
+        if (date && typeof date === 'object' && date.seconds) return new Date(date.seconds * 1000); // Firestore timestamp
+        return new Date(date); // Fallback
+      };
+      
+      const dateA = getValidDate(a.date);
+      const dateB = getValidDate(b.date);
+      
+      // Sort by date ascending (nearest first)
+      return dateA.getTime() - dateB.getTime();
+    });
 
   // Dashboard statistics for selected club
   const submittedEvents = clubEvents.filter(event => event.status === 'proposed').length;

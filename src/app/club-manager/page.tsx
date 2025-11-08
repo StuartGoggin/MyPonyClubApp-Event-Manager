@@ -5,12 +5,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, CheckCircle, Clock, Users, Building, Plus, Activity, Calendar, FileText, XCircle, Filter } from 'lucide-react';
+import { MapPin, CheckCircle, Clock, Users, Building, Plus, Activity, Calendar, FileText, XCircle, Filter, AlertTriangle } from 'lucide-react';
 import { Zone, Club, Event, EventType } from '@/lib/types';
 import { ClubEventSubmission } from '@/components/club-manager/club-event-submission';
 import { ClubEventStatus } from '@/components/club-manager/club-event-status';
+import { useAuth } from '@/contexts/auth-context';
+import { useRouter } from 'next/navigation';
 
 export default function ClubEventManagerDashboard() {
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
+  const router = useRouter();
+  
   const [zones, setZones] = useState<Zone[]>([]);
   const [clubs, setClubs] = useState<Club[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
@@ -20,13 +25,64 @@ export default function ClubEventManagerDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [showAddEventForm, setShowAddEventForm] = useState(false);
   const [eventFilter, setEventFilter] = useState<'all' | 'upcoming' | 'past'>('all');
-
-  // Future: This will be replaced with user's authorized clubs from authentication
   const [authorizedClubs, setAuthorizedClubs] = useState<string[]>([]);
+  const [accessDenied, setAccessDenied] = useState(false);
 
+  // Helper function to check if user has access to a club
+  const hasClubAccess = (clubId: string, userZoneId?: string): boolean => {
+    if (!user) return false;
+    
+    // Super users and zone reps have access to all clubs
+    if (user.role === 'super_user' || user.role === 'zone_rep') {
+      return true;
+    }
+    
+    // Standard users can only access their own club
+    if (user.role === 'standard') {
+      return user.clubId === clubId;
+    }
+    
+    return false;
+  };
+
+  // Helper function to get authorized clubs based on user role
+  const getAuthorizedClubIds = (allClubs: Club[], userRole: string, userClubId?: string, userZoneId?: string): string[] => {
+    if (!user) return [];
+    
+    // Super users can access all clubs
+    if (userRole === 'super_user') {
+      return allClubs.map(club => club.id);
+    }
+    
+    // Zone reps can access all clubs in their zone
+    if (userRole === 'zone_rep' && userZoneId) {
+      return allClubs.filter(club => club.zoneId === userZoneId).map(club => club.id);
+    }
+    
+    // Standard users can only access their own club
+    if (userRole === 'standard' && userClubId) {
+      return allClubs.some(club => club.id === userClubId) ? [userClubId] : [];
+    }
+    
+    return [];
+  };
+
+  // Check authentication and authorization
   useEffect(() => {
+    if (authLoading) return;
+    
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
+    
+    if (!user) {
+      setAccessDenied(true);
+      return;
+    }
+    
     fetchData();
-  }, []);
+  }, [isAuthenticated, authLoading, user, router]);
 
   const fetchData = async () => {
     console.log('Club Manager: fetchData called - refreshing all data');
@@ -59,14 +115,34 @@ export default function ClubEventManagerDashboard() {
 
       console.log('Club Manager: Data updated in state');
 
-      // Future: Replace with actual user authorization check
-      // For now, allow access to all clubs
+      // Get user-authorized clubs based on role and associations
       const clubsArray = clubsData.clubs || clubsData || [];
-      setAuthorizedClubs(clubsArray.map((club: Club) => club.id));
+      const authorizedClubIds = getAuthorizedClubIds(
+        clubsArray, 
+        user?.role || '', 
+        user?.clubId, 
+        user?.zoneId
+      );
+      
+      setAuthorizedClubs(authorizedClubIds);
 
-      // Auto-select first authorized club
-      if (clubsArray.length > 0) {
-        setSelectedClubId(clubsArray[0].id);
+      // Check if user has access to any clubs
+      if (authorizedClubIds.length === 0) {
+        setAccessDenied(true);
+        setError('Access denied: You do not have permission to manage any clubs.');
+        return;
+      }
+
+      // Auto-select user's primary club or first authorized club
+      let defaultClubId = '';
+      if (user?.role === 'standard' && user?.clubId && authorizedClubIds.includes(user.clubId)) {
+        defaultClubId = user.clubId;
+      } else if (authorizedClubIds.length > 0) {
+        defaultClubId = authorizedClubIds[0];
+      }
+      
+      if (defaultClubId) {
+        setSelectedClubId(defaultClubId);
       }
     } catch (err) {
       console.error('Error fetching data:', err);
@@ -108,13 +184,40 @@ export default function ClubEventManagerDashboard() {
   const rejectedEvents = clubEvents.filter(event => event.status === 'rejected').length;
   const totalEvents = clubEvents.length;
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center space-y-4">
           <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent mx-auto"></div>
           <p className="text-muted-foreground">Loading...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (accessDenied) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background/98 to-primary/5 p-4 flex items-center justify-center">
+        <Card className="max-w-md w-full glass-effect border-2 border-destructive/20 shadow-xl">
+          <CardContent className="p-8 text-center">
+            <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2 text-destructive">Access Denied</h3>
+            <p className="text-muted-foreground mb-4">
+              You do not have permission to access the club management dashboard.
+            </p>
+            <div className="text-sm text-muted-foreground mb-4">
+              {user?.role === 'standard' && (
+                <p>Standard users can only manage events for their assigned club.</p>
+              )}
+              {(!user?.clubId && user?.role === 'standard') && (
+                <p>No club association found in your profile. Please contact an administrator.</p>
+              )}
+            </div>
+            <Button onClick={() => router.push('/admin')} variant="outline">
+              Go to Admin Dashboard
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -148,10 +251,28 @@ export default function ClubEventManagerDashboard() {
                   <Users className="h-6 w-6 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h1 className="text-xl font-bold bg-gradient-to-r from-primary via-primary/80 to-accent bg-clip-text text-transparent mb-1">
-                    Club Event Manager
-                  </h1>
-                  <p className="text-muted-foreground text-xs font-medium">Submit and manage your event requests</p>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h1 className="text-xl font-bold bg-gradient-to-r from-primary via-primary/80 to-accent bg-clip-text text-transparent">
+                      Club Event Manager
+                    </h1>
+                    {user && (
+                      <Badge variant={
+                        user.role === 'super_user' ? 'default' : 
+                        user.role === 'zone_rep' ? 'secondary' : 
+                        'outline'
+                      } className="text-xs">
+                        {user.role === 'super_user' ? 'Super User' : 
+                         user.role === 'zone_rep' ? 'Zone Rep' : 
+                         'Standard'}
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-muted-foreground text-xs font-medium">
+                    Submit and manage your event requests
+                    {user?.role === 'standard' && ' for your club'}
+                    {user?.role === 'zone_rep' && ' for clubs in your zone'}
+                    {user?.role === 'super_user' && ' for all clubs'}
+                  </p>
                 </div>
               </div>
             </CardContent>

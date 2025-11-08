@@ -99,14 +99,12 @@ export function MultiEventRequestForm({
   const { toast } = useToast();
   const router = useRouter();
   
-  // Data loading state - always allow refresh for event types
+  // Data loading state - silent refresh for event types
   const [clubs, setClubs] = useState<Club[]>(propClubs || []);
   const [eventTypes, setEventTypes] = useState<EventType[]>(propEventTypes || []);
   const [allEvents, setAllEvents] = useState<Event[]>(propAllEvents || []);
   const [zones, setZones] = useState<Zone[]>(propZones || []);
   const [isLoadingData, setIsLoadingData] = useState(embedMode && (!propClubs || !propEventTypes || !propAllEvents || !propZones));
-  const [isRefreshingEventTypes, setIsRefreshingEventTypes] = useState(false);
-  const [lastEventTypesUpdate, setLastEventTypesUpdate] = useState<Date | null>(null);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
@@ -241,33 +239,18 @@ export function MultiEventRequestForm({
     };
   }, []);
 
-  // Function to refresh event types
+  // Silent function to refresh event types (no user notifications)
   const refreshEventTypes = async () => {
-    if (isRefreshingEventTypes) return;
-    
-    setIsRefreshingEventTypes(true);
     try {
       const response = await fetch('/api/event-types');
       if (response.ok) {
         const data = await response.json();
         const newEventTypes = data.eventTypes || data;
         setEventTypes(newEventTypes);
-        setLastEventTypesUpdate(new Date());
-        
-        toast({
-          title: 'Event Types Updated',
-          description: `Loaded ${newEventTypes.length} event types. New types will now appear in the dropdown.`,
-        });
       }
     } catch (error) {
-      console.error('Error refreshing event types:', error);
-      toast({
-        title: 'Refresh Failed',
-        description: 'Could not update event types. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsRefreshingEventTypes(false);
+      console.error('Silent refresh of event types failed:', error);
+      // No user notification - fail silently
     }
   };
 
@@ -286,9 +269,9 @@ export function MultiEventRequestForm({
 
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
-  }, [isRefreshingEventTypes]);
+  }, []);
 
-  // Refresh event types on component mount (once)
+  // Silent refresh on component mount (once)
   useEffect(() => {
     if (!embedMode && propEventTypes && propEventTypes.length > 0) {
       // Only refresh if we have initial data (not first load)
@@ -1052,8 +1035,6 @@ export function MultiEventRequestForm({
                   eventTypes={eventTypes}
                   canRemove={eventFields.length > 1}
                   onRemoveEvent={() => handleRemoveEvent(index)}
-                  isRefreshingEventTypes={isRefreshingEventTypes}
-                  onRefreshEventTypes={refreshEventTypes}
                 />
               ))}
 

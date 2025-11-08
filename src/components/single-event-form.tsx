@@ -1,7 +1,7 @@
 'use client';
 
 import { Control, UseFormWatch } from 'react-hook-form';
-import { CalendarIcon, Calendar as CalendarLucide, Trash2, Wand2, AlertTriangle, RefreshCw } from 'lucide-react';
+import { CalendarIcon, Calendar as CalendarLucide, Trash2, Wand2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -37,8 +37,6 @@ interface SingleEventFormProps {
   canRemove?: boolean;
   isLoadingSuggestions?: boolean;
   conflictSuggestions?: any;
-  isRefreshingEventTypes?: boolean;
-  onRefreshEventTypes?: () => void;
 }
 
 export function SingleEventForm({
@@ -51,9 +49,7 @@ export function SingleEventForm({
   onRemoveEvent,
   canRemove = false,
   isLoadingSuggestions = false,
-  conflictSuggestions,
-  isRefreshingEventTypes = false,
-  onRefreshEventTypes
+  conflictSuggestions
 }: SingleEventFormProps) {
 
   const isHistoricallyTraditional = watch(`events.${eventIndex}.isHistoricallyTraditional`);
@@ -131,22 +127,7 @@ export function SingleEventForm({
         name={`events.${eventIndex}.eventTypeId`}
         render={({ field }) => (
           <FormItem>
-            <div className="flex items-center justify-between">
-              <FormLabel>Event Type *</FormLabel>
-              {onRefreshEventTypes && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={onRefreshEventTypes}
-                  disabled={isRefreshingEventTypes}
-                  className="h-6 px-2 text-xs text-muted-foreground hover:text-primary"
-                >
-                  <RefreshCw className={`h-3 w-3 mr-1 ${isRefreshingEventTypes ? 'animate-spin' : ''}`} />
-                  {isRefreshingEventTypes ? 'Updating...' : 'Refresh Types'}
-                </Button>
-              )}
-            </div>
+            <FormLabel>Event Type *</FormLabel>
             <Select onValueChange={field.onChange} defaultValue={field.value}>
               <FormControl>
                 <SelectTrigger>

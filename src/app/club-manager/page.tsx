@@ -542,6 +542,7 @@ export default function ClubEventManagerDashboard() {
                     clubName={selectedClub.name}
                     zoneName={selectedZone?.name || 'Unknown Zone'}
                     eventTypes={eventTypes}
+                    club={selectedClub}
                     onEventSubmitted={() => {
                       handleEventUpdate();
                       setShowAddEventForm(false);

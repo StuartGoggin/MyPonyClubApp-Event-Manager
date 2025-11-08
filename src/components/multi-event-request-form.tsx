@@ -32,6 +32,7 @@ import { EventRequestPolicyInfo } from '@/components/event-request-policy-info';
 import { createMultiEventRequestAction } from '@/lib/actions';
 import { useRouter } from 'next/navigation';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
+import { formatClubAddress } from '@/lib/utils';
 
 // Individual event details schema
 const eventDetailsSchema = z.object({
@@ -321,6 +322,15 @@ export function MultiEventRequestForm({
     setClubSearchTerm(club.name);
     setShowSuggestions(false);
     form.setValue('clubId', club.id);
+    
+    // Update location for existing events if they're empty
+    const clubAddress = formatClubAddress(club);
+    const currentEvents = form.getValues('events');
+    currentEvents.forEach((event, index) => {
+      if (!event.location || event.location.trim() === '') {
+        form.setValue(`events.${index}.location`, clubAddress);
+      }
+    });
   };
 
   // Handle input changes for autocomplete
@@ -437,11 +447,13 @@ export function MultiEventRequestForm({
     }
 
     const nextPriority = eventFields.length + 1;
+    const defaultLocation = selectedClub ? formatClubAddress(selectedClub) : '';
+    
     appendEvent({
       priority: nextPriority,
       name: '',
       eventTypeId: '',
-      location: '',
+      location: defaultLocation,
       isQualifier: false,
       isHistoricallyTraditional: false,
       date: new Date(),

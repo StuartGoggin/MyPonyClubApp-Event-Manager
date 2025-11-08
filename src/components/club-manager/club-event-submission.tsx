@@ -11,9 +11,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon, PlusCircle, CheckCircle, History } from 'lucide-react';
-import { EventType } from '@/lib/types';
+import { EventType, Club } from '@/lib/types';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
+import { formatClubAddress } from '@/lib/utils';
 
 interface ClubEventSubmissionProps {
   clubId: string;
@@ -21,6 +22,7 @@ interface ClubEventSubmissionProps {
   zoneName: string;
   eventTypes: EventType[];
   onEventSubmitted: () => void;
+  club?: Club;
 }
 
 export function ClubEventSubmission({ 
@@ -28,19 +30,22 @@ export function ClubEventSubmission({
   clubName, 
   zoneName, 
   eventTypes, 
-  onEventSubmitted 
+  onEventSubmitted,
+  club 
 }: ClubEventSubmissionProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const defaultLocation = club ? formatClubAddress(club) : '';
   const [formData, setFormData] = useState({
     name: '',
     date: undefined as Date | undefined,
     eventTypeId: '',
-    location: '',
+    location: defaultLocation,
     coordinatorName: '',
     coordinatorContact: '',
     isQualifier: false,
+    isHistoricallyTraditional: false,
     notes: ''
   });
 
@@ -81,10 +86,11 @@ export function ClubEventSubmission({
           name: '',
           date: undefined,
           eventTypeId: '',
-          location: '',
+          location: defaultLocation,
           coordinatorName: '',
           coordinatorContact: '',
           isQualifier: false,
+          isHistoricallyTraditional: false,
           notes: ''
         });
         onEventSubmitted();
@@ -321,6 +327,23 @@ export function ClubEventSubmission({
                 <Label htmlFor="isQualifier" className="text-sm font-medium leading-none">
                   This is a Zone Qualifier Event
                 </Label>
+              </div>
+
+              {/* Historical Event */}
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="isHistoricallyTraditional"
+                  checked={formData.isHistoricallyTraditional}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isHistoricallyTraditional: !!checked }))}
+                />
+                <div className="space-y-1">
+                  <Label htmlFor="isHistoricallyTraditional" className="text-sm font-medium leading-none">
+                    Historically traditional event
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    This event has traditionally been held on this date
+                  </p>
+                </div>
               </div>
 
               {/* Notes */}

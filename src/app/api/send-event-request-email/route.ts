@@ -7,6 +7,9 @@ import { requiresApproval, getInitialEmailStatus, shouldAutoSend } from '@/lib/e
 import { autoSendQueuedEmail } from '@/lib/auto-send-email';
 import { exportEventRequestAsJSON, createJSONAttachment } from '@/lib/event-request-json-export';
 import { generateEventRequestEmailHTML, generateEventRequestEmailText } from '@/lib/event-request-email-template';
+import { EmailTemplateService } from '@/lib/email-template-service';
+import { EmailTemplateVariableData, EmailTemplateType } from '@/lib/types-email-templates';
+import { EmailAttachmentService, AttachmentFile } from '@/lib/email-attachment-service';
 import { QueuedEmail } from '@/lib/types';
 
 // Only initialize Resend if API key is available
@@ -56,10 +59,7 @@ interface EventRequestEmailData {
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('Enhanced Email Notification API called');
-    
     const data: EventRequestEmailData = await request.json();
-    console.log('Received data:', { hasFormData: !!data.formData, hasPdfData: !!data.pdfData });
     
     const { formData, pdfData } = data;
 
@@ -73,7 +73,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Get club and zone information
-    console.log('Getting club info for:', formData.clubId);
     const club = await getClubById(formData.clubId);
     if (!club) {
       console.error('Club not found:', formData.clubId);
@@ -93,7 +92,6 @@ export async function POST(request: NextRequest) {
 
     // Generate reference number
     const referenceNumber = `ER-${Date.now()}`;
-    console.log('Generated reference number:', referenceNumber);
 
     // Generate JSON export for super users
     const jsonExport = await exportEventRequestAsJSON(formData, referenceNumber);
@@ -111,9 +109,7 @@ export async function POST(request: NextRequest) {
     let pdfBuffer: Buffer;
     if (pdfData && pdfData.length > 0) {
       pdfBuffer = Buffer.from(pdfData);
-      console.log('Using provided PDF data, size:', pdfBuffer.length);
     } else {
-      console.log('Generating new PDF...');
       pdfBuffer = await generateEventRequestPDF({
         formData: {
           ...formData,
@@ -180,20 +176,98 @@ export async function POST(request: NextRequest) {
       createdAt: new Date(),
     });
 
+    // Helper function to generate email content using templates
+    const generateEmailFromTemplate = async (templateType: EmailTemplateType, variables: EmailTemplateVariableData) => {
+      try {
+        // Try to get custom template first
+        const template = await EmailTemplateService.getDefaultTemplate(templateType);
+        if (template) {
+          const rendered = await EmailTemplateService.renderTemplate({
+            templateId: template.id,
+            variables,
+            recipientType: templateType.split('-').pop() as any
+          });
+          
+          if (rendered) {
+            // Generate attachments based on template settings
+            const attachmentFiles = await EmailAttachmentService.generateAttachments(
+              rendered.attachments,
+              variables
+            );
+
+            // Convert attachment files to Resend format
+            const resendAttachments = attachmentFiles.map(file => ({
+              filename: file.filename,
+              content: file.content instanceof Buffer ? file.content : Buffer.from(String(file.content), 'utf-8')
+            }));
+
+            return {
+              subject: rendered.subject,
+              html: rendered.htmlBody,
+              text: rendered.textBody,
+              attachments: resendAttachments
+            };
+          }
+        }
+        
+        // Fallback to original template system
+        console.warn(`Using fallback template for ${templateType}`);
+        return {
+          subject: templateType.includes('requester') 
+            ? `Event Request Submitted - ${referenceNumber}`
+            : templateType.includes('zone-manager')
+            ? `Zone Approval Required - Event Request ${referenceNumber}`
+            : templateType.includes('super-user')
+            ? `Super User Notification - Event Request ${referenceNumber}`
+            : `Event Request Notification - ${referenceNumber}`,
+          html: generateEventRequestEmailHTML({
+            ...variables,
+            isForSuperUser: templateType.includes('super-user')
+          }),
+          text: generateEventRequestEmailText({
+            ...variables,
+            isForSuperUser: templateType.includes('super-user')
+          }),
+          attachments: {
+            includePdf: true,
+            includeJsonExport: templateType.includes('super-user')
+          }
+        };
+      } catch (error) {
+        console.error(`Error generating template for ${templateType}:`, error);
+        // Fallback to original system
+        return {
+          subject: `Event Request Notification - ${referenceNumber}`,
+          html: generateEventRequestEmailHTML(variables as any),
+          text: generateEventRequestEmailText(variables as any),
+          attachments: {
+            includePdf: true,
+            includeJsonExport: templateType.includes('super-user')
+          }
+        };
+      }
+    };
+
+    // Prepare template variables
+    const templateVariables: EmailTemplateVariableData = {
+      ...emailTemplateData,
+      systemUrl: process.env.NEXTAUTH_URL || 'https://events.ponyclub.com.au',
+      supportEmail: process.env.SUPPORT_EMAIL || 'support@ponyclub.com.au',
+      organizationName: 'Pony Club Australia',
+      clubId: club.id,
+      zoneId: zone.id,
+    };
+
     // 1. Send email to requesting user
     console.log('Preparing email for requesting user:', formData.submittedByEmail);
     
-    const requesterEmailData = {
-      ...emailTemplateData,
-      isForSuperUser: false,
-    };
-
+    const requesterContent = await generateEmailFromTemplate('event-request-requester', templateVariables);
     const requesterEmail = {
       from: 'noreply@ponyclub.com.au',
       to: [formData.submittedByEmail],
-      subject: `Event Request Submitted - ${referenceNumber}`,
-      html: generateEventRequestEmailHTML(requesterEmailData),
-      text: generateEventRequestEmailText(requesterEmailData),
+      subject: requesterContent.subject,
+      html: requesterContent.html,
+      text: requesterContent.text,
       attachments: [pdfAttachment],
     };
 
@@ -250,17 +324,19 @@ export async function POST(request: NextRequest) {
     for (const approverEmail of approverEmails) {
       console.log('Preparing email for zone approver:', approverEmail);
       
-      const approverEmailData = {
-        ...emailTemplateData,
-        isForSuperUser: false,
+      const zoneVariables = {
+        ...templateVariables,
+        recipientName: approverEmail.split('@')[0], // Simple name extraction
+        recipientRole: 'Zone Manager',
       };
 
+      const zoneContent = await generateEmailFromTemplate('event-request-zone-manager', zoneVariables);
       const zoneApproverEmail = {
         from: 'noreply@ponyclub.com.au',
         to: [approverEmail],
-        subject: `Zone Approval Required - Event Request ${referenceNumber}`,
-        html: generateEventRequestEmailHTML(approverEmailData),
-        text: generateEventRequestEmailText(approverEmailData),
+        subject: zoneContent.subject,
+        html: zoneContent.html,
+        text: zoneContent.text,
         attachments: [pdfAttachment],
       };
 
@@ -319,17 +395,20 @@ export async function POST(request: NextRequest) {
     for (const superUserEmail of superUserEmails) {
       console.log('Preparing email for super user:', superUserEmail);
       
-      const superUserEmailData = {
-        ...emailTemplateData,
+      const superUserVariables = {
+        ...templateVariables,
         isForSuperUser: true,
+        recipientName: superUserEmail.split('@')[0], // Simple name extraction
+        recipientRole: 'Super User Administrator',
       };
 
+      const superUserContent = await generateEmailFromTemplate('event-request-super-user', superUserVariables);
       const superUserEmailMessage = {
         from: 'noreply@ponyclub.com.au',
         to: [superUserEmail],
-        subject: `Super User Notification - Event Request ${referenceNumber}`,
-        html: generateEventRequestEmailHTML(superUserEmailData),
-        text: generateEventRequestEmailText(superUserEmailData),
+        subject: superUserContent.subject,
+        html: superUserContent.html,
+        text: superUserContent.text,
         attachments: [
           pdfAttachment,
           {

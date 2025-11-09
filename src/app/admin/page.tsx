@@ -21,10 +21,20 @@ async function AdminDashboardContent() {
   const isDatabaseAvailable = isDatabaseConnected();
   const databaseErrorMessage = getDatabaseErrorMessage();
   
-  // Use server data instead of mock data - force fresh data
-  const clubs = await getAllClubs();
-  const zones = await getAllZones();
-  const eventTypes = await getAllEventTypes();
+  // Get counts only to avoid loading massive datasets
+  let clubs = [];
+  let zones = [];
+  let eventTypes = [];
+  
+  try {
+    // Only load zones and event types (smaller datasets)
+    zones = await getAllZones();
+    eventTypes = await getAllEventTypes();
+    // Skip clubs for now to avoid 16MB+ data load - dashboard will show "Loading..." for club count
+  } catch (error) {
+    console.log('Error loading dashboard data:', error);
+    // Continue with empty arrays - dashboard will handle gracefully
+  }
 
   // Get email queue statistics
   let emailStats = null;
@@ -193,8 +203,8 @@ async function AdminDashboardContent() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Badge variant={clubs.length > 0 ? 'default' : 'outline'} className="text-xs">
-                  {clubs.length} clubs registered
+                <Badge variant="outline" className="text-xs">
+                  Loading club count...
                 </Badge>
                 <Button asChild variant="outline" className="w-full">
                   <Link href="/admin/clubs">
@@ -301,6 +311,35 @@ async function AdminDashboardContent() {
                   <Link href="/admin/email-queue">
                     <Mail className="h-4 w-4 mr-2" />
                     Manage Email Queue
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Email Templates Management */}
+          <div className="relative overflow-hidden rounded-2xl border border-teal-200/50 bg-gradient-to-br from-teal-50/80 via-teal-50/60 to-emerald-50/40 dark:from-teal-950/40 dark:via-teal-950/30 dark:to-emerald-950/20 shadow-xl backdrop-blur-sm hover:shadow-2xl transition-all duration-300 hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-r from-teal-400/5 to-emerald-400/5"></div>
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-teal-400/10 to-transparent rounded-full blur-2xl"></div>
+            
+            <div className="relative p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="rounded-xl bg-teal-100 dark:bg-teal-900/50 p-3 border border-teal-200 dark:border-teal-700">
+                  <FileText className="h-5 w-5 text-teal-600 dark:text-teal-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">Email Templates</h3>
+                  <p className="text-sm text-muted-foreground">Customize notification content</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Badge variant="outline" className="text-xs">
+                  Event request notifications
+                </Badge>
+                <Button asChild variant="outline" className="w-full">
+                  <Link href="/admin/email-templates">
+                    <FileText className="h-4 w-4 mr-2" />
+                    Manage Templates
                   </Link>
                 </Button>
               </div>

@@ -375,18 +375,45 @@ export async function seedData() {
 
 export const getClubs = async (): Promise<Club[]> => {
     const querySnapshot = await getDocs(collection(db, 'clubs'));
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Club));
+    return querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        // Convert Firestore timestamps to plain Date objects for serialization
+        if (data.createdAt && typeof data.createdAt.toDate === 'function') {
+            data.createdAt = data.createdAt.toDate();
+        }
+        if (data.updatedAt && typeof data.updatedAt.toDate === 'function') {
+            data.updatedAt = data.updatedAt.toDate();
+        }
+        return { id: doc.id, ...data } as Club;
+    });
 };
 
 export const getEventTypes = async (): Promise<EventType[]> => {
     const querySnapshot = await getDocs(collection(db, 'eventTypes'));
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as EventType));
+    return querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        // Convert Firestore timestamps to plain Date objects for serialization
+        if (data.createdAt && typeof data.createdAt.toDate === 'function') {
+            data.createdAt = data.createdAt.toDate();
+        }
+        if (data.updatedAt && typeof data.updatedAt.toDate === 'function') {
+            data.updatedAt = data.updatedAt.toDate();
+        }
+        return { id: doc.id, ...data } as EventType;
+    });
 };
 
 export const getEvents = async (): Promise<Event[]> => {
     const querySnapshot = await getDocs(collection(db, 'events'));
     const events = querySnapshot.docs.map(doc => {
         const data = doc.data();
+        // Convert Firestore timestamps to plain Date objects for serialization
+        if (data.createdAt && typeof data.createdAt.toDate === 'function') {
+            data.createdAt = data.createdAt.toDate();
+        }
+        if (data.updatedAt && typeof data.updatedAt.toDate === 'function') {
+            data.updatedAt = data.updatedAt.toDate();
+        }
         return {
             id: doc.id,
             ...data,
@@ -458,10 +485,17 @@ export const getZones = async (): Promise<Zone[]> => {
     return zonesMock;
   }
   
-  return querySnapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data()
-  })) as Zone[];
+  return querySnapshot.docs.map(doc => {
+    const data = doc.data();
+    // Convert Firestore timestamps to plain Date objects for serialization
+    if (data.createdAt && typeof data.createdAt.toDate === 'function') {
+      data.createdAt = data.createdAt.toDate();
+    }
+    if (data.updatedAt && typeof data.updatedAt.toDate === 'function') {
+      data.updatedAt = data.updatedAt.toDate();
+    }
+    return { id: doc.id, ...data } as Zone;
+  });
 };
 
 export const getZoneById = async (zoneId: string): Promise<Zone | null> => {

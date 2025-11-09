@@ -15,27 +15,23 @@ export function RequestEventHeader() {
       
       <div className="relative p-4 sm:p-6">
         {/* Header Section */}
-        <div className="mb-4">
-          <div className="flex flex-col sm:flex-row sm:items-start gap-3">
-            <div className="flex-1">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-2">
-                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-primary via-purple-600 to-accent bg-clip-text text-transparent">
-                  Request Event Dates
-                </h1>
-                <HelpTooltip 
-                  content="Submit up to 4 event requests with priority rankings. Your zone coordinator will review and approve dates based on availability and policy guidelines."
-                  side="right"
-                />
-              </div>
-              <p className="text-muted-foreground text-sm sm:text-base">
-                Submit up to 4 event requests with priority preferences for zone approval
-              </p>
-            </div>
+        <div className="mb-2">
+          <div className="flex items-center gap-2 mb-2">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-primary via-purple-600 to-accent bg-clip-text text-transparent">
+              Request Event Dates
+            </h1>
+            <HelpTooltip 
+              content="Submit up to 4 event requests with priority rankings. Your zone coordinator will review and approve dates based on availability and policy guidelines."
+              side="right"
+            />
           </div>
+          <p className="text-muted-foreground text-sm sm:text-base">
+            Submit up to 4 event requests with priority preferences for zone approval
+          </p>
         </div>
 
         {/* Collapsible Policy Toggle */}
-        <div className="border-t border-border/30 pt-4">
+        <div className="border-t border-border/30 pt-2">
           <Button
             variant="ghost" 
             onClick={() => setIsPolicyVisible(!isPolicyVisible)}

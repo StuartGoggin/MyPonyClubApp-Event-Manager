@@ -12,7 +12,10 @@ export interface CalendarPDFOptions {
     location?: string;
     contact?: string;
     coordinator?: string;
+    zone?: string;
+    state?: string;
   }>;
+  format?: 'standard' | 'zone';
 }
 
 function getMonthName(month: number): string {
@@ -25,6 +28,11 @@ function getMonthName(month: number): string {
 
 export function generateCalendarPDF(options: CalendarPDFOptions): Buffer {
   try {
+    // Check if this is zone format and delegate to zone format generator
+    if (options.format === 'zone') {
+      return generateZoneFormatPDF(options);
+    }
+
     // Create a new jsPDF instance with better defaults
     const doc = new jsPDF({
       orientation: 'portrait',
@@ -411,5 +419,267 @@ export function generateCalendarPDF(options: CalendarPDFOptions): Buffer {
     
     const pdfOutput = doc.output('arraybuffer');
     return Buffer.from(pdfOutput);
+  }
+}
+
+// Zone format PDF generator - Tabular format with Zone and State columns
+function generateZoneFormatPDF(options: CalendarPDFOptions): Buffer {
+  try {
+    // Create a new jsPDF instance in landscape for better table display
+    const doc = new jsPDF({
+      orientation: 'landscape',
+      unit: 'mm',
+      format: 'a4',
+      compress: true
+    });
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 10;
+    const contentWidth = pageWidth - 2 * margin;
+
+    // Colors
+    const colors = {
+      header: [0, 0, 0] as const,
+      headerBg: [230, 230, 230] as const,
+      text: [0, 0, 0] as const,
+      border: [0, 0, 0] as const,
+      altRow: [248, 248, 248] as const,
+    };
+
+    let yPosition = margin;
+    let pageNumber = 1;
+
+    // Title
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.setTextColor(...colors.header);
+    const title = options.title || 'Pony Club Events Calendar';
+    const titleWidth = doc.getTextWidth(title);
+    doc.text(title, (pageWidth - titleWidth) / 2, yPosition);
+    yPosition += 10;
+
+    // Year info
+    if (options.months && options.months.length > 0) {
+      const years = [...new Set(options.months.map(m => m.year))];
+      const yearText = years.length === 1 ? `${years[0]}` : `${Math.min(...years)} - ${Math.max(...years)}`;
+      
+      doc.setFontSize(12);
+      doc.setTextColor(...colors.header);
+      const yearWidth = doc.getTextWidth(yearText);
+      doc.text(yearText, (pageWidth - yearWidth) / 2, yPosition);
+      yPosition += 15;
+    }
+
+    // Column definitions matching the PDF format
+    const columns = [
+      { header: 'Date', width: 22, align: 'left' as const },
+      { header: 'Event', width: 65, align: 'left' as const },
+      { header: 'Club', width: 50, align: 'left' as const },
+      { header: 'Location', width: 55, align: 'left' as const },
+      { header: 'Zone', width: 40, align: 'left' as const },
+      { header: 'State', width: 20, align: 'center' as const },
+      { header: 'Contact', width: 45, align: 'left' as const }
+    ];
+
+    const tableWidth = columns.reduce((sum, col) => sum + col.width, 0);
+    const startX = (pageWidth - tableWidth) / 2;
+
+    // Group events by month
+    const eventsByMonth: { [key: string]: typeof options.events } = {};
+    options.events.forEach(event => {
+      const eventDate = new Date(event.date);
+      const monthKey = `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}`;
+      if (!eventsByMonth[monthKey]) {
+        eventsByMonth[monthKey] = [];
+      }
+      eventsByMonth[monthKey].push(event);
+    });
+
+    // Sort events by date within each month
+    Object.keys(eventsByMonth).forEach(monthKey => {
+      eventsByMonth[monthKey].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    });
+
+    // Function to draw table header
+    const drawTableHeader = () => {
+      let currentX = startX;
+      
+      // Header background
+      doc.setFillColor(...colors.headerBg);
+      doc.rect(startX, yPosition - 2, tableWidth, 8, 'F');
+      
+      // Header borders and text
+      doc.setDrawColor(...colors.border);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.setTextColor(...colors.header);
+      
+      columns.forEach((col) => {
+        // Draw cell border
+        doc.rect(currentX, yPosition - 2, col.width, 8);
+        
+        // Draw header text
+        const textX = col.align === 'center' 
+          ? currentX + col.width / 2 - doc.getTextWidth(col.header) / 2
+          : currentX + 2;
+        doc.text(col.header, textX, yPosition + 3);
+        
+        currentX += col.width;
+      });
+      
+      yPosition += 8;
+    };
+
+    // Process each month
+    const sortedMonths = options.months.sort((a, b) => {
+      if (a.year !== b.year) return a.year - b.year;
+      return a.month - b.month;
+    });
+
+    sortedMonths.forEach((monthData, monthIndex) => {
+      const { year, month } = monthData;
+      const monthKey = `${year}-${String(month).padStart(2, '0')}`;
+      const monthEvents = eventsByMonth[monthKey] || [];
+
+      // Check if we need a new page
+      if (yPosition > pageHeight - 50) {
+        doc.addPage();
+        pageNumber++;
+        yPosition = margin;
+      }
+
+      // Month header
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.setTextColor(...colors.header);
+      const monthText = `${getMonthName(month)} ${year}`;
+      doc.text(monthText, startX, yPosition);
+      yPosition += 8;
+
+      if (monthEvents.length === 0) {
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(10);
+        doc.text('No events scheduled', startX + 10, yPosition);
+        yPosition += 8;
+      } else {
+        // Draw table header
+        drawTableHeader();
+
+        // Event rows
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        
+        monthEvents.forEach((event, eventIndex) => {
+          // Check if we need a new page
+          if (yPosition > pageHeight - 15) {
+            doc.addPage();
+            pageNumber++;
+            yPosition = margin;
+            drawTableHeader();
+          }
+
+          let currentX = startX;
+          const rowHeight = 6;
+
+          // Alternating row background
+          if (eventIndex % 2 === 1) {
+            doc.setFillColor(...colors.altRow);
+            doc.rect(startX, yPosition - 1, tableWidth, rowHeight, 'F');
+          }
+
+          doc.setTextColor(...colors.text);
+          
+          // Draw row borders and content
+          columns.forEach((col, colIndex) => {
+            // Draw cell border
+            doc.setDrawColor(...colors.border);
+            doc.rect(currentX, yPosition - 1, col.width, rowHeight);
+            
+            let cellText = '';
+            switch (colIndex) {
+              case 0: // Date
+                const eventDate = new Date(event.date);
+                cellText = eventDate.toLocaleDateString('en-AU', { 
+                  day: '2-digit', 
+                  month: '2-digit',
+                  year: '2-digit'
+                });
+                break;
+              case 1: // Event
+                cellText = event.name || 'Unnamed Event';
+                break;
+              case 2: // Club
+                cellText = event.club || '';
+                break;
+              case 3: // Location
+                cellText = event.location || '';
+                break;
+              case 4: // Zone
+                cellText = event.zone || 'Unknown';
+                break;
+              case 5: // State
+                cellText = event.state || 'VIC';
+                break;
+              case 6: // Contact
+                cellText = event.contact || event.coordinator || '';
+                break;
+            }
+            
+            // Truncate text if too long for cell
+            const maxChars = Math.floor(col.width / 2.2); // Approximate characters that fit
+            if (cellText.length > maxChars) {
+              cellText = cellText.substring(0, maxChars - 3) + '...';
+            }
+            
+            // Position text based on alignment
+            let textX = currentX + 2;
+            if (col.align === 'center') {
+              textX = currentX + col.width / 2 - doc.getTextWidth(cellText) / 2;
+            }
+            
+            doc.text(cellText, textX, yPosition + 3);
+            currentX += col.width;
+          });
+          
+          yPosition += rowHeight;
+        });
+      }
+      
+      yPosition += 8; // Space between months
+    });
+
+    // Footer on all pages
+    const totalPages = doc.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(100, 100, 100);
+      
+      const footerY = pageHeight - 8;
+      const generatedText = `Generated: ${new Date().toLocaleDateString('en-AU')}`;
+      const pageText = `Page ${i} of ${totalPages}`;
+      const formatText = 'Zone Format - Includes Zone and State Information';
+      
+      doc.text(generatedText, margin, footerY);
+      doc.text(pageText, pageWidth / 2 - doc.getTextWidth(pageText) / 2, footerY);
+      doc.text(formatText, pageWidth - margin - doc.getTextWidth(formatText), footerY);
+    }
+
+    return Buffer.from(doc.output('arraybuffer'));
+    
+  } catch (error) {
+    console.error('Zone format PDF generation error:', error);
+    
+    // Fallback PDF
+    const doc = new jsPDF();
+    doc.setFontSize(14);
+    doc.text('Zone Format Calendar', 20, 30);
+    doc.setFontSize(10);
+    doc.text('Unable to generate zone format calendar PDF at this time.', 20, 50);
+    doc.text('Please try again or use the standard format.', 20, 60);
+    
+    return Buffer.from(doc.output('arraybuffer'));
   }
 }

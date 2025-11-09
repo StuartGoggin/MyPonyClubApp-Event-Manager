@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
     const filterScope = searchParams.get('filterScope') || 'all';
     const zoneId = searchParams.get('zoneId');
     const clubId = searchParams.get('clubId');
+    const format = searchParams.get('format') || 'standard';
 
     // Fetch real events from Firestore
     const [events, clubs, eventTypes, zones] = await Promise.all([
@@ -69,6 +70,7 @@ export async function GET(request: NextRequest) {
     const enhancedEvents = filteredEvents.map(event => {
       const club = clubs.find(c => c.id === event.clubId);
       const eventType = eventTypes.find(et => et.id === event.eventTypeId);
+      const zone = zones.find(z => z.id === club?.zoneId);
       
       return {
   name: event.name || eventType?.name || 'Event',
@@ -78,7 +80,9 @@ export async function GET(request: NextRequest) {
   eventType: eventType?.name,
   location: event.location || club?.physicalAddress || (club?.address ? ((Object.prototype.hasOwnProperty.call(club.address, 'suburb') ? (club.address as any).suburb : (club.address as any).town) || '') : ''),
   contact: event.coordinatorContact || club?.email || club?.phone,
-  coordinator: event.coordinatorName
+  coordinator: event.coordinatorName,
+  zone: zone?.name || 'Unknown Zone',
+  state: 'VIC' // Default to VIC for now - can be enhanced later
       };
     });
 
@@ -120,12 +124,14 @@ export async function GET(request: NextRequest) {
     const pdfBuffer = generateCalendarPDF({ 
       months, 
       events: enhancedEvents, 
-      title: calendarTitle 
+      title: calendarTitle,
+      format: format as 'standard' | 'zone' // Pass format to existing generator
     });
 
-    const filename = scope === 'month' ? `calendar_month_${year}_${month.toString().padStart(2, '0')}.pdf` :
-                    scope === 'year' ? `calendar_year_${year}.pdf` :
-                    `calendar_custom_${startDate}_to_${endDate}.pdf`;
+    const formatSuffix = format === 'zone' ? '_zone' : '';
+    const filename = scope === 'month' ? `calendar_month_${year}_${month.toString().padStart(2, '0')}${formatSuffix}.pdf` :
+                    scope === 'year' ? `calendar_year_${year}${formatSuffix}.pdf` :
+                    `calendar_custom_${startDate}_to_${endDate}${formatSuffix}.pdf`;
 
   return new NextResponse(new Uint8Array(pdfBuffer), {
       status: 200,

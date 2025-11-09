@@ -83,6 +83,8 @@ export function EventCalendar({
   const [pdfFilterScope, setPdfFilterScope] = useState<'all' | 'zone' | 'club'>('all');
   const [pdfSelectedZone, setPdfSelectedZone] = useState<string>('');
   const [pdfSelectedClub, setPdfSelectedClub] = useState<string>('');
+  // PDF format state
+  const [pdfFormat, setPdfFormat] = useState<'standard' | 'zone'>('standard');
   // PDF section collapsible state - hidden by default
   const [isPdfSectionVisible, setIsPdfSectionVisible] = useState(false);
 
@@ -96,6 +98,7 @@ export function EventCalendar({
       filterScope: pdfFilterScope,
       zoneId: pdfFilterScope === 'zone' ? pdfSelectedZone : '',
       clubId: pdfFilterScope === 'club' ? pdfSelectedClub : '',
+      format: pdfFormat,
     });
     const res = await fetch(`/api/calendar/pdf?${params.toString()}`);
     if (!res.ok) {
@@ -341,6 +344,22 @@ export function EventCalendar({
                   </Select>
                 </>
               )}
+            </div>
+
+            {/* Format Selection Row */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <label className="text-xs font-semibold text-primary whitespace-nowrap">Format:</label>
+                <Select value={pdfFormat} onValueChange={(value: 'standard' | 'zone') => setPdfFormat(value)}>
+                  <SelectTrigger className="h-6 text-xs min-w-[130px] px-2 py-0.5 border-primary/40 bg-gradient-to-r from-primary/5 to-accent/5">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="standard" className="text-xs">Standard Format</SelectItem>
+                    <SelectItem value="zone" className="text-xs">Zone Format</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             
             {/* Date Range and Download Controls */}

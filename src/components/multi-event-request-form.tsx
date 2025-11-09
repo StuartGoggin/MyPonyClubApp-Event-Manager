@@ -471,6 +471,7 @@ export function MultiEventRequestForm({
       // Transform data to match EventRequestFormData interface
       const formDataForPDF = {
         ...data,
+        clubName: selectedClub?.name || '', // Add club name from selected club
         events: data.events.map(event => ({
           ...event,
           coordinatorName: event.coordinatorName || '',
@@ -592,6 +593,7 @@ export function MultiEventRequestForm({
             // Transform data to match EventRequestFormData interface
             const formDataForPDF: any = {
               ...data,
+              clubName: selectedClub?.name || '', // Add club name from selected club
               events: data.events.map(event => ({
                 ...event,
                 coordinatorName: event.coordinatorName || '',

@@ -1,7 +1,5 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { User, Bell, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { UserAccountMenu } from './user-account-menu';
 
@@ -56,27 +54,8 @@ export function AppHeader() {
             </Link>
           </div>
 
-          {/* Right side - Status indicators and user info */}
+          {/* Right side - User info */}
           <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
-            {/* Notifications - smaller on mobile */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="relative h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 hover:border-white/30 transition-all duration-300 hover:scale-105"
-            >
-              <Bell className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
-              <div className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 h-2 w-2 sm:h-3 sm:w-3 bg-gradient-to-br from-red-400 to-pink-500 rounded-full border border-background animate-pulse"></div>
-            </Button>
-
-            {/* Settings - smaller on mobile */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 hover:border-white/30 transition-all duration-300 hover:scale-105"
-            >
-              <Settings className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
-            </Button>
-
             {/* User account menu */}
             <UserAccountMenu />
           </div>

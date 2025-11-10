@@ -24,6 +24,10 @@
     "deploy": "npm run predeploy && firebase deploy"
   },
   "dependencies": {
+    "@firebase/app": "^0.14.5",
+    "@firebase/firestore": "^4.9.2",
+    "@firebase/firestore-compat": "^0.4.2",
+    "@firebase/storage": "^0.14.0",
     "@genkit-ai/firebase": "^1.16.0",
     "@genkit-ai/googleai": "^1.16.0",
     "@hookform/resolvers": "^3.9.0",

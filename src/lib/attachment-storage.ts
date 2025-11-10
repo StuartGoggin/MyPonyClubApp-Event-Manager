@@ -1,7 +1,4 @@
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { app } from './firebase';
-
-const storage = getStorage(app);
+import { bucket } from './firebase-admin';
 
 export interface StoredAttachment {
   id: string;
@@ -24,24 +21,34 @@ export async function storeAttachmentFile(
   folder: string = 'email-attachments'
 ): Promise<StoredAttachment> {
   try {
+    if (!bucket) {
+      throw new Error('Firebase Storage not initialized');
+    }
+
     const timestamp = Date.now();
     const sanitizedFilename = filename.replace(/[^a-zA-Z0-9.-]/g, '_');
-    const storageRef = ref(storage, `${folder}/${timestamp}_${sanitizedFilename}`);
+    const storagePath = `${folder}/${timestamp}_${sanitizedFilename}`;
+    const file = bucket.file(storagePath);
     
     console.log(`📤 Uploading attachment to Firebase Storage: ${sanitizedFilename} (${(content.length / 1024 / 1024).toFixed(2)} MB)`);
     
-    // Upload file to Firebase Storage
-    const uploadResult = await uploadBytes(storageRef, content, {
-      contentType: contentType,
-      customMetadata: {
-        originalFilename: filename,
-        uploadedAt: new Date().toISOString(),
-        fileSize: content.length.toString()
+    // Upload file to Firebase Storage using Admin SDK
+    await file.save(content, {
+      metadata: {
+        contentType: contentType,
+        metadata: {
+          originalFilename: filename,
+          uploadedAt: new Date().toISOString(),
+          fileSize: content.length.toString()
+        }
       }
     });
     
-    // Get download URL
-    const downloadUrl = await getDownloadURL(uploadResult.ref);
+    // Get download URL with 7-day expiration (you can adjust this)
+    const [downloadUrl] = await file.getSignedUrl({
+      action: 'read',
+      expires: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
     
     const attachmentId = `att_${timestamp}_${Math.random().toString(36).substr(2, 9)}`;
     
@@ -50,7 +57,7 @@ export async function storeAttachmentFile(
       filename: filename,
       contentType: contentType,
       size: content.length,
-      storageUrl: uploadResult.ref.fullPath,
+      storageUrl: storagePath,
       downloadUrl: downloadUrl,
       createdAt: new Date(),
       // Set expiration to 30 days from now (optional cleanup)
@@ -73,19 +80,14 @@ export async function storeAttachmentFile(
  */
 export async function downloadAttachmentFile(storageUrl: string): Promise<Buffer> {
   try {
+    if (!bucket) {
+      throw new Error('Firebase Storage not initialized');
+    }
+
     console.log(`📥 Downloading attachment from storage: ${storageUrl}`);
     
-    const storageRef = ref(storage, storageUrl);
-    const downloadUrl = await getDownloadURL(storageRef);
-    
-    // Fetch the file content
-    const response = await fetch(downloadUrl);
-    if (!response.ok) {
-      throw new Error(`Failed to download file: ${response.status} ${response.statusText}`);
-    }
-    
-    const arrayBuffer = await response.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    const file = bucket.file(storageUrl);
+    const [buffer] = await file.download();
     
     console.log(`✅ Downloaded attachment: ${(buffer.length / 1024 / 1024).toFixed(2)} MB`);
     
@@ -102,9 +104,13 @@ export async function downloadAttachmentFile(storageUrl: string): Promise<Buffer
  */
 export async function deleteAttachmentFile(storageUrl: string): Promise<void> {
   try {
-    const storageRef = ref(storage, storageUrl);
-    const { deleteObject } = await import('firebase/storage');
-    await deleteObject(storageRef);
+    if (!bucket) {
+      console.warn('Firebase Storage not initialized - cannot delete attachment');
+      return;
+    }
+
+    const file = bucket.file(storageUrl);
+    await file.delete();
     console.log(`🗑️ Deleted attachment from storage: ${storageUrl}`);
   } catch (error) {
     console.error('❌ Error deleting attachment from storage:', error);

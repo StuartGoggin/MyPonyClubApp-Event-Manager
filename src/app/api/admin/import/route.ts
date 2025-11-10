@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import JSZip from 'jszip';
 import { bucket, adminDb } from '@/lib/firebase-admin';
-import { doc, writeBatch, collection, getDocs, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { Event, Club, Zone, EventType } from '@/lib/types';
 import { createHash } from 'crypto';
 

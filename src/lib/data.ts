@@ -1,13 +1,14 @@
 import { getYear } from 'date-fns';
 import type { Zone, Club, EventType, Event } from './types';
 import { adminDb } from './firebase-admin';
-import { db } from './firebase';
-import { collection, getDocs, doc, getDoc, addDoc, updateDoc } from 'firebase/firestore/lite';
 import { Timestamp, DocumentData } from 'firebase-admin/firestore';
 
 export const updateZone = async (zone: Zone) => {
-  const zoneRef = doc(db, 'zones', zone.id);
-  await updateDoc(zoneRef, {
+  if (!adminDb) {
+    throw new Error('Firebase Admin not initialized');
+  }
+  const zoneRef = adminDb.collection('zones').doc(zone.id);
+  await zoneRef.update({
     name: zone.name,
     streetAddress: zone.streetAddress,
     imageUrl: zone.imageUrl,
@@ -374,8 +375,12 @@ export async function seedData() {
 
 
 export const getClubs = async (): Promise<Club[]> => {
-    const querySnapshot = await getDocs(collection(db, 'clubs'));
-    return querySnapshot.docs.map(doc => {
+    if (!adminDb) {
+        console.warn('Admin DB not available - returning empty clubs array');
+        return [];
+    }
+    const querySnapshot = await adminDb.collection('clubs').get();
+    return querySnapshot.docs.map((doc: DocumentData) => {
         const data = doc.data();
         // Convert Firestore timestamps to plain Date objects for serialization
         if (data.createdAt && typeof data.createdAt.toDate === 'function') {
@@ -389,8 +394,12 @@ export const getClubs = async (): Promise<Club[]> => {
 };
 
 export const getEventTypes = async (): Promise<EventType[]> => {
-    const querySnapshot = await getDocs(collection(db, 'eventTypes'));
-    return querySnapshot.docs.map(doc => {
+    if (!adminDb) {
+        console.warn('Admin DB not available - returning empty event types array');
+        return [];
+    }
+    const querySnapshot = await adminDb.collection('eventTypes').get();
+    return querySnapshot.docs.map((doc: DocumentData) => {
         const data = doc.data();
         // Convert Firestore timestamps to plain Date objects for serialization
         if (data.createdAt && typeof data.createdAt.toDate === 'function') {
@@ -404,8 +413,12 @@ export const getEventTypes = async (): Promise<EventType[]> => {
 };
 
 export const getEvents = async (): Promise<Event[]> => {
-    const querySnapshot = await getDocs(collection(db, 'events'));
-    const events = querySnapshot.docs.map(doc => {
+    if (!adminDb) {
+        console.warn('Admin DB not available - returning empty events array');
+        return [];
+    }
+    const querySnapshot = await adminDb.collection('events').get();
+    const events = querySnapshot.docs.map((doc: DocumentData) => {
         const data = doc.data();
         // Convert Firestore timestamps to plain Date objects for serialization
         if (data.createdAt && typeof data.createdAt.toDate === 'function') {
@@ -417,8 +430,8 @@ export const getEvents = async (): Promise<Event[]> => {
         return {
             id: doc.id,
             ...data,
-            // The `date` field from firestore is a plain object, so we need to convert it to a Date
-            date: new Date(data.date.seconds * 1000),
+            // The `date` field from firestore is a timestamp
+            date: data.date && data.date.seconds ? new Date(data.date.seconds * 1000) : new Date(data.date),
         } as Event;
     });
 
@@ -428,64 +441,89 @@ export const getEvents = async (): Promise<Event[]> => {
 };
 
 export const getEventById = async (id: string) => {
-    const eventDocRef = doc(db, 'events', id);
-    const docSnap = await getDoc(eventDocRef);
-    if (!docSnap.exists()) return undefined;
+    if (!adminDb) {
+        return undefined;
+    }
+    const eventDocRef = adminDb.collection('events').doc(id);
+    const docSnap = await eventDocRef.get();
+    if (!docSnap.exists) return undefined;
     const data = docSnap.data();
+    if (!data) return undefined;
     return {
         id: docSnap.id,
         ...data,
-        date: new Date(data.date.seconds * 1000),
+        date: data.date && data.date.seconds ? new Date(data.date.seconds * 1000) : new Date(data.date),
     } as Event;
 }
 
 export const getClubById = async (id: string) => {
-    const clubDocRef = doc(db, 'clubs', id);
-    const docSnap = await getDoc(clubDocRef);
-     if (!docSnap.exists()) return undefined;
+    if (!adminDb) {
+        return undefined;
+    }
+    const clubDocRef = adminDb.collection('clubs').doc(id);
+    const docSnap = await clubDocRef.get();
+    if (!docSnap.exists) return undefined;
     return { id: docSnap.id, ...docSnap.data() } as Club;
 };
 
 export const updateClub = async (id: string, updateData: Partial<Club>) => {
-  const clubRef = doc(db, 'clubs', id);
-  await updateDoc(clubRef, updateData);
+  if (!adminDb) {
+    throw new Error('Firebase Admin not initialized');
+  }
+  const clubRef = adminDb.collection('clubs').doc(id);
+  await clubRef.update(updateData);
   return { success: true };
 };
 
 export const getEventTypeById = async (id: string) => {
-    const eventTypeDocRef = doc(db, 'eventTypes', id);
-    const docSnap = await getDoc(eventTypeDocRef);
-    if (!docSnap.exists()) return undefined;
+    if (!adminDb) {
+        return undefined;
+    }
+    const eventTypeDocRef = adminDb.collection('eventTypes').doc(id);
+    const docSnap = await eventTypeDocRef.get();
+    if (!docSnap.exists) return undefined;
     return { id: docSnap.id, ...docSnap.data() } as EventType;
 };
 
 export const addEvent = async (event: Omit<Event, 'id' | 'source'>) => {
+  if (!adminDb) {
+    throw new Error('Firebase Admin not initialized');
+  }
   const newEventData = {
     ...event,
     source: 'zone', // Default source for new events
+    date: Timestamp.fromDate(event.date), // Convert Date to Firestore Timestamp
   };
-  const eventsCollection = collection(db, 'events');
-  const docRef = await addDoc(eventsCollection, newEventData);
+  const eventsCollection = adminDb.collection('events');
+  const docRef = await eventsCollection.add(newEventData);
   return { id: docRef.id, ...event };
 };
 
 export const updateEventStatus = async (id: string, status: 'approved' | 'rejected') => {
-  const eventRef = doc(db, 'events', id);
-  await updateDoc(eventRef, { status });
+  if (!adminDb) {
+    throw new Error('Firebase Admin not initialized');
+  }
+  const eventRef = adminDb.collection('events').doc(id);
+  await eventRef.update({ status });
   return { success: true };
 };
 
 // Zone-related functions
 export const getZones = async (): Promise<Zone[]> => {
-  const zonesCollection = collection(db, 'zones');
-  const querySnapshot = await getDocs(zonesCollection);
+  if (!adminDb) {
+    console.warn('Admin DB not available - returning mock zones');
+    return zonesMock;
+  }
+  
+  const zonesCollection = adminDb.collection('zones');
+  const querySnapshot = await zonesCollection.get();
   
   if (querySnapshot.empty) {
     // If no zones in database, return mock data
     return zonesMock;
   }
   
-  return querySnapshot.docs.map(doc => {
+  return querySnapshot.docs.map((doc: DocumentData) => {
     const data = doc.data();
     // Convert Firestore timestamps to plain Date objects for serialization
     if (data.createdAt && typeof data.createdAt.toDate === 'function') {
@@ -500,10 +538,14 @@ export const getZones = async (): Promise<Zone[]> => {
 
 export const getZoneById = async (zoneId: string): Promise<Zone | null> => {
   try {
-    const zoneRef = doc(db, 'zones', zoneId);
-    const docSnap = await getDoc(zoneRef);
+    if (!adminDb) {
+      return zonesMock.find(zone => zone.id === zoneId) || null;
+    }
     
-    if (docSnap.exists()) {
+    const zoneRef = adminDb.collection('zones').doc(zoneId);
+    const docSnap = await zoneRef.get();
+    
+    if (docSnap.exists) {
       return { id: docSnap.id, ...docSnap.data() } as Zone;
     }
     

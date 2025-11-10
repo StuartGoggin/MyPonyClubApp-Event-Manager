@@ -2,12 +2,48 @@ import { adminDb, isDatabaseConnected, getDatabaseErrorMessage } from './firebas
 import type { Zone, Club, EventType, Event } from './types';
 import type { QueryDocumentSnapshot, DocumentData } from 'firebase-admin/firestore';
 
+// Simple in-memory cache
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+}
+
+const cache = {
+  clubs: null as CacheEntry<Club[]> | null,
+  zones: null as CacheEntry<Zone[]> | null,
+  eventTypes: null as CacheEntry<EventType[]> | null,
+};
+
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+function getCached<T>(key: keyof typeof cache): T | null {
+  const entry = cache[key] as CacheEntry<T> | null;
+  if (!entry) return null;
+  
+  const age = Date.now() - entry.timestamp;
+  if (age > CACHE_TTL) {
+    cache[key] = null; // Expire
+    return null;
+  }
+  
+  console.log(`✨ Cache HIT for ${key} (age: ${Math.round(age / 1000)}s)`);
+  return entry.data;
+}
+
+function setCache<T>(key: keyof typeof cache, data: T): void {
+  (cache[key] as CacheEntry<T>) = {
+    data,
+    timestamp: Date.now(),
+  };
+}
+
 // Server-side functions for fetching data from Firestore
 export async function getAllZones(): Promise<Zone[]> {
   try {
+    // Fast fail if database is not connected
     if (!adminDb || !isDatabaseConnected()) {
       const errorMessage = getDatabaseErrorMessage();
-      console.warn('⚠️ getAllZones: Database connection issue -', errorMessage);
+      console.warn('⚠️ getAllZones: Database not connected -', errorMessage);
       return [];
     }
     
@@ -20,13 +56,14 @@ export async function getAllZones(): Promise<Zone[]> {
       }
     });
     
+    console.log(`✅ Retrieved ${zones.length} zones`);
     return zones;
   } catch (error: any) {
     // Check if it's a database connection error
     if (error.code === 14 || error.message?.includes('ETIMEDOUT') || error.message?.includes('UNAVAILABLE')) {
-      console.warn('⚠️ getAllZones: Database connection timeout or unavailable');
+      console.error('⚠️ getAllZones: Database connection timeout or unavailable');
     } else {
-      console.error('Error fetching zones:', error);
+      console.error('❌ Error fetching zones:', error);
     }
     return [];
   }
@@ -34,13 +71,27 @@ export async function getAllZones(): Promise<Zone[]> {
 
 export async function getAllClubs(): Promise<Club[]> {
   try {
+    // Check cache first
+    const cached = getCached<Club[]>('clubs');
+    if (cached) {
+      return cached;
+    }
+    
+    // Fast fail if database is not connected - don't attempt connection
     if (!adminDb || !isDatabaseConnected()) {
       const errorMessage = getDatabaseErrorMessage();
-      console.warn('⚠️ getAllClubs: Database connection issue -', errorMessage);
+      console.warn('⚠️ getAllClubs: Database not connected -', errorMessage);
+      console.warn('⚠️ Returning empty array to avoid timeout');
       return [];
     }
     
+    console.log('� Fetching clubs from Firestore (cache miss)...');
+    const startTime = Date.now();
     const clubsSnapshot = await adminDb.collection('clubs').get();
+    const queryTime = Date.now() - startTime;
+    
+    console.log(`📦 Processing ${clubsSnapshot.size} documents...`);
+    const processStart = Date.now();
     const clubs: Club[] = [];
     
     clubsSnapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
@@ -49,13 +100,25 @@ export async function getAllClubs(): Promise<Club[]> {
       }
     });
     
+    const processTime = Date.now() - processStart;
+    const totalTime = Date.now() - startTime;
+    
+    console.log(`⏱️  Timing breakdown:`);
+    console.log(`   - Firestore query: ${queryTime}ms`);
+    console.log(`   - Document processing: ${processTime}ms`);
+    console.log(`   - Total: ${totalTime}ms`);
+    console.log(`✅ Retrieved ${clubs.length} clubs - CACHED for 5 minutes`);
+    
+    // Cache the result
+    setCache('clubs', clubs);
+    
     return clubs;
   } catch (error: any) {
     // Check if it's a database connection error
     if (error.code === 14 || error.message?.includes('ETIMEDOUT') || error.message?.includes('UNAVAILABLE')) {
-      console.warn('⚠️ getAllClubs: Database connection timeout or unavailable');
+      console.error('⚠️ getAllClubs: Database connection timeout or unavailable');
     } else {
-      console.error('Error fetching clubs:', error);
+      console.error('❌ Error fetching clubs:', error);
     }
     return [];
   }

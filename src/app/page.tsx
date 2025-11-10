@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react';
 import { EventCalendar } from '@/components/dashboard/event-calendar';
 import { Event, Club, EventType, Zone } from '@/lib/types';
+import { useAuth } from '@/contexts/auth-context';
 
 export default function DashboardPage() {
+  const { user } = useAuth();
   const [events, setEvents] = useState<Event[]>([]);
   const [clubs, setClubs] = useState<Club[]>([]);
   const [eventTypes, setEventTypes] = useState<EventType[]>([]);
@@ -168,7 +170,8 @@ export default function DashboardPage() {
         clubs={clubs} 
         eventTypes={eventTypes} 
         zones={zones} 
-        today={new Date()} 
+        today={new Date()}
+        currentUser={user} 
       />
     </div>
   );

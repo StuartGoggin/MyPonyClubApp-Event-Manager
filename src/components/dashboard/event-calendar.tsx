@@ -39,7 +39,12 @@ interface EventCalendarProps {
   zones: Zone[];
   today: Date;
   bypassSourceFiltering?: boolean; // New prop to bypass event source filtering
-  currentUser?: { id: string; role: 'organiser' | 'zone_approver' | 'admin' | 'viewer' };
+  currentUser?: {
+    id: string;
+    role: string;
+    zoneId?: string;
+    clubId?: string;
+  } | null;
 }
 
 export function EventCalendar({
@@ -80,13 +85,24 @@ export function EventCalendar({
   const [pdfStartDate, setPdfStartDate] = useState<string>('');
   const [pdfEndDate, setPdfEndDate] = useState<string>('');
   // PDF scope filtering state
-  const [pdfFilterScope, setPdfFilterScope] = useState<'all' | 'zone' | 'club'>('all');
+  const [pdfFilterScope, setPdfFilterScope] = useState<'all' | 'zone' | 'club'>('zone');
   const [pdfSelectedZone, setPdfSelectedZone] = useState<string>('');
   const [pdfSelectedClub, setPdfSelectedClub] = useState<string>('');
   // PDF format state
   const [pdfFormat, setPdfFormat] = useState<'standard' | 'zone'>('standard');
   // PDF section collapsible state - hidden by default
   const [isPdfSectionVisible, setIsPdfSectionVisible] = useState(false);
+
+  // Initialize PDF defaults based on user authentication
+  useEffect(() => {
+    // Set default scope to 'zone'
+    setPdfFilterScope('zone');
+    
+    // If user is authenticated and has a zone, auto-select it
+    if (currentUser?.zoneId) {
+      setPdfSelectedZone(currentUser.zoneId);
+    }
+  }, [currentUser]);
 
   const handleDownloadPDF = async () => {
     const params = new URLSearchParams({
@@ -614,7 +630,7 @@ export function EventCalendar({
     eventType={selectedEventType}
     nearbyEvents={selectedEvent ? getNearbyEvents(selectedEvent) : []}
     clubs={clubs}
-    currentUser={currentUser || { id: 'default', role: 'viewer' }}
+    currentUser={currentUser}
     />
   </div>
   );

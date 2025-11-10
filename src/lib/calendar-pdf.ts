@@ -471,6 +471,65 @@ function generateZoneFormatPDF(options: CalendarPDFOptions): Buffer {
       yPosition += 15;
     }
 
+    // Introduction paragraph for Zone Format
+    const introText = [
+      "Dear Clubs, Riders and Families,",
+      "",
+      "Please find the current Zone Event Calendar for promoting our local Pony Club events. Feel free to share with your members and other riding friends. We hope you enjoy being part of the competitions that your Zone clubs have put together for you this year.",
+      "",
+      "Our Zone runs a qualifier series where each time you enter and ride as an official Pony Club rider, you and your horse gain points during the year. These are calculated as end-of-year totals (look for the light blue highlighted events on the calendar).",
+      "",
+      "Zone Series Points are typically collected between series runs from 1st January until 17th December each year, unless specified otherwise by the Zone. The more you enter, the more points you collect, and higher placings will add up towards the end-of-year prizes!",
+      "",
+      "Start representing your club and enjoying competitions with your Pony Club friends. These qualifiers also assist riders who are able to qualify to ride at State level, so support the clubs running qualifying competitions and represent yourself and your horse to compete at State events.",
+      "",
+      "The Event Calendar may change during the year. Updates will be located on the Zone website or Facebook page. Check JustGo or other online event organisers for detailed event information and booking details for events that interest you.",
+      "",
+      "Enjoy your Pony Club journey!"
+    ];
+
+    // Add introduction with nice formatting
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(...colors.text);
+    
+    const introStartY = yPosition;
+    const maxLineWidth = contentWidth - 20; // Leave some margin for readability
+    let currentY = yPosition;
+    
+    introText.forEach(paragraph => {
+      if (paragraph === "") {
+        currentY += 3; // Smaller spacing for empty lines
+        return;
+      }
+      
+      // Split long paragraphs into multiple lines
+      const words = paragraph.split(' ');
+      let currentLine = '';
+      
+      words.forEach((word, index) => {
+        const testLine = currentLine + (currentLine ? ' ' : '') + word;
+        const lineWidth = doc.getTextWidth(testLine);
+        
+        if (lineWidth > maxLineWidth && currentLine !== '') {
+          // Line is too long, print current line and start new one
+          doc.text(currentLine, margin + 10, currentY);
+          currentY += 4;
+          currentLine = word;
+        } else {
+          currentLine = testLine;
+        }
+        
+        // If this is the last word, print the line
+        if (index === words.length - 1) {
+          doc.text(currentLine, margin + 10, currentY);
+          currentY += 5; // Spacing after paragraph
+        }
+      });
+    });
+    
+    yPosition = currentY + 5; // Extra space before the table
+
     // Column definitions matching the PDF format
     const columns = [
       { header: 'Date', width: 22, align: 'left' as const },

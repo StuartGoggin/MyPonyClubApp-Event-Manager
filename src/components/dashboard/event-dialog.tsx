@@ -42,7 +42,12 @@ interface EventDialogProps {
   clubs: Club[];
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  currentUser: { id: string; role: 'organiser' | 'zone_approver' | 'admin' | 'viewer' };
+  currentUser?: {
+    id: string;
+    role: string;
+    zoneId?: string;
+    clubId?: string;
+  } | null;
 }
 
 export function EventDialog({

@@ -128,10 +128,25 @@ export async function GET(request: NextRequest) {
       format: format as 'standard' | 'zone' // Pass format to existing generator
     });
 
-    const formatSuffix = format === 'zone' ? '_zone' : '';
-    const filename = scope === 'month' ? `calendar_month_${year}_${month.toString().padStart(2, '0')}${formatSuffix}.pdf` :
-                    scope === 'year' ? `calendar_year_${year}${formatSuffix}.pdf` :
-                    `calendar_custom_${startDate}_to_${endDate}${formatSuffix}.pdf`;
+    // Generate filename with zone-specific naming convention when format is 'zone'
+    let filename = '';
+    if (format === 'zone' && filterScope === 'zone' && zoneId) {
+      const zone = zones.find(z => z.id === zoneId);
+      const zoneName = zone?.name || 'Zone';
+      const today = new Date();
+      const asOfDate = today.toLocaleDateString('en-GB', { 
+        day: '2-digit', 
+        month: 'short', 
+        year: 'numeric' 
+      }).replace(/ /g, '').toLowerCase();
+      
+      filename = `${zoneName} Calendar ${year} as of ${asOfDate}.pdf`;
+    } else {
+      const formatSuffix = format === 'zone' ? '_zone' : '';
+      filename = scope === 'month' ? `calendar_month_${year}_${month.toString().padStart(2, '0')}${formatSuffix}.pdf` :
+                      scope === 'year' ? `calendar_year_${year}${formatSuffix}.pdf` :
+                      `calendar_custom_${startDate}_to_${endDate}${formatSuffix}.pdf`;
+    }
 
   return new NextResponse(new Uint8Array(pdfBuffer), {
       status: 200,

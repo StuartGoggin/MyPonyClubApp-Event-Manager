@@ -80,16 +80,18 @@ export function EventCalendar({
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [eventSources] = useAtom(eventSourceAtom);
   const [filterMode, setFilterMode] = useState<'location' | 'distance'>('location');
-  // PDF export state
-  const [pdfScope, setPdfScope] = useState<'month' | 'year' | 'custom'>('month');
+  // PDF export state - default to year scope and next year
+  const nextYear = currentYear + 1;
+  const [pdfScope, setPdfScope] = useState<'month' | 'year' | 'custom'>('year');
+  const [pdfYear, setPdfYear] = useState(nextYear);
   const [pdfStartDate, setPdfStartDate] = useState<string>('');
   const [pdfEndDate, setPdfEndDate] = useState<string>('');
-  // PDF scope filtering state
+  // PDF scope filtering state - default to zone
   const [pdfFilterScope, setPdfFilterScope] = useState<'all' | 'zone' | 'club'>('zone');
   const [pdfSelectedZone, setPdfSelectedZone] = useState<string>('');
   const [pdfSelectedClub, setPdfSelectedClub] = useState<string>('');
-  // PDF format state
-  const [pdfFormat, setPdfFormat] = useState<'standard' | 'zone'>('standard');
+  // PDF format state - default to zone format
+  const [pdfFormat, setPdfFormat] = useState<'standard' | 'zone'>('zone');
   // PDF section collapsible state - hidden by default
   const [isPdfSectionVisible, setIsPdfSectionVisible] = useState(false);
 
@@ -107,7 +109,7 @@ export function EventCalendar({
   const handleDownloadPDF = async () => {
     const params = new URLSearchParams({
       scope: pdfScope,
-      year: pdfScope === 'year' ? String(selectedYear) : pdfScope === 'month' ? String(selectedYear) : '',
+      year: pdfScope === 'year' ? String(pdfYear) : pdfScope === 'month' ? String(pdfYear) : '',
       month: pdfScope === 'month' ? String(selectedMonth) : '',
       startDate: pdfScope === 'custom' ? pdfStartDate : '',
       endDate: pdfScope === 'custom' ? pdfEndDate : '',
@@ -127,9 +129,9 @@ export function EventCalendar({
     if (pdfScope === 'custom') {
       filename = `calendar_custom_${pdfStartDate}_to_${pdfEndDate}.pdf`;
     } else if (pdfScope === 'month') {
-      filename = `calendar_month_${selectedYear}_${String(selectedMonth).padStart(2, '0')}.pdf`;
+      filename = `calendar_month_${pdfYear}_${String(selectedMonth).padStart(2, '0')}.pdf`;
     } else if (pdfScope === 'year') {
-      filename = `calendar_year_${selectedYear}.pdf`;
+      filename = `calendar_year_${pdfYear}.pdf`;
     }
     const link = document.createElement('a');
     link.href = url;
@@ -426,9 +428,9 @@ export function EventCalendar({
                         ))}
                       </SelectContent>
                     </Select>
-                    <Select value={String(selectedYear)} onValueChange={(value) => setSelectedYear(Number(value))}>
+                    <Select value={String(pdfYear)} onValueChange={(value) => setPdfYear(Number(value))}>
                       <SelectTrigger className="h-6 text-xs min-w-[70px] px-2 py-0.5 border-primary/40 bg-gradient-to-r from-primary/5 to-accent/5">
-                        <SelectValue>{selectedYear}</SelectValue>
+                        <SelectValue>{pdfYear}</SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         {yearOptions.map(y => (
@@ -441,9 +443,9 @@ export function EventCalendar({
                   </>
                 )}
                 {pdfScope === 'year' && (
-                  <Select value={String(selectedYear)} onValueChange={(value) => setSelectedYear(Number(value))}>
+                  <Select value={String(pdfYear)} onValueChange={(value) => setPdfYear(Number(value))}>
                     <SelectTrigger className="h-6 text-xs min-w-[70px] px-2 py-0.5 border-primary/40 bg-gradient-to-r from-primary/5 to-accent/5">
-                      <SelectValue>{selectedYear}</SelectValue>
+                      <SelectValue>{pdfYear}</SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {yearOptions.map(y => (

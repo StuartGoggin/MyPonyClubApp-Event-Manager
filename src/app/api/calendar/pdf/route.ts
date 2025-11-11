@@ -54,15 +54,21 @@ export async function GET(request: NextRequest) {
 
     // Apply scope filtering (all events, zone events, or club events)
     if (filterScope === 'zone' && zoneId) {
-      // Filter events for specific zone
+      // Filter events for specific zone (but keep public holidays)
       const zoneClubs = clubs.filter(club => club.zoneId === zoneId);
       const zoneClubIds = zoneClubs.map(club => club.id);
       filteredEvents = filteredEvents.filter(event => 
-        event.clubId && zoneClubIds.includes(event.clubId)
+        (event.clubId && zoneClubIds.includes(event.clubId)) ||
+        event.status === 'public_holiday' ||
+        event.source === 'public_holiday'
       );
     } else if (filterScope === 'club' && clubId) {
-      // Filter events for specific club
-      filteredEvents = filteredEvents.filter(event => event.clubId === clubId);
+      // Filter events for specific club (but keep public holidays)
+      filteredEvents = filteredEvents.filter(event => 
+        event.clubId === clubId ||
+        event.status === 'public_holiday' ||
+        event.source === 'public_holiday'
+      );
     }
     // If filterScope === 'all', no additional filtering needed
 
@@ -72,17 +78,21 @@ export async function GET(request: NextRequest) {
       const eventType = eventTypes.find(et => et.id === event.eventTypeId);
       const zone = zones.find(z => z.id === club?.zoneId);
       
+      // Check if this is a public holiday
+      const isPublicHoliday = event.status === 'public_holiday' || event.source === 'public_holiday';
+      
       return {
   name: event.name || eventType?.name || 'Event',
   date: event.date.toISOString().split('T')[0], // Convert Date to YYYY-MM-DD string
   status: event.status || 'pending',
-  club: club?.name,
+  club: isPublicHoliday ? '' : (club?.name || ''),
   eventType: eventType?.name,
   location: event.location || club?.physicalAddress || (club?.address ? ((Object.prototype.hasOwnProperty.call(club.address, 'suburb') ? (club.address as any).suburb : (club.address as any).town) || '') : ''),
   contact: event.coordinatorContact || club?.email || club?.phone,
   coordinator: event.coordinatorName,
   zone: zone?.name || 'Unknown Zone',
-  state: 'VIC' // Default to VIC for now - can be enhanced later
+  state: 'VIC', // Default to VIC for now - can be enhanced later
+  isQualifier: event.isQualifier || false
       };
     });
 

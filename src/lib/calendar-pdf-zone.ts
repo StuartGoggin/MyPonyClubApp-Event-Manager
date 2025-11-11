@@ -50,7 +50,7 @@ function getOrdinalSuffix(day: number): string {
 
 export function generateZoneFormatCalendarPDF(options: ZoneCalendarPDFOptions): Buffer {
   try {
-    // Create a new jsPDF instance - Portrait orientation to match the reference
+    // Create a new jsPDF instance - Portrait orientation
     const doc = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
@@ -60,25 +60,31 @@ export function generateZoneFormatCalendarPDF(options: ZoneCalendarPDFOptions): 
 
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 15;
-    const contentWidth = pageWidth - 2 * margin;
+    const marginLeft = 15; // Left margin
+    const marginRight = 15; // Right margin
+    const marginTop = 15; // Top margin
+    const marginBottom = 15; // Bottom margin
+    const contentWidth = pageWidth - marginLeft - marginRight;
 
-    // Colors matching the reference document
+    // Modern color palette
     const colors = {
-      header: [0, 0, 0] as const,          // Black for headers
-      text: [0, 0, 0] as const,            // Black for text
-      border: [0, 0, 0] as const,          // Black borders
-      // Event type colors from the HTML reference
-      stateCouncil: [234, 235, 222] as const,     // #EAEBDE
-      smzMeeting: [170, 199, 172] as const,       // #AAC7AC  
-      stateEvent: [253, 246, 153] as const,       // #FDF699
+      primary: [59, 130, 246] as const,           // Blue-500
+      headerBg: [248, 250, 252] as const,         // Slate-50
+      text: [15, 23, 42] as const,                // Slate-900
+      textLight: [71, 85, 105] as const,          // Slate-600
+      border: [203, 213, 225] as const,           // Slate-300
+      borderDark: [148, 163, 184] as const,       // Slate-400
+      // Event type colors - softer, more professional
+      stateCouncil: [241, 245, 249] as const,     // Slate-100
+      smzMeeting: [187, 247, 208] as const,       // Green-200
+      stateEvent: [254, 249, 195] as const,       // Yellow-100
       zoneCompetition: [255, 255, 255] as const,  // White
-      stateQualifier: [237, 244, 247] as const,   // #EDF4F7
-      stateClubEvent: [255, 255, 0] as const,     // Yellow
-      freshmansCamp: [135, 240, 56] as const,     // #87F038
-      certificateAssessment: [255, 192, 0] as const, // #FFC000
-      schoolHolidays: [172, 239, 252] as const,   // #ACEFFC
-      freshmansSeries: [146, 208, 80] as const,   // #92D050
+      stateQualifier: [224, 242, 254] as const,   // Sky-100
+      stateClubEvent: [254, 240, 138] as const,   // Yellow-200
+      freshmansCamp: [187, 247, 208] as const,    // Green-200
+      certificateAssessment: [254, 215, 170] as const, // Orange-200
+      schoolHolidays: [207, 250, 254] as const,   // Cyan-100
+      freshmansSeries: [220, 252, 231] as const,  // Green-100
     };
 
     // Function to get event background color based on event type or name
@@ -111,7 +117,7 @@ export function generateZoneFormatCalendarPDF(options: ZoneCalendarPDFOptions): 
       return colors.zoneCompetition; // Default white background
     };
 
-    let yPosition = margin;
+    let yPosition = marginTop;
 
     // Get the current year from the events or use current year
     let calendarYear = new Date().getFullYear();
@@ -122,26 +128,34 @@ export function generateZoneFormatCalendarPDF(options: ZoneCalendarPDFOptions): 
 
     // Main Title - exactly like the reference "SMZ EVENT CALENDAR 2026"
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(16);
-    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(20);
+    doc.setTextColor(...colors.primary);
     const title = `SMZ EVENT CALENDAR ${calendarYear}`;
     const titleWidth = doc.getTextWidth(title);
     doc.text(title, (pageWidth - titleWidth) / 2, yPosition);
-    yPosition += 20;
+    
+    // Decorative underline
+    doc.setDrawColor(...colors.primary);
+    doc.setLineWidth(0.5);
+    const lineStart = (pageWidth - titleWidth) / 2;
+    const lineEnd = lineStart + titleWidth;
+    doc.line(lineStart, yPosition + 2, lineEnd, yPosition + 2);
+    
+    yPosition += 18;
 
     // Welcome Message Section
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
+    doc.setTextColor(...colors.text);
     const welcomeTitle = 'Welcome to the Southern Metropolitan Zone Event Calendar';
     const welcomeTitleWidth = doc.getTextWidth(welcomeTitle);
     doc.text(welcomeTitle, (pageWidth - welcomeTitleWidth) / 2, yPosition);
-    yPosition += 8;
+    yPosition += 10;
 
     // Description paragraph
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
-    doc.setTextColor(40, 40, 40);
+    doc.setTextColor(...colors.textLight);
     
     const descriptionText = `Dear Clubs, Riders and Families - Welcome to our ${calendarYear} SMZ Event Calendar! This calendar showcases the exciting competitions and activities that our Southern Metropolitan Zone clubs have organized for you this year. Please share this with your members and riding friends to help promote our local Pony Club events.
 
@@ -153,35 +167,32 @@ This calendar may be updated throughout the year. For the latest information, vi
 
     // Split text into lines and display
     const descriptionLines = doc.splitTextToSize(descriptionText, contentWidth - 10);
-    let lineHeight = 4;
+    let lineHeight = 4.5;
     
     descriptionLines.forEach((line: string) => {
-      doc.text(line, margin + 5, yPosition);
+      doc.text(line, marginLeft + 5, yPosition);
       yPosition += lineHeight;
     });
     
-    yPosition += 10;
+    yPosition += 12;
 
     // Create Legend Table (matching the reference format)
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
+    doc.setTextColor(...colors.text);
     
     // Legend header
     const legendStartY = yPosition;
-    const legendWidth = 150; // Width for the legend table
+    const legendWidth = 160; // Width for the legend table
     const legendX = (pageWidth - legendWidth) / 2;
     
     // Draw legend title
-    doc.setFillColor(255, 255, 255);
-    doc.rect(legendX, yPosition - 3, 20, 6, 'F');
-    doc.setDrawColor(0, 0, 0);
-    doc.rect(legendX, yPosition - 3, 20, 6);
-    doc.text('Legend', legendX + 2, yPosition + 1);
+    doc.text('Legend', legendX, yPosition);
     yPosition += 6;
     
-    // Legend items
+    // Legend items with improved styling
     const legendItems = [
-      { color: colors.stateCouncil, text: 'STATE Council meeting- every 1st Tuesday per month except (Nov – 2nd Tuesday)' },
+      { color: colors.stateCouncil, text: 'STATE Council meeting - every 1st Tuesday per month except (Nov – 2nd Tuesday)' },
       { color: colors.smzMeeting, text: 'SMZ Meeting date' },
       { color: colors.stateEvent, text: 'State event' },
       { color: colors.zoneCompetition, text: 'Zone Competition (non Qualifier)' },
@@ -193,17 +204,19 @@ This calendar may be updated throughout the year. For the latest information, vi
     ];
 
     legendItems.forEach(item => {
-      // Color box
+      // Color box with border
       doc.setFillColor(item.color[0], item.color[1], item.color[2]);
-      doc.rect(legendX, yPosition - 3, 20, 6, 'F');
-      doc.setDrawColor(0, 0, 0);
-      doc.rect(legendX, yPosition - 3, 20, 6);
+      doc.rect(legendX, yPosition - 3.5, 18, 5, 'FD');
+      doc.setDrawColor(...colors.border);
+      doc.setLineWidth(0.3);
+      doc.rect(legendX, yPosition - 3.5, 18, 5);
       
-      // Text
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8);
-      const textLines = doc.splitTextToSize(item.text, legendWidth - 25);
-      doc.text(textLines, legendX + 22, yPosition + 1);
+      // Text with better spacing
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(...colors.textLight);
+      const textLines = doc.splitTextToSize(item.text, legendWidth - 22);
+      doc.text(textLines, legendX + 20, yPosition);
       yPosition += Math.max(6, textLines.length * 4);
     });
 
@@ -211,50 +224,52 @@ This calendar may be updated throughout the year. For the latest information, vi
 
     // Main Calendar Table - 4 columns with optimized widths
     const columnWidths = {
-      date: 45,      // Date column - wider for full date with ordinals
-      qualifier: 22, // SMZ Qualifier column - compact for checkmarks
-      club: 40,      // Club column - adequate for club names
-      event: 73      // Event column - remaining space for event descriptions
+      date: 42,      // Date column - wider for full date with ordinals
+      qualifier: 20, // SMZ Qualifier column - compact for checkmarks
+      club: 48,      // Club column - wider for better readability
+      event: 60      // Event column - remaining space for event descriptions
     };
 
     // Table headers with improved formatting
     const drawTableHeader = () => {
-      const startX = margin;
+      const startX = marginLeft;
       let currentX = startX;
-      const headerHeight = 12;
+      const headerHeight = 11;
       
-      // Header background
-      doc.setFillColor(240, 240, 240); // Light gray header background
-      doc.rect(startX, yPosition - 5, contentWidth, headerHeight, 'F');
+      // Header background with modern color
+      doc.setFillColor(...colors.headerBg);
+      doc.rect(startX, yPosition - 4, contentWidth, headerHeight, 'F');
       
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
-      doc.setTextColor(0, 0, 0);
+      doc.setTextColor(...colors.text);
       
       // Enhanced borders
-      doc.setDrawColor(0, 0, 0);
-      doc.setLineWidth(0.8);
+      doc.setDrawColor(...colors.borderDark);
+      doc.setLineWidth(0.5);
       
       // Date column header
-      doc.rect(currentX, yPosition - 5, columnWidths.date, headerHeight);
+      doc.rect(currentX, yPosition - 4, columnWidths.date, headerHeight);
       doc.text('Date', currentX + columnWidths.date/2 - doc.getTextWidth('Date')/2, yPosition + 2);
       currentX += columnWidths.date;
       
       // SMZ Qualifier column header  
-      doc.rect(currentX, yPosition - 5, columnWidths.qualifier, headerHeight);
+      doc.rect(currentX, yPosition - 4, columnWidths.qualifier, headerHeight);
       doc.setFontSize(8);
-      doc.text('SMZ', currentX + columnWidths.qualifier/2 - doc.getTextWidth('SMZ')/2, yPosition);
-      doc.text('Qualifier', currentX + columnWidths.qualifier/2 - doc.getTextWidth('Qualifier')/2, yPosition + 4);
+      const smzWidth = doc.getTextWidth('SMZ');
+      const qualWidth = doc.getTextWidth('Qualifier');
+      doc.text('SMZ', currentX + columnWidths.qualifier/2 - smzWidth/2, yPosition);
+      doc.text('Qualifier', currentX + columnWidths.qualifier/2 - qualWidth/2, yPosition + 4);
       doc.setFontSize(10);
       currentX += columnWidths.qualifier;
       
       // Club column header
-      doc.rect(currentX, yPosition - 5, columnWidths.club, headerHeight);
+      doc.rect(currentX, yPosition - 4, columnWidths.club, headerHeight);
       doc.text('Club', currentX + columnWidths.club/2 - doc.getTextWidth('Club')/2, yPosition + 2);
       currentX += columnWidths.club;
       
       // Event column header
-      doc.rect(currentX, yPosition - 5, columnWidths.event, headerHeight);
+      doc.rect(currentX, yPosition - 4, columnWidths.event, headerHeight);
       doc.text('Event', currentX + columnWidths.event/2 - doc.getTextWidth('Event')/2, yPosition + 2);
       
       yPosition += headerHeight;
@@ -286,27 +301,27 @@ This calendar may be updated throughout the year. For the latest information, vi
       // Check if we need a new page
       if (yPosition > pageHeight - 60) {
         doc.addPage();
-        yPosition = margin + 20;
+        yPosition = marginTop + 20;
         drawTableHeader();
       }
 
       // Add school holidays row for January (example)
       if (month === '01') {
-        const startX = margin;
-        const holidayRowHeight = 12;
+        const startX = marginLeft;
+        const holidayRowHeight = 10;
         
         // School holidays row spanning all columns with improved formatting
         doc.setFillColor(colors.schoolHolidays[0], colors.schoolHolidays[1], colors.schoolHolidays[2]);
-        doc.rect(startX, yPosition - 2, contentWidth, holidayRowHeight, 'F');
-        doc.setDrawColor(0, 0, 0);
+        doc.rect(startX, yPosition - 1.5, contentWidth, holidayRowHeight, 'F');
+        doc.setDrawColor(...colors.border);
         doc.setLineWidth(0.3);
-        doc.rect(startX, yPosition - 2, contentWidth, holidayRowHeight);
+        doc.rect(startX, yPosition - 1.5, contentWidth, holidayRowHeight);
         
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(9);
-        doc.setTextColor(0, 0, 0);
+        doc.setTextColor(...colors.text);
         const holidayY = yPosition + (holidayRowHeight / 2) + 1;
-        doc.text(`1st to 28th January – public school holidays`, startX + 5, holidayY);
+        doc.text(`1st to 28th January – public school holidays`, startX + 4, holidayY);
         yPosition += holidayRowHeight;
       }
       
@@ -315,13 +330,13 @@ This calendar may be updated throughout the year. For the latest information, vi
       
       // Event rows with improved formatting
       monthEvents.forEach((event, index) => {
-        const startX = margin;
+        const startX = marginLeft;
         let currentX = startX;
         
         // Check if we need a new page
-        if (yPosition > pageHeight - 25) {
+        if (yPosition > pageHeight - 30) {
           doc.addPage();
-          yPosition = margin + 20;
+          yPosition = marginTop + 20;
           drawTableHeader();
         }
         
@@ -330,58 +345,62 @@ This calendar may be updated throughout the year. For the latest information, vi
         
         // Calculate row height based on text content
         const clubText = event.club || '';
-        const clubLines = doc.splitTextToSize(clubText, columnWidths.club - 6);
-        const eventLines = doc.splitTextToSize(event.name, columnWidths.event - 6);
+        const clubLines = doc.splitTextToSize(clubText, columnWidths.club - 5);
+        const eventLines = doc.splitTextToSize(event.name, columnWidths.event - 5);
         const maxLines = Math.max(clubLines.length, eventLines.length, 1);
-        const rowHeight = Math.max(10, maxLines * 4 + 2);
+        const rowHeight = Math.max(9, maxLines * 4.5 + 3);
         
-        // Row background color with improved opacity
+        // Row background color
         doc.setFillColor(eventBgColor[0], eventBgColor[1], eventBgColor[2]);
-        doc.rect(startX, yPosition - 2, contentWidth, rowHeight, 'F');
+        doc.rect(startX, yPosition - 1.5, contentWidth, rowHeight, 'F');
         
-        // Cell borders with consistent line width
-        doc.setDrawColor(0, 0, 0);
-        doc.setLineWidth(0.3);
+        // Cell borders with subtle color
+        doc.setDrawColor(...colors.border);
+        doc.setLineWidth(0.25);
         
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(9);
-        doc.setTextColor(0, 0, 0);
+        doc.setTextColor(...colors.text);
         
         // Date cell with better alignment
-        doc.rect(currentX, yPosition - 2, columnWidths.date, rowHeight);
+        doc.rect(currentX, yPosition - 1.5, columnWidths.date, rowHeight);
         const dateStr = eventDate.getDate() + getOrdinalSuffix(eventDate.getDate()) + ' ' + getMonthName(eventDate.getMonth() + 1);
-        const dateY = yPosition + (rowHeight / 2) + 1;
+        const dateY = yPosition + (rowHeight / 2) + 1.5;
         doc.text(dateStr, currentX + 3, dateY);
         currentX += columnWidths.date;
         
         // SMZ Qualifier cell with centered checkmark
-        doc.rect(currentX, yPosition - 2, columnWidths.qualifier, rowHeight);
+        doc.rect(currentX, yPosition - 1.5, columnWidths.qualifier, rowHeight);
         const isQualifier = event.name.toLowerCase().includes('qualifier') || event.eventType?.toLowerCase().includes('qualifier');
         if (isQualifier) {
           doc.setFont('helvetica', 'bold');
-          doc.setFontSize(12);
-          const checkY = yPosition + (rowHeight / 2) + 2;
-          doc.text('✓', currentX + columnWidths.qualifier/2 - 2, checkY);
+          doc.setFontSize(14);
+          doc.setTextColor(...colors.primary);
+          const checkY = yPosition + (rowHeight / 2) + 2.5;
+          const checkmark = '✓';
+          const checkWidth = doc.getTextWidth(checkmark);
+          doc.text(checkmark, currentX + (columnWidths.qualifier - checkWidth) / 2, checkY);
           doc.setFont('helvetica', 'normal');
           doc.setFontSize(9);
+          doc.setTextColor(...colors.text);
         }
         currentX += columnWidths.qualifier;
         
         // Club cell with proper text wrapping and vertical centering
-        doc.rect(currentX, yPosition - 2, columnWidths.club, rowHeight);
+        doc.rect(currentX, yPosition - 1.5, columnWidths.club, rowHeight);
         if (clubText) {
           const clubStartY = yPosition + (rowHeight - (clubLines.length * 4)) / 2 + 3;
           clubLines.forEach((line: string, i: number) => {
-            doc.text(line, currentX + 3, clubStartY + (i * 4));
+            doc.text(line, currentX + 2.5, clubStartY + (i * 4));
           });
         }
         currentX += columnWidths.club;
         
         // Event cell with proper text wrapping and vertical centering
-        doc.rect(currentX, yPosition - 2, columnWidths.event, rowHeight);
+        doc.rect(currentX, yPosition - 1.5, columnWidths.event, rowHeight);
         const eventStartY = yPosition + (rowHeight - (eventLines.length * 4)) / 2 + 3;
         eventLines.forEach((line: string, i: number) => {
-          doc.text(line, currentX + 3, eventStartY + (i * 4));
+          doc.text(line, currentX + 2.5, eventStartY + (i * 4));
         });
         
         yPosition += rowHeight;
@@ -410,18 +429,18 @@ This calendar may be updated throughout the year. For the latest information, vi
       doc.setPage(i);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8);
-      doc.setTextColor(128, 128, 128);
+      doc.setTextColor(...colors.textLight);
       
-      const footerY = pageHeight - 10;
+      const footerY = pageHeight - 12;
       
       // Left side: Generated date
       const leftFooter = `Generated: ${asOfDate}`;
-      doc.text(leftFooter, margin, footerY);
+      doc.text(leftFooter, marginLeft, footerY);
       
       // Right side: Calendar description (e.g., "Southern Metro Zone Calendar 2026")
       const rightFooter = `${titleText} ${footerYear}`;
       const rightFooterWidth = doc.getTextWidth(rightFooter);
-      doc.text(rightFooter, pageWidth - margin - rightFooterWidth, footerY);
+      doc.text(rightFooter, pageWidth - marginRight - rightFooterWidth, footerY);
     }
 
     return Buffer.from(doc.output('arraybuffer'));

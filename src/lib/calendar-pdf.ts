@@ -435,8 +435,13 @@ function generateZoneFormatPDF(options: CalendarPDFOptions): Buffer {
 
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 10;
-    const contentWidth = pageWidth - 2 * margin;
+    const marginLeft = 15;
+    const marginRight = 15;
+    const marginTop = 15;
+    const marginBottom = 15;
+    const contentWidth = pageWidth - marginLeft - marginRight;
+    
+    console.log('Zone PDF Margins:', { marginLeft, marginRight, marginTop, marginBottom, pageWidth, pageHeight, contentWidth });
 
     // Colors
     const colors = {
@@ -447,7 +452,7 @@ function generateZoneFormatPDF(options: CalendarPDFOptions): Buffer {
       altRow: [248, 248, 248] as const,
     };
 
-    let yPosition = margin;
+    let yPosition = marginTop;
     let pageNumber = 1;
 
     // Title
@@ -513,7 +518,7 @@ function generateZoneFormatPDF(options: CalendarPDFOptions): Buffer {
         
         if (lineWidth > maxLineWidth && currentLine !== '') {
           // Line is too long, print current line and start new one
-          doc.text(currentLine, margin + 10, currentY);
+          doc.text(currentLine, marginLeft + 10, currentY);
           currentY += 4;
           currentLine = word;
         } else {
@@ -522,7 +527,7 @@ function generateZoneFormatPDF(options: CalendarPDFOptions): Buffer {
         
         // If this is the last word, print the line
         if (index === words.length - 1) {
-          doc.text(currentLine, margin + 10, currentY);
+          doc.text(currentLine, marginLeft + 10, currentY);
           currentY += 5; // Spacing after paragraph
         }
       });
@@ -530,19 +535,20 @@ function generateZoneFormatPDF(options: CalendarPDFOptions): Buffer {
     
     yPosition = currentY + 5; // Extra space before the table
 
-    // Column definitions matching the PDF format
+    // Column definitions - adjusted to fit within margins (contentWidth = 267mm with 15mm margins)
     const columns = [
       { header: 'Date', width: 22, align: 'left' as const },
-      { header: 'Event', width: 65, align: 'left' as const },
-      { header: 'Club', width: 50, align: 'left' as const },
-      { header: 'Location', width: 55, align: 'left' as const },
+      { header: 'Event', width: 62, align: 'left' as const },
+      { header: 'Club', width: 48, align: 'left' as const },
+      { header: 'Location', width: 50, align: 'left' as const },
       { header: 'Zone', width: 40, align: 'left' as const },
-      { header: 'State', width: 20, align: 'center' as const },
-      { header: 'Contact', width: 45, align: 'left' as const }
+      { header: 'State', width: 18, align: 'center' as const },
+      { header: 'Contact', width: 27, align: 'left' as const }
     ];
 
     const tableWidth = columns.reduce((sum, col) => sum + col.width, 0);
-    const startX = (pageWidth - tableWidth) / 2;
+    console.log('Table width:', tableWidth, 'Content width:', contentWidth);
+    const startX = marginLeft; // Start table at left margin, not centered
 
     // Group events by month
     const eventsByMonth: { [key: string]: typeof options.events } = {};
@@ -605,7 +611,7 @@ function generateZoneFormatPDF(options: CalendarPDFOptions): Buffer {
       if (yPosition > pageHeight - 50) {
         doc.addPage();
         pageNumber++;
-        yPosition = margin;
+        yPosition = marginTop;
       }
 
       // Month header
@@ -634,7 +640,7 @@ function generateZoneFormatPDF(options: CalendarPDFOptions): Buffer {
           if (yPosition > pageHeight - 15) {
             doc.addPage();
             pageNumber++;
-            yPosition = margin;
+            yPosition = marginTop;
             drawTableHeader();
           }
 
@@ -735,9 +741,9 @@ function generateZoneFormatPDF(options: CalendarPDFOptions): Buffer {
       const pageText = `Page ${i} of ${totalPages}`;
       const formatText = `${titleText} ${calendarYear}`;
       
-      doc.text(generatedText, margin, footerY);
+      doc.text(generatedText, marginLeft, footerY);
       doc.text(pageText, pageWidth / 2 - doc.getTextWidth(pageText) / 2, footerY);
-      doc.text(formatText, pageWidth - margin - doc.getTextWidth(formatText), footerY);
+      doc.text(formatText, pageWidth - marginRight - doc.getTextWidth(formatText), footerY);
     }
 
     return Buffer.from(doc.output('arraybuffer'));

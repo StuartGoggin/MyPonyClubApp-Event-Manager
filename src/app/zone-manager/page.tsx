@@ -5,9 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Calendar, CheckCircle, Clock, Users, Building } from 'lucide-react';
+import { MapPin, CheckCircle, Clock, Users, Building } from 'lucide-react';
 import { Zone, Club, Event, EventType } from '@/lib/types';
-import { EventCalendar } from '@/components/dashboard/event-calendar';
 import { ZoneEventApproval } from '@/components/zone-manager/zone-event-approval';
 import { ZoneEventManagement } from '@/components/zone-manager/zone-event-management';
 import { RouteGuard } from '@/components/auth/route-guard';
@@ -248,12 +247,8 @@ function ZoneManagerContent() {
           </div>
 
           {/* Main Dashboard Tabs */}
-          <Tabs defaultValue="calendar" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="calendar">
-                <Calendar className="h-4 w-4 mr-2" />
-                Zone Calendar
-              </TabsTrigger>
+          <Tabs defaultValue="approvals" className="space-y-4">
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="approvals">
                 <Clock className="h-4 w-4 mr-2" />
                 Event Approvals
@@ -268,26 +263,6 @@ function ZoneManagerContent() {
                 Manage Events
               </TabsTrigger>
             </TabsList>
-
-            <TabsContent value="calendar" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Zone Event Calendar</CardTitle>
-                  <CardDescription>
-                    View all events within {selectedZone.name}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <EventCalendar 
-                    events={zoneEvents}
-                    clubs={zoneClubs}
-                    eventTypes={eventTypes}
-                    zones={[selectedZone]}
-                    today={new Date()}
-                  />
-                </CardContent>
-              </Card>
-            </TabsContent>
 
             <TabsContent value="approvals" className="space-y-4">
               <ZoneEventApproval

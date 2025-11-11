@@ -94,6 +94,8 @@ export function EventCalendar({
   const [pdfFormat, setPdfFormat] = useState<'standard' | 'zone'>('zone');
   // PDF section collapsible state - hidden by default
   const [isPdfSectionVisible, setIsPdfSectionVisible] = useState(false);
+  // PDF download loading state
+  const [isPdfGenerating, setIsPdfGenerating] = useState(false);
 
   // Initialize PDF defaults based on user authentication
   useEffect(() => {
@@ -107,39 +109,51 @@ export function EventCalendar({
   }, [currentUser]);
 
   const handleDownloadPDF = async () => {
-    const params = new URLSearchParams({
-      scope: pdfScope,
-      year: pdfScope === 'year' ? String(pdfYear) : pdfScope === 'month' ? String(pdfYear) : '',
-      month: pdfScope === 'month' ? String(selectedMonth) : '',
-      startDate: pdfScope === 'custom' ? pdfStartDate : '',
-      endDate: pdfScope === 'custom' ? pdfEndDate : '',
-      filterScope: pdfFilterScope,
-      zoneId: pdfFilterScope === 'zone' ? pdfSelectedZone : '',
-      clubId: pdfFilterScope === 'club' ? pdfSelectedClub : '',
-      format: pdfFormat,
-    });
-    const res = await fetch(`/api/calendar/pdf?${params.toString()}`);
-    if (!res.ok) {
-      alert('Failed to generate PDF');
-      return;
+    setIsPdfGenerating(true);
+    try {
+      const params = new URLSearchParams({
+        scope: pdfScope,
+        year: pdfScope === 'year' ? String(pdfYear) : pdfScope === 'month' ? String(pdfYear) : '',
+        month: pdfScope === 'month' ? String(selectedMonth) : '',
+        startDate: pdfScope === 'custom' ? pdfStartDate : '',
+        endDate: pdfScope === 'custom' ? pdfEndDate : '',
+        filterScope: pdfFilterScope,
+        zoneId: pdfFilterScope === 'zone' ? pdfSelectedZone : '',
+        clubId: pdfFilterScope === 'club' ? pdfSelectedClub : '',
+        format: pdfFormat,
+      });
+      const res = await fetch(`/api/calendar/pdf?${params.toString()}`);
+      if (!res.ok) {
+        alert('Failed to generate PDF');
+        return;
+      }
+      
+      // Extract filename from Content-Disposition header
+      const contentDisposition = res.headers.get('Content-Disposition');
+      let filename = 'calendar.pdf'; // Default fallback
+      
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?(.+?)"?$/);
+        if (filenameMatch && filenameMatch[1]) {
+          filename = filenameMatch[1];
+        }
+      }
+      
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
+    } finally {
+      setIsPdfGenerating(false);
     }
-    const blob = await res.blob();
-    const url = window.URL.createObjectURL(blob);
-    let filename = '';
-    if (pdfScope === 'custom') {
-      filename = `calendar_custom_${pdfStartDate}_to_${pdfEndDate}.pdf`;
-    } else if (pdfScope === 'month') {
-      filename = `calendar_month_${pdfYear}_${String(selectedMonth).padStart(2, '0')}.pdf`;
-    } else if (pdfScope === 'year') {
-      filename = `calendar_year_${pdfYear}.pdf`;
-    }
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(url);
   };
   const [selectedZoneId, setSelectedZoneId] = useState<string>('all');
   const [selectedClubId, setSelectedClubId] = useState<string>('all');
@@ -489,9 +503,17 @@ export function EventCalendar({
                   size="sm"
                   className="premium-button font-bold px-3 py-1 text-sm shadow ring-1 ring-primary/20 hover:ring-accent/30 transition"
                   onClick={handleDownloadPDF}
-                  disabled={pdfScope === 'custom' && (!pdfStartDate || !pdfEndDate)}
+                  disabled={isPdfGenerating || (pdfScope === 'custom' && (!pdfStartDate || !pdfEndDate))}
                 >
-                  <span className="mr-1">📄</span> Download PDF
+                  {isPdfGenerating ? (
+                    <>
+                      <span className="mr-1 animate-spin">⏳</span> Generating...
+                    </>
+                  ) : (
+                    <>
+                      <span className="mr-1">📄</span> Download PDF
+                    </>
+                  )}
                 </Button>
               </div>
             </div>

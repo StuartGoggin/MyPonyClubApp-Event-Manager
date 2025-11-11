@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateCalendarPDF } from '@/lib/calendar-pdf';
-import { getEvents, getClubs, getEventTypes, getZones } from '@/lib/data';
+import { getAllEvents, getAllClubs, getAllEventTypes, getAllZones } from '@/lib/server-data';
 
 // Force dynamic rendering for this route since it uses request parameters
 export const dynamic = 'force-dynamic';
@@ -19,12 +19,12 @@ export async function GET(request: NextRequest) {
     const clubId = searchParams.get('clubId');
     const format = searchParams.get('format') || 'standard';
 
-    // Fetch real events from Firestore
+    // Fetch real events from Firestore using cached functions
     const [events, clubs, eventTypes, zones] = await Promise.all([
-      getEvents(),
-      getClubs(), 
-      getEventTypes(),
-      getZones()
+      getAllEvents(),
+      getAllClubs(), 
+      getAllEventTypes(),
+      getAllZones()
     ]);
 
     // Filter events for the requested date range
@@ -111,12 +111,16 @@ export async function GET(request: NextRequest) {
     if (filterScope === 'zone' && zoneId) {
       const zone = zones.find(z => z.id === zoneId);
       if (zone) {
-        calendarTitle = `${zone.name} Zone Events Calendar`;
+        // Remove "Zone" from the end of zone name if it exists to avoid duplication
+        const zoneName = zone.name.replace(/\s+Zone$/i, '');
+        calendarTitle = `${zoneName} Zone Events Calendar`;
       }
     } else if (filterScope === 'club' && clubId) {
       const club = clubs.find(c => c.id === clubId);
       if (club) {
-        calendarTitle = `${club.name} Events Calendar`;
+        // Remove "Pony Club" from the end of club name if it exists to avoid duplication
+        const clubName = club.name.replace(/\s+Pony Club$/i, '');
+        calendarTitle = `${clubName} Events Calendar`;
       }
     }
 
@@ -130,22 +134,114 @@ export async function GET(request: NextRequest) {
 
     // Generate filename with zone-specific naming convention when format is 'zone'
     let filename = '';
+    
+    // Helper function to format date as DDmmmYYYY
+    const formatAsOfDate = (date: Date): string => {
+      const day = date.getDate().toString().padStart(2, '0');
+      const monthNames = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 
+                          'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+      const monthName = monthNames[date.getMonth()];
+      const yearNum = date.getFullYear();
+      return `${day}${monthName}${yearNum}`;
+    };
+    
+    const today = new Date();
+    const asOfDate = formatAsOfDate(today);
+    
+    console.log('PDF Filename generation:', { format, filterScope, zoneId, clubId, scope, year, month });
+    
+    // Zone format with zone filter
     if (format === 'zone' && filterScope === 'zone' && zoneId) {
       const zone = zones.find(z => z.id === zoneId);
       const zoneName = zone?.name || 'Zone';
-      const today = new Date();
-      const asOfDate = today.toLocaleDateString('en-GB', { 
-        day: '2-digit', 
-        month: 'short', 
-        year: 'numeric' 
-      }).replace(/ /g, '').toLowerCase();
       
-      filename = `${zoneName} Calendar ${year} as of ${asOfDate}.pdf`;
-    } else {
-      const formatSuffix = format === 'zone' ? '_zone' : '';
-      filename = scope === 'month' ? `calendar_month_${year}_${month.toString().padStart(2, '0')}${formatSuffix}.pdf` :
-                      scope === 'year' ? `calendar_year_${year}${formatSuffix}.pdf` :
-                      `calendar_custom_${startDate}_to_${endDate}${formatSuffix}.pdf`;
+      if (scope === 'month') {
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                           'July', 'August', 'September', 'October', 'November', 'December'];
+        const monthName = monthNames[month - 1];
+        filename = `${zoneName} ${monthName} ${year} as of ${asOfDate}.pdf`;
+      } else if (scope === 'year') {
+        filename = `${zoneName} Calendar ${year} as of ${asOfDate}.pdf`;
+      } else if (scope === 'custom') {
+        filename = `${zoneName} Calendar ${startDate} to ${endDate} as of ${asOfDate}.pdf`;
+      }
+      console.log('Generated zone filename:', filename);
+    }
+    // Zone format with club filter
+    else if (format === 'zone' && filterScope === 'club' && clubId) {
+      const club = clubs.find(c => c.id === clubId);
+      const clubName = club?.name || 'Club';
+      
+      if (scope === 'month') {
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                           'July', 'August', 'September', 'October', 'November', 'December'];
+        const monthName = monthNames[month - 1];
+        filename = `${clubName} ${monthName} ${year} as of ${asOfDate}.pdf`;
+      } else if (scope === 'year') {
+        filename = `${clubName} Calendar ${year} as of ${asOfDate}.pdf`;
+      } else if (scope === 'custom') {
+        filename = `${clubName} Calendar ${startDate} to ${endDate} as of ${asOfDate}.pdf`;
+      }
+      console.log('Generated club filename:', filename);
+    }
+    // Zone format with all events
+    else if (format === 'zone' && filterScope === 'all') {
+      if (scope === 'month') {
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                           'July', 'August', 'September', 'October', 'November', 'December'];
+        const monthName = monthNames[month - 1];
+        filename = `PonyClub Events ${monthName} ${year} as of ${asOfDate}.pdf`;
+      } else if (scope === 'year') {
+        filename = `PonyClub Events Calendar ${year} as of ${asOfDate}.pdf`;
+      } else if (scope === 'custom') {
+        filename = `PonyClub Events ${startDate} to ${endDate} as of ${asOfDate}.pdf`;
+      }
+      console.log('Generated all events filename:', filename);
+    }
+    // Standard format downloads
+    else {
+      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                         'July', 'August', 'September', 'October', 'November', 'December'];
+      
+      if (scope === 'month') {
+        const monthName = monthNames[month - 1];
+        if (filterScope === 'zone' && zoneId) {
+          const zone = zones.find(z => z.id === zoneId);
+          const zoneName = zone?.name || 'Zone';
+          filename = `${zoneName} ${monthName} ${year} as of ${asOfDate}.pdf`;
+        } else if (filterScope === 'club' && clubId) {
+          const club = clubs.find(c => c.id === clubId);
+          const clubName = club?.name || 'Club';
+          filename = `${clubName} ${monthName} ${year} as of ${asOfDate}.pdf`;
+        } else {
+          filename = `PonyClub Events ${monthName} ${year} as of ${asOfDate}.pdf`;
+        }
+      } else if (scope === 'year') {
+        if (filterScope === 'zone' && zoneId) {
+          const zone = zones.find(z => z.id === zoneId);
+          const zoneName = zone?.name || 'Zone';
+          filename = `${zoneName} Calendar ${year} as of ${asOfDate}.pdf`;
+        } else if (filterScope === 'club' && clubId) {
+          const club = clubs.find(c => c.id === clubId);
+          const clubName = club?.name || 'Club';
+          filename = `${clubName} Calendar ${year} as of ${asOfDate}.pdf`;
+        } else {
+          filename = `PonyClub Events Calendar ${year} as of ${asOfDate}.pdf`;
+        }
+      } else if (scope === 'custom') {
+        if (filterScope === 'zone' && zoneId) {
+          const zone = zones.find(z => z.id === zoneId);
+          const zoneName = zone?.name || 'Zone';
+          filename = `${zoneName} Calendar ${startDate} to ${endDate} as of ${asOfDate}.pdf`;
+        } else if (filterScope === 'club' && clubId) {
+          const club = clubs.find(c => c.id === clubId);
+          const clubName = club?.name || 'Club';
+          filename = `${clubName} Calendar ${startDate} to ${endDate} as of ${asOfDate}.pdf`;
+        } else {
+          filename = `PonyClub Events ${startDate} to ${endDate} as of ${asOfDate}.pdf`;
+        }
+      }
+      console.log('Generated standard filename:', filename);
     }
 
   return new NextResponse(new Uint8Array(pdfBuffer), {

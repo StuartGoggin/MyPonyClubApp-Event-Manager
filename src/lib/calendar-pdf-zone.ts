@@ -388,17 +388,40 @@ This calendar may be updated throughout the year. For the latest information, vi
       });
     });
     
-    // Footer
+    // Footer with descriptive information
     const totalPages = doc.getNumberOfPages();
+    const today = new Date();
+    
+    // Format date as DDmmmYYYY (e.g., 11nov2025)
+    const day = today.getDate().toString().padStart(2, '0');
+    const monthNames = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 
+                        'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+    const monthName = monthNames[today.getMonth()];
+    const yearNum = today.getFullYear();
+    const asOfDate = `${day}${monthName}${yearNum}`;
+    
+    // Extract calendar year from the months array or use calendarYear from above
+    const footerYear = options.months.length > 0 ? options.months[0].year : calendarYear;
+    
+    // Get zone/club name from title, or default to "PonyClub Events"
+    const titleText = options.title || 'PonyClub Events Calendar';
+    
     for (let i = 1; i <= totalPages; i++) {
       doc.setPage(i);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8);
       doc.setTextColor(128, 128, 128);
       
-      const footerText = `Generated: ${new Date().toLocaleDateString('en-AU')}`;
       const footerY = pageHeight - 10;
-      doc.text(footerText, margin, footerY);
+      
+      // Left side: Generated date
+      const leftFooter = `Generated: ${asOfDate}`;
+      doc.text(leftFooter, margin, footerY);
+      
+      // Right side: Calendar description (e.g., "Southern Metro Zone Calendar 2026")
+      const rightFooter = `${titleText} ${footerYear}`;
+      const rightFooterWidth = doc.getTextWidth(rightFooter);
+      doc.text(rightFooter, pageWidth - margin - rightFooterWidth, footerY);
     }
 
     return Buffer.from(doc.output('arraybuffer'));

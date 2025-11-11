@@ -710,6 +710,20 @@ function generateZoneFormatPDF(options: CalendarPDFOptions): Buffer {
 
     // Footer on all pages
     const totalPages = doc.getNumberOfPages();
+    
+    // Format date as DDmmmYYYY (e.g., 11nov2025)
+    const today = new Date();
+    const day = today.getDate().toString().padStart(2, '0');
+    const monthNamesShort = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 
+                             'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+    const monthName = monthNamesShort[today.getMonth()];
+    const yearNum = today.getFullYear();
+    const asOfDate = `${day}${monthName}${yearNum}`;
+    
+    // Extract calendar year from the months array
+    const calendarYear = options.months.length > 0 ? options.months[0].year : yearNum;
+    const titleText = options.title || 'PonyClub Events Calendar';
+    
     for (let i = 1; i <= totalPages; i++) {
       doc.setPage(i);
       doc.setFont('helvetica', 'normal');
@@ -717,9 +731,9 @@ function generateZoneFormatPDF(options: CalendarPDFOptions): Buffer {
       doc.setTextColor(100, 100, 100);
       
       const footerY = pageHeight - 8;
-      const generatedText = `Generated: ${new Date().toLocaleDateString('en-AU')}`;
+      const generatedText = `Generated: ${asOfDate}`;
       const pageText = `Page ${i} of ${totalPages}`;
-      const formatText = 'Zone Format - Includes Zone and State Information';
+      const formatText = `${titleText} ${calendarYear}`;
       
       doc.text(generatedText, margin, footerY);
       doc.text(pageText, pageWidth / 2 - doc.getTextWidth(pageText) / 2, footerY);

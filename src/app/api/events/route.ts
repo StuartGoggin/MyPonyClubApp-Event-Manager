@@ -2,56 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminDb, isDatabaseConnected, getDatabaseErrorMessage } from '@/lib/firebase-admin';
 import { Timestamp } from 'firebase-admin/firestore';
 import { Event } from '@/lib/types';
-import { getYear } from 'date-fns';
-
-interface PublicHoliday {
-  date: string;
-  localName: string;
-  name: string;
-  countryCode: string;
-  counties?: string[] | null;
-}
-
-const getPublicHolidays = async (startYear: number, yearsAhead: number = 5): Promise<Event[]> => {
-  const allHolidays: Event[] = [];
-  
-  // Fetch holidays for current year and next 5 years (6 years total)
-  for (let i = 0; i <= yearsAhead; i++) {
-    const year = startYear + i;
-    
-    try {
-      const response = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/AU`);
-      if (!response.ok) {
-        console.warn(`Failed to fetch public holidays for ${year}:`, response.statusText);
-        continue; // Skip this year but continue with others
-      }
-      
-      const holidays: PublicHoliday[] = await response.json();
-      
-      // Filter for Victorian holidays (AU-VIC) and convert to Event format
-      const yearHolidays = holidays
-        .filter(holiday => holiday.counties === null || holiday.counties?.includes('AU-VIC'))
-        .map((holiday, index) => ({
-          id: `ph-${year}-${index}`,
-          name: holiday.localName,
-          date: new Date(holiday.date),
-          clubId: 'N/A',
-          eventTypeId: 'ph', 
-          status: 'public_holiday' as const,
-          location: 'Victoria',
-          source: 'public_holiday' as const,
-        }));
-      
-      allHolidays.push(...yearHolidays);
-      
-    } catch (error) {
-      console.error(`Error fetching public holidays for ${year}:`, error);
-      // Continue with other years even if one fails
-    }
-  }
-  
-  return allHolidays;
-};
+import { getAllEvents } from '@/lib/server-data';
 
 export async function GET(request: NextRequest) {
   try {
@@ -73,9 +24,10 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status');
     const clubId = searchParams.get('clubId');
 
-    let query = adminDb.collection('events');
+    // Use cached getAllEvents which includes public holidays
+    let allEvents = await getAllEvents();
 
-    // Filter by zone through clubs if zoneId is provided
+    // Apply filters if provided
     if (zoneId) {
       // First get clubs in the zone
       const clubsSnapshot = await adminDb.collection('clubs').where('zoneId', '==', zoneId).get();
@@ -86,71 +38,21 @@ export async function GET(request: NextRequest) {
       }
       
       // Filter events by clubs in the zone
-      query = query.where('clubId', 'in', clubIds);
+      allEvents = allEvents.filter(event => event.clubId && clubIds.includes(event.clubId));
     }
 
     // Filter by specific club if provided
     if (clubId && !zoneId) {
-      query = query.where('clubId', '==', clubId);
+      allEvents = allEvents.filter(event => event.clubId === clubId);
     }
 
     // Filter by status if provided
     if (status) {
-      query = query.where('status', '==', status);
+      allEvents = allEvents.filter(event => event.status === status);
     }
 
-    // Order by date
-    query = query.orderBy('date', 'desc');
-
-    const snapshot = await query.get();
-    const events: Event[] = [];
-
-    snapshot.forEach((doc: any) => {
-      const data = doc.data();
-      
-      // Handle date conversion with error handling
-      let eventDate: Date;
-      try {
-        if (data.date && typeof data.date.toDate === 'function') {
-          eventDate = data.date.toDate();
-        } else if (data.date instanceof Date) {
-          eventDate = data.date;
-        } else if (typeof data.date === 'string') {
-          eventDate = new Date(data.date);
-        } else {
-          console.warn(`Invalid date format for event ${doc.id}:`, data.date);
-          eventDate = new Date(); // Fallback to current date
-        }
-      } catch (error) {
-        console.error(`Error converting date for event ${doc.id}:`, error);
-        eventDate = new Date(); // Fallback to current date
-      }
-      
-      events.push({
-        id: doc.id,
-        name: data.name,
-        date: eventDate,
-        clubId: data.clubId,
-        eventTypeId: data.eventTypeId,
-        status: data.status,
-        location: data.location,
-        source: data.source,
-        coordinatorName: data.coordinatorName,
-        coordinatorContact: data.coordinatorContact,
-        isQualifier: data.isQualifier,
-        notes: data.notes,
-        submittedBy: data.submittedBy,
-        submittedByContact: data.submittedByContact,
-        schedule: data.schedule,
-        priority: data.priority,
-        isHistoricallyTraditional: data.isHistoricallyTraditional
-      });
-    });
-
-    // Add public holidays for current year and next 5 years
-    const currentYear = getYear(new Date());
-    const publicHolidays = await getPublicHolidays(currentYear);
-    const allEvents = [...events, ...publicHolidays];
+    // Sort by date descending
+    allEvents.sort((a, b) => b.date.getTime() - a.date.getTime());
 
     return NextResponse.json({ events: allEvents });
   } catch (error: any) {

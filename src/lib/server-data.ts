@@ -1,6 +1,20 @@
 import { adminDb, isDatabaseConnected, getDatabaseErrorMessage } from './firebase-admin';
 import type { Zone, Club, EventType, Event } from './types';
 import type { QueryDocumentSnapshot, DocumentData } from 'firebase-admin/firestore';
+import { getYear } from 'date-fns';
+
+// Interface for public holiday API response
+interface PublicHoliday {
+  date: string;
+  localName: string;
+  name: string;
+  countryCode: string;
+  fixed: boolean;
+  global: boolean;
+  counties: string[] | null;
+  launchYear: number | null;
+  types: string[];
+}
 
 // Simple in-memory cache
 interface CacheEntry<T> {
@@ -12,16 +26,20 @@ const cache = {
   clubs: null as CacheEntry<Club[]> | null,
   zones: null as CacheEntry<Zone[]> | null,
   eventTypes: null as CacheEntry<EventType[]> | null,
+  events: null as CacheEntry<Event[]> | null,
+  publicHolidays: null as CacheEntry<Event[]> | null,
 };
 
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL = 12 * 60 * 60 * 1000; // 12 hours
+const PUBLIC_HOLIDAYS_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours (holidays don't change often)
 
-function getCached<T>(key: keyof typeof cache): T | null {
+function getCached<T>(key: keyof typeof cache, customTTL?: number): T | null {
   const entry = cache[key] as CacheEntry<T> | null;
   if (!entry) return null;
   
+  const ttl = customTTL || CACHE_TTL;
   const age = Date.now() - entry.timestamp;
-  if (age > CACHE_TTL) {
+  if (age > ttl) {
     cache[key] = null; // Expire
     return null;
   }
@@ -40,6 +58,12 @@ function setCache<T>(key: keyof typeof cache, data: T): void {
 // Server-side functions for fetching data from Firestore
 export async function getAllZones(): Promise<Zone[]> {
   try {
+    // Check cache first
+    const cached = getCached<Zone[]>('zones');
+    if (cached) {
+      return cached;
+    }
+    
     // Fast fail if database is not connected
     if (!adminDb || !isDatabaseConnected()) {
       const errorMessage = getDatabaseErrorMessage();
@@ -47,6 +71,7 @@ export async function getAllZones(): Promise<Zone[]> {
       return [];
     }
     
+    console.log('🔍 Fetching zones from Firestore (cache miss)...');
     const zonesSnapshot = await adminDb.collection('zones').get();
     const zones: Zone[] = [];
     
@@ -56,7 +81,11 @@ export async function getAllZones(): Promise<Zone[]> {
       }
     });
     
-    console.log(`✅ Retrieved ${zones.length} zones`);
+    console.log(`✅ Retrieved ${zones.length} zones - CACHED for 12 hours`);
+    
+    // Cache the result
+    setCache('zones', zones);
+    
     return zones;
   } catch (error: any) {
     // Check if it's a database connection error
@@ -107,7 +136,7 @@ export async function getAllClubs(): Promise<Club[]> {
     console.log(`   - Firestore query: ${queryTime}ms`);
     console.log(`   - Document processing: ${processTime}ms`);
     console.log(`   - Total: ${totalTime}ms`);
-    console.log(`✅ Retrieved ${clubs.length} clubs - CACHED for 5 minutes`);
+    console.log(`✅ Retrieved ${clubs.length} clubs - CACHED for 12 hours`);
     
     // Cache the result
     setCache('clubs', clubs);
@@ -126,11 +155,18 @@ export async function getAllClubs(): Promise<Club[]> {
 
 export async function getAllEventTypes(): Promise<EventType[]> {
   try {
+    // Check cache first
+    const cached = getCached<EventType[]>('eventTypes');
+    if (cached) {
+      return cached;
+    }
+    
     if (!adminDb) {
       console.warn('Firebase Admin not initialized, returning empty event types array');
       return [];
     }
     
+    console.log('🔍 Fetching event types from Firestore (cache miss)...');
     const eventTypesSnapshot = await adminDb.collection('eventTypes').get();
     const eventTypes: EventType[] = [];
     
@@ -140,6 +176,11 @@ export async function getAllEventTypes(): Promise<EventType[]> {
       }
     });
     
+    console.log(`✅ Retrieved ${eventTypes.length} event types - CACHED for 12 hours`);
+    
+    // Cache the result
+    setCache('eventTypes', eventTypes);
+    
     return eventTypes;
   } catch (error) {
     console.error('Error fetching event types:', error);
@@ -147,13 +188,78 @@ export async function getAllEventTypes(): Promise<EventType[]> {
   }
 }
 
+// Fetch public holidays with caching
+async function getPublicHolidays(startYear: number, yearsAhead: number = 5): Promise<Event[]> {
+  // Check cache first
+  const cached = getCached<Event[]>('publicHolidays', PUBLIC_HOLIDAYS_CACHE_TTL);
+  if (cached) {
+    return cached;
+  }
+
+  console.log('🎉 Fetching public holidays from API (cache miss)...');
+  const allHolidays: Event[] = [];
+  
+  // Fetch holidays for current year and next 5 years (6 years total)
+  for (let i = 0; i <= yearsAhead; i++) {
+    const year = startYear + i;
+    
+    try {
+      const response = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/AU`);
+      if (!response.ok) {
+        console.warn(`Failed to fetch public holidays for ${year}:`, response.statusText);
+        continue; // Skip this year but continue with others
+      }
+      
+      const holidays: PublicHoliday[] = await response.json();
+      
+      // Filter for Victorian holidays (AU-VIC) and convert to Event format
+      const yearHolidays = holidays
+        .filter(holiday => holiday.counties === null || holiday.counties?.includes('AU-VIC'))
+        .map((holiday, index) => ({
+          id: `ph-${year}-${index}`,
+          name: holiday.localName,
+          date: new Date(holiday.date),
+          clubId: 'N/A',
+          eventTypeId: 'ph', 
+          status: 'public_holiday' as const,
+          location: 'Victoria',
+          source: 'public_holiday' as const,
+        }));
+      
+      allHolidays.push(...yearHolidays);
+      
+    } catch (error) {
+      console.error(`Error fetching public holidays for ${year}:`, error);
+      // Continue with other years even if one fails
+    }
+  }
+  
+  console.log(`✅ Fetched ${allHolidays.length} public holidays - CACHED for 24 hours`);
+  
+  // Cache the result for 24 hours
+  setCache('publicHolidays', allHolidays);
+  
+  return allHolidays;
+}
+
 export async function getAllEvents(): Promise<Event[]> {
   try {
+    // Check cache first
+    const cached = getCached<Event[]>('events');
+    if (cached) {
+      // Still need to append public holidays (they're cached separately)
+      const currentYear = getYear(new Date());
+      const publicHolidays = await getPublicHolidays(currentYear);
+      return [...cached, ...publicHolidays];
+    }
+    
     if (!adminDb) {
       console.warn('Firebase Admin not initialized, returning empty events array');
       return [];
     }
     
+    console.log('📅 Fetching events from Firestore (cache miss)...');
+    const startTime = Date.now();
     const eventsSnapshot = await adminDb.collection('events').get();
     const events: Event[] = [];
     
@@ -168,7 +274,17 @@ export async function getAllEvents(): Promise<Event[]> {
       }
     });
     
-    return events;
+    const queryTime = Date.now() - startTime;
+    console.log(`✅ Retrieved ${events.length} events in ${queryTime}ms - CACHED for 12 hours`);
+    
+    // Cache the Firestore events
+    setCache('events', events);
+    
+    // Fetch and append public holidays
+    const currentYear = getYear(new Date());
+    const publicHolidays = await getPublicHolidays(currentYear);
+    
+    return [...events, ...publicHolidays];
   } catch (error) {
     console.error('Error fetching events:', error);
     return [];

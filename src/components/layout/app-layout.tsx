@@ -211,13 +211,13 @@ export function AppLayout({ children }: PropsWithChildren) {
                   <span className="text-sm">Event Sources</span>
                 </div>
                 <div className="space-y-3 pl-2">
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 opacity-50 cursor-not-allowed">
                     <Checkbox 
                       id="pca" 
-                      onCheckedChange={(checked) => handleSourceChange('pca', !!checked)} 
-                      checked={eventSources.includes('pca')} 
+                      disabled
+                      checked={false} 
                     />
-                    <Label htmlFor="pca" className="text-sm font-medium leading-none">PCA Event Calendar</Label>
+                    <Label htmlFor="pca" className="text-sm font-medium leading-none text-muted-foreground cursor-not-allowed">PCA Event Calendar (Coming Soon)</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Checkbox 

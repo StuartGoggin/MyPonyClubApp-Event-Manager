@@ -143,7 +143,14 @@ async function ZonesContent() {
 
 export default function AdminZonesPage() {
   return (
-    <Suspense fallback={<div className="p-6">Loading zones...</div>}>
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <MapPin className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">Loading Zones...</p>
+        </div>
+      </div>
+    }>
       <ZonesContent />
     </Suspense>
   );

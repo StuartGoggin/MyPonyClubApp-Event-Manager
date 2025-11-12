@@ -119,56 +119,71 @@ export function DashboardStatsCards() {
   ];
 
   const variantStyles = {
-    default: 'from-blue-50/80 to-cyan-50/60 dark:from-blue-950/40 dark:to-cyan-950/30 border-blue-200/50 dark:border-blue-800/50',
-    success: 'from-emerald-50/80 to-green-50/60 dark:from-emerald-950/40 dark:to-green-950/30 border-emerald-200/50 dark:border-emerald-800/50',
-    warning: 'from-amber-50/80 to-orange-50/60 dark:from-amber-950/40 dark:to-orange-950/30 border-amber-200/50 dark:border-amber-800/50',
-    destructive: 'from-red-50/80 to-pink-50/60 dark:from-red-950/40 dark:to-pink-950/30 border-red-200/50 dark:border-red-800/50',
+    default: 'from-blue-50/90 to-cyan-50/80 dark:from-blue-950/30 dark:to-cyan-950/20 border-blue-200/60 dark:border-blue-700/60',
+    success: 'from-emerald-50/90 to-green-50/80 dark:from-emerald-950/30 dark:to-green-950/20 border-emerald-200/60 dark:border-emerald-700/60',
+    warning: 'from-amber-50/90 to-orange-50/80 dark:from-amber-950/30 dark:to-orange-950/20 border-amber-200/60 dark:border-amber-700/60',
+    destructive: 'from-red-50/90 to-pink-50/80 dark:from-red-950/30 dark:to-pink-950/20 border-red-200/60 dark:border-red-700/60',
   };
 
   const iconStyles = {
-    default: 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-700',
-    success: 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-700',
-    warning: 'bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-700',
-    destructive: 'bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400 border-red-200 dark:border-red-700',
+    default: 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400 border border-blue-300/60 dark:border-blue-700/60',
+    success: 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 border border-emerald-300/60 dark:border-emerald-700/60',
+    warning: 'bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-400 border border-amber-300/60 dark:border-amber-700/60',
+    destructive: 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-400 border border-red-300/60 dark:border-red-700/60',
+  };
+
+  const textColorStyles = {
+    default: 'text-blue-700 dark:text-blue-400',
+    success: 'text-emerald-700 dark:text-emerald-400',
+    warning: 'text-amber-700 dark:text-amber-400',
+    destructive: 'text-red-700 dark:text-red-400',
+  };
+
+  const numberColorStyles = {
+    default: 'text-blue-600 dark:text-blue-500',
+    success: 'text-emerald-600 dark:text-emerald-500',
+    warning: 'text-amber-600 dark:text-amber-500',
+    destructive: 'text-red-600 dark:text-red-500',
   };
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
         {[...Array(5)].map((_, index) => (
-          <Card key={index} className="animate-pulse">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="h-4 bg-gray-200 rounded w-20 mb-2"></div>
-                  <div className="h-8 bg-gray-200 rounded w-12"></div>
-                </div>
-                <div className="h-8 w-8 bg-gray-200 rounded"></div>
-              </div>
-            </CardContent>
-          </Card>
+          <div key={index} className="relative overflow-hidden rounded-lg border-2 border-gray-200/60 bg-gradient-to-br from-gray-50/90 to-gray-100/80 p-3 animate-pulse">
+            <div className="flex items-center justify-between mb-2">
+              <div className="h-7 w-7 bg-gray-200 rounded-md"></div>
+              <div className="h-3 bg-gray-200 rounded w-16"></div>
+            </div>
+            <div className="h-8 bg-gray-200 rounded w-12 mb-1"></div>
+            <div className="h-3 bg-gray-200 rounded w-20"></div>
+          </div>
         ))}
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
       {statsData.map((stat) => (
         <div 
           key={stat.title}
-          className={`relative overflow-hidden rounded-2xl border bg-gradient-to-br shadow-lg backdrop-blur-sm hover:shadow-xl transition-all duration-300 hover:scale-105 ${variantStyles[stat.variant]}`}
+          className={`relative overflow-hidden rounded-lg border-2 bg-gradient-to-br shadow-md hover:shadow-lg transition-all duration-200 hover:scale-[1.02] ${variantStyles[stat.variant]}`}
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-white/10"></div>
-          <div className="relative p-6">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex flex-col justify-center">
-                <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
-                <p className="text-2xl font-bold">{stat.value}</p>
-              </div>
-              <div className={`p-3 rounded-xl border ${iconStyles[stat.variant]}`}>
+          <div className="p-3">
+            <div className="flex items-center justify-between mb-2">
+              <div className={`rounded-md p-1.5 ${iconStyles[stat.variant]}`}>
                 {stat.icon}
               </div>
+              <span className={`text-xs font-bold uppercase tracking-wider ${textColorStyles[stat.variant]}`}>
+                {stat.title.split(' ')[0]}
+              </span>
+            </div>
+            <div className={`text-3xl font-black leading-none mb-1 ${numberColorStyles[stat.variant]}`}>
+              {stat.value}
+            </div>
+            <div className={`text-xs font-medium ${textColorStyles[stat.variant]} opacity-80`}>
+              {stat.title}
             </div>
           </div>
         </div>

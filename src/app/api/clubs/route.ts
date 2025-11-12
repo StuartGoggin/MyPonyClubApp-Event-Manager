@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAllClubs, updateClub, createClub } from '@/lib/server-data';
+import { getAllClubs, updateClub, createClub, deleteClub, invalidateClubsCache } from '@/lib/server-data';
 import type { Club } from '@/lib/types';
 
 export async function GET() {
@@ -41,6 +41,9 @@ export async function POST(request: Request) {
       );
     }
     
+    // Invalidate cache after creating a club
+    invalidateClubsCache();
+    
     return NextResponse.json(newClub, { status: 201 });
   } catch (error) {
     console.error('Error creating club:', error);
@@ -71,11 +74,47 @@ export async function PUT(request: Request) {
       );
     }
     
+    // Invalidate cache after updating a club
+    invalidateClubsCache();
+    
     return NextResponse.json(updatedClub);
   } catch (error) {
     console.error('Error updating club:', error);
     return NextResponse.json(
       { error: 'Failed to update club' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Club ID is required' },
+        { status: 400 }
+      );
+    }
+    
+    const success = await deleteClub(id);
+    
+    if (!success) {
+      return NextResponse.json(
+        { error: 'Failed to delete club' },
+        { status: 500 }
+      );
+    }
+    
+    // Cache is already invalidated in deleteClub function
+    
+    return NextResponse.json({ success: true, message: 'Club deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting club:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete club' },
       { status: 500 }
     );
   }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { importClubsFromJson } from '@/lib/club-import';
 import { ClubJsonData } from '@/lib/club-data-utils';
+import { invalidateClubsCache } from '@/lib/server-data';
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,6 +24,9 @@ export async function POST(request: NextRequest) {
 
     // Perform the import
     const result = await importClubsFromJson(clubs);
+
+    // Invalidate cache after bulk import
+    invalidateClubsCache();
 
     return NextResponse.json({
       success: true,

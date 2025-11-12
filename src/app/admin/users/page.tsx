@@ -336,9 +336,10 @@ function UserManagementContent() {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-lg">Loading users...</div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <Users className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">Loading User Management...</p>
         </div>
       </div>
     );

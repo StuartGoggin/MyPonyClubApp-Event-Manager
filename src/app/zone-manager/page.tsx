@@ -207,67 +207,61 @@ function ZoneManagerContent() {
                 </div>
               </div>
               
-              <div className="space-y-4">
-                {/* Zone Statistics Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {/* Pending Events */}
-                  <div className="relative overflow-hidden rounded-xl border border-border/40 bg-gradient-to-br from-background via-background/95 to-amber/5 shadow-lg backdrop-blur-sm hover:shadow-xl transition-all duration-300">
-                    <div className="absolute inset-0 bg-gradient-to-r from-amber/5 to-orange/5"></div>
-                    <div className="relative p-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="rounded-lg bg-amber-100 dark:bg-amber-900/50 p-1.5 border border-amber-200 dark:border-amber-700">
-                          <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                        </div>
-                        <span className="text-sm font-bold uppercase tracking-wide">Pending</span>
+              {/* Zone Statistics - Compact Grid */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                {/* Pending Events */}
+                <div className="relative overflow-hidden rounded-lg border-2 border-amber-200/60 dark:border-amber-700/60 bg-gradient-to-br from-amber-50/90 to-orange-50/80 dark:from-amber-950/30 dark:to-orange-950/20 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-[1.02]">
+                  <div className="p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="rounded-md bg-amber-100 dark:bg-amber-900/50 p-1.5 border border-amber-300/60 dark:border-amber-700/60">
+                        <Clock className="h-4 w-4 text-amber-700 dark:text-amber-400" />
                       </div>
-                      <div className="text-2xl font-black text-amber-600">{pendingEvents}</div>
-                      <div className="text-sm text-muted-foreground">Awaiting approval</div>
+                      <span className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">Pending</span>
                     </div>
+                    <div className="text-3xl font-black text-amber-600 dark:text-amber-500 leading-none mb-1">{pendingEvents}</div>
+                    <div className="text-xs text-amber-700/80 dark:text-amber-400/80 font-medium">Awaiting approval</div>
                   </div>
+                </div>
 
-                  {/* Approved Events */}
-                  <div className="relative overflow-hidden rounded-xl border border-border/40 bg-gradient-to-br from-background via-background/95 to-emerald/5 shadow-lg backdrop-blur-sm hover:shadow-xl transition-all duration-300">
-                    <div className="absolute inset-0 bg-gradient-to-r from-emerald/5 to-green/5"></div>
-                    <div className="relative p-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="rounded-lg bg-emerald-100 dark:bg-emerald-900/50 p-1.5 border border-emerald-200 dark:border-emerald-700">
-                          <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                        </div>
-                        <span className="text-sm font-bold uppercase tracking-wide">Approved</span>
+                {/* Approved Events */}
+                <div className="relative overflow-hidden rounded-lg border-2 border-emerald-200/60 dark:border-emerald-700/60 bg-gradient-to-br from-emerald-50/90 to-green-50/80 dark:from-emerald-950/30 dark:to-green-950/20 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-[1.02]">
+                  <div className="p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="rounded-md bg-emerald-100 dark:bg-emerald-900/50 p-1.5 border border-emerald-300/60 dark:border-emerald-700/60">
+                        <CheckCircle className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
                       </div>
-                      <div className="text-2xl font-black text-emerald-600">{approvedEvents}</div>
-                      <div className="text-sm text-muted-foreground">Events confirmed</div>
+                      <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Approved</span>
                     </div>
+                    <div className="text-3xl font-black text-emerald-600 dark:text-emerald-500 leading-none mb-1">{approvedEvents}</div>
+                    <div className="text-xs text-emerald-700/80 dark:text-emerald-400/80 font-medium">Events confirmed</div>
                   </div>
+                </div>
 
-                  {/* Total Clubs */}
-                  <div className="relative overflow-hidden rounded-xl border border-border/40 bg-gradient-to-br from-background via-background/95 to-blue/5 shadow-lg backdrop-blur-sm hover:shadow-xl transition-all duration-300">
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue/5 to-cyan/5"></div>
-                    <div className="relative p-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="rounded-lg bg-blue-100 dark:bg-blue-900/50 p-1.5 border border-blue-200 dark:border-blue-700">
-                          <Building className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                        </div>
-                        <span className="text-sm font-bold uppercase tracking-wide">Clubs</span>
+                {/* Total Clubs */}
+                <div className="relative overflow-hidden rounded-lg border-2 border-blue-200/60 dark:border-blue-700/60 bg-gradient-to-br from-blue-50/90 to-cyan-50/80 dark:from-blue-950/30 dark:to-cyan-950/20 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-[1.02]">
+                  <div className="p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="rounded-md bg-blue-100 dark:bg-blue-900/50 p-1.5 border border-blue-300/60 dark:border-blue-700/60">
+                        <Building className="h-4 w-4 text-blue-700 dark:text-blue-400" />
                       </div>
-                      <div className="text-2xl font-black text-blue-600">{totalClubs}</div>
-                      <div className="text-sm text-muted-foreground">In this zone</div>
+                      <span className="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400">Clubs</span>
                     </div>
+                    <div className="text-3xl font-black text-blue-600 dark:text-blue-500 leading-none mb-1">{totalClubs}</div>
+                    <div className="text-xs text-blue-700/80 dark:text-blue-400/80 font-medium">In this zone</div>
                   </div>
+                </div>
 
-                  {/* Active Clubs */}
-                  <div className="relative overflow-hidden rounded-xl border border-border/40 bg-gradient-to-br from-background via-background/95 to-purple/5 shadow-lg backdrop-blur-sm hover:shadow-xl transition-all duration-300">
-                    <div className="absolute inset-0 bg-gradient-to-r from-purple/5 to-violet/5"></div>
-                    <div className="relative p-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="rounded-lg bg-purple-100 dark:bg-purple-900/50 p-1.5 border border-purple-200 dark:border-purple-700">
-                          <Users className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                        </div>
-                        <span className="text-sm font-bold uppercase tracking-wide">Active</span>
+                {/* Active Clubs */}
+                <div className="relative overflow-hidden rounded-lg border-2 border-purple-200/60 dark:border-purple-700/60 bg-gradient-to-br from-purple-50/90 to-violet-50/80 dark:from-purple-950/30 dark:to-violet-950/20 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-[1.02]">
+                  <div className="p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="rounded-md bg-purple-100 dark:bg-purple-900/50 p-1.5 border border-purple-300/60 dark:border-purple-700/60">
+                        <Users className="h-4 w-4 text-purple-700 dark:text-purple-400" />
                       </div>
-                      <div className="text-2xl font-black text-purple-600">{activeClubs}</div>
-                      <div className="text-sm text-muted-foreground">With events</div>
+                      <span className="text-xs font-bold uppercase tracking-wider text-purple-700 dark:text-purple-400">Active</span>
                     </div>
+                    <div className="text-3xl font-black text-purple-600 dark:text-purple-500 leading-none mb-1">{activeClubs}</div>
+                    <div className="text-xs text-purple-700/80 dark:text-purple-400/80 font-medium">With events</div>
                   </div>
                 </div>
               </div>

@@ -271,8 +271,16 @@ export default function AdminClubsPage() {
 
     setIsDeleting(true);
     try {
-      // In a real app, you'd make an API call to delete from Firestore
-      // and also check if the club has any associated events
+      // Call the DELETE API endpoint
+      const response = await fetch(`/api/clubs?id=${clubToDelete.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete club');
+      }
+
+      // Remove from local state after successful deletion
       setClubs(prev => prev.filter(c => c.id !== clubToDelete.id));
       
       setIsDeleteDialogOpen(false);
@@ -280,7 +288,7 @@ export default function AdminClubsPage() {
       setDeleteConfirmText('');
     } catch (error) {
       console.error('Error deleting club:', error);
-      // Handle error appropriately
+      setError('Failed to delete club. Please try again.');
     } finally {
       setIsDeleting(false);
     }

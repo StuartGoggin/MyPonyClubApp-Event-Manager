@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
+import { invalidateClubsCache, invalidateZonesCache } from '@/lib/server-data';
 
 export async function DELETE(request: NextRequest) {
   try {
@@ -79,6 +80,14 @@ export async function DELETE(request: NextRequest) {
 
     const totalDeleted = results.zones.deleted + results.clubs.deleted + results.clubPictures.deleted;
     const totalErrors = results.zones.errors.length + results.clubs.errors.length + results.clubPictures.errors.length;
+
+    // Invalidate caches after purging data
+    if (results.clubs.deleted > 0) {
+      invalidateClubsCache();
+    }
+    if (results.zones.deleted > 0) {
+      invalidateZonesCache();
+    }
 
     console.log(`🎉 Database purge completed!`);
     console.log(`  Total items deleted: ${totalDeleted}`);

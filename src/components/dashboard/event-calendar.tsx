@@ -160,8 +160,13 @@ export function EventCalendar({
   const [homeClubId, setHomeClubId] = useState<string | null>(null);
   const [distance, setDistance] = useState<number>(50);
 
-  // Helper function to get club name from clubId
-  const getClubName = (clubId: string | undefined) => {
+  // Helper function to get club name from clubId or zone name for zone events
+  const getClubName = (clubId: string | undefined, event?: Event) => {
+    // Check if this is a zone-level event
+    if (event?.zoneId && !event?.clubId) {
+      const zone = zones.find(z => z.id === event.zoneId);
+      return zone ? `${zone.name} (Zone Event)` : 'Zone Event';
+    }
     if (!clubId) return 'Unknown Club';
     return clubs.find(club => club.id === clubId)?.name || 'Unknown Club';
   };
@@ -628,7 +633,7 @@ export function EventCalendar({
       
     {view === 'month' && (
     <div className='p-4'>
-      <CalendarGrid month={currentDate} events={filteredEvents} onEventClick={handleEventClick} today={today} clubs={clubs}/>
+      <CalendarGrid month={currentDate} events={filteredEvents} onEventClick={handleEventClick} today={today} clubs={clubs} zones={zones}/>
     </div>
     )}
       
@@ -639,7 +644,7 @@ export function EventCalendar({
               key={month.toString()}
               className="bg-white rounded-lg shadow p-4 flex flex-col w-full"
             >
-              <CalendarGrid month={month} events={filteredEvents} onEventClick={handleEventClick} isYearView={true} today={today} clubs={clubs} />
+              <CalendarGrid month={month} events={filteredEvents} onEventClick={handleEventClick} isYearView={true} today={today} clubs={clubs} zones={zones} />
             </div>
           ))}
         </div>
@@ -690,6 +695,7 @@ const CalendarGrid = ({
   isYearView = false,
   today,
   clubs,
+  zones,
 }: {
   month: Date;
   events: Event[];
@@ -697,12 +703,18 @@ const CalendarGrid = ({
   isYearView?: boolean;
   today: Date;
   clubs: Club[];
+  zones: Zone[];
 }) => {
   const start = startOfWeek(startOfMonth(month), { weekStartsOn });
   const end = endOfWeek(endOfMonth(month), { weekStartsOn });
   
-  // Helper function to get club name from clubId
-  const getClubName = (clubId: string | undefined) => {
+  // Helper function to get club name from clubId or zone name for zone events
+  const getClubName = (clubId: string | undefined, event?: Event) => {
+    // Check if this is a zone-level event
+    if (event?.zoneId && !event?.clubId) {
+      const zone = zones.find(z => z.id === event.zoneId);
+      return zone ? `${zone.name} (Zone Event)` : 'Zone Event';
+    }
     if (!clubId) return 'Unknown Club';
     return clubs.find(club => club.id === clubId)?.name || 'Unknown Club';
   };
@@ -803,7 +815,9 @@ const CalendarGrid = ({
                               key={event.id || i}
                               className={cn(
                                 "rounded-xl shadow-sm border p-2 text-left transition hover:ring-2 hover:ring-primary max-w-xs w-full",
-                                // Only apply bg-white for non-public holidays
+                                // Zone events get distinctive brighter background
+                                event.zoneId && !event.clubId ? "bg-gradient-to-br from-blue-100 to-indigo-100 hover:from-blue-200 hover:to-indigo-200 border-blue-300" :
+                                // Only apply bg-white for non-public holidays and non-zone events
                                 !(event.status === 'public_holiday' || event.source === 'public_holiday') && "bg-white",
                                 event.status === 'approved' ? 'event-approved' :
                                 event.status === 'proposed' ? 'event-proposed' :
@@ -835,9 +849,11 @@ const CalendarGrid = ({
                                     )}>{event.name}</div>
                                     {event.source !== 'public_holiday' && (
                                       <div className={cn("text-muted-foreground font-medium leading-tight",
-                                        isYearView ? "text-[8px]" : "text-[9px]"
+                                        isYearView ? "text-[8px]" : "text-[9px]",
+                                        // Make zone events brighter
+                                        event.zoneId && !event.clubId ? "text-blue-700 font-semibold" : ""
                                       )}>
-                                        {getClubName(event.clubId)}
+                                        {getClubName(event.clubId, event)}
                                       </div>
                                     )}
                                     <div className="flex">
@@ -871,7 +887,7 @@ const CalendarGrid = ({
                                   <div className="flex-shrink-0 flex items-center">
                                     <img 
                                       src={getClubLogo(event.clubId)!} 
-                                      alt={`${getClubName(event.clubId)} logo`}
+                                      alt={`${getClubName(event.clubId, event)} logo`}
                                       className={cn(
                                         "rounded object-contain bg-white border border-gray-200 max-w-full max-h-full",
                                         isYearView ? "w-10 h-10" : "w-14 h-14"

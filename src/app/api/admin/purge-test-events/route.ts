@@ -5,6 +5,7 @@ import { Event } from '@/lib/types';
 interface PurgeTestEventsConfig {
   dryRun: boolean;
   excludePublicHolidays: boolean;
+  purgeAllEvents: boolean; // NEW: Nuclear option to delete all events except public holidays
   filterByDateRange?: {
     start?: string;
     end?: string;
@@ -52,7 +53,26 @@ async function createBackup(events: Event[]): Promise<string> {
   return backupFilename;
 }
 
-function shouldPreserveEvent(event: Event): { preserve: boolean; reason?: string } {
+function shouldPreserveEvent(event: Event, config: PurgeTestEventsConfig): { preserve: boolean; reason?: string } {
+  // If purgeAllEvents is enabled, only preserve public holidays (if excludePublicHolidays is true)
+  if (config.purgeAllEvents) {
+    if (config.excludePublicHolidays) {
+      // Only preserve public holidays
+      if (event.status === 'public_holiday') {
+        return { preserve: true, reason: 'Public holiday event' };
+      }
+      
+      // Preserve events with 'public_holiday' in name (case insensitive)
+      if (event.name?.toLowerCase().includes('public holiday') || 
+          event.name?.toLowerCase().includes('holiday')) {
+        return { preserve: true, reason: 'Holiday event' };
+      }
+    }
+    // In nuclear mode, delete everything else
+    return { preserve: false };
+  }
+  
+  // Standard preservation logic (original behavior)
   // Preserve public holidays
   if (event.status === 'public_holiday') {
     return { preserve: true, reason: 'Public holiday event' };
@@ -113,7 +133,7 @@ async function performPurge(config: PurgeTestEventsConfig): Promise<PurgeResult>
     console.log(`📊 Found ${allEvents.length} total events`);
     
     for (const event of allEvents) {
-      const preserveCheck = shouldPreserveEvent(event);
+      const preserveCheck = shouldPreserveEvent(event, config);
       
       if (preserveCheck.preserve) {
         eventsToPreserve.push(event);
@@ -244,6 +264,7 @@ export async function POST(request: NextRequest) {
     const finalConfig: PurgeTestEventsConfig = {
       dryRun: config.dryRun ?? true, // Default to dry run for safety
       excludePublicHolidays: config.excludePublicHolidays ?? true,
+      purgeAllEvents: config.purgeAllEvents ?? false, // Default to safe mode
       createBackup: config.createBackup ?? true,
       filterByDateRange: config.filterByDateRange || { start: undefined, end: undefined },
       filterBySource: config.filterBySource || [],

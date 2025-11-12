@@ -54,11 +54,15 @@ export async function GET(request: NextRequest) {
 
     // Apply scope filtering (all events, zone events, or club events)
     if (filterScope === 'zone' && zoneId) {
-      // Filter events for specific zone (but keep public holidays)
+      // Filter events for specific zone (includes zone-level events, club events in zone, and public holidays)
       const zoneClubs = clubs.filter(club => club.zoneId === zoneId);
       const zoneClubIds = zoneClubs.map(club => club.id);
       filteredEvents = filteredEvents.filter(event => 
+        // Zone-level events (events with zoneId but no clubId)
+        (event.zoneId === zoneId && !event.clubId) ||
+        // Club events within the zone
         (event.clubId && zoneClubIds.includes(event.clubId)) ||
+        // Public holidays
         event.status === 'public_holiday' ||
         event.source === 'public_holiday'
       );
@@ -76,16 +80,19 @@ export async function GET(request: NextRequest) {
     const enhancedEvents = filteredEvents.map(event => {
       const club = clubs.find(c => c.id === event.clubId);
       const eventType = eventTypes.find(et => et.id === event.eventTypeId);
-      const zone = zones.find(z => z.id === club?.zoneId);
+      const zone = zones.find(z => z.id === (club?.zoneId || event.zoneId));
       
       // Check if this is a public holiday
       const isPublicHoliday = event.status === 'public_holiday' || event.source === 'public_holiday';
+      
+      // Check if this is a zone-level event (has zoneId but no clubId)
+      const isZoneEvent = event.zoneId && !event.clubId;
       
       return {
   name: event.name || eventType?.name || 'Event',
   date: event.date.toISOString().split('T')[0], // Convert Date to YYYY-MM-DD string
   status: event.status || 'pending',
-  club: isPublicHoliday ? '' : (club?.name || ''),
+  club: isPublicHoliday ? '' : isZoneEvent ? `${zone?.name || 'Zone'} (Zone Event)` : (club?.name || ''),
   eventType: eventType?.name,
   location: event.location || club?.physicalAddress || (club?.address ? ((Object.prototype.hasOwnProperty.call(club.address, 'suburb') ? (club.address as any).suburb : (club.address as any).town) || '') : ''),
   contact: event.coordinatorContact || club?.email || club?.phone,

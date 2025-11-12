@@ -88,7 +88,11 @@ export function ZoneEventManagement({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const getClubName = (clubId: string | undefined) => {
+  const getClubName = (clubId: string | undefined, event?: Event) => {
+    // Check if this is a zone-level event
+    if (event?.zoneId && !event?.clubId) {
+      return `${zoneName} (Zone Event)`;
+    }
     if (!clubId) return 'Unknown Club';
     return clubs.find(club => club.id === clubId)?.name || 'Unknown Club';
   };
@@ -101,11 +105,12 @@ export function ZoneEventManagement({
   // Filter events based on search and filters
   const filteredEvents = events.filter(event => {
     const matchesSearch = event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         getClubName(event.clubId).toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         getClubName(event.clubId, event).toLowerCase().includes(searchTerm.toLowerCase()) ||
                          event.location?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || event.status === statusFilter;
-    const matchesClub = clubFilter === 'all' || event.clubId === clubFilter;
+    // For zone events (no clubId), only show if 'all' is selected or if filtering for zone events
+    const matchesClub = clubFilter === 'all' || event.clubId === clubFilter || (clubFilter === 'zone-event' && event.zoneId && !event.clubId);
     const matchesType = typeFilter === 'all' || event.eventTypeId === typeFilter;
 
     return matchesSearch && matchesStatus && matchesClub && matchesType;
@@ -236,7 +241,7 @@ export function ZoneEventManagement({
               <TableCell>
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-muted-foreground" />
-                  {getClubName(event.clubId)}
+                  {getClubName(event.clubId, event)}
                 </div>
               </TableCell>
               <TableCell>
@@ -338,7 +343,8 @@ export function ZoneEventManagement({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Clubs</SelectItem>
+                  <SelectItem value="all">All Clubs & Zone Events</SelectItem>
+                  <SelectItem value="zone-event">Zone Events Only</SelectItem>
                   {clubs.map(club => (
                     <SelectItem key={club.id} value={club.id}>{club.name}</SelectItem>
                   ))}
@@ -500,7 +506,7 @@ export function ZoneEventManagement({
             <div className="p-4 bg-muted rounded-lg">
               <div className="font-medium">{selectedEvent.name}</div>
               <div className="text-sm text-muted-foreground mt-1">
-                {getClubName(selectedEvent.clubId)} • {formatDate(selectedEvent.date)}
+                {getClubName(selectedEvent.clubId, selectedEvent)} • {formatDate(selectedEvent.date)}
               </div>
             </div>
           )}

@@ -488,7 +488,13 @@ function generateZoneFormatPDF(options: CalendarPDFOptions): Buffer {
       yPosition += 15;
     }
 
-    // Introduction paragraph for Zone Format
+    // TWO-COLUMN LAYOUT: Introduction on left, Legend on right
+    const leftColumnWidth = contentWidth * 0.6; // 60% for text
+    const rightColumnWidth = contentWidth * 0.35; // 35% for legend
+    const columnGap = contentWidth * 0.05; // 5% gap
+    const rightColumnX = marginLeft + leftColumnWidth + columnGap;
+    
+    // Introduction paragraph for Zone Format (LEFT COLUMN)
     const introText = [
       "Dear Clubs, Riders and Families,",
       "",
@@ -505,18 +511,17 @@ function generateZoneFormatPDF(options: CalendarPDFOptions): Buffer {
       "Enjoy your Pony Club journey!"
     ];
 
-    // Add introduction with nice formatting
+    // Add introduction with nice formatting (LEFT COLUMN)
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
+    doc.setFontSize(8);
     doc.setTextColor(...colors.text);
     
     const introStartY = yPosition;
-    const maxLineWidth = contentWidth - 20; // Leave some margin for readability
     let currentY = yPosition;
     
     introText.forEach(paragraph => {
       if (paragraph === "") {
-        currentY += 3; // Smaller spacing for empty lines
+        currentY += 2; // Smaller spacing for empty lines
         return;
       }
       
@@ -528,10 +533,10 @@ function generateZoneFormatPDF(options: CalendarPDFOptions): Buffer {
         const testLine = currentLine + (currentLine ? ' ' : '') + word;
         const lineWidth = doc.getTextWidth(testLine);
         
-        if (lineWidth > maxLineWidth && currentLine !== '') {
+        if (lineWidth > leftColumnWidth && currentLine !== '') {
           // Line is too long, print current line and start new one
-          doc.text(currentLine, marginLeft + 10, currentY);
-          currentY += 4;
+          doc.text(currentLine, marginLeft, currentY);
+          currentY += 3.5;
           currentLine = word;
         } else {
           currentLine = testLine;
@@ -539,71 +544,69 @@ function generateZoneFormatPDF(options: CalendarPDFOptions): Buffer {
         
         // If this is the last word, print the line
         if (index === words.length - 1) {
-          doc.text(currentLine, marginLeft + 10, currentY);
-          currentY += 5; // Spacing after paragraph
+          doc.text(currentLine, marginLeft, currentY);
+          currentY += 4; // Spacing after paragraph
         }
       });
     });
     
-    yPosition = currentY + 5; // Extra space before the table
+    const leftColumnEndY = currentY;
 
     // Modern color palette for event type badges
     const eventTypeColors = {
       'Zone Qualifier': { bg: [59, 130, 246] as const, text: [255, 255, 255] as const }, // Blue
-      'Zone Meeting': { bg: [16, 185, 129] as const, text: [255, 255, 255] as const }, // Green
+      'Zone Event': { bg: [239, 68, 68] as const, text: [255, 255, 255] as const }, // Red
+      'Zone Meeting': { bg: [16, 185, 129] as const, text: [255, 255, 255] as const }, // Green (moved from Zone Meeting)
       'State Event': { bg: [245, 158, 11] as const, text: [255, 255, 255] as const }, // Amber
       'Zone Certificate': { bg: [139, 92, 246] as const, text: [255, 255, 255] as const }, // Purple
-      'Public Holiday': { bg: [239, 68, 68] as const, text: [255, 255, 255] as const }, // Red
+      'Public Holiday': { bg: [34, 197, 94] as const, text: [255, 255, 255] as const }, // Green (was Red)
     };
 
-    // Draw legend with beautiful badges
-    const drawLegend = () => {
+    // Draw legend in RIGHT COLUMN (vertical layout)
+    let legendY = introStartY;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(...colors.text);
+    doc.text('Event Types', rightColumnX, legendY);
+    legendY += 6;
+
+    const legendItems = Object.entries(eventTypeColors);
+    const badgeHeight = 5;
+    const badgeSpacing = 2;
+
+    legendItems.forEach(([label, colorScheme], index) => {
+      // Calculate badge dimensions
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(11);
+      doc.setFontSize(7);
+      const textWidth = doc.getTextWidth(label);
+      const badgeWidth = textWidth + 4; // Padding
+
+      // Draw label text
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7);
       doc.setTextColor(...colors.text);
-      doc.text('Event Types', marginLeft, yPosition);
-      yPosition += 8;
+      doc.text(label, rightColumnX, legendY);
 
-      const legendItems = Object.entries(eventTypeColors);
-      const badgeHeight = 6;
-      const badgeSpacing = 3;
-      let currentX = marginLeft;
+      // Draw rounded rectangle badge next to label
+      const badgeX = rightColumnX + 30; // Fixed position for alignment
+      doc.setFillColor(colorScheme.bg[0], colorScheme.bg[1], colorScheme.bg[2]);
+      doc.roundedRect(badgeX, legendY - 3.5, badgeWidth, badgeHeight, 1, 1, 'F');
 
-      legendItems.forEach(([label, colorScheme], index) => {
-        // Calculate badge width based on text
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(8);
-        const textWidth = doc.getTextWidth(label);
-        const badgeWidth = textWidth + 6; // Padding
+      // Draw badge text
+      doc.setTextColor(colorScheme.text[0], colorScheme.text[1], colorScheme.text[2]);
+      doc.text(label, badgeX + 2, legendY);
 
-        // Check if we need to wrap to next line
-        if (currentX + badgeWidth > pageWidth - marginRight && index > 0) {
-          currentX = marginLeft;
-          yPosition += badgeHeight + badgeSpacing;
-        }
+      legendY += badgeHeight + badgeSpacing;
+    });
 
-        // Draw rounded rectangle badge
-        doc.setFillColor(colorScheme.bg[0], colorScheme.bg[1], colorScheme.bg[2]);
-        doc.roundedRect(currentX, yPosition - 4, badgeWidth, badgeHeight, 1.5, 1.5, 'F');
+    // Set yPosition to the maximum of left column end or legend end
+    yPosition = Math.max(leftColumnEndY, legendY) + 5;
 
-        // Draw badge text
-        doc.setTextColor(colorScheme.text[0], colorScheme.text[1], colorScheme.text[2]);
-        doc.text(label, currentX + 3, yPosition);
-
-        currentX += badgeWidth + 8; // Move to next badge position
-      });
-
-      yPosition += badgeHeight + 10;
-    };
-
-    // Draw the legend
-    drawLegend();
-
-    // Column definitions - 3 columns: Date, Club, Event
+    // Column definitions - 3 columns: Date, Club/Zone, Event
     const columns = [
       { header: 'Date', width: 35, align: 'left' as const },
-      { header: 'Club', width: 50, align: 'left' as const },
-      { header: 'Event', width: 182, align: 'left' as const }
+      { header: 'Club/Zone', width: 60, align: 'left' as const }, // Increased width from 50 to 60
+      { header: 'Event', width: 172, align: 'left' as const } // Adjusted to maintain total width
     ];
 
     const tableWidth = columns.reduce((sum, col) => sum + col.width, 0);
@@ -664,8 +667,28 @@ function generateZoneFormatPDF(options: CalendarPDFOptions): Buffer {
       const monthKey = `${year}-${String(month).padStart(2, '0')}`;
       const monthEvents = eventsByMonth[monthKey] || [];
 
-      // Check if we need a new page
-      if (yPosition > pageHeight - 50) {
+      // Estimate space needed for this month
+      const monthDays = new Date(year, month, 0).getDate();
+      let estimatedRows = 0;
+      for (let day = 1; day <= monthDays; day++) {
+        const currentDate = new Date(year, month - 1, day);
+        const dayOfWeek = currentDate.getDay();
+        const dayDateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dayEvents = monthEvents.filter(e => e.date === dayDateStr);
+        
+        // Count rows: weekends or days with events
+        if (dayOfWeek === 0 || dayOfWeek === 6 || dayEvents.length > 0) {
+          estimatedRows += Math.max(1, dayEvents.length); // At least 1 row per weekend day
+        }
+      }
+      
+      const monthHeaderHeight = 22; // Month title + table header
+      const rowHeight = 8;
+      const estimatedHeight = monthHeaderHeight + (estimatedRows * rowHeight);
+      const spaceRemaining = pageHeight - marginBottom - yPosition;
+      
+      // If this month won't fit well on current page (less than 40% would show), start new page
+      if (spaceRemaining < estimatedHeight * 0.4 && yPosition > marginTop + 20) {
         doc.addPage();
         pageNumber++;
         yPosition = marginTop;
@@ -711,8 +734,8 @@ function generateZoneFormatPDF(options: CalendarPDFOptions): Buffer {
         allDaysToShow.forEach((dayData, dayIndex) => {
           const { date, events: dayEvents } = dayData;
           
-          // Check if we need a new page
-          if (yPosition > pageHeight - 15) {
+          // Check if we need a new page (leave space for footer)
+          if (yPosition > pageHeight - 25) {
             doc.addPage();
             pageNumber++;
             yPosition = marginTop;
@@ -754,8 +777,8 @@ function generateZoneFormatPDF(options: CalendarPDFOptions): Buffer {
           } else {
             // Show events for this day
             dayEvents.forEach((event, eventIndex) => {
-          // Check if we need a new page
-          if (yPosition > pageHeight - 15) {
+          // Check if we need a new page (leave space for footer)
+          if (yPosition > pageHeight - 25) {
             doc.addPage();
             pageNumber++;
             yPosition = marginTop;
@@ -777,13 +800,21 @@ function generateZoneFormatPDF(options: CalendarPDFOptions): Buffer {
           const eventName = event.name?.toLowerCase() || '';
           const eventType = event.eventType?.toLowerCase() || '';
           const eventStatus = (event as any).status?.toLowerCase() || '';
+          const clubName = event.club || '';
           let eventTypeBadge = '';
           let badgeColor: { bg: readonly [number, number, number]; text: readonly [number, number, number] } = eventTypeColors['Zone Qualifier']; // Default
+          
+          // Check if it's a zone event (club name contains "Zone Event" or club field contains zone name)
+          const isZoneEvent = clubName.includes('(Zone Event)') || clubName.toLowerCase().includes('zone') && clubName.includes('Event');
           
           // Check if it's a public holiday (by status or name)
           if (eventStatus === 'public_holiday' || eventName.includes('holiday') || eventName.includes('public holiday')) {
             eventTypeBadge = 'Public Holiday';
             badgeColor = eventTypeColors['Public Holiday'];
+          } else if (isZoneEvent) {
+            // Zone-level events get special badge
+            eventTypeBadge = 'Zone Event';
+            badgeColor = eventTypeColors['Zone Event'];
           } else if ((event as any).isQualifier === true) {
             // Check the isQualifier field from Firestore
             eventTypeBadge = 'Zone Qualifier';
@@ -817,15 +848,26 @@ function generateZoneFormatPDF(options: CalendarPDFOptions): Buffer {
                 doc.text(dateText, currentX + 2, yPosition + 4);
                 break;
                 
-              case 1: // Club
+              case 1: // Club/Zone
                 cellText = event.club || '';
-                const maxClubChars = Math.floor(col.width / 2.2);
-                if (cellText.length > maxClubChars) {
-                  cellText = cellText.substring(0, maxClubChars - 3) + '...';
-                }
+                // Use actual text width measurement instead of character count
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(8);
-                doc.text(cellText, currentX + 2, yPosition + 4);
+                const availableWidth = col.width - 4; // Leave 2mm padding on each side
+                let clubDisplayText = cellText;
+                
+                // Only truncate if the actual text width exceeds available space
+                if (doc.getTextWidth(cellText) > availableWidth) {
+                  // Binary search for the right length
+                  while (doc.getTextWidth(clubDisplayText + '...') > availableWidth && clubDisplayText.length > 0) {
+                    clubDisplayText = clubDisplayText.substring(0, clubDisplayText.length - 1);
+                  }
+                  clubDisplayText += '...';
+                } else {
+                  clubDisplayText = cellText;
+                }
+                
+                doc.text(clubDisplayText, currentX + 2, yPosition + 4);
                 break;
                 
               case 2: // Event with badge
@@ -851,8 +893,8 @@ function generateZoneFormatPDF(options: CalendarPDFOptions): Buffer {
                   badgeX += badgeWidth + 3;
                 }
                 
-                // Draw event name
-                doc.setFont('helvetica', 'normal');
+                // Draw event name in BOLD
+                doc.setFont('helvetica', 'bold');
                 doc.setFontSize(8);
                 doc.setTextColor(...colors.text);
                 const remainingWidth = col.width - (badgeX - currentX) - 2;

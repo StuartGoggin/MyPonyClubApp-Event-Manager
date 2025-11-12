@@ -5,13 +5,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, CheckCircle, Clock, Users, Building } from 'lucide-react';
+import { MapPin, CheckCircle, Clock, Users, Building, Plus } from 'lucide-react';
 import { Zone, Club, Event, EventType } from '@/lib/types';
 import { ZoneEventApproval } from '@/components/zone-manager/zone-event-approval';
 import { ZoneEventManagement } from '@/components/zone-manager/zone-event-management';
+import { ZoneEventSubmission } from '@/components/zone-manager/zone-event-submission';
 import { RouteGuard } from '@/components/auth/route-guard';
+import { useAuth } from '@/contexts/auth-context';
 
 function ZoneManagerContent() {
+  const { user } = useAuth();
   const [zones, setZones] = useState<Zone[]>([]);
   const [clubs, setClubs] = useState<Club[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
@@ -19,13 +22,14 @@ function ZoneManagerContent() {
   const [selectedZoneId, setSelectedZoneId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showAddZoneEventForm, setShowAddZoneEventForm] = useState(false);
 
   // Future: This will be replaced with user's authorized zones from authentication
   const [authorizedZones, setAuthorizedZones] = useState<string[]>([]);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [user]); // Re-fetch when user changes
 
   const fetchData = async () => {
     setLoading(true);
@@ -55,14 +59,33 @@ function ZoneManagerContent() {
       setEvents(eventsData.events || eventsData || []);
       setEventTypes(eventTypesData.eventTypes || eventTypesData || []);
 
-      // Future: Replace with actual user authorization check
-      // For now, allow access to all zones
+      // Set authorized zones based on user role
       const zonesArray = zonesData.zones || zonesData || [];
-      setAuthorizedZones(zonesArray.map((zone: Zone) => zone.id));
+      
+      if (user?.role === 'super_user') {
+        // Super users can access all zones
+        setAuthorizedZones(zonesArray.map((zone: Zone) => zone.id));
+      } else if (user?.role === 'zone_rep' && user?.zoneId) {
+        // Zone reps can only access their assigned zone
+        setAuthorizedZones([user.zoneId]);
+      } else {
+        // Default: allow access to all zones (fallback)
+        setAuthorizedZones(zonesArray.map((zone: Zone) => zone.id));
+      }
 
-      // Auto-select first authorized zone
-      if (zonesArray.length > 0) {
-        setSelectedZoneId(zonesArray[0].id);
+      // Auto-select zone based on user membership
+      let defaultZoneId = '';
+      
+      // If user has a zoneId and it exists in the zones list, select it
+      if (user?.zoneId && zonesArray.some((zone: Zone) => zone.id === user.zoneId)) {
+        defaultZoneId = user.zoneId;
+      } else if (zonesArray.length > 0) {
+        // Otherwise, select first available zone
+        defaultZoneId = zonesArray[0].id;
+      }
+      
+      if (defaultZoneId) {
+        setSelectedZoneId(defaultZoneId);
       }
     } catch (err) {
       console.error('Error fetching data:', err);
@@ -76,6 +99,11 @@ function ZoneManagerContent() {
   const selectedZone = zones.find(zone => zone.id === selectedZoneId);
   const zoneClubs = Array.isArray(clubs) ? clubs.filter(club => club.zoneId === selectedZoneId) : [];
   const zoneEvents = Array.isArray(events) ? events.filter(event => {
+    // Include events that are directly associated with the zone
+    if (event.zoneId === selectedZoneId) {
+      return true;
+    }
+    // Include events from clubs in this zone
     const eventClub = clubs.find(club => club.id === event.clubId);
     return eventClub?.zoneId === selectedZoneId;
   }) : [];
@@ -248,7 +276,7 @@ function ZoneManagerContent() {
 
           {/* Main Dashboard Tabs */}
           <Tabs defaultValue="approvals" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="approvals">
                 <Clock className="h-4 w-4 mr-2" />
                 Event Approvals
@@ -261,6 +289,10 @@ function ZoneManagerContent() {
               <TabsTrigger value="manage">
                 <CheckCircle className="h-4 w-4 mr-2" />
                 Manage Events
+              </TabsTrigger>
+              <TabsTrigger value="add-zone-event">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Zone Event
               </TabsTrigger>
             </TabsList>
 
@@ -284,6 +316,31 @@ function ZoneManagerContent() {
                 eventTypes={eventTypes}
                 onEventUpdate={fetchData}
               />
+            </TabsContent>
+
+            <TabsContent value="add-zone-event" className="space-y-4">
+              <Card className="enhanced-card glass-effect border-2 border-border/40 shadow-xl">
+                <CardHeader>
+                  <CardTitle className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                    Create Zone-Level Event
+                  </CardTitle>
+                  <CardDescription>
+                    Add a new zone-level event. Zone-level events are automatically approved and visible to all clubs in the selected zone.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ZoneEventSubmission
+                    zones={zones}
+                    eventTypes={eventTypes}
+                    defaultZoneId={selectedZoneId}
+                    onEventSubmitted={() => {
+                      fetchData();
+                      // Optionally switch back to manage tab after submission
+                      // document.querySelector('[value="manage"]')?.click();
+                    }}
+                  />
+                </CardContent>
+              </Card>
             </TabsContent>
           </Tabs>
         </>

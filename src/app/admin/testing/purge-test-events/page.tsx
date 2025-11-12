@@ -27,6 +27,7 @@ import Link from 'next/link';
 interface PurgeConfig {
   dryRun: boolean;
   excludePublicHolidays: boolean;
+  purgeAllEvents: boolean;
   filterByDateRange: {
     start: string;
     end: string;
@@ -69,6 +70,7 @@ export default function PurgeTestEventsPage() {
   const [purgeConfig, setPurgeConfig] = useState<PurgeConfig>({
     dryRun: true,
     excludePublicHolidays: true,
+    purgeAllEvents: false,
     filterByDateRange: { start: '', end: '' },
     filterBySource: [],
     filterByStatus: [],
@@ -209,6 +211,19 @@ export default function PurgeTestEventsPage() {
 
                 <div className="flex items-center space-x-2">
                   <Checkbox
+                    id="purge-all"
+                    checked={purgeConfig.purgeAllEvents}
+                    onCheckedChange={(checked) => 
+                      setPurgeConfig(prev => ({ ...prev, purgeAllEvents: checked as boolean }))
+                    }
+                  />
+                  <Label htmlFor="purge-all" className="text-sm text-red-600 font-medium">
+                    ⚠️ Nuclear Option: Delete ALL Events (including approved)
+                  </Label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
                     id="create-backup"
                     checked={purgeConfig.createBackup}
                     onCheckedChange={(checked) => 
@@ -220,6 +235,16 @@ export default function PurgeTestEventsPage() {
                   </Label>
                 </div>
               </div>
+
+              {purgeConfig.purgeAllEvents && (
+                <Alert className="border-red-200 bg-red-50">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription className="text-red-800">
+                    <strong>⚠️ Warning:</strong> Nuclear option enabled! This will delete ALL events except public holidays. 
+                    Recent approved events and upcoming events will NOT be protected. Use with extreme caution!
+                  </AlertDescription>
+                </Alert>
+              )}
             </div>
 
             <Separator />

@@ -669,7 +669,6 @@ function generateZoneFormatPDF(options: CalendarPDFOptions): Buffer {
         doc.addPage();
         pageNumber++;
         yPosition = marginTop;
-        drawLegend();
       }
 
       // Month header
@@ -717,7 +716,6 @@ function generateZoneFormatPDF(options: CalendarPDFOptions): Buffer {
             doc.addPage();
             pageNumber++;
             yPosition = marginTop;
-            drawLegend();
             drawTableHeader();
           }
 

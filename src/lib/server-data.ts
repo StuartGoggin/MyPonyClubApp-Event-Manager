@@ -55,6 +55,33 @@ function setCache<T>(key: keyof typeof cache, data: T): void {
   };
 }
 
+// Function to invalidate specific cache entries
+export function invalidateCache(keys: (keyof typeof cache)[]): void {
+  keys.forEach(key => {
+    if (cache[key]) {
+      cache[key] = null;
+      console.log(`🗑️  Cache invalidated for ${key}`);
+    }
+  });
+}
+
+// Convenience functions for common invalidation scenarios
+export function invalidateEventsCache(): void {
+  invalidateCache(['events']);
+}
+
+export function invalidateClubsCache(): void {
+  invalidateCache(['clubs']);
+}
+
+export function invalidateZonesCache(): void {
+  invalidateCache(['zones']);
+}
+
+export function invalidateEventTypesCache(): void {
+  invalidateCache(['eventTypes']);
+}
+
 // Server-side functions for fetching data from Firestore
 export async function getAllZones(): Promise<Zone[]> {
   try {
@@ -377,6 +404,7 @@ export async function deleteEvent(eventId: string): Promise<boolean> {
     }
     
     await adminDb.collection('events').doc(eventId).delete();
+    invalidateEventsCache();
     console.log(`Event ${eventId} deleted successfully`);
     return true;
   } catch (error: any) {
@@ -420,6 +448,11 @@ export async function deleteEventsBatch(eventIds: string[]): Promise<{ success: 
         console.error('Error in batch delete:', error);
         failed.push(...batch);
       }
+    }
+    
+    // Invalidate cache if any events were successfully deleted
+    if (success.length > 0) {
+      invalidateEventsCache();
     }
     
   } catch (error: any) {

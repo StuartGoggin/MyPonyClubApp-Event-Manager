@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminDb, isDatabaseConnected, getDatabaseErrorMessage } from '@/lib/firebase-admin';
 import { Timestamp } from 'firebase-admin/firestore';
 import { Event } from '@/lib/types';
-import { getAllEvents } from '@/lib/server-data';
+import { getAllEvents, invalidateEventsCache } from '@/lib/server-data';
 
 export async function GET(request: NextRequest) {
   try {
@@ -112,6 +112,9 @@ export async function POST(request: NextRequest) {
     };
 
     const docRef = await adminDb.collection('events').add(newEvent);
+    
+    // Invalidate the events cache so the new event appears immediately
+    invalidateEventsCache();
     
     return NextResponse.json({ 
       success: true, 

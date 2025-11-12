@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { Timestamp } from 'firebase-admin/firestore';
+import { invalidateEventsCache } from '@/lib/server-data';
 
 export async function PATCH(
   request: NextRequest,
@@ -64,6 +65,9 @@ export async function PATCH(
     
     console.log('API: Event updated successfully');
     
+    // Invalidate the events cache so changes appear immediately
+    invalidateEventsCache();
+    
     return NextResponse.json({ 
       success: true,
       message: 'Event updated successfully'
@@ -99,6 +103,9 @@ export async function DELETE(
     }
 
     await adminDb.collection('events').doc(eventId).delete();
+    
+    // Invalidate the events cache so deletion appears immediately
+    invalidateEventsCache();
     
     return NextResponse.json({ 
       success: true,

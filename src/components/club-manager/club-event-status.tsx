@@ -20,7 +20,8 @@ import {
   Star,
   X,
   Trophy,
-  Calendar as CalendarLucide
+  Calendar as CalendarLucide,
+  Trash2
 } from 'lucide-react';
 import { Event, Club, EventType } from '@/lib/types';
 import { EventScheduleUpload } from '../event-schedule-upload';
@@ -121,9 +122,35 @@ export function ClubEventStatus({
   onEventUpdate 
 }: ClubEventStatusProps) {
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
+  const [deletingEventId, setDeletingEventId] = useState<string | null>(null);
 
   const handleEditEvent = (event: Event) => {
     setEditingEventId(editingEventId === event.id ? null : event.id);
+  };
+
+  const handleDeleteEvent = async (event: Event) => {
+    if (!confirm(`Are you sure you want to delete "${event.name}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    setDeletingEventId(event.id);
+    try {
+      const response = await fetch(`/api/events/${event.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete event');
+      }
+
+      // Refresh the event list
+      onEventUpdate();
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      alert('Failed to delete event. Please try again.');
+    } finally {
+      setDeletingEventId(null);
+    }
   };
 
   const getEventTypeName = (eventTypeId: string) => {
@@ -418,31 +445,52 @@ export function ClubEventStatus({
                       </div>
                     </div>
 
-                    {/* Edit Button - Moved to bottom */}
-                    <div className="pt-4 mt-auto">
+                    {/* Action Buttons - Moved to bottom */}
+                    <div className="pt-4 mt-auto space-y-2">
                       {canEdit ? (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleEditEvent(event)}
-                          className={`distinctive-button-secondary w-full h-10 border-2 font-bold text-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 backdrop-blur-sm ${
-                            editingEventId === event.id
-                              ? 'bg-gradient-to-r from-red-50 via-red-100 to-red-200 hover:from-red-100 hover:via-red-200 hover:to-red-300 border-red-300/70 hover:border-red-400 text-red-800 hover:text-red-900'
-                              : 'bg-gradient-to-r from-teal-50 via-teal-100 to-cyan-100 hover:from-teal-100 hover:via-teal-200 hover:to-cyan-200 border-teal-300/70 hover:border-teal-400 text-teal-800 hover:text-teal-900'
-                          }`}
-                        >
-                          {editingEventId === event.id ? (
-                            <>
-                              <X className="h-4 w-4 mr-2 drop-shadow-sm" />
-                              Cancel Edit
-                            </>
-                          ) : (
-                            <>
-                              <Edit3 className="h-4 w-4 mr-2 drop-shadow-sm" />
-                              Edit Event Details
-                            </>
-                          )}
-                        </Button>
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleEditEvent(event)}
+                            className={`distinctive-button-secondary w-full h-10 border-2 font-bold text-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 backdrop-blur-sm ${
+                              editingEventId === event.id
+                                ? 'bg-gradient-to-r from-red-50 via-red-100 to-red-200 hover:from-red-100 hover:via-red-200 hover:to-red-300 border-red-300/70 hover:border-red-400 text-red-800 hover:text-red-900'
+                                : 'bg-gradient-to-r from-teal-50 via-teal-100 to-cyan-100 hover:from-teal-100 hover:via-teal-200 hover:to-cyan-200 border-teal-300/70 hover:border-teal-400 text-teal-800 hover:text-teal-900'
+                            }`}
+                          >
+                            {editingEventId === event.id ? (
+                              <>
+                                <X className="h-4 w-4 mr-2 drop-shadow-sm" />
+                                Cancel Edit
+                              </>
+                            ) : (
+                              <>
+                                <Edit3 className="h-4 w-4 mr-2 drop-shadow-sm" />
+                                Edit Event Details
+                              </>
+                            )}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDeleteEvent(event)}
+                            disabled={deletingEventId === event.id}
+                            className="distinctive-button-danger w-full h-10 border-2 font-bold text-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 backdrop-blur-sm bg-gradient-to-r from-rose-50 via-rose-100 to-red-100 hover:from-rose-100 hover:via-rose-200 hover:to-red-200 border-rose-300/70 hover:border-rose-400 text-rose-800 hover:text-rose-900 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                          >
+                            {deletingEventId === event.id ? (
+                              <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-2 border-rose-800 border-t-transparent mr-2"></div>
+                                Deleting...
+                              </>
+                            ) : (
+                              <>
+                                <Trash2 className="h-4 w-4 mr-2 drop-shadow-sm" />
+                                Delete Event
+                              </>
+                            )}
+                          </Button>
+                        </>
                       ) : (
                         <Button size="sm" variant="ghost" disabled className="distinctive-button-disabled w-full h-10 bg-gradient-to-r from-slate-100 to-slate-200 border-2 border-slate-300/50 text-slate-500 font-bold text-sm rounded-xl shadow-inner">
                           <Eye className="h-4 w-4 mr-2" />

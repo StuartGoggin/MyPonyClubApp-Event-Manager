@@ -3,6 +3,7 @@ import JSZip from 'jszip';
 import { bucket, adminDb } from '@/lib/firebase-admin';
 import { Event, Club, Zone, EventType } from '@/lib/types';
 import { createHash } from 'crypto';
+import { invalidateEventsCache } from '@/lib/server-data';
 
 interface ImportConfig {
   eventTypes: string[];
@@ -261,6 +262,9 @@ export async function POST(request: NextRequest) {
     if (operationCount > 0) {
       await batch.commit();
     }
+    
+    // Invalidate the events cache after bulk import
+    invalidateEventsCache();
 
     // Upload schedule files if not skipped
     if (!config.skipSchedules) {

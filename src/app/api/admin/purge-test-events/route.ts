@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllEvents, deleteEventsBatch } from '@/lib/server-data';
+import { getAllEvents, deleteEventsBatch, invalidateEventsCache } from '@/lib/server-data';
 import { Event } from '@/lib/types';
 
 interface PurgeTestEventsConfig {
@@ -227,6 +227,11 @@ async function performPurge(config: PurgeTestEventsConfig): Promise<PurgeResult>
         for (const failedId of failed) {
           const failedEvent = eventsToDelete.find(e => e.id === failedId);
           errors.push(`Failed to delete event: ${failedEvent?.name || failedId}`);
+        }
+        
+        // Invalidate the events cache after bulk deletion
+        if (deleted > 0) {
+          invalidateEventsCache();
         }
         
         console.log(`✅ Deletion completed: ${deleted} deleted, ${skipped} failed`);

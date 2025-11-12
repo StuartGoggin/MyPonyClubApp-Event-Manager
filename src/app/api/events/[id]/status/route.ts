@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
+import { invalidateEventsCache } from '@/lib/server-data';
 
 export async function PATCH(
   request: NextRequest,
@@ -40,6 +41,9 @@ export async function PATCH(
     };
 
     await adminDb.collection('events').doc(eventId).update(eventUpdate);
+    
+    // Invalidate the events cache so status changes appear immediately
+    invalidateEventsCache();
     
     return NextResponse.json({ 
       success: true,

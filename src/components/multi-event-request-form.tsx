@@ -82,7 +82,6 @@ export type MultiEventRequestFormValues = z.infer<typeof multiEventRequestSchema
 interface MultiEventRequestFormProps {
   clubs?: Club[];
   eventTypes?: EventType[];
-  allEvents?: Event[];
   zones?: Zone[];
   embedMode?: boolean;
   onSubmit?: (data: any) => void;
@@ -91,7 +90,6 @@ interface MultiEventRequestFormProps {
 export function MultiEventRequestForm({ 
   clubs: propClubs, 
   eventTypes: propEventTypes, 
-  allEvents: propAllEvents, 
   zones: propZones,
   embedMode = false,
   onSubmit
@@ -102,9 +100,8 @@ export function MultiEventRequestForm({
   // Data loading state - silent refresh for event types
   const [clubs, setClubs] = useState<Club[]>(propClubs || []);
   const [eventTypes, setEventTypes] = useState<EventType[]>(propEventTypes || []);
-  const [allEvents, setAllEvents] = useState<Event[]>(propAllEvents || []);
   const [zones, setZones] = useState<Zone[]>(propZones || []);
-  const [isLoadingData, setIsLoadingData] = useState(embedMode && (!propClubs || !propEventTypes || !propAllEvents || !propZones));
+  const [isLoadingData, setIsLoadingData] = useState(embedMode && (!propClubs || !propEventTypes || !propZones));
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
@@ -121,6 +118,7 @@ export function MultiEventRequestForm({
   const [isLoadingNames, setIsLoadingNames] = useState(false);
   const nameAutocompleteRef = useRef<HTMLDivElement>(null);
   const [selectedUserData, setSelectedUserData] = useState<any>(null);
+  const hasInitializedEvent = useRef(false);
 
   const form = useForm<MultiEventRequestFormValues>({
     resolver: zodResolver(multiEventRequestSchema),
@@ -166,27 +164,24 @@ export function MultiEventRequestForm({
             }
           };
 
-          const [clubsRes, eventTypesRes, eventsRes, zonesRes] = await Promise.all([
+          const [clubsRes, eventTypesRes, zonesRes] = await Promise.all([
             fetchWithTimeout('/api/clubs'),
             fetchWithTimeout('/api/event-types'),
-            fetchWithTimeout('/api/events'),
             fetchWithTimeout('/api/zones')
           ]);
 
-          if (!clubsRes.ok || !eventTypesRes.ok || !eventsRes.ok || !zonesRes.ok) {
+          if (!clubsRes.ok || !eventTypesRes.ok || !zonesRes.ok) {
             throw new Error('One or more API requests failed');
           }
 
-          const [clubsData, eventTypesData, eventsData, zonesData] = await Promise.all([
+          const [clubsData, eventTypesData, zonesData] = await Promise.all([
             clubsRes.json(),
             eventTypesRes.json(),
-            eventsRes.json(),
             zonesRes.json()
           ]);
 
           setClubs(clubsData.clubs || clubsData);
           setEventTypes(eventTypesData.eventTypes || eventTypesData);
-          setAllEvents(eventsData.events || eventsData);
           setZones(zonesData.zones || zonesData);
           setIsLoadingData(false);
         } catch (error) {
@@ -194,7 +189,6 @@ export function MultiEventRequestForm({
           
           setClubs([]);
           setEventTypes([]);
-          setAllEvents([]);
           setZones([]);
           setIsLoadingData(false);
           
@@ -273,7 +267,8 @@ export function MultiEventRequestForm({
 
   // Initialize first event after component mounts (hydration-safe)
   useEffect(() => {
-    if (eventFields.length === 0) {
+    if (eventFields.length === 0 && !hasInitializedEvent.current) {
+      hasInitializedEvent.current = true;
       appendEvent({
         priority: 1,
         name: '',
@@ -579,6 +574,7 @@ export function MultiEventRequestForm({
     setIsSubmitting(true);
     try {
       console.log('Submitting multi-event request:', data);
+      console.log('Form errors:', form.formState.errors);
       
       if (onSubmit) {
         await onSubmit(data);
@@ -742,7 +738,14 @@ export function MultiEventRequestForm({
   return (
     <div className="space-y-4 sm:space-y-6 pb-8 sm:pb-4">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmitForm)} className="space-y-4 sm:space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmitForm, (errors) => {
+          console.error('Form validation errors:', errors);
+          toast({
+            title: 'Form Validation Failed',
+            description: 'Please check all required fields and fix any errors before submitting.',
+            variant: 'destructive',
+          });
+        })} className="space-y-4 sm:space-y-6">
           {/* Your Details */}
           <Card>
             <CardHeader>
@@ -1049,6 +1052,16 @@ export function MultiEventRequestForm({
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
                     Please add at least one event request to continue.
+                  </AlertDescription>
+                </Alert>
+              )}
+              
+              {/* Display events array validation errors */}
+              {form.formState.errors.events && typeof form.formState.errors.events.message === 'string' && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    {form.formState.errors.events.message}
                   </AlertDescription>
                 </Alert>
               )}

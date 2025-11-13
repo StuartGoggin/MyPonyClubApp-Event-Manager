@@ -70,6 +70,8 @@ export interface BackupExecution {
   endTime?: Date;
   status: 'running' | 'completed' | 'failed' | 'cancelled';
   exportSize?: number; // bytes
+  storagePath?: string; // Firebase Storage path
+  downloadUrl?: string; // Signed URL for download
   deliveryStatus: {
     email?: 'pending' | 'sent' | 'failed';
     storage?: 'pending' | 'uploaded' | 'failed';

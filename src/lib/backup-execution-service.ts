@@ -2,6 +2,7 @@ import { BackupScheduleService } from './backup-schedule-service';
 import { BackupSchedule, BackupExecution } from './types-backup';
 import { getAllClubs, getAllZones, getAllEventTypes } from './server-data';
 import { sendBackupEmail } from './backup-email-service';
+import { bucket } from './firebase-admin';
 import JSZip from 'jszip';
 
 export class BackupExecutionService {
@@ -281,7 +282,7 @@ export class BackupExecutionService {
     if (deliveryOptions.method === 'storage' || deliveryOptions.method === 'both') {
       try {
         execution.deliveryStatus.storage = 'pending';
-        await this.uploadToStorage(backupBuffer, schedule);
+        await this.uploadToStorage(backupBuffer, schedule, execution);
         execution.deliveryStatus.storage = 'uploaded';
         storageSuccess = true;
       } catch (error) {
@@ -363,7 +364,11 @@ export class BackupExecutionService {
   /**
    * Upload backup to storage
    */
-  private static async uploadToStorage(backupBuffer: Buffer, schedule: BackupSchedule): Promise<void> {
+  private static async uploadToStorage(
+    backupBuffer: Buffer, 
+    schedule: BackupSchedule,
+    execution: Omit<BackupExecution, 'id'>
+  ): Promise<void> {
     const { deliveryOptions } = schedule;
     const storageConfig = deliveryOptions.storage;
     
@@ -378,7 +383,7 @@ export class BackupExecutionService {
 
       switch (storageConfig.provider) {
         case 'firebase':
-          await this.uploadToFirebaseStorage(backupBuffer, fullPath);
+          await this.uploadToFirebaseStorage(backupBuffer, fullPath, execution);
           break;
         case 'aws-s3':
           // TODO: Implement AWS S3 upload
@@ -401,19 +406,60 @@ export class BackupExecutionService {
   /**
    * Upload to Firebase Storage
    */
-  private static async uploadToFirebaseStorage(buffer: Buffer, path: string): Promise<void> {
+  private static async uploadToFirebaseStorage(
+    buffer: Buffer, 
+    path: string, 
+    execution: Omit<BackupExecution, 'id'>
+  ): Promise<void> {
     try {
-      // TODO: Implement Firebase Storage upload
-      // const { bucket } = require('./firebase-admin');
-      // const file = bucket.file(path);
-      // await file.save(buffer, { metadata: { contentType: 'application/zip' } });
+      if (!bucket) {
+        throw new Error('Firebase Storage not initialized. Please check your Firebase Admin configuration.');
+      }
+
+      console.log(`🔥 Uploading backup to Firebase Storage: ${path}`);
+      console.log(`📦 File size: ${(buffer.length / (1024 * 1024)).toFixed(2)} MB`);
+
+      const file = bucket.file(path);
       
-      // For now, simulate the upload
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      console.log(`🔥 Simulated Firebase Storage upload to: ${path}`);
+      // Upload the buffer to Firebase Storage
+      await file.save(buffer, {
+        metadata: {
+          contentType: 'application/zip',
+          metadata: {
+            uploadedAt: new Date().toISOString(),
+            uploadedBy: 'BackupScheduler',
+            fileType: 'automated-backup',
+            scheduleId: execution.scheduleId,
+            scheduleName: execution.scheduleName
+          }
+        },
+        resumable: false, // For smaller files, non-resumable is faster
+        validation: 'crc32c' // Enable data integrity validation
+      });
+
+      // Make the file downloadable with a signed URL (valid for 7 days)
+      const [signedUrl] = await file.getSignedUrl({
+        action: 'read',
+        expires: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days
+      });
+
+      console.log(`✅ Backup uploaded successfully to Firebase Storage`);
+      console.log(`🔗 Download URL (valid for 7 days): ${signedUrl}`);
+      
+      // Store the path and download URL in the execution record
+      execution.storagePath = path;
+      execution.downloadUrl = signedUrl;
       
     } catch (error) {
       console.error('Error uploading to Firebase Storage:', error);
+      if (error instanceof Error) {
+        // Provide more specific error messages
+        if (error.message.includes('permission')) {
+          throw new Error('Firebase Storage permission denied. Please check your storage rules and service account permissions.');
+        } else if (error.message.includes('not found')) {
+          throw new Error('Firebase Storage bucket not found. Please verify your Firebase project configuration.');
+        }
+      }
       throw error;
     }
   }

@@ -10,6 +10,7 @@ import { getEmailQueueStats } from '@/lib/email-queue-admin';
 import { RouteGuard } from '@/components/auth/route-guard';
 import { DataExportTile } from '@/components/admin/data-export-tile';
 import { BackupScheduleTile } from '@/components/admin/backup-schedule-tile';
+import { BackupHistoryTile } from '@/components/admin/backup-history-tile';
 import { DashboardStatsCards } from '@/components/admin/dashboard-stats-cards';
 
 // Force dynamic rendering to ensure fresh data
@@ -360,6 +361,9 @@ async function AdminDashboardContent() {
 
           {/* Automatic Backup Scheduling */}
           <BackupScheduleTile />
+
+          {/* Backup History */}
+          <BackupHistoryTile />
         </div>
       </div>
 

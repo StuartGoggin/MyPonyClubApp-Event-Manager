@@ -7,9 +7,10 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { CheckCircle, XCircle, Clock, Calendar, MapPin, User, FileText, AlertTriangle, Trophy, Building, Calendar as CalendarLucide, Star, ChevronDown, ChevronUp } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Calendar, MapPin, User, FileText, AlertTriangle, Trophy, Building, Calendar as CalendarLucide, Star, ChevronDown, ChevronUp, Navigation } from 'lucide-react';
 import { Event, Club, EventType } from '@/lib/types';
 import { EventRailwayProgress } from '../club-manager/event-railway-progress';
+import { cn } from '@/lib/utils';
 
 // Utility function to format dates with validation
 const formatDate = (date: Date | string | any) => {
@@ -140,6 +141,60 @@ export function ZoneEventApproval({
   const getEventTypeName = (eventTypeId: string | undefined) => {
     if (!eventTypeId) return 'Unknown Type';
     return eventTypes.find(type => type.id === eventTypeId)?.name || 'Unknown Type';
+  };
+
+  // Calculate distance between two coordinates using Haversine formula
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c; // Distance in kilometers
+  };
+
+  // Get distance to nearby event
+  const getEventDistance = (currentEvent: Event, nearbyEvent: Event): string | null => {
+    const currentClub = clubs.find(c => c.id === currentEvent.clubId);
+    if (!currentClub?.latitude || !currentClub?.longitude) {
+      return null;
+    }
+    
+    const nearbyClub = clubs.find(c => c.id === nearbyEvent.clubId);
+    if (!nearbyClub?.latitude || !nearbyClub?.longitude) {
+      return null;
+    }
+    
+    const distance = calculateDistance(
+      currentClub.latitude,
+      currentClub.longitude,
+      nearbyClub.latitude,
+      nearbyClub.longitude
+    );
+    
+    return `${Math.round(distance)}km away`;
+  };
+
+  // Get events within ±1 day of the given event
+  const getNearbyEvents = (event: Event): Event[] => {
+    if (!event) return [];
+    
+    const eventDate = new Date(event.date);
+    const oneDayBefore = new Date(eventDate);
+    oneDayBefore.setDate(eventDate.getDate() - 1);
+    const oneDayAfter = new Date(eventDate);
+    oneDayAfter.setDate(eventDate.getDate() + 1);
+    
+    return events.filter(e => {
+      if (e.id === event.id) return false; // Exclude the current event
+      if (e.status === 'rejected') return false; // Exclude rejected events
+      
+      const otherEventDate = new Date(e.date);
+      return otherEventDate >= oneDayBefore && otherEventDate <= oneDayAfter;
+    });
   };
 
   const handleEventAction = (event: Event, action: 'approve' | 'reject') => {
@@ -457,6 +512,94 @@ export function ZoneEventApproval({
                   <div className="mb-4">
                     <EventRailwayProgress event={event} />
                   </div>
+
+                  {/* Approval Information Panel */}
+                  {(() => {
+                    const nearbyEvents = getNearbyEvents(event);
+                    
+                    return (
+                      <div className="mb-4">
+                        <div className="flex items-center gap-2 mb-3">
+                          <FileText className="h-5 w-5 text-primary" />
+                          <h4 className="font-semibold text-lg">Approval Information</h4>
+                        </div>
+                        
+                        {nearbyEvents.length > 0 ? (
+                          <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                            <div className="flex items-center gap-2 mb-3">
+                              <AlertTriangle className="h-5 w-5 text-amber-600" />
+                              <h5 className="font-semibold text-amber-800">Potential Scheduling Conflicts</h5>
+                            </div>
+                            <p className="text-sm text-amber-700 mb-3">
+                              The following events are scheduled within 1 day of this event:
+                            </p>
+                            <div className="space-y-2">
+                              {nearbyEvents.map(nearbyEvent => {
+                                const distance = getEventDistance(event, nearbyEvent);
+                                const hasDistance = distance !== null;
+                                const nearbyClub = clubs.find(c => c.id === nearbyEvent.clubId);
+                                
+                                return (
+                                  <div key={nearbyEvent.id} className="text-sm bg-amber-100 p-3 rounded border border-amber-200">
+                                    <div className="flex items-center justify-between mb-2">
+                                      <div className="flex-1">
+                                        <div className="font-semibold text-amber-900">{nearbyEvent.name}</div>
+                                        <div className="text-xs text-amber-700 mt-0.5">
+                                          {nearbyClub?.name || 'Unknown Club'} • {formatDate(nearbyEvent.date)}
+                                        </div>
+                                      </div>
+                                      <div className={cn(
+                                        "flex items-center gap-1.5 px-3 py-1.5 rounded-lg shadow-sm border-2",
+                                        "transform rotate-12 transition-all",
+                                        hasDistance 
+                                          ? "bg-green-100 border-green-300 text-green-800" 
+                                          : "bg-red-100 border-red-300 text-red-800"
+                                      )}>
+                                        <Navigation className={cn(
+                                          "h-3.5 w-3.5",
+                                          hasDistance ? "text-green-600" : "text-red-600"
+                                        )} />
+                                        <span className="text-xs font-bold">
+                                          {hasDistance ? distance : "N/A"}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs">
+                                      <Badge variant="outline" className="text-amber-700 border-amber-300">
+                                        {getEventTypeName(nearbyEvent.eventTypeId)}
+                                      </Badge>
+                                      {nearbyEvent.status === 'approved' && (
+                                        <Badge className="bg-green-100 text-green-800 border-green-300">
+                                          <CheckCircle className="h-3 w-3 mr-1" />
+                                          Approved
+                                        </Badge>
+                                      )}
+                                      {nearbyEvent.status === 'proposed' && (
+                                        <Badge className="bg-amber-100 text-amber-800 border-amber-300">
+                                          <Clock className="h-3 w-3 mr-1" />
+                                          Pending
+                                        </Badge>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                            <div className="flex items-center gap-2 mb-2">
+                              <CheckCircle className="h-5 w-5 text-green-600" />
+                              <h5 className="font-semibold text-green-800">No Scheduling Conflicts</h5>
+                            </div>
+                            <p className="text-sm text-green-700">
+                              There are no other events scheduled within 1 day of this event date.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   {/* Approval Action Buttons */}
                   {!processedInfo && (

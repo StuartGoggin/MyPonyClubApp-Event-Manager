@@ -16,7 +16,8 @@ import { NavigationItem, filterNavigationByRole, UserRole } from '@/lib/access-c
 
 export function AppLayout({ children }: PropsWithChildren) {
   const pathname = usePathname();
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  // Start expanded only on root URL, minimized everywhere else
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(pathname !== '/');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isClient, setIsClient] = useState(false);
@@ -27,6 +28,14 @@ export function AppLayout({ children }: PropsWithChildren) {
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  // Update sidebar state when pathname changes
+  useEffect(() => {
+    // Expand sidebar on root URL, collapse on other pages (but allow user toggle to persist)
+    if (pathname === '/') {
+      setSidebarCollapsed(false);
+    }
+  }, [pathname]);
 
   // Detect mobile screen size only after hydration
   useEffect(() => {
@@ -120,67 +129,50 @@ export function AppLayout({ children }: PropsWithChildren) {
       {/* Beautiful full-width header */}
       <AppHeader />
       
-      {/* Mobile Menu Button - only show after hydration */}
-      {isClient && isMobile && (
+      {/* Menu Toggle Button - shows when sidebar is collapsed */}
+      {isClient && sidebarCollapsed && (
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="fixed top-20 left-4 z-50 h-10 w-10 bg-background/95 backdrop-blur-sm border border-border/40 shadow-lg hover:bg-primary/10 md:hidden"
+          onClick={() => setSidebarCollapsed(false)}
+          className="fixed top-24 left-4 z-50 h-10 w-10 bg-background/95 backdrop-blur-sm border border-border/40 shadow-lg hover:bg-primary/10"
         >
-          {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          <Menu className="h-5 w-5" />
         </Button>
       )}
 
-      {/* Mobile Overlay - only show after hydration */}
-      {isClient && isMobile && mobileMenuOpen && (
+      {/* Overlay when sidebar is open - click to close */}
+      {isClient && !sidebarCollapsed && (
         <div
-          className="fixed inset-0 bg-black/50 z-30 md:hidden"
-          onClick={() => setMobileMenuOpen(false)}
+          className="fixed inset-0 top-20 bg-black/20 z-30"
+          onClick={() => setSidebarCollapsed(true)}
         />
       )}
 
       {/* Content area below header */}
-      <div className="h-[calc(100vh-5rem)] flex">
-        {/* Sidebar */}
+      <div className="h-[calc(100vh-5rem)] flex relative">
+        {/* Sidebar - now fixed/absolute to hover over content */}
         <div className={`
-          transition-all duration-300 border-r border-border/40 bg-background/95 backdrop-blur-sm
-          ${!isClient || !isMobile 
-            ? sidebarCollapsed 
-              ? 'w-16' 
-              : 'w-64'
-            : mobileMenuOpen 
-              ? 'fixed inset-y-0 left-0 top-20 w-64 z-40' 
-              : 'w-0 overflow-hidden'
-          }
+          fixed top-20 left-0 h-[calc(100vh-5rem)] z-40
+          transition-all duration-300 border-r border-border/40 bg-background/95 backdrop-blur-sm shadow-lg
+          ${sidebarCollapsed 
+            ? '-translate-x-full opacity-0' 
+            : 'translate-x-0 opacity-100'
+          } w-64
         `}>
-          {/* Sidebar Header with toggle */}
+          {/* Sidebar Header with close button */}
           <div className="p-4 border-b border-border/40 flex items-center justify-between">
-            {(!sidebarCollapsed || (isClient && mobileMenuOpen)) && (
-              <h2 className="text-lg font-semibold tracking-tight text-muted-foreground">
-                Navigation
-              </h2>
-            )}
-            {(!isClient || !isMobile) && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className="h-8 w-8 hover:bg-primary/10"
-              >
-                {sidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-              </Button>
-            )}
-            {isClient && isMobile && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setMobileMenuOpen(false)}
-                className="h-8 w-8 hover:bg-primary/10"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            )}
+            <h2 className="text-lg font-semibold tracking-tight text-muted-foreground">
+              Navigation
+            </h2>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSidebarCollapsed(true)}
+              className="h-8 w-8 hover:bg-primary/10"
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </div>
           
           {/* Sidebar Content */}
@@ -193,9 +185,10 @@ export function AppLayout({ children }: PropsWithChildren) {
                   href={item.href}
                   className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-primary/10 hover:text-primary"
                   title={item.title}
+                  onClick={() => setSidebarCollapsed(true)}
                 >
                   <item.icon className="h-4 w-4" />
-                  {(!sidebarCollapsed || (isClient && mobileMenuOpen)) && <span>{item.label}</span>}
+                  <span>{item.label}</span>
                 </Link>
               ))}
             </div>
@@ -203,14 +196,13 @@ export function AppLayout({ children }: PropsWithChildren) {
             {/* Separator */}
             <div className="border-t border-border/40 my-4"></div>
             
-            {/* Event Sources - only show when expanded */}
-            {(!sidebarCollapsed || (isClient && mobileMenuOpen)) && (
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 text-muted-foreground font-medium">
-                  <Database className="text-primary h-4 w-4" />
-                  <span className="text-sm">Event Sources</span>
-                </div>
-                <div className="space-y-3 pl-2">
+            {/* Event Sources */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-muted-foreground font-medium">
+                <Database className="text-primary h-4 w-4" />
+                <span className="text-sm">Event Sources</span>
+              </div>
+              <div className="space-y-3 pl-2">
                   <div className="flex items-center space-x-2 opacity-50 cursor-not-allowed">
                     <Checkbox 
                       id="pca" 
@@ -239,13 +231,12 @@ export function AppLayout({ children }: PropsWithChildren) {
                   </div>
                 </div>
               </div>
-            )}
+            </div>
           </div>
-        </div>
         
-        {/* Main Content Area */}
-        <div className={`flex-1 flex flex-col ${isClient && isMobile ? 'w-full' : ''}`}>
-          <div className={`flex-1 p-4 md:p-6 ${isClient && isMobile ? 'pt-16' : ''}`}>
+        {/* Main Content Area - now takes full width with sidebar hovering */}
+        <div className="flex-1 flex flex-col w-full">
+          <div className="flex-1 p-4 md:p-6">
             <div className="max-w-7xl mx-auto">
               {children}
             </div>

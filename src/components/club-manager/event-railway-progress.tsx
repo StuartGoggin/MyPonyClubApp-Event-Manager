@@ -25,7 +25,8 @@ export function EventRailwayProgress({ event, schedules = [] }: EventRailwayProg
     
     switch (event.status) {
       case 'proposed':
-        return 'date-submitted';
+        // Event submitted, now in date review
+        return 'date-review';
       case 'rejected':
         return 'date-rejected';
       case 'approved':
@@ -48,6 +49,7 @@ export function EventRailwayProgress({ event, schedules = [] }: EventRailwayProg
   };
 
   const currentStage = getCurrentStage();
+  const latestSchedule = schedules.length > 0 ? schedules[schedules.length - 1] : null;
   
   // Define all possible stages in order
   const stages = [
@@ -139,6 +141,38 @@ export function EventRailwayProgress({ event, schedules = [] }: EventRailwayProg
   const visibleStages = getVisibleStages();
 
   const getStageStatus = (stageId: string) => {
+    // Special handling for specific stages
+    
+    // Date Submitted is always green once event is submitted (proposed status)
+    if (stageId === 'date-submitted' && event.status === 'proposed') {
+      return 'completed';
+    }
+    
+    // Date Approved is yellow (in progress) when event is proposed
+    if (stageId === 'date-approved' && event.status === 'proposed') {
+      return 'current';
+    }
+    
+    // Date Approved is green when event is approved
+    if (stageId === 'date-approved' && event.status === 'approved') {
+      return 'completed';
+    }
+    
+    // Schedule Required logic
+    if (stageId === 'schedule-required' && event.status === 'approved') {
+      // Yellow if no schedule uploaded
+      if (!latestSchedule) {
+        return 'current';
+      }
+      // Green if schedule uploaded
+      return 'completed';
+    }
+    
+    // Schedule Submitted is green if schedule is uploaded
+    if (stageId === 'schedule-submitted' && latestSchedule) {
+      return 'completed';
+    }
+    
     if (stageId === currentStage) return 'current';
     
     const stageIndex = visibleStages.findIndex(s => s.id === stageId);
@@ -189,8 +223,8 @@ export function EventRailwayProgress({ event, schedules = [] }: EventRailwayProg
                       ? stage.type === 'rejection'
                         ? 'bg-red-100 border-red-500 text-red-700 animate-pulse'
                         : stage.type === 'action-required'
-                        ? 'bg-amber-100 border-amber-500 text-amber-700 animate-pulse'
-                        : 'bg-blue-100 border-blue-500 text-blue-700 animate-pulse'
+                        ? 'bg-yellow-100 border-yellow-500 text-yellow-700 animate-pulse'
+                        : 'bg-yellow-100 border-yellow-500 text-yellow-700 animate-pulse'
                       : 'bg-gray-100 border-gray-300 text-gray-500'
                     }
                   `}
@@ -199,7 +233,11 @@ export function EventRailwayProgress({ event, schedules = [] }: EventRailwayProg
                 </div>
                 {/* Station Label */}
                 <div className="mt-2 text-center w-full">
-                  <div className={`text-sm font-medium ${status === 'current' ? 'text-blue-700' : 'text-gray-600'}`}>{stage.title}</div>
+                  <div className={`text-sm font-medium ${
+                    status === 'completed' ? 'text-green-700' : 
+                    status === 'current' ? 'text-yellow-700' : 
+                    'text-gray-600'
+                  }`}>{stage.title}</div>
                   {status === 'current' && (
                     <div className="text-xs text-muted-foreground mt-1">{stage.description}</div>
                   )}
@@ -249,7 +287,7 @@ export function EventRailwayProgress({ event, schedules = [] }: EventRailwayProg
           <span>Completed</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded-full bg-blue-100 border border-blue-500"></div>
+          <div className="w-3 h-3 rounded-full bg-yellow-100 border border-yellow-500"></div>
           <span>In Progress</span>
         </div>
         <div className="flex items-center gap-1">

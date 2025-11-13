@@ -442,130 +442,126 @@ export function ClubEventStatus({
                             </div>
                           </div>
                         </div>
-                      </div>
-                    </div>
 
-                    {/* Action Buttons - Moved to bottom */}
-                    <div className="pt-4 mt-auto space-y-2">
-                      {canEdit ? (
-                        <>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleEditEvent(event)}
-                            className={`distinctive-button-secondary w-full h-10 border-2 font-bold text-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 backdrop-blur-sm ${
-                              editingEventId === event.id
-                                ? 'bg-gradient-to-r from-red-50 via-red-100 to-red-200 hover:from-red-100 hover:via-red-200 hover:to-red-300 border-red-300/70 hover:border-red-400 text-red-800 hover:text-red-900'
-                                : 'bg-gradient-to-r from-teal-50 via-teal-100 to-cyan-100 hover:from-teal-100 hover:via-teal-200 hover:to-cyan-200 border-teal-300/70 hover:border-teal-400 text-teal-800 hover:text-teal-900'
-                            }`}
-                          >
-                            {editingEventId === event.id ? (
-                              <>
-                                <X className="h-4 w-4 mr-2 drop-shadow-sm" />
-                                Cancel Edit
-                              </>
-                            ) : (
-                              <>
-                                <Edit3 className="h-4 w-4 mr-2 drop-shadow-sm" />
-                                Edit Event Details
-                              </>
-                            )}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleDeleteEvent(event)}
-                            disabled={deletingEventId === event.id}
-                            className="distinctive-button-danger w-full h-10 border-2 font-bold text-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 backdrop-blur-sm bg-gradient-to-r from-rose-50 via-rose-100 to-red-100 hover:from-rose-100 hover:via-rose-200 hover:to-red-200 border-rose-300/70 hover:border-rose-400 text-rose-800 hover:text-rose-900 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-                          >
-                            {deletingEventId === event.id ? (
-                              <>
-                                <div className="animate-spin rounded-full h-4 w-4 border-2 border-rose-800 border-t-transparent mr-2"></div>
-                                Deleting...
-                              </>
-                            ) : (
-                              <>
-                                <Trash2 className="h-4 w-4 mr-2 drop-shadow-sm" />
-                                Delete Event
-                              </>
-                            )}
-                          </Button>
-                        </>
-                      ) : (
-                        <Button size="sm" variant="ghost" disabled className="distinctive-button-disabled w-full h-10 bg-gradient-to-r from-slate-100 to-slate-200 border-2 border-slate-300/50 text-slate-500 font-bold text-sm rounded-xl shadow-inner">
-                          <Eye className="h-4 w-4 mr-2" />
-                          View Only
-                        </Button>
-                      )}
+                        {/* Action Buttons - Inside Event Details */}
+                        <div className="pt-3 mt-3 border-t border-border/30 space-y-2">
+                          {canEdit ? (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleEditEvent(event)}
+                                className={`distinctive-button-secondary w-full h-10 border-2 font-bold text-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 backdrop-blur-sm ${
+                                  editingEventId === event.id
+                                    ? 'bg-gradient-to-r from-red-50 via-red-100 to-red-200 hover:from-red-100 hover:via-red-200 hover:to-red-300 border-red-300/70 hover:border-red-400 text-red-800 hover:text-red-900'
+                                    : 'bg-gradient-to-r from-teal-50 via-teal-100 to-cyan-100 hover:from-teal-100 hover:via-teal-200 hover:to-cyan-200 border-teal-300/70 hover:border-teal-400 text-teal-800 hover:text-teal-900'
+                                }`}
+                              >
+                                {editingEventId === event.id ? (
+                                  <>
+                                    <X className="h-4 w-4 mr-2 drop-shadow-sm" />
+                                    Cancel Edit
+                                  </>
+                                ) : (
+                                  <>
+                                    <Edit3 className="h-4 w-4 mr-2 drop-shadow-sm" />
+                                    Edit Event Details
+                                  </>
+                                )}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleDeleteEvent(event)}
+                                disabled={deletingEventId === event.id}
+                                className="distinctive-button-danger w-full h-10 border-2 font-bold text-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 backdrop-blur-sm bg-gradient-to-r from-rose-50 via-rose-100 to-red-100 hover:from-rose-100 hover:via-rose-200 hover:to-red-200 border-rose-300/70 hover:border-rose-400 text-rose-800 hover:text-rose-900 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                              >
+                                {deletingEventId === event.id ? (
+                                  <>
+                                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-rose-800 border-t-transparent mr-2"></div>
+                                    Deleting...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Trash2 className="h-4 w-4 mr-2 drop-shadow-sm" />
+                                    Delete Event
+                                  </>
+                                )}
+                              </Button>
+                            </>
+                          ) : (
+                            <Button size="sm" variant="ghost" disabled className="distinctive-button-disabled w-full h-10 bg-gradient-to-r from-slate-100 to-slate-200 border-2 border-slate-300/50 text-slate-500 font-bold text-sm rounded-xl shadow-inner">
+                              <Eye className="h-4 w-4 mr-2" />
+                              View Only
+                            </Button>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
 
                   {/* Right Side - Event Schedule */}
-                  <div className="p-4 bg-slate-200/80 backdrop-blur-sm border-l border-border/60 flex flex-col justify-between min-h-[280px]">
-                    <div className="space-y-4 flex-1">
-                      {/* Event Schedule Section */}
-                      <div className="space-y-3 p-3 bg-white/90 backdrop-blur-sm rounded-lg border border-border/40 shadow-sm">
-                        <div className="flex items-center gap-2 mb-3">
-                          <div className="h-1 w-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full"></div>
-                          <div className="text-sm font-extrabold text-foreground uppercase tracking-wide">Event Schedule</div>
-                        </div>
+                  <div className="p-4 bg-slate-200/80 backdrop-blur-sm border-l border-border/60">
+                    {/* Event Schedule Section - All in One Box */}
+                    <div className="p-3 bg-white/90 backdrop-blur-sm rounded-lg border border-border/40 shadow-sm">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="h-1 w-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full"></div>
+                        <div className="text-sm font-extrabold text-foreground uppercase tracking-wide">Event Schedule</div>
+                      </div>
 
+                      <div className="space-y-3">
+                        {/* Document Info Row */}
                         {event.schedule ? (
-                          <div className="space-y-3">
-                            {/* Schedule File Info */}
-                            <div className="flex items-center gap-3 p-2.5 bg-white/90 backdrop-blur-sm rounded-lg border border-border/30 shadow-sm">
-                              <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                                <FileText className="h-4 w-4 text-blue-700" />
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <div className="text-xs font-medium text-muted-foreground">Document</div>
-                                <div className="text-sm font-bold text-foreground">{event.schedule?.fileName ?? 'Schedule.pdf'}</div>
-                              </div>
-                              <Button 
-                                size="sm" 
-                                variant="ghost" 
-                                onClick={() => {
-                                  if (event.schedule?.fileUrl) {
-                                    // Create a temporary link to download the file
-                                    const link = document.createElement('a');
-                                    link.href = event.schedule.fileUrl;
-                                    link.download = event.schedule.fileName ?? 'Schedule.pdf';
-                                    link.target = '_blank';
-                                    document.body.appendChild(link);
-                                    link.click();
-                                    document.body.removeChild(link);
-                                  }
-                                }}
-                                className="distinctive-button-icon h-8 w-8 p-0 bg-blue-100 hover:bg-blue-200 text-blue-700 hover:text-blue-900 rounded-lg border border-blue-300/60 hover:border-blue-400 shadow-sm hover:shadow-md transition-all duration-300"
-                              >
-                                <Download className="h-3 w-3" />
-                              </Button>
+                          <div className="flex items-center gap-3 p-2">
+                            <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                              <FileText className="h-4 w-4 text-blue-700" />
                             </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-xs font-medium text-muted-foreground">Document</div>
+                              <div className="text-sm font-bold text-foreground">{event.schedule?.fileName ?? 'Schedule.pdf'}</div>
+                            </div>
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              onClick={() => {
+                                if (event.schedule?.fileUrl) {
+                                  // Create a temporary link to download the file
+                                  const link = document.createElement('a');
+                                  link.href = event.schedule.fileUrl;
+                                  link.download = event.schedule.fileName ?? 'Schedule.pdf';
+                                  link.target = '_blank';
+                                  document.body.appendChild(link);
+                                  link.click();
+                                  document.body.removeChild(link);
+                                }
+                              }}
+                              className="distinctive-button-icon h-8 w-8 p-0 bg-blue-100 hover:bg-blue-200 text-blue-700 hover:text-blue-900 rounded-lg border border-blue-300/60 hover:border-blue-400 shadow-sm hover:shadow-md transition-all duration-300"
+                            >
+                              <Download className="h-3 w-3" />
+                            </Button>
                           </div>
                         ) : (
-                          <div className="space-y-3">
-                            {/* Upload Prompt */}
-                            <div className="bg-white/80 backdrop-blur-sm p-3 rounded-lg border border-border/40 text-center shadow-sm">
-                              <FileText className="h-8 w-8 text-blue-400 mx-auto mb-2" />
-                              <p className="text-xs text-blue-700 font-medium">
+                          <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border-2 border-orange-300 rounded-lg shadow-md animate-pulse">
+                            <div className="flex-shrink-0 w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center shadow-lg">
+                              <FileText className="h-5 w-5 text-white animate-bounce" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-xs font-bold text-orange-700 uppercase tracking-wide">⚠️ Action Required</div>
+                              <div className="text-base font-extrabold text-orange-900">
                                 Upload your event schedule for approval
-                              </p>
+                              </div>
                             </div>
                           </div>
                         )}
-                      </div>
 
-                      {/* Schedule Status Section removed as requested */}
-                    </div>
-
-                    {/* Schedule Action Button - Moved to bottom */}
-                    <div className="pt-4 mt-auto">
-                      <div className="p-2 bg-white/80 backdrop-blur-sm rounded-lg border border-border/50 shadow-sm">
-                        <EventScheduleUpload 
-                          eventId={event.id} 
-                          existingSchedule={event.schedule}
-                          onUploadSuccess={(schedule) => onEventUpdate()} 
-                        />
+                        {/* Upload Section - Integrated */}
+                        <div className="pt-2 border-t border-border/30">
+                          <EventScheduleUpload 
+                            eventId={event.id} 
+                            existingSchedule={event.schedule}
+                            onUploadSuccess={(schedule) => onEventUpdate()} 
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>

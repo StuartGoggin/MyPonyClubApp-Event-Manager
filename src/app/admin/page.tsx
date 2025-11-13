@@ -348,6 +348,21 @@ async function AdminDashboardContent() {
         </div>
       </div>
 
+      {/* Backups Section */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+          <Database className="h-5 w-5 text-violet-600" />
+          Backups
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Data Export */}
+          <DataExportTile />
+
+          {/* Automatic Backup Scheduling */}
+          <BackupScheduleTile />
+        </div>
+      </div>
+
       {/* Data Management Section */}
       <div className="space-y-4">
         <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
@@ -388,12 +403,6 @@ async function AdminDashboardContent() {
               </div>
             </div>
           </div>
-
-          {/* Data Export */}
-          <DataExportTile />
-
-          {/* Automatic Backup Scheduling */}
-          <BackupScheduleTile />
         </div>
       </div>
 

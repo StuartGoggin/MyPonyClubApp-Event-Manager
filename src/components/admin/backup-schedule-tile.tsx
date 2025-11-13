@@ -241,21 +241,26 @@ export function BackupScheduleTile({ onScheduleCreated }: BackupScheduleTileProp
     });
   };
 
-  const formatNextRun = (date: Date | undefined) => {
+  const formatNextRun = (date: Date | string | undefined) => {
     if (!date) return 'Not scheduled';
     
-    // Handle both Date objects and date strings
-    const dateObj = date instanceof Date ? date : new Date(date);
-    
-    // Check if the date is valid
-    if (isNaN(dateObj.getTime())) {
-      return 'Invalid date';
+    try {
+      // Handle both Date objects and date strings
+      const dateObj = date instanceof Date ? date : new Date(date);
+      
+      // Check if the date is valid
+      if (isNaN(dateObj.getTime())) {
+        return 'Not scheduled';
+      }
+      
+      return new Intl.DateTimeFormat('en-US', {
+        dateStyle: 'medium',
+        timeStyle: 'short'
+      }).format(dateObj);
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Not scheduled';
     }
-    
-    return new Intl.DateTimeFormat('en-US', {
-      dateStyle: 'medium',
-      timeStyle: 'short'
-    }).format(dateObj);
   };
 
   return (
@@ -286,17 +291,15 @@ export function BackupScheduleTile({ onScheduleCreated }: BackupScheduleTileProp
           </div>
 
           {/* Next scheduled backup */}
-          {stats?.nextScheduledBackup && (
-            <div className="p-3 bg-orange-50/50 dark:bg-orange-950/20 rounded-lg border border-orange-200/30">
-              <div className="flex items-center gap-2 text-sm">
-                <Calendar className="h-4 w-4 text-orange-600" />
-                <span className="text-muted-foreground">Next backup:</span>
-              </div>
-              <div className="text-sm font-medium">
-                {formatNextRun(stats.nextScheduledBackup)}
-              </div>
+          <div className="p-3 bg-orange-50/50 dark:bg-orange-950/20 rounded-lg border border-orange-200/30">
+            <div className="flex items-center gap-2 text-sm">
+              <Calendar className="h-4 w-4 text-orange-600" />
+              <span className="text-muted-foreground">Next backup:</span>
             </div>
-          )}
+            <div className="text-sm font-medium">
+              {stats?.nextScheduledBackup ? formatNextRun(stats.nextScheduledBackup) : 'Not scheduled'}
+            </div>
+          </div>
 
           {/* Schedule list */}
           {schedules.length > 0 && (

@@ -84,6 +84,9 @@ export interface BackupExecution {
       clubs: number;
       zones: number;
       eventTypes: number;
+      emailQueue: number;
+      emailLogs: number;
+      emailTemplates: number;
     };
     executionDuration: number; // milliseconds
     triggeredBy: 'schedule' | 'manual';

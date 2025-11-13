@@ -40,7 +40,7 @@ export function BackupScheduleTile({ onScheduleCreated }: BackupScheduleTileProp
     emailRecipients: '',
     emailSubject: 'Automated Backup - {date}',
     storageProvider: 'firebase' as 'firebase' | 'aws-s3' | 'google-drive',
-    storagePath: '/backups',
+    storagePath: 'backups',
     retentionDays: 30,
     includeEvents: true,
     includeUsers: true,
@@ -226,7 +226,7 @@ export function BackupScheduleTile({ onScheduleCreated }: BackupScheduleTileProp
       emailRecipients: '',
       emailSubject: 'Automated Backup - {date}',
       storageProvider: 'firebase',
-      storagePath: '/backups',
+      storagePath: 'backups',
       retentionDays: 30,
       includeEvents: true,
       includeUsers: true,
@@ -540,8 +540,9 @@ export function BackupScheduleTile({ onScheduleCreated }: BackupScheduleTileProp
                             id="storagePath"
                             value={formData.storagePath}
                             onChange={(e) => setFormData(prev => ({ ...prev, storagePath: e.target.value }))}
-                            placeholder="/backups"
+                            placeholder="backups"
                           />
+                          <p className="text-xs text-gray-500">Path in Firebase Storage (no leading slash)</p>
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="retentionDays">Retention (Days)</Label>

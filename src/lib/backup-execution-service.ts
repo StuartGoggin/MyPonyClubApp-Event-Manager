@@ -1,8 +1,10 @@
 import { BackupScheduleService } from './backup-schedule-service';
 import { BackupSchedule, BackupExecution } from './types-backup';
-import { getAllClubs, getAllZones, getAllEventTypes } from './server-data';
+import { getAllClubs, getAllZones, getAllEventTypes, getAllEvents } from './server-data';
+import { UserService } from './user-service';
 import { sendBackupEmail } from './backup-email-service';
 import { bucket } from './firebase-admin';
+import { getQueuedEmails, getEmailLogs, getEmailQueueConfig, getEmailTemplates } from './email-queue-admin';
 import JSZip from 'jszip';
 
 export class BackupExecutionService {
@@ -22,7 +24,10 @@ export class BackupExecutionService {
           users: 0,
           clubs: 0,
           zones: 0,
-          eventTypes: 0
+          eventTypes: 0,
+          emailQueue: 0,
+          emailLogs: 0,
+          emailTemplates: 0
         },
         executionDuration: 0,
         triggeredBy: 'schedule'
@@ -117,6 +122,9 @@ export class BackupExecutionService {
       clubs: number;
       zones: number;
       eventTypes: number;
+      emailQueue: number;
+      emailLogs: number;
+      emailTemplates: number;
     };
   }> {
     const exportData: any = {};
@@ -125,36 +133,76 @@ export class BackupExecutionService {
       users: 0,
       clubs: 0,
       zones: 0,
-      eventTypes: 0
+      eventTypes: 0,
+      emailQueue: 0,
+      emailLogs: 0,
+      emailTemplates: 0
     };
 
     try {
+      console.log('📦 Preparing backup data based on export configuration...');
+      
       // Fetch data based on export configuration
       if (schedule.exportConfig.includeClubs) {
+        console.log('🏇 Fetching clubs for backup...');
         exportData.clubs = await getAllClubs();
         recordCounts.clubs = exportData.clubs.length;
+        console.log(`✅ Exported ${recordCounts.clubs} clubs`);
       }
 
       if (schedule.exportConfig.includeZones) {
+        console.log('🗺️ Fetching zones for backup...');
         exportData.zones = await getAllZones();
         recordCounts.zones = exportData.zones.length;
+        console.log(`✅ Exported ${recordCounts.zones} zones`);
       }
 
       if (schedule.exportConfig.includeEventTypes) {
+        console.log('📋 Fetching event types for backup...');
         exportData.eventTypes = await getAllEventTypes();
         recordCounts.eventTypes = exportData.eventTypes.length;
+        console.log(`✅ Exported ${recordCounts.eventTypes} event types`);
       }
 
-      // TODO: Add events and users when those services are implemented
+      // Fetch events if requested
       if (schedule.exportConfig.includeEvents) {
-        exportData.events = []; // Placeholder
-        recordCounts.events = 0;
+        console.log('📅 Fetching events for backup...');
+        exportData.events = await getAllEvents();
+        recordCounts.events = exportData.events.length;
+        console.log(`✅ Exported ${recordCounts.events} events`);
       }
 
+      // Fetch users if requested
       if (schedule.exportConfig.includeUsers) {
-        exportData.users = []; // Placeholder
-        recordCounts.users = 0;
+        console.log('👥 Fetching users for backup...');
+        // Get all users (both active and inactive for complete backup)
+        exportData.users = await UserService.getUsers({});
+        recordCounts.users = exportData.users.length;
+        console.log(`✅ Exported ${recordCounts.users} users`);
       }
+
+      // Fetch email queue (approval workflow history)
+      console.log('📧 Fetching email queue for backup...');
+      exportData.emailQueue = await getQueuedEmails();
+      recordCounts.emailQueue = exportData.emailQueue.length;
+      console.log(`✅ Exported ${recordCounts.emailQueue} email queue records`);
+
+      // Fetch email logs (audit trail)
+      console.log('📜 Fetching email logs for backup...');
+      exportData.emailLogs = await getEmailLogs(10000); // Get up to 10k logs
+      recordCounts.emailLogs = exportData.emailLogs.length;
+      console.log(`✅ Exported ${recordCounts.emailLogs} email logs`);
+
+      // Fetch email templates
+      console.log('📝 Fetching email templates for backup...');
+      exportData.emailTemplates = await getEmailTemplates();
+      recordCounts.emailTemplates = exportData.emailTemplates.length;
+      console.log(`✅ Exported ${recordCounts.emailTemplates} email templates`);
+
+      // Fetch email configuration
+      console.log('⚙️ Fetching email configuration for backup...');
+      exportData.emailConfig = await getEmailQueueConfig();
+      console.log(`✅ Exported email configuration`);
 
       // Add metadata if requested
       if (schedule.exportConfig.includeMetadata) {
@@ -169,11 +217,38 @@ export class BackupExecutionService {
         };
       }
 
+      // Log summary of exported data
+      const totalRecords = Object.values(recordCounts).reduce((sum, count) => sum + count, 0);
+      console.log('\n📊 Backup Data Summary:');
+      console.log(`   Total Records: ${totalRecords}`);
+      if (recordCounts.events > 0) console.log(`   - Events: ${recordCounts.events}`);
+      if (recordCounts.users > 0) console.log(`   - Users: ${recordCounts.users}`);
+      if (recordCounts.clubs > 0) console.log(`   - Clubs: ${recordCounts.clubs}`);
+      if (recordCounts.zones > 0) console.log(`   - Zones: ${recordCounts.zones}`);
+      if (recordCounts.eventTypes > 0) console.log(`   - Event Types: ${recordCounts.eventTypes}`);
+      if (recordCounts.emailQueue > 0) console.log(`   - Email Queue: ${recordCounts.emailQueue}`);
+      if (recordCounts.emailLogs > 0) console.log(`   - Email Logs: ${recordCounts.emailLogs}`);
+      if (recordCounts.emailTemplates > 0) console.log(`   - Email Templates: ${recordCounts.emailTemplates}`);
+      console.log('');
+
       return { data: exportData, recordCounts };
     } catch (error) {
       console.error('Error preparing export data:', error);
       throw new Error('Failed to prepare export data');
     }
+  }
+
+  /**
+   * Serialize data for JSON export (handles Dates, etc.)
+   */
+  private static serializeForExport(data: any): string {
+    return JSON.stringify(data, (key, value) => {
+      // Convert Date objects to ISO strings for consistent format
+      if (value instanceof Date) {
+        return value.toISOString();
+      }
+      return value;
+    }, 2);
   }
 
   /**
@@ -184,29 +259,52 @@ export class BackupExecutionService {
     schedule: BackupSchedule
   ): Promise<Buffer> {
     try {
+      console.log('📦 Creating backup ZIP file...');
       const zip = new JSZip();
       const { data } = exportData;
 
-      // Add data files
-      if (data.clubs) {
-        zip.file('clubs.json', JSON.stringify(data.clubs, null, 2));
+      // Add data files with proper serialization
+      if (data.clubs && data.clubs.length > 0) {
+        console.log(`   Adding clubs.json (${data.clubs.length} records)`);
+        zip.file('clubs.json', this.serializeForExport(data.clubs));
       }
-      if (data.zones) {
-        zip.file('zones.json', JSON.stringify(data.zones, null, 2));
+      if (data.zones && data.zones.length > 0) {
+        console.log(`   Adding zones.json (${data.zones.length} records)`);
+        zip.file('zones.json', this.serializeForExport(data.zones));
       }
-      if (data.eventTypes) {
-        zip.file('event-types.json', JSON.stringify(data.eventTypes, null, 2));
+      if (data.eventTypes && data.eventTypes.length > 0) {
+        console.log(`   Adding event-types.json (${data.eventTypes.length} records)`);
+        zip.file('event-types.json', this.serializeForExport(data.eventTypes));
       }
-      if (data.events) {
-        zip.file('events.json', JSON.stringify(data.events, null, 2));
+      if (data.events && data.events.length > 0) {
+        console.log(`   Adding events.json (${data.events.length} records)`);
+        zip.file('events.json', this.serializeForExport(data.events));
       }
-      if (data.users) {
-        zip.file('users.json', JSON.stringify(data.users, null, 2));
+      if (data.users && data.users.length > 0) {
+        console.log(`   Adding users.json (${data.users.length} records)`);
+        zip.file('users.json', this.serializeForExport(data.users));
+      }
+      if (data.emailQueue && data.emailQueue.length > 0) {
+        console.log(`   Adding email-queue.json (${data.emailQueue.length} records)`);
+        zip.file('email-queue.json', this.serializeForExport(data.emailQueue));
+      }
+      if (data.emailLogs && data.emailLogs.length > 0) {
+        console.log(`   Adding email-logs.json (${data.emailLogs.length} records)`);
+        zip.file('email-logs.json', this.serializeForExport(data.emailLogs));
+      }
+      if (data.emailTemplates && data.emailTemplates.length > 0) {
+        console.log(`   Adding email-templates.json (${data.emailTemplates.length} records)`);
+        zip.file('email-templates.json', this.serializeForExport(data.emailTemplates));
+      }
+      if (data.emailConfig) {
+        console.log('   Adding email-config.json');
+        zip.file('email-config.json', this.serializeForExport(data.emailConfig));
       }
 
       // Add metadata if requested
       if (schedule.exportConfig.includeMetadata && data.exportInfo) {
-        zip.file('export-info.json', JSON.stringify(data.exportInfo, null, 2));
+        console.log('   Adding export-info.json');
+        zip.file('export-info.json', this.serializeForExport(data.exportInfo));
       }
 
       // Add manifest if requested
@@ -218,18 +316,19 @@ export class BackupExecutionService {
           scheduleId: schedule.id,
           totalRecords: exportData.recordCounts,
           files: Object.keys(data)
-            .filter(key => key !== 'exportInfo')
+            .filter(key => key !== 'exportInfo' && Array.isArray(data[key]) && data[key].length > 0)
             .map(key => ({
               name: `${key}.json`,
-              size: JSON.stringify(data[key]).length,
-              records: Array.isArray(data[key]) ? data[key].length : 1
+              size: this.serializeForExport(data[key]).length,
+              records: data[key].length
             })),
           metadata: {
             compressionLevel: schedule.exportConfig.compressionLevel,
             createdBy: 'BackupScheduler'
           }
         };
-        zip.file('manifest.json', JSON.stringify(manifest, null, 2));
+        console.log('   Adding manifest.json');
+        zip.file('manifest.json', this.serializeForExport(manifest));
       }
 
       // Add README
@@ -379,7 +478,9 @@ export class BackupExecutionService {
     try {
       const timestamp = new Date().toISOString().split('T')[0];
       const filename = `backup-${schedule.name.replace(/[^a-z0-9]/gi, '-')}-${timestamp}.zip`;
-      const fullPath = `${storageConfig.path}/${filename}`.replace(/\/+/g, '/');
+      // Remove leading slash to avoid creating root directory
+      const cleanPath = storageConfig.path.replace(/^\/+/, '');
+      const fullPath = `${cleanPath}/${filename}`.replace(/\/+/g, '/');
 
       switch (storageConfig.provider) {
         case 'firebase':

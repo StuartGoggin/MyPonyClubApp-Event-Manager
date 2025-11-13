@@ -302,6 +302,12 @@ export function BackupHistoryTile() {
                           {execution.metadata.exportedRecords.clubs > 0 && (
                             <div>Clubs: {execution.metadata.exportedRecords.clubs}</div>
                           )}
+                          {execution.metadata.exportedRecords.emailQueue > 0 && (
+                            <div>Email Queue: {execution.metadata.exportedRecords.emailQueue}</div>
+                          )}
+                          {execution.metadata.exportedRecords.emailLogs > 0 && (
+                            <div>Email Logs: {execution.metadata.exportedRecords.emailLogs}</div>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -390,6 +396,18 @@ export function BackupHistoryTile() {
                   <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded">
                     <div className="text-xs text-gray-600 dark:text-gray-400">Zones</div>
                     <div className="text-lg font-semibold">{selectedExecution.metadata.exportedRecords.zones}</div>
+                  </div>
+                  <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded">
+                    <div className="text-xs text-gray-600 dark:text-gray-400">Email Queue</div>
+                    <div className="text-lg font-semibold">{selectedExecution.metadata.exportedRecords.emailQueue}</div>
+                  </div>
+                  <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded">
+                    <div className="text-xs text-gray-600 dark:text-gray-400">Email Logs</div>
+                    <div className="text-lg font-semibold">{selectedExecution.metadata.exportedRecords.emailLogs}</div>
+                  </div>
+                  <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded">
+                    <div className="text-xs text-gray-600 dark:text-gray-400">Email Templates</div>
+                    <div className="text-lg font-semibold">{selectedExecution.metadata.exportedRecords.emailTemplates}</div>
                   </div>
                 </div>
               </div>

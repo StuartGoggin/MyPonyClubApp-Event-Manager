@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { CheckCircle, XCircle, Clock, Calendar, MapPin, User, FileText, AlertTriangle, Download, ExternalLink } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Calendar, MapPin, User, FileText, AlertTriangle, Download, ExternalLink, Sparkles, ChevronRight, AlertCircle, CheckCircleIcon } from 'lucide-react';
 import { Event, Club, EventType } from '@/lib/types';
 import { EventRailwayProgress } from '../club-manager/event-railway-progress';
 import { cn } from '@/lib/utils';
@@ -62,9 +62,11 @@ export function ZoneScheduleApproval({
   onEventUpdate 
 }: ZoneScheduleApprovalProps) {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-  const [dialogType, setDialogType] = useState<'approve' | 'reject' | null>(null);
+  const [dialogType, setDialogType] = useState<'approve' | 'reject' | 'ai-report' | null>(null);
   const [comment, setComment] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [aiReviewingEventId, setAiReviewingEventId] = useState<string | null>(null);
+  const [expandedAiReview, setExpandedAiReview] = useState<string | null>(null);
 
   // Filter events that have schedules pending approval
   const pendingSchedules = events.filter(event => 
@@ -132,6 +134,70 @@ export function ZoneScheduleApproval({
     setDialogType(null);
     setSelectedEvent(null);
     setComment('');
+  };
+
+  const handleRequestAiReview = async (event: Event) => {
+    setAiReviewingEventId(event.id);
+    try {
+      const response = await fetch(`/api/events/${event.id}/ai-review`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to perform AI review');
+      }
+
+      // Refresh data to show the new AI review
+      onEventUpdate();
+    } catch (error) {
+      console.error('Error requesting AI review:', error);
+      alert('Failed to perform AI review. Please try again.');
+    } finally {
+      setAiReviewingEventId(null);
+    }
+  };
+
+  const handleViewFullAiReport = (event: Event) => {
+    setSelectedEvent(event);
+    setDialogType('ai-report');
+  };
+
+  const handleDownloadAiReport = (event: Event) => {
+    if (!event.schedule?.aiReview) return;
+
+    const report = `AI Schedule Compliance Review
+Event: ${event.name}
+Date: ${formatDate(event.date)}
+Review Date: ${formatDate(event.schedule.aiReview.reviewedAt)}
+Model: ${event.schedule.aiReview.model}
+
+SUMMARY
+${event.schedule.aiReview.summary}
+
+COMPLIANCE SCORE: ${event.schedule.aiReview.overallScore}/100
+STATUS: ${event.schedule.aiReview.compliant ? 'COMPLIANT' : 'NON-COMPLIANT'}
+
+ISSUES FOUND (${event.schedule.aiReview.issues.length})
+${event.schedule.aiReview.issues.map((issue, index) => `
+${index + 1}. [${issue.severity.toUpperCase()}] ${issue.category.toUpperCase()}
+   ${issue.description}
+`).join('\n')}
+
+SUGGESTIONS (${event.schedule.aiReview.suggestions.length})
+${event.schedule.aiReview.suggestions.map((suggestion, index) => `
+${index + 1}. ${suggestion}
+`).join('\n')}
+`;
+
+    const blob = new Blob([report], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `AI-Review-${event.name.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -250,6 +316,170 @@ export function ZoneScheduleApproval({
                   </div>
                 </div>
 
+                {/* AI Compliance Review */}
+                <div className="rounded-lg border-2 border-purple-200/60 dark:border-purple-700/60 bg-gradient-to-br from-purple-50/90 to-violet-50/80 dark:from-purple-950/30 dark:to-violet-950/20 p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-semibold text-purple-900 dark:text-purple-100 uppercase tracking-wide flex items-center gap-2">
+                      <Sparkles className="h-4 w-4" />
+                      AI Compliance Review
+                    </h4>
+                    {!event.schedule?.aiReview && (
+                      <Button
+                        size="sm"
+                        onClick={() => handleRequestAiReview(event)}
+                        disabled={aiReviewingEventId === event.id}
+                        className="bg-purple-600 hover:bg-purple-700 text-white"
+                      >
+                        {aiReviewingEventId === event.id ? (
+                          <>
+                            <Clock className="h-3 w-3 mr-1 animate-spin" />
+                            Analyzing...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="h-3 w-3 mr-1" />
+                            Run AI Review
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </div>
+
+                  {event.schedule?.aiReview ? (
+                    <div className="space-y-3">
+                      {/* Summary Card */}
+                      <div className="p-3 bg-white/60 dark:bg-slate-900/40 rounded-lg border border-purple-300/40 dark:border-purple-700/40">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <div className={cn(
+                              "w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold",
+                              event.schedule.aiReview.overallScore >= 80 ? "bg-green-100 text-green-700" :
+                              event.schedule.aiReview.overallScore >= 60 ? "bg-yellow-100 text-yellow-700" :
+                              "bg-red-100 text-red-700"
+                            )}>
+                              {event.schedule.aiReview.overallScore}
+                            </div>
+                            <div>
+                              <div className="text-xs font-semibold text-purple-900 dark:text-purple-100 uppercase tracking-wide">
+                                Compliance Score
+                              </div>
+                              <Badge className={cn(
+                                "mt-1",
+                                event.schedule.aiReview.compliant 
+                                  ? "bg-green-600" 
+                                  : "bg-orange-600"
+                              )}>
+                                {event.schedule.aiReview.compliant ? (
+                                  <>
+                                    <CheckCircleIcon className="h-3 w-3 mr-1" />
+                                    Compliant
+                                  </>
+                                ) : (
+                                  <>
+                                    <AlertCircle className="h-3 w-3 mr-1" />
+                                    Needs Attention
+                                  </>
+                                )}
+                              </Badge>
+                            </div>
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {formatDate(event.schedule.aiReview.reviewedAt)}
+                          </div>
+                        </div>
+                        <p className="text-sm text-purple-800 dark:text-purple-200">
+                          {event.schedule.aiReview.summary}
+                        </p>
+                      </div>
+
+                      {/* Issues Summary - Collapsible */}
+                      {event.schedule.aiReview.issues.length > 0 && (
+                        <div className="p-3 bg-white/60 dark:bg-slate-900/40 rounded-lg border border-purple-300/40 dark:border-purple-700/40">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="text-xs font-semibold text-purple-900 dark:text-purple-100 uppercase tracking-wide">
+                              Issues Found ({event.schedule.aiReview.issues.length})
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setExpandedAiReview(
+                                expandedAiReview === event.id ? null : event.id
+                              )}
+                              className="h-6 px-2"
+                            >
+                              {expandedAiReview === event.id ? 'Show Less' : 'Show All'}
+                              <ChevronRight className={cn(
+                                "h-3 w-3 ml-1 transition-transform",
+                                expandedAiReview === event.id && "rotate-90"
+                              )} />
+                            </Button>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            {(expandedAiReview === event.id 
+                              ? event.schedule.aiReview.issues 
+                              : event.schedule.aiReview.issues.slice(0, 3)
+                            ).map((issue, index) => (
+                              <div key={index} className="flex items-start gap-2 text-sm">
+                                <div className={cn(
+                                  "mt-0.5 rounded px-1.5 py-0.5 text-xs font-bold uppercase",
+                                  issue.severity === 'high' ? "bg-red-100 text-red-700" :
+                                  issue.severity === 'medium' ? "bg-yellow-100 text-yellow-700" :
+                                  "bg-blue-100 text-blue-700"
+                                )}>
+                                  {issue.severity}
+                                </div>
+                                <div className="flex-1">
+                                  <span className="font-medium text-purple-900 dark:text-purple-100">
+                                    {issue.category}:
+                                  </span>
+                                  <span className="text-purple-800 dark:text-purple-200 ml-1">
+                                    {issue.description}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                            {!expandedAiReview && event.schedule.aiReview.issues.length > 3 && (
+                              <div className="text-xs text-muted-foreground text-center pt-1">
+                                +{event.schedule.aiReview.issues.length - 3} more issues
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Action Buttons */}
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleViewFullAiReport(event)}
+                          className="flex-1 border-purple-300 dark:border-purple-700"
+                        >
+                          <FileText className="h-4 w-4 mr-1" />
+                          View Full Report
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDownloadAiReport(event)}
+                          className="flex-1 border-purple-300 dark:border-purple-700"
+                        >
+                          <Download className="h-4 w-4 mr-1" />
+                          Download Report
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-4">
+                      <Sparkles className="h-8 w-8 mx-auto mb-2 text-purple-400" />
+                      <p className="text-sm text-purple-700 dark:text-purple-300">
+                        Click "Run AI Review" to analyze this schedule for compliance issues
+                      </p>
+                    </div>
+                  )}
+                </div>
+
                 {/* Event Details */}
                 {event.description && (
                   <div className="space-y-2 text-sm">
@@ -345,74 +575,180 @@ export function ZoneScheduleApproval({
 
       {/* Confirmation Dialog */}
       <Dialog open={dialogType !== null} onOpenChange={(open) => !open && handleCancelAction()}>
-        <DialogContent>
+        <DialogContent className={dialogType === 'ai-report' ? 'max-w-4xl max-h-[80vh] overflow-y-auto' : ''}>
           <DialogHeader>
             <DialogTitle>
-              {dialogType === 'approve' ? 'Approve Schedule' : 'Request Changes to Schedule'}
+              {dialogType === 'approve' && 'Approve Schedule'}
+              {dialogType === 'reject' && 'Request Changes to Schedule'}
+              {dialogType === 'ai-report' && 'AI Compliance Review - Full Report'}
             </DialogTitle>
             <DialogDescription>
-              {dialogType === 'approve' 
-                ? `You are about to approve the schedule for "${selectedEvent?.name}". This will notify the club that their schedule is approved.`
-                : `You are about to request changes to the schedule for "${selectedEvent?.name}". The club will be notified and can resubmit.`
+              {dialogType === 'approve' && 
+                `You are about to approve the schedule for "${selectedEvent?.name}". This will notify the club that their schedule is approved.`
+              }
+              {dialogType === 'reject' &&
+                `You are about to request changes to the schedule for "${selectedEvent?.name}". The club will be notified and can resubmit.`
+              }
+              {dialogType === 'ai-report' &&
+                `Detailed AI analysis of the schedule for "${selectedEvent?.name}"`
               }
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="comment">
-                {dialogType === 'approve' ? 'Comments (Optional)' : 'Reason for Changes (Required)'}
-              </Label>
-              <Textarea
-                id="comment"
-                placeholder={
-                  dialogType === 'approve'
-                    ? "Add any comments or notes..."
-                    : "Please explain what changes are needed..."
-                }
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                rows={4}
-                required={dialogType === 'reject'}
-              />
+          {dialogType === 'ai-report' && selectedEvent?.schedule?.aiReview ? (
+            <div className="space-y-6">
+              {/* Score Overview */}
+              <div className="flex items-center gap-4 p-4 bg-purple-50 dark:bg-purple-950/20 rounded-lg">
+                <div className={cn(
+                  "w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold",
+                  selectedEvent.schedule.aiReview.overallScore >= 80 ? "bg-green-100 text-green-700" :
+                  selectedEvent.schedule.aiReview.overallScore >= 60 ? "bg-yellow-100 text-yellow-700" :
+                  "bg-red-100 text-red-700"
+                )}>
+                  {selectedEvent.schedule.aiReview.overallScore}
+                </div>
+                <div className="flex-1">
+                  <div className="text-lg font-bold">Compliance Score</div>
+                  <Badge className={cn(
+                    "mt-1",
+                    selectedEvent.schedule.aiReview.compliant 
+                      ? "bg-green-600" 
+                      : "bg-orange-600"
+                  )}>
+                    {selectedEvent.schedule.aiReview.compliant ? 'Compliant' : 'Needs Attention'}
+                  </Badge>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Reviewed: {formatDate(selectedEvent.schedule.aiReview.reviewedAt)}
+                  </div>
+                </div>
+              </div>
+
+              {/* Summary */}
+              <div>
+                <h4 className="font-semibold mb-2">Summary</h4>
+                <p className="text-sm text-muted-foreground">{selectedEvent.schedule.aiReview.summary}</p>
+              </div>
+
+              {/* Issues */}
+              {selectedEvent.schedule.aiReview.issues.length > 0 && (
+                <div>
+                  <h4 className="font-semibold mb-3">Issues Found ({selectedEvent.schedule.aiReview.issues.length})</h4>
+                  <div className="space-y-3">
+                    {selectedEvent.schedule.aiReview.issues.map((issue, index) => (
+                      <div key={index} className="p-3 bg-white dark:bg-slate-900 rounded-lg border">
+                        <div className="flex items-start gap-3">
+                          <div className={cn(
+                            "mt-0.5 rounded px-2 py-1 text-xs font-bold uppercase",
+                            issue.severity === 'high' ? "bg-red-100 text-red-700" :
+                            issue.severity === 'medium' ? "bg-yellow-100 text-yellow-700" :
+                            "bg-blue-100 text-blue-700"
+                          )}>
+                            {issue.severity}
+                          </div>
+                          <div className="flex-1">
+                            <div className="font-medium text-sm mb-1 uppercase tracking-wide">
+                              {issue.category}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {issue.description}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Suggestions */}
+              {selectedEvent.schedule.aiReview.suggestions.length > 0 && (
+                <div>
+                  <h4 className="font-semibold mb-3">Suggestions ({selectedEvent.schedule.aiReview.suggestions.length})</h4>
+                  <ul className="space-y-2">
+                    {selectedEvent.schedule.aiReview.suggestions.map((suggestion, index) => (
+                      <li key={index} className="flex items-start gap-2 text-sm">
+                        <CheckCircle className="h-4 w-4 mt-0.5 text-green-600 flex-shrink-0" />
+                        <span>{suggestion}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
-          </div>
+          ) : dialogType !== 'ai-report' && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="comment">
+                  {dialogType === 'approve' ? 'Comments (Optional)' : 'Reason for Changes (Required)'}
+                </Label>
+                <Textarea
+                  id="comment"
+                  placeholder={
+                    dialogType === 'approve'
+                      ? "Add any comments or notes..."
+                      : "Please explain what changes are needed..."
+                  }
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  rows={4}
+                  required={dialogType === 'reject'}
+                />
+              </div>
+            </div>
+          )}
 
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={handleCancelAction}
-              disabled={isProcessing}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleConfirmAction}
-              disabled={isProcessing || (dialogType === 'reject' && !comment.trim())}
-              className={cn(
-                dialogType === 'approve' 
-                  ? "bg-emerald-600 hover:bg-emerald-700" 
-                  : "bg-red-600 hover:bg-red-700"
-              )}
-            >
-              {isProcessing ? (
-                <>Processing...</>
-              ) : (
-                <>
-                  {dialogType === 'approve' ? (
-                    <>
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Approve Schedule
-                    </>
+            {dialogType === 'ai-report' ? (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => selectedEvent && handleDownloadAiReport(selectedEvent)}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download Report
+                </Button>
+                <Button onClick={handleCancelAction}>
+                  Close
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={handleCancelAction}
+                  disabled={isProcessing}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleConfirmAction}
+                  disabled={isProcessing || (dialogType === 'reject' && !comment.trim())}
+                  className={cn(
+                    dialogType === 'approve' 
+                      ? "bg-emerald-600 hover:bg-emerald-700" 
+                      : "bg-red-600 hover:bg-red-700"
+                  )}
+                >
+                  {isProcessing ? (
+                    <>Processing...</>
                   ) : (
                     <>
-                      <XCircle className="h-4 w-4 mr-2" />
-                      Request Changes
+                      {dialogType === 'approve' ? (
+                        <>
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Approve Schedule
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="h-4 w-4 mr-2" />
+                          Request Changes
+                        </>
+                      )}
                     </>
                   )}
-                </>
-              )}
-            </Button>
+                </Button>
+              </>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

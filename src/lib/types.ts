@@ -201,6 +201,23 @@ export type EventStatus = 'proposed' | 'approved' | 'rejected' | 'public_holiday
 export type EventSource = 'pca' | 'zone' | 'public_holiday';
 export type EventScheduleStatus = 'missing' | 'pending' | 'approved' | 'rejected';
 
+export interface AIReviewIssue {
+  severity: 'high' | 'medium' | 'low';
+  category: 'safety' | 'timing' | 'compliance' | 'content';
+  description: string;
+}
+
+export interface ScheduleAIReview {
+  summary: string;
+  issues: AIReviewIssue[];
+  suggestions: string[];
+  overallScore: number; // 0-100
+  compliant: boolean;
+  reviewedAt: Date;
+  model: string;
+  rawResponse?: string;
+}
+
 export interface EventSchedule {
   id: string;
   eventId: string;
@@ -215,6 +232,7 @@ export interface EventSchedule {
   reviewedAt?: Date;
   reviewComment?: string; // Comments from reviewer (approval or rejection feedback)
   notes?: string;
+  aiReview?: ScheduleAIReview; // AI-powered compliance review
 }
 
 // User Management Types

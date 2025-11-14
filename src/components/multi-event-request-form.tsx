@@ -132,6 +132,11 @@ export function MultiEventRequestForm({
     },
   });
 
+  // Scroll to top on component mount (mobile fix - prevents focus from jumping to middle of page)
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, []);
+
   // Initialize nameSearchTerm with form value
   useEffect(() => {
     const currentName = form.watch('submittedBy');

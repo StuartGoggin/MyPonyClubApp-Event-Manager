@@ -29,7 +29,7 @@ export default async function RequestEventPage() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" id="page-top">
       <RequestEventHeader />
       <MultiEventRequestForm clubs={clubs} eventTypes={eventTypes} zones={zones} />
     </div>

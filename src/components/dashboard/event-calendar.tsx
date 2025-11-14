@@ -800,15 +800,15 @@ const CalendarGrid = ({
   }, [events, month, isYearView]);
 
   return (
-    <div className={cn("enhanced-card rounded-lg border shadow-md", { "p-2": isYearView, "p-4": !isYearView })}>
+    <div className={cn("enhanced-card rounded-lg border shadow-md overflow-x-auto", { "p-2": isYearView, "p-4": !isYearView })}>
       {isYearView && (
         <h3 className="text-base font-semibold font-headline mb-2 text-center bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{format(month, 'MMMM')}</h3>
       )}
-  <table className={cn("w-full max-w-full text-xs text-center font-medium text-muted-foreground bg-muted/30 rounded-t-lg", { "max-h-[22rem]": isYearView, "overflow-y-auto": isYearView, "p-2": isYearView })}>
+  <table className={cn("w-full min-w-full text-xs text-center font-medium text-muted-foreground bg-muted/30 rounded-t-lg", { "max-h-[22rem]": isYearView, "overflow-y-auto": isYearView, "p-2": isYearView })}>
         <thead>
           <tr>
             {dayOrder.map((day) => (
-              <th key={day} className="py-3 font-semibold">{day}</th>
+              <th key={day} className="py-2 sm:py-3 font-semibold text-[10px] sm:text-xs">{day}</th>
             ))}
           </tr>
         </thead>
@@ -839,7 +839,7 @@ const CalendarGrid = ({
                   const isDayActiveInMonth = activeDaysOfMonth.has(dayIdx);
                   const isDayInCurrentMonth = isSameMonth(day, month);
                   return (
-                    <td key={day.toString()} className={cn('relative p-1.5 min-h-[6rem] align-top', {
+                    <td key={day.toString()} className={cn('relative p-0.5 sm:p-1.5 min-h-[4rem] sm:min-h-[6rem] align-top', {
                       'text-muted-foreground': !isDayInCurrentMonth,
                       // Uniform darker blue for weekends
                       'bg-blue-100': isSaturday || isSunday,
@@ -848,19 +848,19 @@ const CalendarGrid = ({
                       <div className="flex flex-col items-center">
                         <span
                           className={cn(
-                            'font-bold text-sm mb-1 mt-0 text-center w-full flex justify-center items-start',
+                            'font-bold text-[10px] sm:text-sm mb-0.5 sm:mb-1 mt-0 text-center w-full flex justify-center items-start',
                             { 'text-blue-700': isCurrentDayToday, 'text-gray-700': !isCurrentDayToday }
                           )}
                         >
                           {day.getDate()}
                         </span>
                         {/* Events for this day */}
-                        <div className="flex flex-col gap-2 w-full">
+                        <div className="flex flex-col gap-1 sm:gap-2 w-full items-center">
                           {dayEvents.map((event, i) => (
                             <button
                               key={event.id || i}
                               className={cn(
-                                "rounded-xl shadow-sm border p-2 text-left transition hover:ring-2 hover:ring-primary max-w-xs w-full",
+                                "rounded-lg sm:rounded-xl shadow-sm border p-1 sm:p-2 text-left transition hover:ring-2 hover:ring-primary inline-block max-w-full",
                                 // Zone events get distinctive brighter background
                                 event.zoneId && !event.clubId ? "bg-gradient-to-br from-blue-100 to-indigo-100 hover:from-blue-200 hover:to-indigo-200 border-blue-300" :
                                 // Only apply bg-white for non-public holidays and non-zone events
@@ -874,19 +874,19 @@ const CalendarGrid = ({
                               )}
                               onClick={() => onEventClick(event.id)}
                             >
-                              <div className={cn("flex items-stretch gap-2 h-full")}> 
+                              <div className={cn("flex items-stretch gap-1 sm:gap-2 h-full")}> 
                                 {/* Left side content */}
-                                <div className="flex-1 min-w-0 flex items-start gap-1.5">
+                                <div className="flex-1 min-w-0 flex items-start gap-1 sm:gap-1.5">
                                   <div className="flex-shrink-0 pt-0.5">
-                                    {event.status === 'approved' ? <CheckCircle className={cn("h-3 w-3 text-primary flex-shrink-0", { "h-2 w-2": isYearView })}/> :
-                                     event.status === 'proposed' ? <AlertCircle className={cn("h-3 w-3 text-amber-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
-                                     (event.status === 'public_holiday' || event.source === 'public_holiday') ? <FerrisWheel className={cn("h-3 w-3 text-white flex-shrink-0", { "h-2 w-2": isYearView })}/> :
-                                     event.status === 'rejected' ? <Clock className={cn("h-3 w-3 text-red-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
-                                     <Clock className={cn("h-3 w-3 text-accent flex-shrink-0", { "h-2 w-2": isYearView })}/>}
+                                    {event.status === 'approved' ? <CheckCircle className={cn("h-2.5 w-2.5 sm:h-3 sm:w-3 text-primary flex-shrink-0", { "h-2 w-2": isYearView })}/> :
+                                     event.status === 'proposed' ? <AlertCircle className={cn("h-2.5 w-2.5 sm:h-3 sm:w-3 text-amber-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
+                                     (event.status === 'public_holiday' || event.source === 'public_holiday') ? <FerrisWheel className={cn("h-2.5 w-2.5 sm:h-3 sm:w-3 text-white flex-shrink-0", { "h-2 w-2": isYearView })}/> :
+                                     event.status === 'rejected' ? <Clock className={cn("h-2.5 w-2.5 sm:h-3 sm:w-3 text-red-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
+                                     <Clock className={cn("h-2.5 w-2.5 sm:h-3 sm:w-3 text-accent flex-shrink-0", { "h-2 w-2": isYearView })}/>}
                                   </div>
                                   <div className="flex-1 min-w-0 space-y-0.5">
-                                    <div className={cn("font-medium leading-tight", 
-                                      isYearView ? "text-[10px]" : "text-xs",
+                                    <div className={cn("font-medium leading-tight truncate", 
+                                      isYearView ? "text-[10px]" : "text-[9px] sm:text-xs",
                                       event.status === 'approved' ? 'text-primary' : 
                                       event.status === 'proposed' ? 'text-amber-800' :
                                       (event.status === 'public_holiday' || event.source === 'public_holiday') ? 'text-white font-bold' :
@@ -894,8 +894,8 @@ const CalendarGrid = ({
                                       'text-accent'
                                     )}>{event.name}</div>
                                     {event.source !== 'public_holiday' && (
-                                      <div className={cn("text-muted-foreground font-medium leading-tight",
-                                        isYearView ? "text-[8px]" : "text-[9px]",
+                                      <div className={cn("text-muted-foreground font-medium leading-tight truncate",
+                                        isYearView ? "text-[8px]" : "text-[8px] sm:text-[9px]",
                                         // Make zone events brighter
                                         event.zoneId && !event.clubId ? "text-blue-700 font-semibold" : ""
                                       )}>
@@ -905,14 +905,14 @@ const CalendarGrid = ({
                                     <div className="flex">
                                       {event.status === 'proposed' && (
                                         <span className={cn("inline-flex items-center rounded-full font-medium bg-amber-100 text-amber-700 border border-amber-200",
-                                          isYearView ? "px-1 py-0.5 text-[7px]" : "px-1.5 py-0.5 text-[8px]"
+                                          isYearView ? "px-1 py-0.5 text-[7px]" : "px-1 sm:px-1.5 py-0.5 text-[7px] sm:text-[8px]"
                                         )}>
                                           Pending
                                         </span>
                                       )}
                                       {event.status === 'approved' && (
                                         <span className={cn("inline-flex items-center rounded-full font-medium bg-green-100 text-green-700 border border-green-200",
-                                          isYearView ? "px-1 py-0.5 text-[7px]" : "px-1.5 py-0.5 text-[8px]"
+                                          isYearView ? "px-1 py-0.5 text-[7px]" : "px-1 sm:px-1.5 py-0.5 text-[7px] sm:text-[8px]"
                                         )}>
                                           Approved
                                         </span>

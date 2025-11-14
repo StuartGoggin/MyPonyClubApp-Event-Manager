@@ -5,9 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, CheckCircle, Clock, Users, Building, Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { MapPin, CheckCircle, Clock, Users, Building, Plus, FileText, CalendarPlus } from 'lucide-react';
 import { Zone, Club, Event, EventType } from '@/lib/types';
 import { ZoneEventApproval } from '@/components/zone-manager/zone-event-approval';
+import { ZoneScheduleApproval } from '@/components/zone-manager/zone-schedule-approval';
 import { ZoneEventManagement } from '@/components/zone-manager/zone-event-management';
 import { ZoneEventSubmission } from '@/components/zone-manager/zone-event-submission';
 import { RouteGuard } from '@/components/auth/route-guard';
@@ -110,6 +112,7 @@ function ZoneManagerContent() {
 
   // Dashboard statistics for selected zone
   const pendingEvents = zoneEvents.filter(event => event.status === 'proposed').length;
+  const pendingSchedules = zoneEvents.filter(event => event.schedule && event.schedule.status === 'pending').length;
   const approvedEvents = zoneEvents.filter(event => event.status === 'approved').length;
   const totalClubs = zoneClubs.length;
   const activeClubs = zoneClubs.filter(club => 
@@ -270,28 +273,65 @@ function ZoneManagerContent() {
 
           {/* Main Dashboard Tabs */}
           <Tabs defaultValue="approvals" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="approvals">
-                <Clock className="h-4 w-4 mr-2" />
-                Event Approvals
-                {pendingEvents > 0 && (
-                  <Badge variant="destructive" className="ml-2">
-                    {pendingEvents}
-                  </Badge>
+            <div className="flex items-center justify-between gap-4 mb-4">
+              <TabsList className="flex-1 grid grid-cols-3">
+                <TabsTrigger value="approvals">
+                  <Clock className="h-4 w-4 mr-2" />
+                  Event Date Approvals
+                  {pendingEvents > 0 && (
+                    <Badge variant="destructive" className="ml-2">
+                      {pendingEvents}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="schedules">
+                  <FileText className="h-4 w-4 mr-2" />
+                  Event Schedule Approvals
+                  {pendingSchedules > 0 && (
+                    <Badge variant="destructive" className="ml-2">
+                      {pendingSchedules}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="manage">
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Manage Events
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Add Zone Event Button */}
+              <Button 
+                onClick={() => setShowAddZoneEventForm(!showAddZoneEventForm)}
+                size="lg"
+                className="distinctive-button-primary bg-gradient-to-r from-emerald-500 via-emerald-600 to-green-600 hover:from-emerald-600 hover:via-emerald-700 hover:to-green-700 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 px-6 py-3 font-bold text-base rounded-2xl border-2 border-emerald-400/50 hover:border-emerald-300 backdrop-blur-sm whitespace-nowrap"
+              >
+                {showAddZoneEventForm ? (
+                  <>
+                    <CheckCircle className="h-5 w-5 mr-2 drop-shadow-lg" />
+                    View Events
+                  </>
+                ) : (
+                  <>
+                    <CalendarPlus className="h-5 w-5 mr-2 drop-shadow-lg" />
+                    Add Zone Event
+                  </>
                 )}
-              </TabsTrigger>
-              <TabsTrigger value="manage">
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Manage Events
-              </TabsTrigger>
-              <TabsTrigger value="add-zone-event">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Zone Event
-              </TabsTrigger>
-            </TabsList>
+              </Button>
+            </div>
 
             <TabsContent value="approvals" className="space-y-4">
               <ZoneEventApproval
+                zoneId={selectedZoneId}
+                zoneName={selectedZone.name}
+                events={zoneEvents}
+                clubs={zoneClubs}
+                eventTypes={eventTypes}
+                onEventUpdate={fetchData}
+              />
+            </TabsContent>
+
+            <TabsContent value="schedules" className="space-y-4">
+              <ZoneScheduleApproval
                 zoneId={selectedZoneId}
                 zoneName={selectedZone.name}
                 events={zoneEvents}
@@ -311,32 +351,32 @@ function ZoneManagerContent() {
                 onEventUpdate={fetchData}
               />
             </TabsContent>
-
-            <TabsContent value="add-zone-event" className="space-y-4">
-              <Card className="enhanced-card glass-effect border-2 border-border/40 shadow-xl">
-                <CardHeader>
-                  <CardTitle className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                    Create Zone-Level Event
-                  </CardTitle>
-                  <CardDescription>
-                    Add a new zone-level event. Zone-level events are automatically approved and visible to all clubs in the selected zone.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ZoneEventSubmission
-                    zones={zones}
-                    eventTypes={eventTypes}
-                    defaultZoneId={selectedZoneId}
-                    onEventSubmitted={() => {
-                      fetchData();
-                      // Optionally switch back to manage tab after submission
-                      // document.querySelector('[value="manage"]')?.click();
-                    }}
-                  />
-                </CardContent>
-              </Card>
-            </TabsContent>
           </Tabs>
+
+          {/* Add Zone Event Form - Shown when button is clicked */}
+          {showAddZoneEventForm && (
+            <Card className="enhanced-card glass-effect border-2 border-border/40 shadow-xl mt-4">
+              <CardHeader>
+                <CardTitle className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                  Create Zone-Level Event
+                </CardTitle>
+                <CardDescription>
+                  Add a new zone-level event. Zone-level events are automatically approved and visible to all clubs in the selected zone.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ZoneEventSubmission
+                  zones={zones}
+                  eventTypes={eventTypes}
+                  defaultZoneId={selectedZoneId}
+                  onEventSubmitted={() => {
+                    fetchData();
+                    setShowAddZoneEventForm(false);
+                  }}
+                />
+              </CardContent>
+            </Card>
+          )}
         </>
       )}
     </div>

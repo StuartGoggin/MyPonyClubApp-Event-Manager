@@ -213,6 +213,7 @@ export interface EventSchedule {
   submittedBy: string;
   reviewedBy?: string;
   reviewedAt?: Date;
+  reviewComment?: string; // Comments from reviewer (approval or rejection feedback)
   notes?: string;
 }
 

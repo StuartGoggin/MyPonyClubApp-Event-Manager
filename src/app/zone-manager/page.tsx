@@ -150,21 +150,20 @@ function ZoneManagerContent() {
   }
 
   return (
-    <div className="space-y-6">
-      {selectedZone && (
-        <>
-          {/* Clean Zone Management Header - Matching Club Manager Style */}
-          <div className="relative overflow-hidden rounded-2xl border border-border/40 bg-gradient-to-br from-background via-background/95 to-primary/5 shadow-2xl backdrop-blur-sm">
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-emerald-500/5"></div>
-            <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-primary/10 to-transparent rounded-full blur-3xl"></div>
-            <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-accent/10 to-transparent rounded-full blur-3xl"></div>
-            
-            <div className="relative p-6">
-              <div className="flex items-center gap-3 mb-6 group">
-                {/* Logo with beautiful effects */}
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50/50 via-background to-blue-50/30">
+      {/* Unified Header Zone */}
+      <div className="flex-shrink-0 mx-4 mt-4 mb-6">
+        
+        {/* Merged Header Tile with Status Tiles */}
+        <Card className="enhanced-card glass-effect border-2 border-border/40 shadow-lg bg-gradient-to-r from-white/98 via-white/95 to-primary/8">
+          <CardContent className="p-3 sm:p-4 space-y-3 sm:space-y-4">
+            {/* Top Row: Logo, Title, Zone Selection */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 group">
+              {/* Logo and Title */}
+              <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
                 <div className="relative flex-shrink-0">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent rounded-lg sm:rounded-xl opacity-30 blur-lg animate-pulse group-hover:opacity-50 transition-opacity duration-300"></div>
-                  <div className="relative rounded-lg sm:rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/40 backdrop-blur-sm group-hover:border-primary/60 transition-all duration-300 group-hover:scale-105 overflow-hidden h-7 sm:h-8 md:h-9 w-14 sm:w-16 md:w-18">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent rounded-lg opacity-30 blur-lg animate-pulse group-hover:opacity-50 transition-opacity duration-300"></div>
+                  <div className="relative rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/40 backdrop-blur-sm group-hover:border-primary/60 transition-all duration-300 group-hover:scale-105 overflow-hidden h-8 w-16 sm:h-9 sm:w-18">
                     <Image
                       src="/myponyclub-logo-zone-manager.png"
                       alt="MyPonyClub Zone Manager Logo"
@@ -175,46 +174,46 @@ function ZoneManagerContent() {
                   </div>
                 </div>
                 
-                <div className="flex-1 flex items-center justify-between gap-4">
-                  {/* Title matching Event Calendar style */}
-                  <h1 className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-primary via-purple-600 to-accent bg-clip-text text-transparent">
-                    MyPonyClub - Zone Manager
-                  </h1>
-                  
-                  {/* Integrated Zone Selector - Same Line */}
-                  <div className="w-auto max-w-md">
-                    <Select value={selectedZoneId} onValueChange={setSelectedZoneId}>
-                      <SelectTrigger className="relative h-10 border-primary/30 bg-background/90 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:border-primary/50 justify-end">
-                        <SelectValue>
-                          <div className="text-base font-bold text-foreground mr-2">
-                            {selectedZone?.name || 'Select Zone'}
-                          </div>
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent className="rounded-xl border-primary/20 bg-background/95 backdrop-blur-md">
-                        {zones
-                          .filter(zone => authorizedZones.includes(zone.id))
-                          .map(zone => (
-                            <SelectItem key={zone.id} value={zone.id} className="rounded-lg hover:bg-primary/10 py-3">
-                              <div className="flex items-center gap-3">
-                                <div className="rounded-md bg-primary/20 p-1.5">
-                                  <MapPin className="h-3 w-3 text-primary" />
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  <div className="font-bold text-base">{zone.name}</div>
-                                </div>
-                              </div>
-                            </SelectItem>
-                          ))
-                        }
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+                <h1 className="text-base sm:text-lg md:text-xl font-bold bg-gradient-to-r from-primary via-purple-600 to-accent bg-clip-text text-transparent truncate">
+                  MyPonyClub - Zone Manager
+                </h1>
               </div>
-              
-              {/* Zone Statistics - Compact Inline Layout */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+
+              {/* Zone Selection */}
+              <div className="w-full sm:w-auto sm:max-w-md">
+                <Select value={selectedZoneId} onValueChange={setSelectedZoneId}>
+                  <SelectTrigger className="h-12 sm:h-14 border-primary/30 bg-background/90 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:border-primary/50 w-full">
+                    <SelectValue>
+                      <div className="text-left sm:text-right w-full">
+                        <div className="text-sm sm:text-lg font-bold text-foreground truncate">
+                          {selectedZone?.name || 'Select Zone'}
+                        </div>
+                      </div>
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-primary/20 bg-background/95 backdrop-blur-md">
+                    {zones
+                      .filter(zone => authorizedZones.includes(zone.id))
+                      .map(zone => (
+                        <SelectItem key={zone.id} value={zone.id} className="rounded-lg hover:bg-primary/10 py-3">
+                          <div className="flex items-center gap-3">
+                            <div className="rounded-md bg-primary/20 p-1.5">
+                              <MapPin className="h-3 w-3 text-primary" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="font-bold text-base">{zone.name}</div>
+                            </div>
+                          </div>
+                        </SelectItem>
+                      ))
+                    }
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            {/* Zone Statistics - Compact Inline Layout */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
                 {/* Pending Events */}
                 <div className="relative overflow-hidden rounded-lg border border-amber-200/60 dark:border-amber-700/60 bg-gradient-to-br from-amber-50/90 to-orange-50/80 dark:from-amber-950/30 dark:to-orange-950/20 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
                   <div className="p-2 flex items-center justify-between">
@@ -259,34 +258,42 @@ function ZoneManagerContent() {
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
+        </div>
 
+      {/* Main Content */}
+      <div className="flex-1 max-w-7xl mx-auto px-4 space-y-6 w-full">
+        {selectedZone && (
+          <>
           {/* Main Dashboard Tabs */}
           <Tabs defaultValue="approvals" className="space-y-4">
-            <div className="flex items-center justify-between gap-4 mb-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 mb-4">
               <TabsList className="flex-1 grid grid-cols-3">
-                <TabsTrigger value="approvals">
-                  <Clock className="h-4 w-4 mr-2" />
-                  Event Date Approvals
+                <TabsTrigger value="approvals" className="text-xs sm:text-sm">
+                  <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Event Date Approvals</span>
+                  <span className="sm:hidden">Dates</span>
                   {pendingEvents > 0 && (
-                    <Badge variant="destructive" className="ml-2">
+                    <Badge variant="destructive" className="ml-1 sm:ml-2 text-xs">
                       {pendingEvents}
                     </Badge>
                   )}
                 </TabsTrigger>
-                <TabsTrigger value="schedules">
-                  <FileText className="h-4 w-4 mr-2" />
-                  Event Schedule Approvals
+                <TabsTrigger value="schedules" className="text-xs sm:text-sm">
+                  <FileText className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Event Schedule Approvals</span>
+                  <span className="sm:hidden">Schedules</span>
                   {pendingSchedules > 0 && (
-                    <Badge variant="destructive" className="ml-2">
+                    <Badge variant="destructive" className="ml-1 sm:ml-2 text-xs">
                       {pendingSchedules}
                     </Badge>
                   )}
                 </TabsTrigger>
-                <TabsTrigger value="manage">
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Manage Events
+                <TabsTrigger value="manage" className="text-xs sm:text-sm">
+                  <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Manage Events</span>
+                  <span className="sm:hidden">Manage</span>
                 </TabsTrigger>
               </TabsList>
 
@@ -294,16 +301,16 @@ function ZoneManagerContent() {
               <Button 
                 onClick={() => setShowAddZoneEventForm(!showAddZoneEventForm)}
                 size="lg"
-                className="distinctive-button-primary bg-gradient-to-r from-emerald-500 via-emerald-600 to-green-600 hover:from-emerald-600 hover:via-emerald-700 hover:to-green-700 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 px-6 py-3 font-bold text-base rounded-2xl border-2 border-emerald-400/50 hover:border-emerald-300 backdrop-blur-sm whitespace-nowrap"
+                className="distinctive-button-primary bg-gradient-to-r from-emerald-500 via-emerald-600 to-green-600 hover:from-emerald-600 hover:via-emerald-700 hover:to-green-700 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 px-4 sm:px-6 py-3 font-bold text-sm sm:text-base rounded-2xl border-2 border-emerald-400/50 hover:border-emerald-300 backdrop-blur-sm whitespace-nowrap w-full sm:w-auto"
               >
                 {showAddZoneEventForm ? (
                   <>
-                    <CheckCircle className="h-5 w-5 mr-2 drop-shadow-lg" />
+                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 mr-2 drop-shadow-lg" />
                     View Events
                   </>
                 ) : (
                   <>
-                    <CalendarPlus className="h-5 w-5 mr-2 drop-shadow-lg" />
+                    <CalendarPlus className="h-4 w-4 sm:h-5 sm:w-5 mr-2 drop-shadow-lg" />
                     Add Zone Event
                   </>
                 )}
@@ -370,6 +377,7 @@ function ZoneManagerContent() {
           )}
         </>
       )}
+      </div>
     </div>
   );
 }

@@ -214,43 +214,43 @@ ${index + 1}. ${suggestion}
 
           {pendingSchedules.map((event) => (
             <Card key={event.id} className="enhanced-card glass-effect border-2 border-orange-200/60 dark:border-orange-700/60 shadow-lg hover:shadow-xl transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <CardTitle className="text-xl font-bold text-orange-700 dark:text-orange-400">
+              <CardHeader className="pb-3 p-3 sm:p-6">
+                <div className="flex flex-col sm:flex-row items-start justify-between gap-3">
+                  <div className="flex-1 w-full">
+                    <CardTitle className="text-lg sm:text-xl font-bold text-orange-700 dark:text-orange-400">
                       {event.name}
                     </CardTitle>
                     <CardDescription className="mt-1 space-y-1">
                       <div className="flex items-center gap-2 text-sm">
-                        <User className="h-4 w-4" />
-                        <span className="font-medium">{getClubName(event.clubId)}</span>
+                        <User className="h-4 w-4 flex-shrink-0" />
+                        <span className="font-medium truncate">{getClubName(event.clubId)}</span>
                       </div>
                       {event.location && (
                         <div className="flex items-center gap-2 text-sm">
-                          <MapPin className="h-4 w-4" />
-                          <span>{event.location}</span>
+                          <MapPin className="h-4 w-4 flex-shrink-0" />
+                          <span className="truncate">{event.location}</span>
                         </div>
                       )}
                       <div className="flex items-center gap-2 text-sm">
-                        <Calendar className="h-4 w-4" />
+                        <Calendar className="h-4 w-4 flex-shrink-0" />
                         <span>{formatDate(event.date)}</span>
                       </div>
                     </CardDescription>
                   </div>
-                  <Badge variant="outline" className="bg-orange-50 dark:bg-orange-950 border-orange-300 dark:border-orange-700">
+                  <Badge variant="outline" className="bg-orange-50 dark:bg-orange-950 border-orange-300 dark:border-orange-700 whitespace-nowrap">
                     {getEventTypeName(event.eventTypeId)}
                   </Badge>
                 </div>
               </CardHeader>
 
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 p-3 sm:p-6">
                 {/* Schedule Information */}
-                <div className="rounded-lg border-2 border-yellow-200/60 dark:border-yellow-700/60 bg-gradient-to-br from-yellow-50/90 to-amber-50/80 dark:from-yellow-950/30 dark:to-amber-950/20 p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-sm font-semibold text-yellow-900 dark:text-yellow-100 uppercase tracking-wide">
+                <div className="rounded-lg border-2 border-yellow-200/60 dark:border-yellow-700/60 bg-gradient-to-br from-yellow-50/90 to-amber-50/80 dark:from-yellow-950/30 dark:to-amber-950/20 p-3 sm:p-4">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-3">
+                    <h4 className="text-xs sm:text-sm font-semibold text-yellow-900 dark:text-yellow-100 uppercase tracking-wide">
                       Schedule Information
                     </h4>
-                    <Badge className="bg-orange-500 hover:bg-orange-600">
+                    <Badge className="bg-orange-500 hover:bg-orange-600 whitespace-nowrap">
                       <Clock className="h-3 w-3 mr-1" />
                       Pending Review
                     </Badge>
@@ -258,15 +258,15 @@ ${index + 1}. ${suggestion}
 
                   <div className="space-y-3">
                     {event.schedule?.fileUrl && (
-                      <div className="flex items-center justify-between p-3 bg-white/60 dark:bg-slate-900/40 rounded-lg border border-yellow-300/40 dark:border-yellow-700/40">
-                        <div className="flex items-center gap-2">
-                          <FileText className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
-                          <div>
-                            <div className="text-sm font-medium text-yellow-900 dark:text-yellow-100">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 bg-white/60 dark:bg-slate-900/40 rounded-lg border border-yellow-300/40 dark:border-yellow-700/40 overflow-hidden">
+                        <div className="flex items-center gap-2 flex-1 min-w-0 w-full sm:w-auto">
+                          <FileText className="h-5 w-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0" />
+                          <div className="min-w-0 flex-1 overflow-hidden">
+                            <div className="text-sm font-medium text-yellow-900 dark:text-yellow-100 truncate">
                               {event.schedule.fileName || 'Schedule Document'}
                             </div>
                             {event.schedule.uploadedAt && (
-                              <div className="text-xs text-muted-foreground">
+                              <div className="text-xs text-muted-foreground truncate">
                                 Uploaded: {(() => {
                                   try {
                                     return formatDate(event.schedule.uploadedAt);
@@ -278,25 +278,25 @@ ${index + 1}. ${suggestion}
                             )}
                           </div>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 w-full sm:w-auto flex-shrink-0">
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => window.open(event.schedule?.fileUrl, '_blank')}
-                            className="border-yellow-300 dark:border-yellow-700"
+                            className="border-yellow-300 dark:border-yellow-700 flex-1 sm:flex-none"
                           >
-                            <ExternalLink className="h-4 w-4 mr-1" />
-                            View
+                            <ExternalLink className="h-4 w-4 sm:mr-1" />
+                            <span className="hidden sm:inline">View</span>
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
                             asChild
-                            className="border-yellow-300 dark:border-yellow-700"
+                            className="border-yellow-300 dark:border-yellow-700 flex-1 sm:flex-none"
                           >
                             <a href={event.schedule.fileUrl} download>
-                              <Download className="h-4 w-4 mr-1" />
-                              Download
+                              <Download className="h-4 w-4 sm:mr-1" />
+                              <span className="hidden sm:inline">Download</span>
                             </a>
                           </Button>
                         </div>
@@ -317,18 +317,18 @@ ${index + 1}. ${suggestion}
                 </div>
 
                 {/* AI Compliance Review */}
-                <div className="rounded-lg border-2 border-purple-200/60 dark:border-purple-700/60 bg-gradient-to-br from-purple-50/90 to-violet-50/80 dark:from-purple-950/30 dark:to-violet-950/20 p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-sm font-semibold text-purple-900 dark:text-purple-100 uppercase tracking-wide flex items-center gap-2">
-                      <Sparkles className="h-4 w-4" />
-                      AI Compliance Review
+                <div className="rounded-lg border-2 border-purple-200/60 dark:border-purple-700/60 bg-gradient-to-br from-purple-50/90 to-violet-50/80 dark:from-purple-950/30 dark:to-violet-950/20 p-3 sm:p-4">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-3">
+                    <h4 className="text-xs sm:text-sm font-semibold text-purple-900 dark:text-purple-100 uppercase tracking-wide flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 flex-shrink-0" />
+                      <span className="truncate">AI Compliance Review</span>
                     </h4>
                     {!event.schedule?.aiReview && (
                       <Button
                         size="sm"
                         onClick={() => handleRequestAiReview(event)}
                         disabled={aiReviewingEventId === event.id}
-                        className="bg-purple-600 hover:bg-purple-700 text-white"
+                        className="bg-purple-600 hover:bg-purple-700 text-white whitespace-nowrap w-full sm:w-auto"
                       >
                         {aiReviewingEventId === event.id ? (
                           <>
@@ -349,10 +349,10 @@ ${index + 1}. ${suggestion}
                     <div className="space-y-3">
                       {/* Summary Card */}
                       <div className="p-3 bg-white/60 dark:bg-slate-900/40 rounded-lg border border-purple-300/40 dark:border-purple-700/40">
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex items-center gap-2">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-start justify-between gap-3 mb-2">
+                          <div className="flex items-center gap-3">
                             <div className={cn(
-                              "w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold",
+                              "w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-xl sm:text-2xl font-bold flex-shrink-0",
                               event.schedule.aiReview.overallScore >= 80 ? "bg-green-100 text-green-700" :
                               event.schedule.aiReview.overallScore >= 60 ? "bg-yellow-100 text-yellow-700" :
                               "bg-red-100 text-red-700"
@@ -497,7 +497,7 @@ ${index + 1}. ${suggestion}
                 <EventRailwayProgress event={event} />
 
                 {/* Action Buttons */}
-                <div className="flex gap-3 pt-4 border-t">
+                <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
                   <Button
                     onClick={() => handleApprove(event)}
                     className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"

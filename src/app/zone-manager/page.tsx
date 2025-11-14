@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -159,112 +160,102 @@ function ZoneManagerContent() {
             <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-accent/10 to-transparent rounded-full blur-3xl"></div>
             
             <div className="relative p-6">
-              <div className="flex items-center gap-4 mb-6">
+              <div className="flex items-center gap-3 mb-6 group">
+                {/* Logo with beautiful effects */}
                 <div className="relative flex-shrink-0">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent rounded-2xl opacity-20 blur-lg animate-pulse"></div>
-                  <div className="relative rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 p-4 border-2 border-primary/40 backdrop-blur-sm">
-                    <MapPin className="h-8 w-8 text-primary drop-shadow-lg" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent rounded-lg sm:rounded-xl opacity-30 blur-lg animate-pulse group-hover:opacity-50 transition-opacity duration-300"></div>
+                  <div className="relative rounded-lg sm:rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/40 backdrop-blur-sm group-hover:border-primary/60 transition-all duration-300 group-hover:scale-105 overflow-hidden h-7 sm:h-8 md:h-9 w-14 sm:w-16 md:w-18">
+                    <Image
+                      src="/MyPonyClub - Logo - Zone Manager.png"
+                      alt="MyPonyClub Zone Manager Logo"
+                      fill
+                      className="object-cover drop-shadow-lg transition-transform duration-300"
+                      priority
+                    />
                   </div>
                 </div>
-                <div className="flex-1">
-                  <h1 className="text-2xl xl:text-3xl font-bold bg-gradient-to-r from-primary via-purple-600 to-accent bg-clip-text text-transparent">
-                    Zone Manager
+                
+                <div className="flex-1 flex items-center justify-between gap-4">
+                  {/* Title matching Event Calendar style */}
+                  <h1 className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-primary via-purple-600 to-accent bg-clip-text text-transparent">
+                    MyPonyClub - Zone Manager
                   </h1>
-                  <div className="flex items-center gap-4 mt-2">
-                    {/* Integrated Zone Selector with Large Display */}
-                    <div className="flex-1">
-                      <Select value={selectedZoneId} onValueChange={setSelectedZoneId}>
-                        <SelectTrigger className="relative h-14 border-primary/30 bg-background/90 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:border-primary/50">
-                          <SelectValue>
-                            <div className="text-left">
-                              <div className="text-2xl xl:text-3xl font-black text-foreground">
-                                {selectedZone?.name || 'Select Zone'}
-                              </div>
-                              <div className="text-sm text-muted-foreground">
-                                Management and event oversight
-                              </div>
-                            </div>
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent className="rounded-xl border-primary/20 bg-background/95 backdrop-blur-md">
-                          {zones
-                            .filter(zone => authorizedZones.includes(zone.id))
-                            .map(zone => (
-                              <SelectItem key={zone.id} value={zone.id} className="rounded-lg hover:bg-primary/10 py-3">
-                                <div className="flex items-center gap-3">
-                                  <div className="rounded-md bg-primary/20 p-1.5">
-                                    <MapPin className="h-3 w-3 text-primary" />
-                                  </div>
-                                  <div>
-                                    <div className="font-bold text-base">{zone.name}</div>
-                                    <div className="text-sm text-muted-foreground">Zone Management</div>
-                                  </div>
+                  
+                  {/* Integrated Zone Selector - Same Line */}
+                  <div className="w-auto max-w-md">
+                    <Select value={selectedZoneId} onValueChange={setSelectedZoneId}>
+                      <SelectTrigger className="relative h-10 border-primary/30 bg-background/90 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:border-primary/50 justify-end">
+                        <SelectValue>
+                          <div className="text-base font-bold text-foreground mr-2">
+                            {selectedZone?.name || 'Select Zone'}
+                          </div>
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl border-primary/20 bg-background/95 backdrop-blur-md">
+                        {zones
+                          .filter(zone => authorizedZones.includes(zone.id))
+                          .map(zone => (
+                            <SelectItem key={zone.id} value={zone.id} className="rounded-lg hover:bg-primary/10 py-3">
+                              <div className="flex items-center gap-3">
+                                <div className="rounded-md bg-primary/20 p-1.5">
+                                  <MapPin className="h-3 w-3 text-primary" />
                                 </div>
-                              </SelectItem>
-                            ))
-                          }
-                        </SelectContent>
-                      </Select>
-                    </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="font-bold text-base">{zone.name}</div>
+                                </div>
+                              </div>
+                            </SelectItem>
+                          ))
+                        }
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </div>
               
-              {/* Zone Statistics - Compact Grid */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              {/* Zone Statistics - Compact Inline Layout */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
                 {/* Pending Events */}
-                <div className="relative overflow-hidden rounded-lg border-2 border-amber-200/60 dark:border-amber-700/60 bg-gradient-to-br from-amber-50/90 to-orange-50/80 dark:from-amber-950/30 dark:to-orange-950/20 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-[1.02]">
-                  <div className="p-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="rounded-md bg-amber-100 dark:bg-amber-900/50 p-1.5 border border-amber-300/60 dark:border-amber-700/60">
-                        <Clock className="h-4 w-4 text-amber-700 dark:text-amber-400" />
-                      </div>
-                      <span className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">Pending</span>
+                <div className="relative overflow-hidden rounded-lg border border-amber-200/60 dark:border-amber-700/60 bg-gradient-to-br from-amber-50/90 to-orange-50/80 dark:from-amber-950/30 dark:to-orange-950/20 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
+                  <div className="p-2 flex items-center justify-between">
+                    <div className="rounded-md bg-amber-100 dark:bg-amber-900/50 p-1.5 border border-amber-300/60 dark:border-amber-700/60 flex-shrink-0">
+                      <Clock className="h-4 w-4 text-amber-700 dark:text-amber-400" />
                     </div>
-                    <div className="text-3xl font-black text-amber-600 dark:text-amber-500 leading-none mb-1">{pendingEvents}</div>
-                    <div className="text-xs text-amber-700/80 dark:text-amber-400/80 font-medium">Awaiting approval</div>
+                    <div className="text-2xl font-black text-amber-600 dark:text-amber-500 leading-none">{pendingEvents}</div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">Pending</span>
                   </div>
                 </div>
 
                 {/* Approved Events */}
-                <div className="relative overflow-hidden rounded-lg border-2 border-emerald-200/60 dark:border-emerald-700/60 bg-gradient-to-br from-emerald-50/90 to-green-50/80 dark:from-emerald-950/30 dark:to-green-950/20 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-[1.02]">
-                  <div className="p-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="rounded-md bg-emerald-100 dark:bg-emerald-900/50 p-1.5 border border-emerald-300/60 dark:border-emerald-700/60">
-                        <CheckCircle className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
-                      </div>
-                      <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Approved</span>
+                <div className="relative overflow-hidden rounded-lg border border-emerald-200/60 dark:border-emerald-700/60 bg-gradient-to-br from-emerald-50/90 to-green-50/80 dark:from-emerald-950/30 dark:to-green-950/20 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
+                  <div className="p-2 flex items-center justify-between">
+                    <div className="rounded-md bg-emerald-100 dark:bg-emerald-900/50 p-1.5 border border-emerald-300/60 dark:border-emerald-700/60 flex-shrink-0">
+                      <CheckCircle className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
                     </div>
-                    <div className="text-3xl font-black text-emerald-600 dark:text-emerald-500 leading-none mb-1">{approvedEvents}</div>
-                    <div className="text-xs text-emerald-700/80 dark:text-emerald-400/80 font-medium">Events confirmed</div>
+                    <div className="text-2xl font-black text-emerald-600 dark:text-emerald-500 leading-none">{approvedEvents}</div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Approved</span>
                   </div>
                 </div>
 
                 {/* Total Clubs */}
-                <div className="relative overflow-hidden rounded-lg border-2 border-blue-200/60 dark:border-blue-700/60 bg-gradient-to-br from-blue-50/90 to-cyan-50/80 dark:from-blue-950/30 dark:to-cyan-950/20 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-[1.02]">
-                  <div className="p-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="rounded-md bg-blue-100 dark:bg-blue-900/50 p-1.5 border border-blue-300/60 dark:border-blue-700/60">
-                        <Building className="h-4 w-4 text-blue-700 dark:text-blue-400" />
-                      </div>
-                      <span className="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400">Clubs</span>
+                <div className="relative overflow-hidden rounded-lg border border-blue-200/60 dark:border-blue-700/60 bg-gradient-to-br from-blue-50/90 to-cyan-50/80 dark:from-blue-950/30 dark:to-cyan-950/20 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
+                  <div className="p-2 flex items-center justify-between">
+                    <div className="rounded-md bg-blue-100 dark:bg-blue-900/50 p-1.5 border border-blue-300/60 dark:border-blue-700/60 flex-shrink-0">
+                      <Building className="h-4 w-4 text-blue-700 dark:text-blue-400" />
                     </div>
-                    <div className="text-3xl font-black text-blue-600 dark:text-blue-500 leading-none mb-1">{totalClubs}</div>
-                    <div className="text-xs text-blue-700/80 dark:text-blue-400/80 font-medium">In this zone</div>
+                    <div className="text-2xl font-black text-blue-600 dark:text-blue-500 leading-none">{totalClubs}</div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400">Clubs</span>
                   </div>
                 </div>
 
                 {/* Active Clubs */}
-                <div className="relative overflow-hidden rounded-lg border-2 border-purple-200/60 dark:border-purple-700/60 bg-gradient-to-br from-purple-50/90 to-violet-50/80 dark:from-purple-950/30 dark:to-violet-950/20 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-[1.02]">
-                  <div className="p-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="rounded-md bg-purple-100 dark:bg-purple-900/50 p-1.5 border border-purple-300/60 dark:border-purple-700/60">
-                        <Users className="h-4 w-4 text-purple-700 dark:text-purple-400" />
-                      </div>
-                      <span className="text-xs font-bold uppercase tracking-wider text-purple-700 dark:text-purple-400">Active</span>
+                <div className="relative overflow-hidden rounded-lg border border-purple-200/60 dark:border-purple-700/60 bg-gradient-to-br from-purple-50/90 to-violet-50/80 dark:from-purple-950/30 dark:to-violet-950/20 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
+                  <div className="p-2 flex items-center justify-between">
+                    <div className="rounded-md bg-purple-100 dark:bg-purple-900/50 p-1.5 border border-purple-300/60 dark:border-purple-700/60 flex-shrink-0">
+                      <Users className="h-4 w-4 text-purple-700 dark:text-purple-400" />
                     </div>
-                    <div className="text-3xl font-black text-purple-600 dark:text-purple-500 leading-none mb-1">{activeClubs}</div>
-                    <div className="text-xs text-purple-700/80 dark:text-purple-400/80 font-medium">With events</div>
+                    <div className="text-2xl font-black text-purple-600 dark:text-purple-500 leading-none">{activeClubs}</div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-purple-700 dark:text-purple-400">Active</span>
                   </div>
                 </div>
               </div>

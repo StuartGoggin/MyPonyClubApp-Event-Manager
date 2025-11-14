@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
 import { FileText, Clock, CheckCircle, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -16,18 +17,30 @@ export function RequestEventHeader() {
       <div className="relative p-4 sm:p-6">
         {/* Header Section */}
         <div className="mb-2">
-          <div className="flex items-center gap-2 mb-2">
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-primary via-purple-600 to-accent bg-clip-text text-transparent">
-              Request Event Dates
+          <div className="flex items-center gap-3 mb-2 group">
+            {/* Logo with beautiful effects */}
+            <div className="relative flex-shrink-0">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent rounded-lg sm:rounded-xl opacity-30 blur-lg animate-pulse group-hover:opacity-50 transition-opacity duration-300"></div>
+              <div className="relative rounded-lg sm:rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/40 backdrop-blur-sm group-hover:border-primary/60 transition-all duration-300 group-hover:scale-105 overflow-hidden h-7 sm:h-8 md:h-9 w-14 sm:w-16 md:w-18">
+                <Image
+                  src="/MyPonyClub - Logo - Request Event.png"
+                  alt="MyPonyClub Request Event Logo"
+                  fill
+                  className="object-cover drop-shadow-lg transition-transform duration-300"
+                  priority
+                />
+              </div>
+            </div>
+            
+            {/* Title matching Event Calendar style */}
+            <h1 className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-primary via-purple-600 to-accent bg-clip-text text-transparent">
+              MyPonyClub - Request Event Dates
             </h1>
             <HelpTooltip 
               content="Submit up to 4 event requests with priority rankings. Your zone coordinator will review and approve dates based on availability and policy guidelines."
               side="right"
             />
           </div>
-          <p className="text-muted-foreground text-sm sm:text-base">
-            Submit up to 4 event requests with priority preferences for zone approval
-          </p>
         </div>
 
         {/* Collapsible Policy Toggle */}

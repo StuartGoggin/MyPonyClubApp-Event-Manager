@@ -571,10 +571,6 @@ export function ClubEventStatus({
                 {/* Railway Progress Section - Full Width Below Both Columns */}
                 <div className="p-4 bg-gradient-to-r from-blue-50/50 via-indigo-50/30 to-purple-50/50 backdrop-blur-sm border-t border-border/40">
                   <div className="p-4 bg-white/95 backdrop-blur-sm rounded-lg border border-border/40 shadow-sm">
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="h-1 w-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full"></div>
-                      <div className="text-sm font-extrabold text-foreground uppercase tracking-wide">Approval Progress</div>
-                    </div>
                     <EventRailwayProgress 
                       event={event} 
                       schedules={event.schedule ? [event.schedule] : []} 

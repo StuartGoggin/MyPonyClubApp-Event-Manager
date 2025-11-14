@@ -508,27 +508,17 @@ export function ZoneEventApproval({
                     </div>
                   </div>
 
-                  {/* Approval Progress Railway */}
-                  <div className="mb-4">
-                    <EventRailwayProgress event={event} />
-                  </div>
-
                   {/* Approval Information Panel */}
                   {(() => {
                     const nearbyEvents = getNearbyEvents(event);
                     
                     return (
                       <div className="mb-4">
-                        <div className="flex items-center gap-2 mb-3">
-                          <FileText className="h-5 w-5 text-primary" />
-                          <h4 className="font-semibold text-lg">Approval Information</h4>
-                        </div>
-                        
                         {nearbyEvents.length > 0 ? (
                           <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
                             <div className="flex items-center gap-2 mb-3">
                               <AlertTriangle className="h-5 w-5 text-amber-600" />
-                              <h5 className="font-semibold text-amber-800">Potential Scheduling Conflicts</h5>
+                              <h5 className="font-semibold text-amber-800">Approval Information - Potential Scheduling Conflicts</h5>
                             </div>
                             <p className="text-sm text-amber-700 mb-3">
                               The following events are scheduled within 1 day of this event:
@@ -590,7 +580,7 @@ export function ZoneEventApproval({
                           <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                             <div className="flex items-center gap-2 mb-2">
                               <CheckCircle className="h-5 w-5 text-green-600" />
-                              <h5 className="font-semibold text-green-800">No Scheduling Conflicts</h5>
+                              <h5 className="font-semibold text-green-800">Approval Information - No Scheduling Conflicts</h5>
                             </div>
                             <p className="text-sm text-green-700">
                               There are no other events scheduled within 1 day of this event date.
@@ -600,6 +590,11 @@ export function ZoneEventApproval({
                       </div>
                     );
                   })()}
+
+                  {/* Approval Progress Railway */}
+                  <div className="mb-4">
+                    <EventRailwayProgress event={event} />
+                  </div>
 
                   {/* Approval Action Buttons */}
                   {!processedInfo && (

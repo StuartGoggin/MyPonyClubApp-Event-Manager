@@ -62,7 +62,7 @@ export function EventRailwayProgress({ event, schedules = [] }: EventRailwayProg
     },
     {
       id: 'date-review',
-      title: 'Date Review',
+      title: 'Approval Pending',
       description: 'Zone manager reviewing date',
       icon: Clock,
       type: 'process'
@@ -98,7 +98,7 @@ export function EventRailwayProgress({ event, schedules = [] }: EventRailwayProg
     },
     {
       id: 'schedule-review',
-      title: 'Schedule Review',
+      title: 'Schedule Approval Pending',
       description: 'Zone manager reviewing schedule',
       icon: Clock,
       type: 'process'
@@ -122,12 +122,24 @@ export function EventRailwayProgress({ event, schedules = [] }: EventRailwayProg
 
   // Determine which stages to show based on current status
   const getVisibleStages = () => {
-    const mainFlow = ['date-submitted', 'date-approved', 'schedule-required', 'schedule-submitted', 'fully-approved'];
+    let mainFlow: string[];
+    
+    // If event is proposed (awaiting approval), show "Approval Pending" instead of "Date Approved"
+    if (event.status === 'proposed') {
+      mainFlow = ['date-submitted', 'date-review', 'schedule-required', 'schedule-submitted', 'fully-approved'];
+    } else {
+      // Once approved, show "Date Approved"
+      mainFlow = ['date-submitted', 'date-approved', 'schedule-required', 'schedule-submitted', 'fully-approved'];
+    }
     
     // Add rejection loops if applicable
     if (currentStage === 'date-rejected' || event.status === 'rejected') {
-      const index = mainFlow.indexOf('date-approved');
-      mainFlow.splice(index, 0, 'date-rejected');
+      const approvalIndex = mainFlow.indexOf('date-approved');
+      const reviewIndex = mainFlow.indexOf('date-review');
+      const insertIndex = approvalIndex !== -1 ? approvalIndex : reviewIndex;
+      if (insertIndex !== -1) {
+        mainFlow.splice(insertIndex, 0, 'date-rejected');
+      }
     }
     
     if (currentStage === 'schedule-rejected') {
@@ -148,8 +160,8 @@ export function EventRailwayProgress({ event, schedules = [] }: EventRailwayProg
       return 'completed';
     }
     
-    // Date Approved is yellow (in progress) when event is proposed
-    if (stageId === 'date-approved' && event.status === 'proposed') {
+    // Date Review (Approval Pending) is yellow when event is proposed
+    if (stageId === 'date-review' && event.status === 'proposed') {
       return 'current';
     }
     
@@ -158,14 +170,16 @@ export function EventRailwayProgress({ event, schedules = [] }: EventRailwayProg
       return 'completed';
     }
     
-    // Schedule Required logic
-    if (stageId === 'schedule-required' && event.status === 'approved') {
-      // Yellow if no schedule uploaded
-      if (!latestSchedule) {
-        return 'current';
+    // Schedule Required logic - RED as soon as event is submitted (proposed or approved)
+    if (stageId === 'schedule-required') {
+      if (event.status === 'proposed' || event.status === 'approved') {
+        // Red (requires action) if no schedule uploaded
+        if (!latestSchedule) {
+          return 'action-required';
+        }
+        // Green if schedule uploaded
+        return 'completed';
       }
-      // Green if schedule uploaded
-      return 'completed';
     }
     
     // Schedule Submitted is green if schedule is uploaded
@@ -203,9 +217,15 @@ export function EventRailwayProgress({ event, schedules = [] }: EventRailwayProg
   };
 
   return (
-    <div className="space-y-4">
+    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+      {/* Header */}
+      <div className="flex items-center gap-2 mb-4">
+        <Calendar className="h-5 w-5 text-blue-600" />
+        <h5 className="font-semibold text-blue-800">Approval Progress</h5>
+      </div>
+      
       {/* Railway Progress Track - Centered and Evenly Spaced */}
-      <div className="relative w-full">
+      <div className="relative w-full mb-4">
         <div className="flex items-center justify-between w-full">
           {/* Track line */}
           <div className="absolute top-7 left-0 right-0 h-0.5 bg-gray-300 z-0" />
@@ -219,11 +239,11 @@ export function EventRailwayProgress({ event, schedules = [] }: EventRailwayProg
                   className={`w-12 h-12 rounded-full border-2 flex items-center justify-center mx-auto
                     ${status === 'completed'
                       ? 'bg-green-200 border-green-600 text-green-900 shadow-lg'
+                      : status === 'action-required'
+                      ? 'bg-red-100 border-red-500 text-red-700 animate-pulse'
                       : status === 'current'
                       ? stage.type === 'rejection'
                         ? 'bg-red-100 border-red-500 text-red-700 animate-pulse'
-                        : stage.type === 'action-required'
-                        ? 'bg-yellow-100 border-yellow-500 text-yellow-700 animate-pulse'
                         : 'bg-yellow-100 border-yellow-500 text-yellow-700 animate-pulse'
                       : 'bg-gray-100 border-gray-300 text-gray-500'
                     }
@@ -235,10 +255,11 @@ export function EventRailwayProgress({ event, schedules = [] }: EventRailwayProg
                 <div className="mt-2 text-center w-full">
                   <div className={`text-sm font-medium ${
                     status === 'completed' ? 'text-green-700' : 
+                    status === 'action-required' ? 'text-red-700' :
                     status === 'current' ? 'text-yellow-700' : 
                     'text-gray-600'
                   }`}>{stage.title}</div>
-                  {status === 'current' && (
+                  {(status === 'current' || status === 'action-required') && (
                     <div className="text-xs text-muted-foreground mt-1">{stage.description}</div>
                   )}
                 </div>
@@ -254,34 +275,8 @@ export function EventRailwayProgress({ event, schedules = [] }: EventRailwayProg
         </div>
       </div>
 
-      {/* Current Status and Next Action */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
-        <div className="flex items-start gap-3">
-          <div className="flex-shrink-0">
-            {currentStage.includes('rejected') ? (
-              <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" />
-            ) : currentStage === 'fully-approved' ? (
-              <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
-            ) : currentStage.includes('required') ? (
-              <Clock className="h-5 w-5 text-amber-600 mt-0.5" />
-            ) : (
-              <Clock className="h-5 w-5 text-blue-600 mt-0.5" />
-            )}
-          </div>
-          <div className="flex-grow">
-            <div className="font-medium text-sm text-gray-900">
-              Current Status: {visibleStages.find(s => s.id === currentStage)?.title || 'Processing'}
-            </div>
-            <div className="text-sm text-gray-600 mt-1">
-              <span className="font-medium">Next Action: </span>
-              {getNextAction()}
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Legend */}
-      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+      <div className="flex items-center gap-4 text-xs text-blue-700 pt-3 border-t border-blue-200">
         <div className="flex items-center gap-1">
           <div className="w-3 h-3 rounded-full bg-green-100 border border-green-500"></div>
           <span>Completed</span>

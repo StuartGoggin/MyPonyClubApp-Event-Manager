@@ -302,7 +302,11 @@ export function EventCalendar({
         onClick={() => setIsPdfSectionVisible(!isPdfSectionVisible)}
       >
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-primary">📄 Download Calendar</span>
+          <svg className="h-4 w-4 text-primary" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2C11.4477 2 11 2.44772 11 3V13.5858L7.70711 10.2929C7.31658 9.90237 6.68342 9.90237 6.29289 10.2929C5.90237 10.6834 5.90237 11.3166 6.29289 11.7071L11.2929 16.7071C11.6834 17.0976 12.3166 17.0976 12.7071 16.7071L17.7071 11.7071C18.0976 11.3166 18.0976 10.6834 17.7071 10.2929C17.3166 9.90237 16.6834 9.90237 16.2929 10.2929L13 13.5858V3C13 2.44772 12.5523 2 12 2Z"/>
+            <path d="M4 19C4 18.4477 4.44772 18 5 18H19C19.5523 18 20 18.4477 20 19C20 19.5523 19.5523 20 19 20H5C4.44772 20 4 19.5523 4 19Z"/>
+          </svg>
+          <span className="text-xs font-semibold text-primary">Download Calendar</span>
         </div>
         <ChevronDown 
           className={`h-4 w-4 text-primary transition-transform duration-200 ${isPdfSectionVisible ? 'rotate-180' : ''}`}

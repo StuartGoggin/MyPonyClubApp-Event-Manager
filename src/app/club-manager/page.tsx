@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -259,105 +260,66 @@ export default function ClubEventManagerDashboard() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50/50 via-background to-blue-50/30">
-      {/* Unified Header Zone with Two Rows */}
-      <div className="flex-shrink-0 mx-4 mt-4 mb-6 space-y-4">
+      {/* Unified Header Zone */}
+      <div className="flex-shrink-0 mx-4 mt-4 mb-6">
         
-        {/* Top Row: Page Info + Club Selection */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          
-          {/* Page Info Tile */}
-          <Card className="enhanced-card glass-effect border-2 border-border/40 shadow-lg bg-gradient-to-r from-white/98 via-white/95 to-primary/8">
-            <CardContent className="p-4">
+        {/* Merged Header Tile with Status Tiles */}
+        <Card className="enhanced-card glass-effect border-2 border-border/40 shadow-lg bg-gradient-to-r from-white/98 via-white/95 to-primary/8">
+          <CardContent className="p-4 space-y-4">
+            {/* Top Row: Logo, Title, Club Selection */}
+            <div className="flex items-center justify-between gap-4 group">
+              {/* Logo and Title */}
               <div className="flex items-center gap-3">
-                <div className="flex-shrink-0 p-2.5 bg-gradient-to-br from-primary/20 to-accent/20 rounded-lg shadow-inner backdrop-blur-sm">
-                  <Users className="h-6 w-6 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h1 className="text-xl font-bold bg-gradient-to-r from-primary via-primary/80 to-accent bg-clip-text text-transparent">
-                      Club Event Manager
-                    </h1>
-                    {user && (
-                      <Badge variant={
-                        user.role === 'super_user' ? 'default' : 
-                        user.role === 'zone_rep' ? 'secondary' : 
-                        'outline'
-                      } className="text-xs">
-                        {user.role === 'super_user' ? 'Super User' : 
-                         user.role === 'zone_rep' ? 'Zone Rep' : 
-                         'Standard'}
-                      </Badge>
-                    )}
+                <div className="relative flex-shrink-0">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent rounded-lg sm:rounded-xl opacity-30 blur-lg animate-pulse group-hover:opacity-50 transition-opacity duration-300"></div>
+                  <div className="relative rounded-lg sm:rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/40 backdrop-blur-sm group-hover:border-primary/60 transition-all duration-300 group-hover:scale-105 overflow-hidden h-7 sm:h-8 md:h-9 w-14 sm:w-16 md:w-18">
+                    <Image
+                      src="/MyPonyClub - Logo - Club Manager.png"
+                      alt="MyPonyClub Club Manager Logo"
+                      fill
+                      className="object-cover drop-shadow-lg transition-transform duration-300"
+                      priority
+                    />
                   </div>
-                  <p className="text-muted-foreground text-xs font-medium">
-                    Submit and manage your event requests
-                    {user?.role === 'standard' && ' for your club'}
-                    {user?.role === 'zone_rep' && ' for clubs in your zone'}
-                    {user?.role === 'super_user' && ' for all clubs'}
-                  </p>
                 </div>
+                
+                <h1 className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-primary via-purple-600 to-accent bg-clip-text text-transparent">
+                  MyPonyClub - Club Manager
+                </h1>
               </div>
-            </CardContent>
-          </Card>
 
-          {/* Club Selection Tile */}
-          <Card className="enhanced-card glass-effect border-2 border-border/40 shadow-lg bg-gradient-to-r from-white/98 via-white/95 to-blue/8">
-            <CardContent className="p-4">
-              {selectedClub ? (
-                <Select value={selectedClubId} onValueChange={setSelectedClubId}>
-                  <SelectTrigger className="border-none shadow-none bg-transparent p-0 h-auto hover:bg-transparent focus:ring-0 w-full">
-                    <div className="text-left w-full">
-                      <h2 className="text-lg font-bold text-foreground cursor-pointer hover:text-primary transition-colors leading-tight truncate">
-                        {selectedClub.name}
-                      </h2>
-                      <div className="flex items-center gap-1.5 text-muted-foreground mt-0.5">
-                        <MapPin className="h-3 w-3 flex-shrink-0" />
-                        <span className="text-xs font-medium truncate">{selectedZone?.name || 'Unknown Zone'}</span>
-                      </div>
-                    </div>
-                  </SelectTrigger>
-                  <SelectContent className="glass-effect">
-                    {clubs
-                      .filter(club => authorizedClubs.includes(club.id))
-                      .sort((a, b) => a.name.localeCompare(b.name))
-                      .map(club => {
-                        const zone = zones.find(z => z.id === club.zoneId);
-                        return (
-                          <SelectItem key={club.id} value={club.id}>
-                            <div className="flex items-center gap-2">
-                              <Building className="h-4 w-4" />
-                              <div>
-                                <div className="font-medium">{club.name}</div>
-                                <div className="text-xs text-muted-foreground">
-                                  {zone?.name || 'Unknown Zone'}
-                                </div>
-                              </div>
-                            </div>
-                          </SelectItem>
-                        );
-                      })}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <div className="space-y-1">
-                  <h3 className="text-sm font-semibold text-muted-foreground">Select Club</h3>
+              {/* Club Selection */}
+              <div className="w-auto max-w-md">
+                {selectedClub ? (
                   <Select value={selectedClubId} onValueChange={setSelectedClubId}>
-                    <SelectTrigger className="enhanced-select bg-white/90 backdrop-blur-sm border border-border/50 shadow-sm h-9 text-sm">
-                      <SelectValue placeholder="Choose your club..." />
+                    <SelectTrigger className="h-14 border-primary/30 bg-background/90 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:border-primary/50 justify-end">
+                      <SelectValue>
+                        <div className="text-right mr-2">
+                          <div className="text-lg sm:text-xl font-bold text-foreground">
+                            {selectedClub.name}
+                          </div>
+                          <div className="flex items-center justify-end gap-1.5 text-muted-foreground mt-0.5">
+                            <MapPin className="h-3 w-3 flex-shrink-0" />
+                            <span className="text-xs font-medium">{selectedZone?.name || 'Unknown Zone'}</span>
+                          </div>
+                        </div>
+                      </SelectValue>
                     </SelectTrigger>
-                    <SelectContent className="glass-effect">
+                    <SelectContent className="rounded-xl border-primary/20 bg-background/95 backdrop-blur-md">
                       {clubs
                         .filter(club => authorizedClubs.includes(club.id))
                         .sort((a, b) => a.name.localeCompare(b.name))
                         .map(club => {
                           const zone = zones.find(z => z.id === club.zoneId);
                           return (
-                            <SelectItem key={club.id} value={club.id}>
-                              <div className="flex items-center gap-2">
-                                <Building className="h-4 w-4" />
-                                <div>
-                                  <div className="font-medium">{club.name}</div>
-                                  <div className="text-xs text-muted-foreground">
+                            <SelectItem key={club.id} value={club.id} className="rounded-lg hover:bg-primary/10 py-3">
+                              <div className="flex items-center gap-3">
+                                <div className="rounded-md bg-primary/20 p-1.5">
+                                  <Building className="h-3 w-3 text-primary" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="font-bold text-base">{club.name}</div>
+                                  <div className="text-sm text-muted-foreground">
                                     {zone?.name || 'Unknown Zone'}
                                   </div>
                                 </div>
@@ -367,95 +329,112 @@ export default function ClubEventManagerDashboard() {
                         })}
                     </SelectContent>
                   </Select>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Club Statistics - Compact Grid */}
-        {selectedClub && (
-          <div className="grid grid-cols-3 lg:grid-cols-6 gap-2">
-            
-            {/* Pending Approval */}
-            <div className="relative overflow-hidden rounded-lg border border-amber-200/60 dark:border-amber-700/60 bg-gradient-to-br from-amber-50/90 to-orange-50/80 dark:from-amber-950/30 dark:to-orange-950/20 shadow-sm hover:shadow-md transition-shadow duration-200">
-              <div className="p-2">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <div className="rounded bg-amber-100 dark:bg-amber-900/50 p-1 border border-amber-300/60 dark:border-amber-700/60">
-                    <Clock className="h-3 w-3 text-amber-700 dark:text-amber-400" />
-                  </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">Pending</span>
-                </div>
-                <div className="text-2xl font-black text-amber-600 dark:text-amber-500 leading-none">{clubEvents.filter(e => e.status === 'proposed').length}</div>
+                ) : (
+                  <Select value={selectedClubId} onValueChange={setSelectedClubId}>
+                    <SelectTrigger className="h-10 border-primary/30 bg-background/90 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:border-primary/50">
+                      <SelectValue placeholder="Choose your club..." />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl border-primary/20 bg-background/95 backdrop-blur-md">
+                      {clubs
+                        .filter(club => authorizedClubs.includes(club.id))
+                        .sort((a, b) => a.name.localeCompare(b.name))
+                        .map(club => {
+                          const zone = zones.find(z => z.id === club.zoneId);
+                          return (
+                            <SelectItem key={club.id} value={club.id} className="rounded-lg hover:bg-primary/10 py-3">
+                              <div className="flex items-center gap-3">
+                                <div className="rounded-md bg-primary/20 p-1.5">
+                                  <Building className="h-3 w-3 text-primary" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="font-bold text-base">{club.name}</div>
+                                  <div className="text-sm text-muted-foreground">
+                                    {zone?.name || 'Unknown Zone'}
+                                  </div>
+                                </div>
+                              </div>
+                            </SelectItem>
+                          );
+                        })}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
             </div>
 
-            {/* Approved Events */}
-            <div className="relative overflow-hidden rounded-lg border border-emerald-200/60 dark:border-emerald-700/60 bg-gradient-to-br from-emerald-50/90 to-green-50/80 dark:from-emerald-950/30 dark:to-green-950/20 shadow-sm hover:shadow-md transition-shadow duration-200">
-              <div className="p-2">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <div className="rounded bg-emerald-100 dark:bg-emerald-900/50 p-1 border border-emerald-300/60 dark:border-emerald-700/60">
-                    <CheckCircle className="h-3 w-3 text-emerald-700 dark:text-emerald-400" />
+            {/* Status Tiles Row */}
+            {selectedClub && (
+              <div className="grid grid-cols-3 lg:grid-cols-6 gap-2">
+                
+                {/* Pending Approval */}
+                <div className="relative overflow-hidden rounded-lg border border-amber-200/60 dark:border-amber-700/60 bg-gradient-to-br from-amber-50/90 to-orange-50/80 dark:from-amber-950/30 dark:to-orange-950/20 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
+                  <div className="p-2 flex items-center justify-between">
+                    <div className="rounded-md bg-amber-100 dark:bg-amber-900/50 p-1.5 border border-amber-300/60 dark:border-amber-700/60 flex-shrink-0">
+                      <Clock className="h-4 w-4 text-amber-700 dark:text-amber-400" />
+                    </div>
+                    <div className="text-2xl font-black text-amber-600 dark:text-amber-500 leading-none">{clubEvents.filter(e => e.status === 'proposed').length}</div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">Pending</span>
                   </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Approved</span>
                 </div>
-                <div className="text-2xl font-black text-emerald-600 dark:text-emerald-500 leading-none">{clubEvents.filter(e => e.status === 'approved').length}</div>
-              </div>
-            </div>
 
-            {/* Total Events */}
-            <div className="relative overflow-hidden rounded-lg border border-blue-200/60 dark:border-blue-700/60 bg-gradient-to-br from-blue-50/90 to-cyan-50/80 dark:from-blue-950/30 dark:to-cyan-950/20 shadow-sm hover:shadow-md transition-shadow duration-200">
-              <div className="p-2">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <div className="rounded bg-blue-100 dark:bg-blue-900/50 p-1 border border-blue-300/60 dark:border-blue-700/60">
-                    <Activity className="h-3 w-3 text-blue-700 dark:text-blue-400" />
+                {/* Approved Events */}
+                <div className="relative overflow-hidden rounded-lg border border-emerald-200/60 dark:border-emerald-700/60 bg-gradient-to-br from-emerald-50/90 to-green-50/80 dark:from-emerald-950/30 dark:to-green-950/20 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
+                  <div className="p-2 flex items-center justify-between">
+                    <div className="rounded-md bg-emerald-100 dark:bg-emerald-900/50 p-1.5 border border-emerald-300/60 dark:border-emerald-700/60 flex-shrink-0">
+                      <CheckCircle className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
+                    </div>
+                    <div className="text-2xl font-black text-emerald-600 dark:text-emerald-500 leading-none">{clubEvents.filter(e => e.status === 'approved').length}</div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Approved</span>
                   </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400">Total</span>
                 </div>
-                <div className="text-2xl font-black text-blue-600 dark:text-blue-500 leading-none">{clubEvents.length}</div>
-              </div>
-            </div>
 
-            {/* Schedules Under Review */}
-            <div className="relative overflow-hidden rounded-lg border border-orange-200/60 dark:border-orange-700/60 bg-gradient-to-br from-orange-50/90 to-amber-50/80 dark:from-orange-950/30 dark:to-amber-950/20 shadow-sm hover:shadow-md transition-shadow duration-200">
-              <div className="p-2">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <div className="rounded bg-orange-100 dark:bg-orange-900/50 p-1 border border-orange-300/60 dark:border-orange-700/60">
-                    <Clock className="h-3 w-3 text-orange-700 dark:text-orange-400" />
+                {/* Total Events */}
+                <div className="relative overflow-hidden rounded-lg border border-blue-200/60 dark:border-blue-700/60 bg-gradient-to-br from-blue-50/90 to-cyan-50/80 dark:from-blue-950/30 dark:to-cyan-950/20 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
+                  <div className="p-2 flex items-center justify-between">
+                    <div className="rounded-md bg-blue-100 dark:bg-blue-900/50 p-1.5 border border-blue-300/60 dark:border-blue-700/60 flex-shrink-0">
+                      <Activity className="h-4 w-4 text-blue-700 dark:text-blue-400" />
+                    </div>
+                    <div className="text-2xl font-black text-blue-600 dark:text-blue-500 leading-none">{clubEvents.length}</div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400">Total</span>
                   </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-orange-700 dark:text-orange-400">Review</span>
                 </div>
-                <div className="text-2xl font-black text-orange-600 dark:text-orange-500 leading-none">{clubEvents.filter(e => e.schedule && e.schedule.status === 'pending').length}</div>
-              </div>
-            </div>
 
-            {/* Schedules Needing Rework */}
-            <div className="relative overflow-hidden rounded-lg border border-red-200/60 dark:border-red-700/60 bg-gradient-to-br from-red-50/90 to-rose-50/80 dark:from-red-950/30 dark:to-rose-950/20 shadow-sm hover:shadow-md transition-shadow duration-200">
-              <div className="p-2">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <div className="rounded bg-red-100 dark:bg-red-900/50 p-1 border border-red-300/60 dark:border-red-700/60">
-                    <XCircle className="h-3 w-3 text-red-700 dark:text-red-400" />
+                {/* Schedules Under Review */}
+                <div className="relative overflow-hidden rounded-lg border border-orange-200/60 dark:border-orange-700/60 bg-gradient-to-br from-orange-50/90 to-amber-50/80 dark:from-orange-950/30 dark:to-amber-950/20 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
+                  <div className="p-2 flex items-center justify-between">
+                    <div className="rounded-md bg-orange-100 dark:bg-orange-900/50 p-1.5 border border-orange-300/60 dark:border-orange-700/60 flex-shrink-0">
+                      <Clock className="h-4 w-4 text-orange-700 dark:text-orange-400" />
+                    </div>
+                    <div className="text-2xl font-black text-orange-600 dark:text-orange-500 leading-none">{clubEvents.filter(e => e.schedule && e.schedule.status === 'pending').length}</div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-orange-700 dark:text-orange-400">Review</span>
                   </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-red-700 dark:text-red-400">Rework</span>
                 </div>
-                <div className="text-2xl font-black text-red-600 dark:text-red-500 leading-none">{clubEvents.filter(e => e.schedule && e.schedule.status === 'rejected').length}</div>
-              </div>
-            </div>
 
-            {/* Approved Schedules */}
-            <div className="relative overflow-hidden rounded-lg border border-green-200/60 dark:border-green-700/60 bg-gradient-to-br from-green-50/90 to-emerald-50/80 dark:from-green-950/30 dark:to-emerald-950/20 shadow-sm hover:shadow-md transition-shadow duration-200">
-              <div className="p-2">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <div className="rounded bg-green-100 dark:bg-green-900/50 p-1 border border-green-300/60 dark:border-green-700/60">
-                    <FileText className="h-3 w-3 text-green-700 dark:text-green-400" />
+                {/* Schedules Needing Rework */}
+                <div className="relative overflow-hidden rounded-lg border border-red-200/60 dark:border-red-700/60 bg-gradient-to-br from-red-50/90 to-rose-50/80 dark:from-red-950/30 dark:to-rose-950/20 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
+                  <div className="p-2 flex items-center justify-between">
+                    <div className="rounded-md bg-red-100 dark:bg-red-900/50 p-1.5 border border-red-300/60 dark:border-red-700/60 flex-shrink-0">
+                      <XCircle className="h-4 w-4 text-red-700 dark:text-red-400" />
+                    </div>
+                    <div className="text-2xl font-black text-red-600 dark:text-red-500 leading-none">{clubEvents.filter(e => e.schedule && e.schedule.status === 'rejected').length}</div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-red-700 dark:text-red-400">Rework</span>
                   </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-green-700 dark:text-green-400">Ready</span>
                 </div>
-                <div className="text-2xl font-black text-green-600 dark:text-green-500 leading-none">{clubEvents.filter(e => e.schedule && e.schedule.status === 'approved').length}</div>
+
+                {/* Approved Schedules */}
+                <div className="relative overflow-hidden rounded-lg border border-green-200/60 dark:border-green-700/60 bg-gradient-to-br from-green-50/90 to-emerald-50/80 dark:from-green-950/30 dark:to-emerald-950/20 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
+                  <div className="p-2 flex items-center justify-between">
+                    <div className="rounded-md bg-green-100 dark:bg-green-900/50 p-1.5 border border-green-300/60 dark:border-green-700/60 flex-shrink-0">
+                      <FileText className="h-4 w-4 text-green-700 dark:text-green-400" />
+                    </div>
+                    <div className="text-2xl font-black text-green-600 dark:text-green-500 leading-none">{clubEvents.filter(e => e.schedule && e.schedule.status === 'approved').length}</div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-green-700 dark:text-green-400">Ready</span>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        )}
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Event Management Section */}
@@ -467,7 +446,7 @@ export default function ClubEventManagerDashboard() {
               {/* Event Filter - Only show when viewing events */}
               {!showAddEventForm && (
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-2 p-1 bg-gradient-to-r from-slate-100 via-white to-blue-50 rounded-xl border border-border/40 shadow-lg backdrop-blur-sm">
+                  <div className="flex items-center gap-2 p-1.5 bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900 rounded-xl border border-border/40 shadow-md">
                     <div className="flex items-center gap-1.5 px-2 py-1">
                       <Filter className="h-4 w-4 text-primary" />
                       <span className="text-sm font-semibold text-foreground">Filter:</span>
@@ -482,26 +461,38 @@ export default function ClubEventManagerDashboard() {
                       <button
                         key={key}
                         onClick={() => setEventFilter(key as 'all' | 'upcoming' | 'past')}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 ${
                           eventFilter === key
-                            ? 'bg-gradient-to-r from-primary/20 via-primary/15 to-accent/20 text-primary border border-primary/30 shadow-sm'
-                            : 'text-muted-foreground hover:text-foreground hover:bg-white/60'
+                            ? 'bg-gradient-to-r from-primary/90 to-accent/90 text-white shadow-lg border border-primary/40'
+                            : 'text-muted-foreground hover:bg-slate-200/50 dark:hover:bg-slate-700/50'
                         }`}
                       >
                         <Icon className="h-3.5 w-3.5" />
                         <span>{label}</span>
                         {key === 'all' && (
-                          <span className="ml-1 px-1.5 py-0.5 bg-primary/10 text-primary rounded text-xs font-bold">
+                          <span className={`ml-1 px-1.5 py-0.5 rounded text-xs font-bold ${
+                            eventFilter === key 
+                              ? 'bg-white/90 text-primary' 
+                              : 'bg-primary/10 text-primary'
+                          }`}>
                             {clubEvents.length}
                           </span>
                         )}
                         {key === 'upcoming' && (
-                          <span className="ml-1 px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-bold">
+                          <span className={`ml-1 px-1.5 py-0.5 rounded text-xs font-bold ${
+                            eventFilter === key 
+                              ? 'bg-white/90 text-blue-700' 
+                              : 'bg-blue-100 text-blue-700'
+                          }`}>
                             {clubEvents.filter(e => new Date(e.date) >= new Date()).length}
                           </span>
                         )}
                         {key === 'past' && (
-                          <span className="ml-1 px-1.5 py-0.5 bg-gray-100 text-gray-700 rounded text-xs font-bold">
+                          <span className={`ml-1 px-1.5 py-0.5 rounded text-xs font-bold ${
+                            eventFilter === key 
+                              ? 'bg-white/90 text-gray-700' 
+                              : 'bg-gray-100 text-gray-700'
+                          }`}>
                             {clubEvents.filter(e => new Date(e.date) < new Date()).length}
                           </span>
                         )}

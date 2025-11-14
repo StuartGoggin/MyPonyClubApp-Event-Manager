@@ -534,8 +534,8 @@ export function EventCalendar({
     
     {/* Enhanced Navigation and Filter Section */}
     <div className="space-y-4">
-      {/* Top Row: Month/Year Navigation, View Toggle, and Filter Mode */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      {/* Top Row: Month/Year Navigation and View Toggle */}
+      <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-3 p-1.5 bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900 rounded-xl border border-border/40 shadow-md">
           <Button 
             variant="ghost" 
@@ -558,116 +558,122 @@ export function EventCalendar({
           </Button>
         </div>
         
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 p-1.5 bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900 rounded-xl border border-border/40 shadow-md">
-            <Button 
-              variant="ghost"
-              size="sm" 
-              onClick={() => setView('month')}
-              className={`rounded-lg transition-all duration-200 ${
-                view === 'month' 
-                  ? 'bg-gradient-to-r from-primary/90 to-accent/90 text-white shadow-lg border border-primary/40' 
-                  : 'text-muted-foreground hover:bg-slate-200/50 dark:hover:bg-slate-700/50'
-              }`}
-            >
-              Month
-            </Button>
-            <Button 
-              variant="ghost"
-              size="sm" 
-              onClick={() => setView('year')}
-              className={`rounded-lg transition-all duration-200 ${
-                view === 'year' 
-                  ? 'bg-gradient-to-r from-primary/90 to-accent/90 text-white shadow-lg border border-primary/40' 
-                  : 'text-muted-foreground hover:bg-slate-200/50 dark:hover:bg-slate-700/50'
-              }`}
-            >
-              Year
-            </Button>
-          </div>
-          
-          <div className="flex items-center gap-2 p-1.5 bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900 rounded-xl border border-border/40 shadow-md">
-            <Button 
-              variant={filterMode === 'location' ? 'secondary' : 'ghost'} 
-              size="sm" 
-              onClick={() => setFilterMode('location')}
-              className={`rounded-lg transition-all duration-200 ${
-                filterMode === 'location' 
-                  ? 'bg-gradient-to-r from-primary/90 to-accent/90 text-white shadow-lg border border-primary/40' 
-                  : 'text-muted-foreground hover:bg-slate-200/50 dark:hover:bg-slate-700/50'
-              }`}
-            >
-              <Pin className="mr-2 h-4 w-4" /> Filter by Location
-            </Button>
-            <Button 
-              variant={filterMode === 'distance' ? 'secondary' : 'ghost'} 
-              size="sm" 
-              onClick={() => setFilterMode('distance')}
-              className={`rounded-lg transition-all duration-200 ${
-                filterMode === 'distance' 
-                  ? 'bg-gradient-to-r from-primary/90 to-accent/90 text-white shadow-lg border border-primary/40' 
-                  : 'text-muted-foreground hover:bg-slate-200/50 dark:hover:bg-slate-700/50'
-              }`}
-            >
-              <Route className="mr-2 h-4 w-4" /> Filter by Distance
-            </Button>
+        <div className="flex items-center gap-2 p-1.5 bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900 rounded-xl border border-border/40 shadow-md">
+          <Button 
+            variant="ghost"
+            size="sm" 
+            onClick={() => setView('month')}
+            className={`rounded-lg transition-all duration-200 ${
+              view === 'month' 
+                ? 'bg-gradient-to-r from-primary/90 to-accent/90 text-white shadow-lg border border-primary/40' 
+                : 'text-muted-foreground hover:bg-slate-200/50 dark:hover:bg-slate-700/50'
+            }`}
+          >
+            Month
+          </Button>
+          <Button 
+            variant="ghost"
+            size="sm" 
+            onClick={() => setView('year')}
+            className={`rounded-lg transition-all duration-200 ${
+              view === 'year' 
+                ? 'bg-gradient-to-r from-primary/90 to-accent/90 text-white shadow-lg border border-primary/40' 
+                : 'text-muted-foreground hover:bg-slate-200/50 dark:hover:bg-slate-700/50'
+            }`}
+          >
+            Year
+          </Button>
+        </div>
+      </div>
+      
+      {/* Filter Section */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-2 p-3 sm:p-1.5 bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900 rounded-xl border border-border/40 shadow-md">
+            {/* Filter Mode Buttons */}
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-1">
+              <Button 
+                variant={filterMode === 'location' ? 'secondary' : 'ghost'} 
+                size="sm" 
+                onClick={() => setFilterMode('location')}
+                className={`rounded-lg transition-all duration-200 py-2 sm:py-1.5 ${
+                  filterMode === 'location' 
+                    ? 'bg-gradient-to-r from-primary/90 to-accent/90 text-white shadow-lg border border-primary/40' 
+                    : 'text-muted-foreground hover:bg-slate-200/50 dark:hover:bg-slate-700/50'
+                }`}
+              >
+                <Pin className="mr-2 h-4 w-4" /> Filter by Location
+              </Button>
+              <Button 
+                variant={filterMode === 'distance' ? 'secondary' : 'ghost'} 
+                size="sm" 
+                onClick={() => setFilterMode('distance')}
+                className={`rounded-lg transition-all duration-200 py-2 sm:py-1.5 ${
+                  filterMode === 'distance' 
+                    ? 'bg-gradient-to-r from-primary/90 to-accent/90 text-white shadow-lg border border-primary/40' 
+                    : 'text-muted-foreground hover:bg-slate-200/50 dark:hover:bg-slate-700/50'
+                }`}
+              >
+                <Route className="mr-2 h-4 w-4" /> Filter by Distance
+              </Button>
+            </div>
             
-            {/* Filter Controls - Inline */}
+            {/* Filter Controls - Inline on desktop, stacked on mobile */}
             {filterMode === 'location' ? (
               <>
-                <div className="w-px h-6 bg-border/40 mx-1"></div>
-                <Select value={selectedZoneId} onValueChange={handleZoneChange}>
-                  <SelectTrigger className="w-[180px] h-9 text-sm border-primary/30 bg-background/50 backdrop-blur-sm rounded-lg shadow-sm hover:shadow-md transition-all duration-300 hover:border-primary/50">
-                    <SelectValue placeholder="Select Zone" />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl border-primary/20 bg-background/95 backdrop-blur-md">
-                    <SelectItem value="all">All of Victoria</SelectItem>
-                    {zones.map(zone => (
-                      <SelectItem key={zone.id} value={zone.id}>{zone.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={selectedClubId} onValueChange={setSelectedClubId} disabled={selectedZoneId === 'all' && filteredClubs.length === clubs.length}>
-                  <SelectTrigger className="w-[180px] h-9 text-sm border-primary/30 bg-background/50 backdrop-blur-sm rounded-lg shadow-sm hover:shadow-md transition-all duration-300 hover:border-primary/50">
-                    <SelectValue placeholder="Select Club" />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl border-primary/20 bg-background/95 backdrop-blur-md">
-                    <SelectItem value="all">All Clubs</SelectItem>
-                    {filteredClubs.map(club => (
-                      <SelectItem key={club.id} value={club.id}>{club.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="hidden sm:block w-px h-6 bg-border/40 mx-1"></div>
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-2 w-full sm:w-auto">
+                  <Select value={selectedZoneId} onValueChange={handleZoneChange}>
+                    <SelectTrigger className="w-full sm:w-[180px] h-10 sm:h-9 text-sm border-primary/30 bg-background/50 backdrop-blur-sm rounded-lg shadow-sm hover:shadow-md transition-all duration-300 hover:border-primary/50">
+                      <SelectValue placeholder="Select Zone" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl border-primary/20 bg-background/95 backdrop-blur-md">
+                      <SelectItem value="all">All of Victoria</SelectItem>
+                      {zones.map(zone => (
+                        <SelectItem key={zone.id} value={zone.id}>{zone.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={selectedClubId} onValueChange={setSelectedClubId} disabled={selectedZoneId === 'all' && filteredClubs.length === clubs.length}>
+                    <SelectTrigger className="w-full sm:w-[180px] h-10 sm:h-9 text-sm border-primary/30 bg-background/50 backdrop-blur-sm rounded-lg shadow-sm hover:shadow-md transition-all duration-300 hover:border-primary/50">
+                      <SelectValue placeholder="Select Club" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl border-primary/20 bg-background/95 backdrop-blur-md">
+                      <SelectItem value="all">All Clubs</SelectItem>
+                      {filteredClubs.map(club => (
+                        <SelectItem key={club.id} value={club.id}>{club.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </>
             ) : (
               <>
-                <div className="w-px h-6 bg-border/40 mx-1"></div>
-                <Select value={homeClubId ?? ''} onValueChange={(val) => setHomeClubId(val === 'none' ? null : val)}>
-                  <SelectTrigger className="w-[200px] h-9 text-sm border-primary/30 bg-background/50 backdrop-blur-sm rounded-lg shadow-sm hover:shadow-md transition-all duration-300 hover:border-primary/50">
-                    <SelectValue placeholder="Select a home club" />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl border-primary/20 bg-background/95 backdrop-blur-md">
-                    <SelectItem value="none">Select a home club</SelectItem>
-                    {clubs.map(club => (
-                      <SelectItem key={club.id} value={club.id}>{club.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={String(distance)} onValueChange={(val) => setDistance(Number(val))} disabled={!homeClubId}>
-                  <SelectTrigger className="w-[160px] h-9 text-sm border-primary/30 bg-background/50 backdrop-blur-sm rounded-lg shadow-sm hover:shadow-md transition-all duration-300 hover:border-primary/50">
-                    <SelectValue placeholder="Select distance" />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl border-primary/20 bg-background/95 backdrop-blur-md">
-                    <SelectItem value="25">Within 25 km</SelectItem>
-                    <SelectItem value="50">Within 50 km</SelectItem>
-                    <SelectItem value="100">Within 100 km</SelectItem>
-                    <SelectItem value="200">Within 200 km</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="hidden sm:block w-px h-6 bg-border/40 mx-1"></div>
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-2 w-full sm:w-auto">
+                  <Select value={homeClubId ?? ''} onValueChange={(val) => setHomeClubId(val === 'none' ? null : val)}>
+                    <SelectTrigger className="w-full sm:w-[200px] h-10 sm:h-9 text-sm border-primary/30 bg-background/50 backdrop-blur-sm rounded-lg shadow-sm hover:shadow-md transition-all duration-300 hover:border-primary/50">
+                      <SelectValue placeholder="Select a home club" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl border-primary/20 bg-background/95 backdrop-blur-md">
+                      <SelectItem value="none">Select a home club</SelectItem>
+                      {clubs.map(club => (
+                        <SelectItem key={club.id} value={club.id}>{club.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={String(distance)} onValueChange={(val) => setDistance(Number(val))} disabled={!homeClubId}>
+                    <SelectTrigger className="w-full sm:w-[160px] h-10 sm:h-9 text-sm border-primary/30 bg-background/50 backdrop-blur-sm rounded-lg shadow-sm hover:shadow-md transition-all duration-300 hover:border-primary/50">
+                      <SelectValue placeholder="Select distance" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl border-primary/20 bg-background/95 backdrop-blur-md">
+                      <SelectItem value="25">Within 25 km</SelectItem>
+                      <SelectItem value="50">Within 50 km</SelectItem>
+                      <SelectItem value="100">Within 100 km</SelectItem>
+                      <SelectItem value="200">Within 200 km</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </>
             )}
-          </div>
-        </div>
       </div>
     </div>
       

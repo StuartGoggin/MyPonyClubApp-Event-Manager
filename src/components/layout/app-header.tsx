@@ -1,18 +1,8 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { UserAccountMenu } from './user-account-menu';
-
-// A simple SVG pony icon.
-const PonyIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <path d="M9.5 14.5A2.5 2.5 0 0 1 12 12h0a2.5 2.5 0 0 1 2.5 2.5v5.5h-5v-5.5Z" />
-    <path d="M12 12V6.5a2.5 2.5 0 0 1 5 0V9" />
-    <path d="m7 14 2-2" />
-    <path d="M14 14h1a2 2 0 0 1 2 2v2h-3v-3.5a2.5 2.5 0 0 0-5 0V20H6v-2a2 2 0 0 1 2-2h1" />
-    <path d="M12 9.5a2.5 2.5 0 1 1 5 0V12" />
-  </svg>
-);
 
 export function AppHeader() {
   return (
@@ -35,21 +25,24 @@ export function AppHeader() {
             <Link href="/" className="flex items-center gap-2 sm:gap-3 group min-w-0 flex-1">
               {/* Logo with beautiful effects */}
               <div className="relative flex-shrink-0">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent rounded-xl sm:rounded-2xl opacity-30 blur-lg animate-pulse group-hover:opacity-50 transition-opacity duration-300"></div>
-                <div className="relative rounded-xl sm:rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 p-2 sm:p-3 border-2 border-primary/40 backdrop-blur-sm group-hover:border-primary/60 transition-all duration-300 group-hover:scale-105">
-                  <PonyIcon className="h-6 w-6 sm:h-8 sm:w-8 text-primary drop-shadow-lg group-hover:text-accent transition-colors duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent rounded-lg sm:rounded-xl opacity-30 blur-lg animate-pulse group-hover:opacity-50 transition-opacity duration-300"></div>
+                <div className="relative rounded-lg sm:rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/40 backdrop-blur-sm group-hover:border-primary/60 transition-all duration-300 group-hover:scale-105 overflow-hidden h-7 sm:h-8 md:h-9 w-14 sm:w-16 md:w-18">
+                  <Image
+                    src="/logo.png"
+                    alt="MyPonyClub Logo"
+                    fill
+                    className="object-cover drop-shadow-lg transition-transform duration-300"
+                    priority
+                  />
                 </div>
               </div>
               
               {/* App name with gradient text */}
               <div className="flex flex-col min-w-0 flex-1">
-                <h1 className="text-lg sm:text-xl md:text-2xl xl:text-3xl font-bold bg-gradient-to-r from-primary via-purple-600 to-accent bg-clip-text text-transparent group-hover:from-accent group-hover:via-primary group-hover:to-purple-600 transition-all duration-500 truncate">
-                  <span className="hidden sm:inline">PonyClub Events</span>
+                <h1 className="text-base sm:text-lg md:text-xl xl:text-2xl font-bold tracking-tight bg-gradient-to-r from-primary via-purple-600 to-accent bg-clip-text text-transparent group-hover:from-accent group-hover:via-primary group-hover:to-purple-600 transition-all duration-500 truncate">
+                  <span className="hidden sm:inline">MyPonyClub - Events</span>
                   <span className="sm:hidden">Events</span>
                 </h1>
-                <p className="text-xs sm:text-sm text-muted-foreground font-medium truncate hidden sm:block">
-                  Event Management System
-                </p>
               </div>
             </Link>
           </div>

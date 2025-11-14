@@ -6,7 +6,7 @@ import { JotaiProvider } from '@/lib/state';
 import { AuthProvider } from '@/contexts/auth-context';
 
 export const metadata: Metadata = {
-  title: 'MyPonyClub Events',
+  title: 'MyPonyClub - Events',
   description: 'Event management for MyPonyClub',
 };
 

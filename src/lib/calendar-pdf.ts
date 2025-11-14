@@ -554,6 +554,7 @@ function generateZoneFormatPDF(options: CalendarPDFOptions): Buffer {
 
     // Modern color palette for event type badges
     const eventTypeColors = {
+      'Pending Approval': { bg: [253, 224, 71] as const, text: [0, 0, 0] as const }, // Bright Yellow with black text
       'Zone Qualifier': { bg: [59, 130, 246] as const, text: [255, 255, 255] as const }, // Blue
       'Zone Event': { bg: [239, 68, 68] as const, text: [255, 255, 255] as const }, // Red
       'Zone Meeting': { bg: [16, 185, 129] as const, text: [255, 255, 255] as const }, // Green (moved from Zone Meeting)
@@ -804,30 +805,37 @@ function generateZoneFormatPDF(options: CalendarPDFOptions): Buffer {
           let eventTypeBadge = '';
           let badgeColor: { bg: readonly [number, number, number]; text: readonly [number, number, number] } = eventTypeColors['Zone Qualifier']; // Default
           
+          // Check if it's a pending/proposed event (NOT approved)
+          if (eventStatus === 'proposed' || eventStatus === 'pending') {
+            eventTypeBadge = 'Pending Approval';
+            badgeColor = eventTypeColors['Pending Approval'];
+          }
           // Check if it's a zone event (club name contains "Zone Event" or club field contains zone name)
-          const isZoneEvent = clubName.includes('(Zone Event)') || clubName.toLowerCase().includes('zone') && clubName.includes('Event');
-          
-          // Check if it's a public holiday (by status or name)
-          if (eventStatus === 'public_holiday' || eventName.includes('holiday') || eventName.includes('public holiday')) {
-            eventTypeBadge = 'Public Holiday';
-            badgeColor = eventTypeColors['Public Holiday'];
-          } else if (isZoneEvent) {
-            // Zone-level events get special badge
-            eventTypeBadge = 'Zone Event';
-            badgeColor = eventTypeColors['Zone Event'];
-          } else if ((event as any).isQualifier === true) {
-            // Check the isQualifier field from Firestore
-            eventTypeBadge = 'Zone Qualifier';
-            badgeColor = eventTypeColors['Zone Qualifier'];
-          } else if (eventType.includes('meeting') || eventName.includes('meeting')) {
-            eventTypeBadge = 'Zone Meeting';
-            badgeColor = eventTypeColors['Zone Meeting'];
-          } else if (eventType.includes('state') || eventName.includes('state')) {
-            eventTypeBadge = 'State Event';
-            badgeColor = eventTypeColors['State Event'];
-          } else if (eventType.includes('certificate') || eventType.includes('assessment') || eventName.includes('certificate') || eventName.includes('assessment')) {
-            eventTypeBadge = 'Zone Certificate';
-            badgeColor = eventTypeColors['Zone Certificate'];
+          else {
+            const isZoneEvent = clubName.includes('(Zone Event)') || clubName.toLowerCase().includes('zone') && clubName.includes('Event');
+            
+            // Check if it's a public holiday (by status or name)
+            if (eventStatus === 'public_holiday' || eventName.includes('holiday') || eventName.includes('public holiday')) {
+              eventTypeBadge = 'Public Holiday';
+              badgeColor = eventTypeColors['Public Holiday'];
+            } else if (isZoneEvent) {
+              // Zone-level events get special badge
+              eventTypeBadge = 'Zone Event';
+              badgeColor = eventTypeColors['Zone Event'];
+            } else if ((event as any).isQualifier === true) {
+              // Check the isQualifier field from Firestore
+              eventTypeBadge = 'Zone Qualifier';
+              badgeColor = eventTypeColors['Zone Qualifier'];
+            } else if (eventType.includes('meeting') || eventName.includes('meeting')) {
+              eventTypeBadge = 'Zone Meeting';
+              badgeColor = eventTypeColors['Zone Meeting'];
+            } else if (eventType.includes('state') || eventName.includes('state')) {
+              eventTypeBadge = 'State Event';
+              badgeColor = eventTypeColors['State Event'];
+            } else if (eventType.includes('certificate') || eventType.includes('assessment') || eventName.includes('certificate') || eventName.includes('assessment')) {
+              eventTypeBadge = 'Zone Certificate';
+              badgeColor = eventTypeColors['Zone Certificate'];
+            }
           }
           
           // Draw row borders and content

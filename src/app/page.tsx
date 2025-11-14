@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { EventCalendar } from '@/components/dashboard/event-calendar';
 import { Event, Club, EventType, Zone } from '@/lib/types';
 import { useAuth } from '@/contexts/auth-context';
@@ -119,23 +120,25 @@ export default function DashboardPage() {
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-accent/10 to-transparent rounded-full blur-3xl"></div>
         
         <div className="relative p-6">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 group">
+            {/* Logo with beautiful effects */}
             <div className="relative flex-shrink-0">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent rounded-2xl opacity-20 blur-lg animate-pulse"></div>
-              <div className="relative rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 p-4 border-2 border-primary/40 backdrop-blur-sm">
-                <svg className="h-8 w-8 text-primary drop-shadow-lg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5a2.25 2.25 0 0 0 2.25-2.25m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5a2.25 2.25 0 0 1 2.25 2.25v7.5" />
-                </svg>
+              <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent rounded-lg sm:rounded-xl opacity-30 blur-lg animate-pulse group-hover:opacity-50 transition-opacity duration-300"></div>
+              <div className="relative rounded-lg sm:rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/40 backdrop-blur-sm group-hover:border-primary/60 transition-all duration-300 group-hover:scale-105 overflow-hidden h-7 sm:h-8 md:h-9 w-14 sm:w-16 md:w-18">
+                <Image
+                  src="/MyPonyClub - Logo - Calendar Events.png"
+                  alt="MyPonyClub Event Calendar Logo"
+                  fill
+                  className="object-cover drop-shadow-lg transition-transform duration-300"
+                  priority
+                />
               </div>
             </div>
-            <div>
-              <h1 className="text-3xl xl:text-4xl font-bold bg-gradient-to-r from-primary via-purple-600 to-accent bg-clip-text text-transparent">
-                Event Calendar
-              </h1>
-              <p className="text-muted-foreground text-lg mt-2">
-                View and manage all proposed and approved events across Victoria.
-              </p>
-            </div>
+            
+            {/* Title matching main app style */}
+            <h1 className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-primary via-purple-600 to-accent bg-clip-text text-transparent">
+              MyPonyClub - Event Calendar
+            </h1>
           </div>
         </div>
       </div>

@@ -208,7 +208,7 @@ const Sidebar = React.forwardRef<
           >
             <div className="flex h-full w-full flex-col">
               <SheetHeader className="p-0 text-left">
-                  <SheetTitle className="sr-only">PonyClub Events</SheetTitle>
+                  <SheetTitle className="sr-only">MyPonyClub - Events</SheetTitle>
               </SheetHeader>
               {children}
             </div>

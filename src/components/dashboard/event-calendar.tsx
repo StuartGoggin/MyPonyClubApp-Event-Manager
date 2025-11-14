@@ -292,378 +292,414 @@ export function EventCalendar({
   }
 
   return (
-  <div className="enhanced-card rounded-lg border shadow-lg glass-effect">
-    <div className="flex flex-col gap-4 p-4 border-b border-border/50">
-    {/* PDF Export Controls - Collapsible Section */}
-    <div className="w-full">
-      {/* Collapsible Header */}
-      <div 
-        className="flex items-center justify-between p-2 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg border border-border/40 shadow-sm cursor-pointer hover:from-primary/15 hover:to-accent/15 transition-colors"
-        onClick={() => setIsPdfSectionVisible(!isPdfSectionVisible)}
-      >
-        <div className="flex items-center gap-2">
-          <svg className="h-4 w-4 text-primary" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 2C11.4477 2 11 2.44772 11 3V13.5858L7.70711 10.2929C7.31658 9.90237 6.68342 9.90237 6.29289 10.2929C5.90237 10.6834 5.90237 11.3166 6.29289 11.7071L11.2929 16.7071C11.6834 17.0976 12.3166 17.0976 12.7071 16.7071L17.7071 11.7071C18.0976 11.3166 18.0976 10.6834 17.7071 10.2929C17.3166 9.90237 16.6834 9.90237 16.2929 10.2929L13 13.5858V3C13 2.44772 12.5523 2 12 2Z"/>
-            <path d="M4 19C4 18.4477 4.44772 18 5 18H19C19.5523 18 20 18.4477 20 19C20 19.5523 19.5523 20 19 20H5C4.44772 20 4 19.5523 4 19Z"/>
-          </svg>
-          <span className="text-xs font-semibold text-primary">Download Calendar</span>
-        </div>
-        <ChevronDown 
-          className={`h-4 w-4 text-primary transition-transform duration-200 ${isPdfSectionVisible ? 'rotate-180' : ''}`}
-        />
-      </div>
+    <div className="enhanced-card rounded-lg border shadow-lg glass-effect">
+      <div className="flex flex-col gap-4 p-4 border-b border-border/50">
+        {/* PDF Export Controls - Collapsible Section */}
+        <div className="w-full">
+          {/* Collapsible Header */}
+          <div 
+            className="flex items-center justify-between p-2 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg border border-border/40 shadow-sm cursor-pointer hover:from-primary/15 hover:to-accent/15 transition-colors"
+            onClick={() => setIsPdfSectionVisible(!isPdfSectionVisible)}
+          >
+            <div className="flex items-center gap-2">
+              <svg className="h-4 w-4 text-primary" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C11.4477 2 11 2.44772 11 3V13.5858L7.70711 10.2929C7.31658 9.90237 6.68342 9.90237 6.29289 10.2929C5.90237 10.6834 5.90237 11.3166 6.29289 11.7071L11.2929 16.7071C11.6834 17.0976 12.3166 17.0976 12.7071 16.7071L17.7071 11.7071C18.0976 11.3166 18.0976 10.6834 17.7071 10.2929C17.3166 9.90237 16.6834 9.90237 16.2929 10.2929L13 13.5858V3C13 2.44772 12.5523 2 12 2Z"/>
+                <path d="M4 19C4 18.4477 4.44772 18 5 18H19C19.5523 18 20 18.4477 20 19C20 19.5523 19.5523 20 19 20H5C4.44772 20 4 19.5523 4 19Z"/>
+              </svg>
+              <span className="text-xs font-semibold text-primary">Download Calendar</span>
+            </div>
+            <ChevronDown 
+              className={`h-4 w-4 text-primary transition-transform duration-200 ${isPdfSectionVisible ? 'rotate-180' : ''}`}
+            />
+          </div>
       
-      {/* Collapsible Content */}
-      {isPdfSectionVisible && (
-        <div className="mt-2 p-3 bg-gradient-to-r from-primary/5 to-accent/5 rounded-lg border border-border/30">
-          <div className="flex flex-col gap-3">
-            {/* Scope Selection Row */}
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <label className="text-xs font-semibold text-primary whitespace-nowrap">Scope:</label>
-                <Select value={pdfFilterScope} onValueChange={(value: 'all' | 'zone' | 'club') => {
-                  setPdfFilterScope(value);
-                  if (value !== 'zone') setPdfSelectedZone('');
-                  if (value !== 'club') setPdfSelectedClub('');
-                }}>
-                  <SelectTrigger className="h-6 text-xs min-w-[130px] px-2 py-0.5 border-primary/40 bg-gradient-to-r from-primary/5 to-accent/5">
-                    <SelectValue placeholder="Select scope" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all" className="text-xs">All Events</SelectItem>
-                    <SelectItem value="zone" className="text-xs">Zone Events</SelectItem>
-                    <SelectItem value="club" className="text-xs">Club Events</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              {/* Zone Selection */}
-              {pdfFilterScope === 'zone' && (
-                <Select value={pdfSelectedZone} onValueChange={setPdfSelectedZone}>
-                  <SelectTrigger className="h-6 text-xs min-w-[120px] px-2 py-0.5 border-primary/40 bg-gradient-to-r from-primary/5 to-accent/5">
-                    <SelectValue placeholder="Select zone" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {zones.map(zone => (
-                      <SelectItem key={zone.id} value={zone.id} className="text-xs">
-                        {zone.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-              
-              {/* Club Selection - Zone and Club on same row */}
-              {pdfFilterScope === 'club' && (
-                <>
-                  <Select value={pdfSelectedZone} onValueChange={(zoneId) => {
-                    setPdfSelectedZone(zoneId);
-                    setPdfSelectedClub(''); // Reset club selection when zone changes
-                  }}>
-                    <SelectTrigger className="h-6 text-xs min-w-[120px] px-2 py-0.5 border-primary/40 bg-gradient-to-r from-primary/5 to-accent/5">
-                      <SelectValue placeholder="Select zone first" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {zones.map(zone => (
-                        <SelectItem key={zone.id} value={zone.id} className="text-xs">
-                          {zone.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select value={pdfSelectedClub} onValueChange={setPdfSelectedClub} disabled={!pdfSelectedZone}>
-                    <SelectTrigger className="h-6 text-xs min-w-[150px] px-2 py-0.5 border-primary/40 bg-gradient-to-r from-primary/5 to-accent/5">
-                      <SelectValue placeholder={pdfSelectedZone ? "Select club" : "Select zone first"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {pdfFilteredClubs.map(club => (
-                          <SelectItem key={club.id} value={club.id} className="text-xs">
-                            {club.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </>
-              )}
-            </div>
-
-            {/* Format Selection Row */}
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <label className="text-xs font-semibold text-primary whitespace-nowrap">Format:</label>
-                <Select value={pdfFormat} onValueChange={(value: 'standard' | 'zone') => setPdfFormat(value)}>
-                  <SelectTrigger className="h-6 text-xs min-w-[130px] px-2 py-0.5 border-primary/40 bg-gradient-to-r from-primary/5 to-accent/5">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="standard" className="text-xs">Standard Format</SelectItem>
-                    <SelectItem value="zone" className="text-xs">Zone Format</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            
-            {/* Date Range and Download Controls */}
-            <div className="flex items-center gap-4 w-full">
-              {/* Date Range Selector - Left Side */}
-              <div className="flex gap-1">
-                <Button
-                  variant={pdfScope === 'month' ? 'secondary' : 'outline'}
-                  size="sm"
-                  className={pdfScope === 'month' ? 'premium-button px-2 py-1 text-xs' : 'premium-button-outline px-2 py-1 text-xs'}
-                  onClick={() => setPdfScope('month')}
-                >
-                  This Month
-                </Button>
-                <Button
-                  variant={pdfScope === 'year' ? 'secondary' : 'outline'}
-                  size="sm"
-                  className={pdfScope === 'year' ? 'premium-button px-2 py-1 text-xs' : 'premium-button-outline px-2 py-1 text-xs'}
-                  onClick={() => setPdfScope('year')}
-                >
-                  This Year
-                </Button>
-                <Button
-                  variant={pdfScope === 'custom' ? 'secondary' : 'outline'}
-                  size="sm"
-                  className={pdfScope === 'custom' ? 'premium-button px-2 py-1 text-xs' : 'premium-button-outline px-2 py-1 text-xs'}
-                  onClick={() => setPdfScope('custom')}
-                >
-                  Custom Range
-                </Button>
-              </div>
-              
-              {/* Date Selectors - Center, taking remaining space */}
-              <div className="flex items-center gap-2 flex-1 justify-center">
-                {pdfScope === 'month' && (
-                  <>
-                    <Select value={String(selectedMonth)} onValueChange={(value) => setSelectedMonth(Number(value))}>
-                      <SelectTrigger className="h-6 text-xs min-w-[90px] px-2 py-0.5 border-primary/40 bg-gradient-to-r from-primary/5 to-accent/5">
-                        <SelectValue>
-                          {monthOptions.find(m => m.value === selectedMonth)?.label}
-                        </SelectValue>
+          {/* Collapsible Content */}
+          {isPdfSectionVisible && (
+            <div className="mt-2 p-3 bg-gradient-to-r from-primary/5 to-accent/5 rounded-lg border border-border/30">
+              <div className="flex flex-col gap-3">
+                {/* Scope Selection Row */}
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs font-semibold text-primary whitespace-nowrap">Scope:</label>
+                    <Select value={pdfFilterScope} onValueChange={(value: 'all' | 'zone' | 'club') => {
+                      setPdfFilterScope(value);
+                      if (value !== 'zone') setPdfSelectedZone('');
+                      if (value !== 'club') setPdfSelectedClub('');
+                    }}>
+                      <SelectTrigger className="h-6 text-xs min-w-[130px] px-2 py-0.5 border-primary/40 bg-gradient-to-r from-primary/5 to-accent/5">
+                        <SelectValue placeholder="Select scope" />
                       </SelectTrigger>
                       <SelectContent>
-                        {monthOptions.map(m => (
-                          <SelectItem key={m.value} value={String(m.value)} className="text-xs">
-                            {m.label}
+                        <SelectItem value="all" className="text-xs">All Events</SelectItem>
+                        <SelectItem value="zone" className="text-xs">Zone Events</SelectItem>
+                        <SelectItem value="club" className="text-xs">Club Events</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {/* Zone Selection */}
+                  {pdfFilterScope === 'zone' && (
+                    <Select value={pdfSelectedZone} onValueChange={setPdfSelectedZone}>
+                      <SelectTrigger className="h-6 text-xs min-w-[120px] px-2 py-0.5 border-primary/40 bg-gradient-to-r from-primary/5 to-accent/5">
+                        <SelectValue placeholder="Select zone" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {zones.map(zone => (
+                          <SelectItem key={zone.id} value={zone.id} className="text-xs">
+                            {zone.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
-                    <Select value={String(pdfYear)} onValueChange={(value) => setPdfYear(Number(value))}>
-                      <SelectTrigger className="h-6 text-xs min-w-[70px] px-2 py-0.5 border-primary/40 bg-gradient-to-r from-primary/5 to-accent/5">
-                        <SelectValue>{pdfYear}</SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {yearOptions.map(y => (
-                          <SelectItem key={y} value={String(y)} className="text-xs">
-                            {y}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </>
-                )}
-                {pdfScope === 'year' && (
-                  <Select value={String(pdfYear)} onValueChange={(value) => setPdfYear(Number(value))}>
-                    <SelectTrigger className="h-6 text-xs min-w-[70px] px-2 py-0.5 border-primary/40 bg-gradient-to-r from-primary/5 to-accent/5">
-                      <SelectValue>{pdfYear}</SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {yearOptions.map(y => (
-                        <SelectItem key={y} value={String(y)} className="text-xs">
-                          {y}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-                {pdfScope === 'custom' && (
-                  <>
-                    <label htmlFor="pdfStartDate" className="text-xs font-semibold text-primary">Start</label>
-                    <input
-                      id="pdfStartDate"
-                      type="date"
-                      value={pdfStartDate}
-                      onChange={e => setPdfStartDate(e.target.value)}
-                      className="border border-primary/40 rounded px-1 py-0.5 focus:ring-1 focus:ring-primary/40 min-w-[90px] text-xs"
-                      placeholder="Start date"
-                      title="Select start date"
-                    />
-                    <label htmlFor="pdfEndDate" className="text-xs font-semibold text-primary">End</label>
-                    <input
-                      id="pdfEndDate"
-                      type="date"
-                      value={pdfEndDate}
-                      onChange={e => setPdfEndDate(e.target.value)}
-                      className="border border-primary/40 rounded px-1 py-0.5 focus:ring-1 focus:ring-primary/40 min-w-[90px] text-xs"
-                      placeholder="End date"
-                      title="Select end date"
-                    />
-                  </>
-                )}
-              </div>
-              
-              {/* Download Button - Right Side */}
-              <div className="flex-shrink-0">
-                <Button
-                  variant="default"
-                  size="sm"
-                  className="premium-button font-bold px-3 py-1 text-sm shadow ring-1 ring-primary/20 hover:ring-accent/30 transition"
-                  onClick={handleDownloadPDF}
-                  disabled={isPdfGenerating || (pdfScope === 'custom' && (!pdfStartDate || !pdfEndDate))}
-                >
-                  {isPdfGenerating ? (
+                  )}
+                  
+                  {/* Club Selection - Zone and Club on same row */}
+                  {pdfFilterScope === 'club' && (
                     <>
-                      <span className="mr-1 animate-spin">⏳</span> Generating...
-                    </>
-                  ) : (
-                    <>
-                      <span className="mr-1">📄</span> Download PDF
+                      <Select value={pdfSelectedZone} onValueChange={(zoneId) => {
+                        setPdfSelectedZone(zoneId);
+                        setPdfSelectedClub(''); // Reset club selection when zone changes
+                      }}>
+                        <SelectTrigger className="h-6 text-xs min-w-[120px] px-2 py-0.5 border-primary/40 bg-gradient-to-r from-primary/5 to-accent/5">
+                          <SelectValue placeholder="Select zone first" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {zones.map(zone => (
+                            <SelectItem key={zone.id} value={zone.id} className="text-xs">
+                              {zone.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Select value={pdfSelectedClub} onValueChange={setPdfSelectedClub} disabled={!pdfSelectedZone}>
+                        <SelectTrigger className="h-6 text-xs min-w-[150px] px-2 py-0.5 border-primary/40 bg-gradient-to-r from-primary/5 to-accent/5">
+                          <SelectValue placeholder={pdfSelectedZone ? "Select club" : "Select zone first"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {pdfFilteredClubs.map(club => (
+                            <SelectItem key={club.id} value={club.id} className="text-xs">
+                              {club.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </>
                   )}
-                </Button>
+                </div>
+
+                {/* Format Selection Row */}
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs font-semibold text-primary whitespace-nowrap">Format:</label>
+                    <Select value={pdfFormat} onValueChange={(value: 'standard' | 'zone') => setPdfFormat(value)}>
+                      <SelectTrigger className="h-6 text-xs min-w-[130px] px-2 py-0.5 border-primary/40 bg-gradient-to-r from-primary/5 to-accent/5">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="standard" className="text-xs">Standard Format</SelectItem>
+                        <SelectItem value="zone" className="text-xs">Zone Format</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                {/* Date Range and Download Controls */}
+                <div className="flex items-center gap-4 w-full">
+                  {/* Date Range Selector - Left Side */}
+                  <div className="flex gap-1">
+                    <Button
+                      variant={pdfScope === 'month' ? 'secondary' : 'outline'}
+                      size="sm"
+                      className={pdfScope === 'month' ? 'premium-button px-2 py-1 text-xs' : 'premium-button-outline px-2 py-1 text-xs'}
+                      onClick={() => setPdfScope('month')}
+                    >
+                      This Month
+                    </Button>
+                    <Button
+                      variant={pdfScope === 'year' ? 'secondary' : 'outline'}
+                      size="sm"
+                      className={pdfScope === 'year' ? 'premium-button px-2 py-1 text-xs' : 'premium-button-outline px-2 py-1 text-xs'}
+                      onClick={() => setPdfScope('year')}
+                    >
+                      This Year
+                    </Button>
+                    <Button
+                      variant={pdfScope === 'custom' ? 'secondary' : 'outline'}
+                      size="sm"
+                      className={pdfScope === 'custom' ? 'premium-button px-2 py-1 text-xs' : 'premium-button-outline px-2 py-1 text-xs'}
+                      onClick={() => setPdfScope('custom')}
+                    >
+                      Custom Range
+                    </Button>
+                  </div>
+                  
+                  {/* Date Selectors - Center, taking remaining space */}
+                  <div className="flex items-center gap-2 flex-1 justify-center">
+                    {pdfScope === 'month' && (
+                      <>
+                        <Select value={String(selectedMonth)} onValueChange={(value) => setSelectedMonth(Number(value))}>
+                          <SelectTrigger className="h-6 text-xs min-w-[90px] px-2 py-0.5 border-primary/40 bg-gradient-to-r from-primary/5 to-accent/5">
+                            <SelectValue>
+                              {monthOptions.find(m => m.value === selectedMonth)?.label}
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {monthOptions.map(m => (
+                              <SelectItem key={m.value} value={String(m.value)} className="text-xs">
+                                {m.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Select value={String(pdfYear)} onValueChange={(value) => setPdfYear(Number(value))}>
+                          <SelectTrigger className="h-6 text-xs min-w-[70px] px-2 py-0.5 border-primary/40 bg-gradient-to-r from-primary/5 to-accent/5">
+                            <SelectValue>{pdfYear}</SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {yearOptions.map(y => (
+                              <SelectItem key={y} value={String(y)} className="text-xs">
+                                {y}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </>
+                    )}
+                    {pdfScope === 'year' && (
+                      <Select value={String(pdfYear)} onValueChange={(value) => setPdfYear(Number(value))}>
+                        <SelectTrigger className="h-6 text-xs min-w-[70px] px-2 py-0.5 border-primary/40 bg-gradient-to-r from-primary/5 to-accent/5">
+                          <SelectValue>{pdfYear}</SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {yearOptions.map(y => (
+                            <SelectItem key={y} value={String(y)} className="text-xs">
+                              {y}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                    {pdfScope === 'custom' && (
+                      <>
+                        <label htmlFor="pdfStartDate" className="text-xs font-semibold text-primary">Start</label>
+                        <input
+                          id="pdfStartDate"
+                          type="date"
+                          value={pdfStartDate}
+                          onChange={e => setPdfStartDate(e.target.value)}
+                          className="border border-primary/40 rounded px-1 py-0.5 focus:ring-1 focus:ring-primary/40 min-w-[90px] text-xs"
+                          placeholder="Start date"
+                          title="Select start date"
+                        />
+                        <label htmlFor="pdfEndDate" className="text-xs font-semibold text-primary">End</label>
+                        <input
+                          id="pdfEndDate"
+                          type="date"
+                          value={pdfEndDate}
+                          onChange={e => setPdfEndDate(e.target.value)}
+                          className="border border-primary/40 rounded px-1 py-0.5 focus:ring-1 focus:ring-primary/40 min-w-[90px] text-xs"
+                          placeholder="End date"
+                          title="Select end date"
+                        />
+                      </>
+                    )}
+                  </div>
+                  
+                  {/* Download Button - Right Side */}
+                  <div className="flex-shrink-0">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="premium-button font-bold px-3 py-1 text-sm shadow ring-1 ring-primary/20 hover:ring-accent/30 transition"
+                      onClick={handleDownloadPDF}
+                      disabled={isPdfGenerating || (pdfScope === 'custom' && (!pdfStartDate || !pdfEndDate))}
+                    >
+                      {isPdfGenerating ? (
+                        <>
+                          <span className="mr-1 animate-spin">⏳</span> Generating...
+                        </>
+                      ) : (
+                        <>
+                          <span className="mr-1">📄</span> Download PDF
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
-      )}
-    </div>
-    <div className="flex flex-wrap items-center justify-between gap-4">
-      <div className="flex items-center gap-4">
-        <h2 className="text-xl font-semibold font-headline bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-        {view === 'month' ? format(currentDate, 'MMMM yyyy') : format(currentDate, 'yyyy')}
-        </h2>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={prev} className="premium-button-outline h-8 w-8">
+      </div>
+    
+    {/* Enhanced Navigation and Filter Section */}
+    <div className="space-y-4">
+      {/* Top Row: Month/Year Navigation, View Toggle, and Filter Mode */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3 p-1.5 bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900 rounded-xl border border-border/40 shadow-md">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={prev} 
+            className="h-8 w-8 rounded-lg text-muted-foreground hover:bg-slate-200/50 dark:hover:bg-slate-700/50 hover:text-foreground transition-all duration-200"
+          >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="icon" onClick={next} className="premium-button-outline h-8 w-8">
+          <h2 className="text-lg sm:text-xl font-semibold font-headline bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent px-2 min-w-[140px] text-center">
+            {view === 'month' ? format(currentDate, 'MMMM yyyy') : format(currentDate, 'yyyy')}
+          </h2>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={next} 
+            className="h-8 w-8 rounded-lg text-muted-foreground hover:bg-slate-200/50 dark:hover:bg-slate-700/50 hover:text-foreground transition-all duration-200"
+          >
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
+        
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 p-1.5 bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900 rounded-xl border border-border/40 shadow-md">
+            <Button 
+              variant="ghost"
+              size="sm" 
+              onClick={() => setView('month')}
+              className={`rounded-lg transition-all duration-200 ${
+                view === 'month' 
+                  ? 'bg-gradient-to-r from-primary/90 to-accent/90 text-white shadow-lg border border-primary/40' 
+                  : 'text-muted-foreground hover:bg-slate-200/50 dark:hover:bg-slate-700/50'
+              }`}
+            >
+              Month
+            </Button>
+            <Button 
+              variant="ghost"
+              size="sm" 
+              onClick={() => setView('year')}
+              className={`rounded-lg transition-all duration-200 ${
+                view === 'year' 
+                  ? 'bg-gradient-to-r from-primary/90 to-accent/90 text-white shadow-lg border border-primary/40' 
+                  : 'text-muted-foreground hover:bg-slate-200/50 dark:hover:bg-slate-700/50'
+              }`}
+            >
+              Year
+            </Button>
+          </div>
+          
+          <div className="flex items-center gap-2 p-1.5 bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900 rounded-xl border border-border/40 shadow-md">
+            <Button 
+              variant={filterMode === 'location' ? 'secondary' : 'ghost'} 
+              size="sm" 
+              onClick={() => setFilterMode('location')}
+              className={`rounded-lg transition-all duration-200 ${
+                filterMode === 'location' 
+                  ? 'bg-gradient-to-r from-primary/90 to-accent/90 text-white shadow-lg border border-primary/40' 
+                  : 'text-muted-foreground hover:bg-slate-200/50 dark:hover:bg-slate-700/50'
+              }`}
+            >
+              <Pin className="mr-2 h-4 w-4" /> Filter by Location
+            </Button>
+            <Button 
+              variant={filterMode === 'distance' ? 'secondary' : 'ghost'} 
+              size="sm" 
+              onClick={() => setFilterMode('distance')}
+              className={`rounded-lg transition-all duration-200 ${
+                filterMode === 'distance' 
+                  ? 'bg-gradient-to-r from-primary/90 to-accent/90 text-white shadow-lg border border-primary/40' 
+                  : 'text-muted-foreground hover:bg-slate-200/50 dark:hover:bg-slate-700/50'
+              }`}
+            >
+              <Route className="mr-2 h-4 w-4" /> Filter by Distance
+            </Button>
+            
+            {/* Filter Controls - Inline */}
+            {filterMode === 'location' ? (
+              <>
+                <div className="w-px h-6 bg-border/40 mx-1"></div>
+                <Select value={selectedZoneId} onValueChange={handleZoneChange}>
+                  <SelectTrigger className="w-[180px] h-9 text-sm border-primary/30 bg-background/50 backdrop-blur-sm rounded-lg shadow-sm hover:shadow-md transition-all duration-300 hover:border-primary/50">
+                    <SelectValue placeholder="Select Zone" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-primary/20 bg-background/95 backdrop-blur-md">
+                    <SelectItem value="all">All of Victoria</SelectItem>
+                    {zones.map(zone => (
+                      <SelectItem key={zone.id} value={zone.id}>{zone.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={selectedClubId} onValueChange={setSelectedClubId} disabled={selectedZoneId === 'all' && filteredClubs.length === clubs.length}>
+                  <SelectTrigger className="w-[180px] h-9 text-sm border-primary/30 bg-background/50 backdrop-blur-sm rounded-lg shadow-sm hover:shadow-md transition-all duration-300 hover:border-primary/50">
+                    <SelectValue placeholder="Select Club" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-primary/20 bg-background/95 backdrop-blur-md">
+                    <SelectItem value="all">All Clubs</SelectItem>
+                    {filteredClubs.map(club => (
+                      <SelectItem key={club.id} value={club.id}>{club.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </>
+            ) : (
+              <>
+                <div className="w-px h-6 bg-border/40 mx-1"></div>
+                <Select value={homeClubId ?? ''} onValueChange={(val) => setHomeClubId(val === 'none' ? null : val)}>
+                  <SelectTrigger className="w-[200px] h-9 text-sm border-primary/30 bg-background/50 backdrop-blur-sm rounded-lg shadow-sm hover:shadow-md transition-all duration-300 hover:border-primary/50">
+                    <SelectValue placeholder="Select a home club" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-primary/20 bg-background/95 backdrop-blur-md">
+                    <SelectItem value="none">Select a home club</SelectItem>
+                    {clubs.map(club => (
+                      <SelectItem key={club.id} value={club.id}>{club.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={String(distance)} onValueChange={(val) => setDistance(Number(val))} disabled={!homeClubId}>
+                  <SelectTrigger className="w-[160px] h-9 text-sm border-primary/30 bg-background/50 backdrop-blur-sm rounded-lg shadow-sm hover:shadow-md transition-all duration-300 hover:border-primary/50">
+                    <SelectValue placeholder="Select distance" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-primary/20 bg-background/95 backdrop-blur-md">
+                    <SelectItem value="25">Within 25 km</SelectItem>
+                    <SelectItem value="50">Within 50 km</SelectItem>
+                    <SelectItem value="100">Within 100 km</SelectItem>
+                    <SelectItem value="200">Within 200 km</SelectItem>
+                  </SelectContent>
+                </Select>
+              </>
+            )}
+          </div>
+        </div>
       </div>
-      <div className="flex items-center gap-2 ml-4">
-        <Button 
-          variant={view === 'month' ? 'secondary' : 'outline'} 
-          size="sm" 
-          onClick={() => setView('month')}
-          className={view === 'month' ? 'premium-button' : 'premium-button-outline'}
-        >
-          Month
-        </Button>
-        <Button 
-          variant={view === 'year' ? 'secondary' : 'outline'} 
-          size="sm" 
-          onClick={() => setView('year')}
-          className={view === 'year' ? 'premium-button' : 'premium-button-outline'}
-        >
-          Year
-        </Button>
-      </div>
-    </div>
-    <div className="flex items-center gap-2">
-      <Button 
-        variant={filterMode === 'location' ? 'secondary' : 'outline'} 
-        size="sm" 
-        onClick={() => setFilterMode('location')}
-        className={filterMode === 'location' ? 'premium-button' : 'premium-button-outline'}
-      >
-        <Pin className="mr-2 h-4 w-4" /> Filter by Location
-      </Button>
-      <Button 
-        variant={filterMode === 'distance' ? 'secondary' : 'outline'} 
-        size="sm" 
-        onClick={() => setFilterMode('distance')}
-        className={filterMode === 'distance' ? 'premium-button' : 'premium-button-outline'}
-      >
-        <Route className="mr-2 h-4 w-4" /> Filter by Distance
-      </Button>
-    </div>
-    <Separator className="bg-gradient-to-r from-transparent via-border to-transparent" />
-    {filterMode === 'location' ? (
-      <div className="flex items-center gap-2">
-        <Select value={selectedZoneId} onValueChange={handleZoneChange}>
-          <SelectTrigger className="w-[180px] enhanced-select">
-            <SelectValue placeholder="Select Zone" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All of Victoria</SelectItem>
-            {zones.map(zone => (
-              <SelectItem key={zone.id} value={zone.id}>{zone.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={selectedClubId} onValueChange={setSelectedClubId} disabled={selectedZoneId === 'all' && filteredClubs.length === clubs.length}>
-          <SelectTrigger className="w-[180px] enhanced-select">
-            <SelectValue placeholder="Select Club" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Clubs</SelectItem>
-            {filteredClubs.map(club => (
-              <SelectItem key={club.id} value={club.id}>{club.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-    ) : (
-      <div className="flex items-center gap-2">
-         <Select value={homeClubId ?? ''} onValueChange={(val) => setHomeClubId(val === 'none' ? null : val)}>
-          <SelectTrigger className="w-[240px] enhanced-select">
-            <SelectValue placeholder="Select a home club" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">Select a home club</SelectItem>
-            {clubs.map(club => (
-              <SelectItem key={club.id} value={club.id}>{club.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-         <Select value={String(distance)} onValueChange={(val) => setDistance(Number(val))} disabled={!homeClubId}>
-          <SelectTrigger className="w-[180px] enhanced-select">
-            <SelectValue placeholder="Select distance" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="25">Within 25 km</SelectItem>
-            <SelectItem value="50">Within 50 km</SelectItem>
-            <SelectItem value="100">Within 100 km</SelectItem>
-            <SelectItem value="200">Within 200 km</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-    )}
     </div>
       
     {view === 'month' && (
-    <div className='p-4'>
-      <CalendarGrid month={currentDate} events={filteredEvents} onEventClick={handleEventClick} today={today} clubs={clubs} zones={zones}/>
-    </div>
+      <div className='p-4'>
+        <CalendarGrid month={currentDate} events={filteredEvents} onEventClick={handleEventClick} today={today} clubs={clubs} zones={zones}/>
+      </div>
     )}
       
-      {view === 'year' && (
-        <div className="p-4 grid grid-cols-1 gap-8">
-          {yearMonths.map(month => (
-            <div
-              key={month.toString()}
-              className="bg-white rounded-lg shadow p-4 flex flex-col w-full"
-            >
-              <CalendarGrid month={month} events={filteredEvents} onEventClick={handleEventClick} isYearView={true} today={today} clubs={clubs} zones={zones} />
-            </div>
-          ))}
-        </div>
-      )}
+    {view === 'year' && (
+      <div className="p-4 grid grid-cols-1 gap-8">
+        {yearMonths.map(month => (
+          <div
+            key={month.toString()}
+            className="bg-white rounded-lg shadow p-4 flex flex-col w-full"
+          >
+            <CalendarGrid month={month} events={filteredEvents} onEventClick={handleEventClick} isYearView={true} today={today} clubs={clubs} zones={zones} />
+          </div>
+        ))}
+      </div>
+    )}
 
     <EventDialog
-    isOpen={isDialogOpen}
-    onOpenChange={setDialogOpen}
-    event={selectedEvent || null}
-    club={selectedClub}
-    zone={selectedZone}
-    eventType={selectedEventType}
-    nearbyEvents={selectedEvent ? getNearbyEvents(selectedEvent) : []}
-    clubs={clubs}
-    currentUser={currentUser}
+      isOpen={isDialogOpen}
+      onOpenChange={setDialogOpen}
+      event={selectedEvent || null}
+      club={selectedClub}
+      zone={selectedZone}
+      eventType={selectedEventType}
+      nearbyEvents={selectedEvent ? getNearbyEvents(selectedEvent) : []}
+      clubs={clubs}
+      currentUser={currentUser}
     />
   </div>
   );

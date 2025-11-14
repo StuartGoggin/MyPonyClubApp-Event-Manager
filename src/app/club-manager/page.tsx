@@ -265,16 +265,16 @@ export default function ClubEventManagerDashboard() {
         
         {/* Merged Header Tile with Status Tiles */}
         <Card className="enhanced-card glass-effect border-2 border-border/40 shadow-lg bg-gradient-to-r from-white/98 via-white/95 to-primary/8">
-          <CardContent className="p-4 space-y-4">
+          <CardContent className="p-3 sm:p-4 space-y-3 sm:space-y-4">
             {/* Top Row: Logo, Title, Club Selection */}
-            <div className="flex items-center justify-between gap-4 group">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 group">
               {/* Logo and Title */}
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
                 <div className="relative flex-shrink-0">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent rounded-lg sm:rounded-xl opacity-30 blur-lg animate-pulse group-hover:opacity-50 transition-opacity duration-300"></div>
-                  <div className="relative rounded-lg sm:rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/40 backdrop-blur-sm group-hover:border-primary/60 transition-all duration-300 group-hover:scale-105 overflow-hidden h-7 sm:h-8 md:h-9 w-14 sm:w-16 md:w-18">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent rounded-lg opacity-30 blur-lg animate-pulse group-hover:opacity-50 transition-opacity duration-300"></div>
+                  <div className="relative rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/40 backdrop-blur-sm group-hover:border-primary/60 transition-all duration-300 group-hover:scale-105 overflow-hidden h-8 w-16 sm:h-9 sm:w-18">
                     <Image
-                      src="/MyPonyClub - Logo - Club Manager.png"
+                      src="/myponyclub-logo-club-manager.png"
                       alt="MyPonyClub Club Manager Logo"
                       fill
                       className="object-cover drop-shadow-lg transition-transform duration-300"
@@ -283,24 +283,24 @@ export default function ClubEventManagerDashboard() {
                   </div>
                 </div>
                 
-                <h1 className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-primary via-purple-600 to-accent bg-clip-text text-transparent">
+                <h1 className="text-base sm:text-lg md:text-xl font-bold bg-gradient-to-r from-primary via-purple-600 to-accent bg-clip-text text-transparent truncate">
                   MyPonyClub - Club Manager
                 </h1>
               </div>
 
               {/* Club Selection */}
-              <div className="w-auto max-w-md">
+              <div className="w-full sm:w-auto sm:max-w-md">
                 {selectedClub ? (
                   <Select value={selectedClubId} onValueChange={setSelectedClubId}>
-                    <SelectTrigger className="h-14 border-primary/30 bg-background/90 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:border-primary/50 justify-end">
+                    <SelectTrigger className="h-12 sm:h-14 border-primary/30 bg-background/90 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:border-primary/50 w-full">
                       <SelectValue>
-                        <div className="text-right mr-2">
-                          <div className="text-lg sm:text-xl font-bold text-foreground">
+                        <div className="text-left sm:text-right w-full">
+                          <div className="text-sm sm:text-lg font-bold text-foreground truncate">
                             {selectedClub.name}
                           </div>
-                          <div className="flex items-center justify-end gap-1.5 text-muted-foreground mt-0.5">
+                          <div className="flex items-center justify-start sm:justify-end gap-1.5 text-muted-foreground mt-0.5">
                             <MapPin className="h-3 w-3 flex-shrink-0" />
-                            <span className="text-xs font-medium">{selectedZone?.name || 'Unknown Zone'}</span>
+                            <span className="text-xs font-medium truncate">{selectedZone?.name || 'Unknown Zone'}</span>
                           </div>
                         </div>
                       </SelectValue>
@@ -364,71 +364,71 @@ export default function ClubEventManagerDashboard() {
 
             {/* Status Tiles Row */}
             {selectedClub && (
-              <div className="grid grid-cols-3 lg:grid-cols-6 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
                 
                 {/* Pending Approval */}
                 <div className="relative overflow-hidden rounded-lg border border-amber-200/60 dark:border-amber-700/60 bg-gradient-to-br from-amber-50/90 to-orange-50/80 dark:from-amber-950/30 dark:to-orange-950/20 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
-                  <div className="p-2 flex items-center justify-between">
+                  <div className="p-2 flex flex-col sm:flex-row items-center justify-between gap-1 sm:gap-0">
                     <div className="rounded-md bg-amber-100 dark:bg-amber-900/50 p-1.5 border border-amber-300/60 dark:border-amber-700/60 flex-shrink-0">
                       <Clock className="h-4 w-4 text-amber-700 dark:text-amber-400" />
                     </div>
-                    <div className="text-2xl font-black text-amber-600 dark:text-amber-500 leading-none">{clubEvents.filter(e => e.status === 'proposed').length}</div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">Pending</span>
+                    <div className="text-xl sm:text-2xl font-black text-amber-600 dark:text-amber-500 leading-none">{clubEvents.filter(e => e.status === 'proposed').length}</div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 text-center sm:text-right">Pending</span>
                   </div>
                 </div>
 
                 {/* Approved Events */}
                 <div className="relative overflow-hidden rounded-lg border border-emerald-200/60 dark:border-emerald-700/60 bg-gradient-to-br from-emerald-50/90 to-green-50/80 dark:from-emerald-950/30 dark:to-green-950/20 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
-                  <div className="p-2 flex items-center justify-between">
+                  <div className="p-2 flex flex-col sm:flex-row items-center justify-between gap-1 sm:gap-0">
                     <div className="rounded-md bg-emerald-100 dark:bg-emerald-900/50 p-1.5 border border-emerald-300/60 dark:border-emerald-700/60 flex-shrink-0">
                       <CheckCircle className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
                     </div>
-                    <div className="text-2xl font-black text-emerald-600 dark:text-emerald-500 leading-none">{clubEvents.filter(e => e.status === 'approved').length}</div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Approved</span>
+                    <div className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-500 leading-none">{clubEvents.filter(e => e.status === 'approved').length}</div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 text-center sm:text-right">Approved</span>
                   </div>
                 </div>
 
                 {/* Total Events */}
                 <div className="relative overflow-hidden rounded-lg border border-blue-200/60 dark:border-blue-700/60 bg-gradient-to-br from-blue-50/90 to-cyan-50/80 dark:from-blue-950/30 dark:to-cyan-950/20 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
-                  <div className="p-2 flex items-center justify-between">
+                  <div className="p-2 flex flex-col sm:flex-row items-center justify-between gap-1 sm:gap-0">
                     <div className="rounded-md bg-blue-100 dark:bg-blue-900/50 p-1.5 border border-blue-300/60 dark:border-blue-700/60 flex-shrink-0">
                       <Activity className="h-4 w-4 text-blue-700 dark:text-blue-400" />
                     </div>
-                    <div className="text-2xl font-black text-blue-600 dark:text-blue-500 leading-none">{clubEvents.length}</div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400">Total</span>
+                    <div className="text-xl sm:text-2xl font-black text-blue-600 dark:text-blue-500 leading-none">{clubEvents.length}</div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400 text-center sm:text-right">Total</span>
                   </div>
                 </div>
 
                 {/* Schedules Under Review */}
                 <div className="relative overflow-hidden rounded-lg border border-orange-200/60 dark:border-orange-700/60 bg-gradient-to-br from-orange-50/90 to-amber-50/80 dark:from-orange-950/30 dark:to-amber-950/20 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
-                  <div className="p-2 flex items-center justify-between">
+                  <div className="p-2 flex flex-col sm:flex-row items-center justify-between gap-1 sm:gap-0">
                     <div className="rounded-md bg-orange-100 dark:bg-orange-900/50 p-1.5 border border-orange-300/60 dark:border-orange-700/60 flex-shrink-0">
                       <Clock className="h-4 w-4 text-orange-700 dark:text-orange-400" />
                     </div>
-                    <div className="text-2xl font-black text-orange-600 dark:text-orange-500 leading-none">{clubEvents.filter(e => e.schedule && e.schedule.status === 'pending').length}</div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-orange-700 dark:text-orange-400">Review</span>
+                    <div className="text-xl sm:text-2xl font-black text-orange-600 dark:text-orange-500 leading-none">{clubEvents.filter(e => e.schedule && e.schedule.status === 'pending').length}</div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-orange-700 dark:text-orange-400 text-center sm:text-right">Review</span>
                   </div>
                 </div>
 
                 {/* Schedules Needing Rework */}
                 <div className="relative overflow-hidden rounded-lg border border-red-200/60 dark:border-red-700/60 bg-gradient-to-br from-red-50/90 to-rose-50/80 dark:from-red-950/30 dark:to-rose-950/20 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
-                  <div className="p-2 flex items-center justify-between">
+                  <div className="p-2 flex flex-col sm:flex-row items-center justify-between gap-1 sm:gap-0">
                     <div className="rounded-md bg-red-100 dark:bg-red-900/50 p-1.5 border border-red-300/60 dark:border-red-700/60 flex-shrink-0">
                       <XCircle className="h-4 w-4 text-red-700 dark:text-red-400" />
                     </div>
-                    <div className="text-2xl font-black text-red-600 dark:text-red-500 leading-none">{clubEvents.filter(e => e.schedule && e.schedule.status === 'rejected').length}</div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-red-700 dark:text-red-400">Rework</span>
+                    <div className="text-xl sm:text-2xl font-black text-red-600 dark:text-red-500 leading-none">{clubEvents.filter(e => e.schedule && e.schedule.status === 'rejected').length}</div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-red-700 dark:text-red-400 text-center sm:text-right">Rework</span>
                   </div>
                 </div>
 
                 {/* Approved Schedules */}
                 <div className="relative overflow-hidden rounded-lg border border-green-200/60 dark:border-green-700/60 bg-gradient-to-br from-green-50/90 to-emerald-50/80 dark:from-green-950/30 dark:to-emerald-950/20 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
-                  <div className="p-2 flex items-center justify-between">
+                  <div className="p-2 flex flex-col sm:flex-row items-center justify-between gap-1 sm:gap-0">
                     <div className="rounded-md bg-green-100 dark:bg-green-900/50 p-1.5 border border-green-300/60 dark:border-green-700/60 flex-shrink-0">
                       <FileText className="h-4 w-4 text-green-700 dark:text-green-400" />
                     </div>
-                    <div className="text-2xl font-black text-green-600 dark:text-green-500 leading-none">{clubEvents.filter(e => e.schedule && e.schedule.status === 'approved').length}</div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-green-700 dark:text-green-400">Ready</span>
+                    <div className="text-xl sm:text-2xl font-black text-green-600 dark:text-green-500 leading-none">{clubEvents.filter(e => e.schedule && e.schedule.status === 'approved').length}</div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-green-700 dark:text-green-400 text-center sm:text-right">Ready</span>
                   </div>
                 </div>
               </div>
@@ -442,62 +442,66 @@ export default function ClubEventManagerDashboard() {
         <div className="flex-1 mx-4 mb-4">
           <div className="bg-gradient-to-r from-slate-200/30 via-white/90 to-blue-100/30 rounded-xl border border-border/30 shadow-inner">
             {/* Header with Event Filter and Add Event Button */}
-            <div className="flex items-center justify-between p-4 border-b border-border/20">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 p-3 sm:p-4 border-b border-border/20">
               {/* Event Filter - Only show when viewing events */}
               {!showAddEventForm && (
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-2 p-1.5 bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900 rounded-xl border border-border/40 shadow-md">
-                    <div className="flex items-center gap-1.5 px-2 py-1">
+                <div className="w-full sm:w-auto">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-1.5 bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900 rounded-xl border border-border/40 shadow-md">
+                    <div className="flex items-center gap-1.5 px-2 py-1 flex-shrink-0">
                       <Filter className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-semibold text-foreground">Filter:</span>
+                      <span className="text-xs sm:text-sm font-semibold text-foreground whitespace-nowrap">Filter:</span>
                     </div>
                     
                     {/* Filter Buttons */}
-                    {[
-                      { key: 'all', label: 'All Events', icon: Calendar },
-                      { key: 'upcoming', label: 'Upcoming', icon: Clock },
-                      { key: 'past', label: 'Past Events', icon: CheckCircle }
-                    ].map(({ key, label, icon: Icon }) => (
-                      <button
-                        key={key}
-                        onClick={() => setEventFilter(key as 'all' | 'upcoming' | 'past')}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 ${
-                          eventFilter === key
-                            ? 'bg-gradient-to-r from-primary/90 to-accent/90 text-white shadow-lg border border-primary/40'
-                            : 'text-muted-foreground hover:bg-slate-200/50 dark:hover:bg-slate-700/50'
-                        }`}
-                      >
-                        <Icon className="h-3.5 w-3.5" />
-                        <span>{label}</span>
-                        {key === 'all' && (
-                          <span className={`ml-1 px-1.5 py-0.5 rounded text-xs font-bold ${
-                            eventFilter === key 
-                              ? 'bg-white/90 text-primary' 
-                              : 'bg-primary/10 text-primary'
-                          }`}>
-                            {clubEvents.length}
-                          </span>
-                        )}
-                        {key === 'upcoming' && (
-                          <span className={`ml-1 px-1.5 py-0.5 rounded text-xs font-bold ${
-                            eventFilter === key 
-                              ? 'bg-white/90 text-blue-700' 
-                              : 'bg-blue-100 text-blue-700'
-                          }`}>
-                            {clubEvents.filter(e => new Date(e.date) >= new Date()).length}
-                          </span>
-                        )}
-                        {key === 'past' && (
-                          <span className={`ml-1 px-1.5 py-0.5 rounded text-xs font-bold ${
-                            eventFilter === key 
-                              ? 'bg-white/90 text-gray-700' 
-                              : 'bg-gray-100 text-gray-700'
-                          }`}>
-                            {clubEvents.filter(e => new Date(e.date) < new Date()).length}
-                          </span>
-                        )}
-                      </button>
-                    ))}
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-1">
+                      {[
+                        { key: 'all', label: 'All Events', icon: Calendar },
+                        { key: 'upcoming', label: 'Upcoming', icon: Clock },
+                        { key: 'past', label: 'Past Events', icon: CheckCircle }
+                      ].map(({ key, label, icon: Icon }) => (
+                        <button
+                          key={key}
+                          onClick={() => setEventFilter(key as 'all' | 'upcoming' | 'past')}
+                          className={`flex items-center justify-between gap-2 px-3 py-2 sm:py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                            eventFilter === key
+                              ? 'bg-gradient-to-r from-primary/90 to-accent/90 text-white shadow-lg border border-primary/40'
+                              : 'text-muted-foreground hover:bg-slate-200/50 dark:hover:bg-slate-700/50'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Icon className="h-4 w-4 flex-shrink-0" />
+                            <span>{label}</span>
+                          </div>
+                          {key === 'all' && (
+                            <span className={`px-2 py-0.5 rounded text-xs font-bold ${
+                              eventFilter === key 
+                                ? 'bg-white/90 text-primary' 
+                                : 'bg-primary/10 text-primary'
+                            }`}>
+                              {clubEvents.length}
+                            </span>
+                          )}
+                          {key === 'upcoming' && (
+                            <span className={`px-2 py-0.5 rounded text-xs font-bold ${
+                              eventFilter === key 
+                                ? 'bg-white/90 text-blue-700' 
+                                : 'bg-blue-100 text-blue-700'
+                            }`}>
+                              {clubEvents.filter(e => new Date(e.date) >= new Date()).length}
+                            </span>
+                          )}
+                          {key === 'past' && (
+                            <span className={`px-2 py-0.5 rounded text-xs font-bold ${
+                              eventFilter === key 
+                                ? 'bg-white/90 text-gray-700' 
+                                : 'bg-gray-100 text-gray-700'
+                            }`}>
+                              {clubEvents.filter(e => new Date(e.date) < new Date()).length}
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
@@ -509,16 +513,16 @@ export default function ClubEventManagerDashboard() {
               <Button 
                 onClick={() => setShowAddEventForm(!showAddEventForm)}
                 size="lg"
-                className="distinctive-button-primary bg-gradient-to-r from-emerald-500 via-emerald-600 to-green-600 hover:from-emerald-600 hover:via-emerald-700 hover:to-green-700 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 px-8 py-4 font-bold text-lg rounded-2xl border-2 border-emerald-400/50 hover:border-emerald-300 backdrop-blur-sm"
+                className="distinctive-button-primary bg-gradient-to-r from-emerald-500 via-emerald-600 to-green-600 hover:from-emerald-600 hover:via-emerald-700 hover:to-green-700 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 px-4 sm:px-8 py-3 sm:py-4 font-bold text-base sm:text-lg rounded-2xl border-2 border-emerald-400/50 hover:border-emerald-300 backdrop-blur-sm w-full sm:w-auto"
               >
                 {showAddEventForm ? (
                   <>
-                    <Users className="h-6 w-6 mr-3 drop-shadow-lg" />
+                    <Users className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3 drop-shadow-lg" />
                     View Events
                   </>
                 ) : (
                   <>
-                    <Plus className="h-6 w-6 mr-3 drop-shadow-lg" />
+                    <Plus className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3 drop-shadow-lg" />
                     Add Event
                   </>
                 )}

@@ -126,7 +126,7 @@ export default function DashboardPage() {
               <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent rounded-lg sm:rounded-xl opacity-30 blur-lg animate-pulse group-hover:opacity-50 transition-opacity duration-300"></div>
               <div className="relative rounded-lg sm:rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/40 backdrop-blur-sm group-hover:border-primary/60 transition-all duration-300 group-hover:scale-105 overflow-hidden h-7 sm:h-8 md:h-9 w-14 sm:w-16 md:w-18">
                 <Image
-                  src="/MyPonyClub - Logo - Calendar Events.png"
+                  src="/myponyclub-logo-calendar-events.png"
                   alt="MyPonyClub Event Calendar Logo"
                   fill
                   className="object-cover drop-shadow-lg transition-transform duration-300"

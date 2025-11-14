@@ -119,6 +119,7 @@ export function MultiEventRequestForm({
   const nameAutocompleteRef = useRef<HTMLDivElement>(null);
   const [selectedUserData, setSelectedUserData] = useState<any>(null);
   const hasInitializedEvent = useRef(false);
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<MultiEventRequestFormValues>({
     resolver: zodResolver(multiEventRequestSchema),
@@ -135,6 +136,11 @@ export function MultiEventRequestForm({
   // Scroll to top on component mount (mobile fix - prevents focus from jumping to middle of page)
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
+    // Focus on the name field after a short delay to ensure scroll completes
+    const timer = setTimeout(() => {
+      nameInputRef.current?.focus();
+    }, 100);
+    return () => clearTimeout(timer);
   }, []);
 
   // Initialize nameSearchTerm with form value
@@ -776,6 +782,7 @@ export function MultiEventRequestForm({
                     <div className="relative" ref={nameAutocompleteRef}>
                       <FormControl>
                         <Input 
+                          ref={nameInputRef}
                           placeholder="Start typing your name..." 
                           value={nameSearchTerm || (typeof field.value === 'string' ? field.value : '')}
                           onChange={(e) => handleNameInputChange(e.target.value)}

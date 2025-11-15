@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import { AppHeader } from '@/components/layout/app-header';
 import { useAuth } from '@/contexts/auth-context';
 import Link from 'next/link';
-import { Calendar, PlusCircle, Database, FerrisWheel, Shield, Settings, MapPin, Building, ChevronLeft, ChevronRight, Menu, X } from 'lucide-react';
+import { Calendar, PlusCircle, Database, FerrisWheel, Shield, Settings, MapPin, Building, ChevronLeft, ChevronRight, Menu, X, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -105,6 +105,14 @@ export function AppLayout({ children }: PropsWithChildren) {
       label: 'Club Manager',
       requireAuth: true,
       // All authenticated users can access club manager functionality
+    },
+    {
+      href: '/ev-manager',
+      title: 'EV Manager',
+      icon: Trophy,
+      label: 'EV Manager',
+      requireAuth: true,
+      requiredRoles: ['super_user', 'state_admin'], // Super users and state admins
     },
   ];
 

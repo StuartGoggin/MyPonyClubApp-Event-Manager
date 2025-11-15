@@ -202,6 +202,14 @@ export default function ClubEventManagerDashboard() {
   const rejectedEvents = clubEvents.filter(event => event.status === 'rejected').length;
   const totalEvents = clubEvents.length;
 
+  // Create statistics object for the UI
+  const statistics = {
+    submitted: submittedEvents,
+    approved: approvedEvents,
+    rejected: rejectedEvents,
+    total: totalEvents
+  };
+
   if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -259,184 +267,170 @@ export default function ClubEventManagerDashboard() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50/50 via-background to-blue-50/30">
-      {/* Unified Header Zone */}
-      <div className="flex-shrink-0 mx-4 mt-4 mb-6">
-        
-        {/* Merged Header Tile with Status Tiles */}
-        <Card className="enhanced-card glass-effect border-2 border-border/40 shadow-lg bg-gradient-to-r from-white/98 via-white/95 to-primary/8">
-          <CardContent className="p-3 sm:p-4 space-y-3 sm:space-y-4">
-            {/* Top Row: Logo, Title, Club Selection */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 group">
-              {/* Logo and Title */}
-              <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
-                <div className="relative flex-shrink-0">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent rounded-lg opacity-30 blur-lg animate-pulse group-hover:opacity-50 transition-opacity duration-300"></div>
-                  <div className="relative rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/40 backdrop-blur-sm group-hover:border-primary/60 transition-all duration-300 group-hover:scale-105 overflow-hidden h-8 w-16 sm:h-9 sm:w-18">
-                    <Image
-                      src="/myponyclub-logo-club-manager.png"
-                      alt="MyPonyClub Club Manager Logo"
-                      fill
-                      className="object-cover drop-shadow-lg transition-transform duration-300"
-                      priority
-                    />
-                  </div>
-                </div>
-                
-                <h1 className="text-base sm:text-lg md:text-xl font-bold bg-gradient-to-r from-primary via-purple-600 to-accent bg-clip-text text-transparent truncate">
-                  MyPonyClub - Club Manager
-                </h1>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+      <div className="container mx-auto p-4 sm:p-6 lg:p-8">
+        {/* Modern Header */}
+        <div className="mb-8 relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 dark:from-blue-900 dark:via-purple-900 dark:to-indigo-900 p-8 shadow-2xl">
+          <div className="absolute inset-0 bg-grid-white/10 [mask-image:linear-gradient(0deg,white,transparent)]" />
+          <div className="relative flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="relative bg-white/20 backdrop-blur-sm rounded-xl overflow-hidden h-20 w-auto aspect-[16/10] flex items-center justify-center p-2">
+                <Image
+                  src="/myponyclub-logo-club-manager.png"
+                  alt="Club Manager Logo"
+                  fill
+                  className="object-contain drop-shadow-lg"
+                  priority
+                />
               </div>
-
-              {/* Club Selection */}
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <div className="flex-1 sm:flex-initial sm:max-w-md">
-                  {selectedClub ? (
-                    <Select value={selectedClubId} onValueChange={setSelectedClubId}>
-                      <SelectTrigger className="h-12 sm:h-14 border-primary/30 bg-background/90 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:border-primary/50 w-full">
-                      <SelectValue>
-                        <div className="text-left sm:text-right w-full">
-                          <div className="text-sm sm:text-lg font-bold text-foreground truncate">
-                            {selectedClub.name}
-                          </div>
-                          <div className="flex items-center justify-start sm:justify-end gap-1.5 text-muted-foreground mt-0.5">
-                            <MapPin className="h-3 w-3 flex-shrink-0" />
-                            <span className="text-xs font-medium truncate">{selectedZone?.name || 'Unknown Zone'}</span>
-                          </div>
-                        </div>
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl border-primary/20 bg-background/95 backdrop-blur-md">
-                      {clubs
-                        .filter(club => authorizedClubs.includes(club.id))
-                        .sort((a, b) => a.name.localeCompare(b.name))
-                        .map(club => {
-                          const zone = zones.find(z => z.id === club.zoneId);
-                          return (
-                            <SelectItem key={club.id} value={club.id} className="rounded-lg hover:bg-primary/10 py-3">
-                              <div className="flex items-center gap-3">
-                                <div className="rounded-md bg-primary/20 p-1.5">
-                                  <Building className="h-3 w-3 text-primary" />
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  <div className="font-bold text-base">{club.name}</div>
-                                  <div className="text-sm text-muted-foreground">
-                                    {zone?.name || 'Unknown Zone'}
-                                  </div>
-                                </div>
-                              </div>
-                            </SelectItem>
-                          );
-                        })}
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <Select value={selectedClubId} onValueChange={setSelectedClubId}>
-                    <SelectTrigger className="h-10 border-primary/30 bg-background/90 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:border-primary/50">
-                      <SelectValue placeholder="Choose your club..." />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl border-primary/20 bg-background/95 backdrop-blur-md">
-                      {clubs
-                        .filter(club => authorizedClubs.includes(club.id))
-                        .sort((a, b) => a.name.localeCompare(b.name))
-                        .map(club => {
-                          const zone = zones.find(z => z.id === club.zoneId);
-                          return (
-                            <SelectItem key={club.id} value={club.id} className="rounded-lg hover:bg-primary/10 py-3">
-                              <div className="flex items-center gap-3">
-                                <div className="rounded-md bg-primary/20 p-1.5">
-                                  <Building className="h-3 w-3 text-primary" />
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  <div className="font-bold text-base">{club.name}</div>
-                                  <div className="text-sm text-muted-foreground">
-                                    {zone?.name || 'Unknown Zone'}
-                                  </div>
-                                </div>
-                              </div>
-                            </SelectItem>
-                          );
-                        })}
-                    </SelectContent>
-                  </Select>
-                )}
-                </div>
-                
-                {/* Club Settings Button */}
-                {selectedClub && (
-                  <Button
-                    onClick={() => router.push(`/club-manager/settings?clubId=${selectedClubId}`)}
-                    variant="outline"
-                    size="icon"
-                    className="h-12 w-12 sm:h-14 sm:w-14 rounded-xl border-primary/30 bg-background/90 backdrop-blur-sm hover:bg-primary/10 hover:border-primary/50 transition-all duration-300"
-                    title="Club Settings"
-                  >
-                    <Settings className="h-5 w-5 text-primary" />
-                  </Button>
-                )}
+              <div className="text-center sm:text-left">
+                <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+                  Club Manager
+                  <Badge variant="outline" className="bg-white/20 text-white border-white/40">
+                    Club Level
+                  </Badge>
+                </h1>
+                <p className="text-blue-100 mt-1">
+                  Manage your club's events and schedules
+                </p>
               </div>
             </div>
-
-            {/* Status Tiles Row - Only show action-required items */}
-            {selectedClub && (() => {
-              const pendingCount = clubEvents.filter(e => e.status === 'proposed').length;
-              const reviewCount = clubEvents.filter(e => e.schedule && e.schedule.status === 'pending').length;
-              const reworkCount = clubEvents.filter(e => e.schedule && e.schedule.status === 'rejected').length;
-              const hasActionItems = pendingCount > 0 || reviewCount > 0 || reworkCount > 0;
+            
+            {/* Club Selection */}
+            <div className="w-full sm:w-auto sm:min-w-[300px]">
+              <Select value={selectedClubId} onValueChange={setSelectedClubId}>
+                <SelectTrigger className="h-14 bg-white/90 hover:bg-white text-blue-600 shadow-lg border-white/40">
+                  <SelectValue>
+                    {selectedClub ? (
+                      <div className="text-left w-full">
+                        <div className="text-lg font-bold text-foreground truncate">
+                          {selectedClub.name}
+                        </div>
+                        <div className="flex items-center gap-1.5 text-muted-foreground mt-0.5">
+                          <MapPin className="h-3 w-3 flex-shrink-0" />
+                          <span className="text-xs font-medium truncate">{selectedZone?.name || 'Unknown Zone'}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <span>Choose your club...</span>
+                    )}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border-primary/20 bg-background/95 backdrop-blur-md">
+                  {clubs
+                    .filter(club => authorizedClubs.includes(club.id))
+                    .sort((a, b) => a.name.localeCompare(b.name))
+                    .map(club => {
+                      const zone = zones.find(z => z.id === club.zoneId);
+                      return (
+                        <SelectItem key={club.id} value={club.id} className="rounded-lg hover:bg-primary/10 py-3">
+                          <div className="flex items-center gap-3">
+                            <div className="rounded-md bg-primary/20 p-1.5">
+                              <Building className="h-3 w-3 text-primary" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="font-bold text-base">{club.name}</div>
+                              <div className="text-sm text-muted-foreground">
+                                {zone?.name || 'Unknown Zone'}
+                              </div>
+                            </div>
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
+                </SelectContent>
+              </Select>
               
-              return hasActionItems ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {/* Pending Approval - Only show if > 0 */}
-                  {pendingCount > 0 && (
-                    <div className="relative overflow-hidden rounded-lg border border-amber-200/60 dark:border-amber-700/60 bg-gradient-to-br from-amber-50/90 to-orange-50/80 dark:from-amber-950/30 dark:to-orange-950/20 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
-                      <div className="p-2 flex items-center justify-between">
-                        <div className="rounded-md bg-amber-100 dark:bg-amber-900/50 p-1.5 border border-amber-300/60 dark:border-amber-700/60 flex-shrink-0">
-                          <Clock className="h-4 w-4 text-amber-700 dark:text-amber-400" />
-                        </div>
-                        <div className="text-2xl font-black text-amber-600 dark:text-amber-500 leading-none">{pendingCount}</div>
-                        <span className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">Pending</span>
-                      </div>
-                    </div>
-                  )}
+              {/* Settings Button */}
+              <Button
+                onClick={() => router.push(`/club-manager/settings?clubId=${selectedClubId}`)}
+                variant="secondary"
+                size="sm"
+                className="mt-2 w-full bg-white/90 hover:bg-white text-blue-600 shadow-lg"
+                disabled={!selectedClubId}
+              >
+                <Settings className="mr-2 h-4 w-4" />
+                Club Settings
+              </Button>
+            </div>
+          </div>
+        </div>
 
-                  {/* Schedules Under Review - Only show if > 0 */}
-                  {reviewCount > 0 && (
-                    <div className="relative overflow-hidden rounded-lg border border-orange-200/60 dark:border-orange-700/60 bg-gradient-to-br from-orange-50/90 to-amber-50/80 dark:from-orange-950/30 dark:to-amber-950/20 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
-                      <div className="p-2 flex items-center justify-between">
-                        <div className="rounded-md bg-orange-100 dark:bg-orange-900/50 p-1.5 border border-orange-300/60 dark:border-orange-700/60 flex-shrink-0">
-                          <Clock className="h-4 w-4 text-orange-700 dark:text-orange-400" />
-                        </div>
-                        <div className="text-2xl font-black text-orange-600 dark:text-orange-500 leading-none">{reviewCount}</div>
-                        <span className="text-xs font-bold uppercase tracking-wider text-orange-700 dark:text-orange-400">Review</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Schedules Needing Rework - Only show if > 0 */}
-                  {reworkCount > 0 && (
-                    <div className="relative overflow-hidden rounded-lg border border-red-200/60 dark:border-red-700/60 bg-gradient-to-br from-red-50/90 to-rose-50/80 dark:from-red-950/30 dark:to-rose-950/20 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
-                      <div className="p-2 flex items-center justify-between">
-                        <div className="rounded-md bg-red-100 dark:bg-red-900/50 p-1.5 border border-red-300/60 dark:border-red-700/60 flex-shrink-0">
-                          <XCircle className="h-4 w-4 text-red-700 dark:text-red-400" />
-                        </div>
-                        <div className="text-2xl font-black text-red-600 dark:text-red-500 leading-none">{reworkCount}</div>
-                        <span className="text-xs font-bold uppercase tracking-wider text-red-700 dark:text-red-400">Rework</span>
-                      </div>
-                    </div>
-                  )}
+        {/* Modern Statistics Cards */}
+        {selectedClub && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <Card className="bg-white dark:bg-slate-900 border-l-4 border-l-purple-500 shadow-lg hover:shadow-xl transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Total Events</p>
+                    <p className="text-3xl font-bold text-slate-900 dark:text-white mt-1">
+                      {clubEvents.length}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                    <Calendar className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                  </div>
                 </div>
-              ) : null;
-            })()}
-          </CardContent>
-        </Card>
-      </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white dark:bg-slate-900 border-l-4 border-l-green-500 shadow-lg hover:shadow-xl transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Approved</p>
+                    <p className="text-3xl font-bold text-slate-900 dark:text-white mt-1">
+                      {statistics.approved}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                    <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white dark:bg-slate-900 border-l-4 border-l-blue-500 shadow-lg hover:shadow-xl transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Pending</p>
+                    <p className="text-3xl font-bold text-slate-900 dark:text-white mt-1">
+                      {statistics.submitted}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                    <Clock className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white dark:bg-slate-900 border-l-4 border-l-orange-500 shadow-lg hover:shadow-xl transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Rejected</p>
+                    <p className="text-3xl font-bold text-slate-900 dark:text-white mt-1">
+                      {statistics.rejected}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+                    <XCircle className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
       {/* Event Management Section */}
       {selectedClub && (
-        <div className="flex-1 mx-4 mb-4">
-          <div className="bg-gradient-to-r from-slate-200/30 via-white/90 to-blue-100/30 rounded-xl border border-border/30 shadow-inner">
+        <div className="flex-1 mb-8">
+          <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg">
             {/* Header with Event Filter and Add Event Button */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 p-3 sm:p-4 border-b border-border/20">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 p-4 sm:p-6 border-b border-border/20">
               {/* Event Filter - Only show when viewing events */}
               {!showAddEventForm && (
                 <div className="w-full sm:w-auto">
@@ -580,8 +574,8 @@ export default function ClubEventManagerDashboard() {
       )}
 
       {clubs.length === 0 && (
-        <div className="flex-1 flex items-center justify-center mx-4 mb-4">
-          <Card className="enhanced-card glass-effect bg-gradient-to-br from-slate-50/80 to-red-50/60">
+        <div className="flex-1 flex items-center justify-center mb-8">
+          <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm shadow-lg">
             <CardContent className="p-6 text-center">
               <Building className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
               <h3 className="text-lg font-semibold mb-2">No Clubs Available</h3>
@@ -592,6 +586,7 @@ export default function ClubEventManagerDashboard() {
           </Card>
         </div>
       )}
+      </div>
     </div>
   );
 }

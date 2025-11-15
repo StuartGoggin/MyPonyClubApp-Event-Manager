@@ -99,6 +99,9 @@ export function EventCalendar({
 
   // State logo
   const [stateLogo, setStateLogo] = useState<string | null>(null);
+  
+  // Equestrian Victoria logo
+  const [evLogo, setEvLogo] = useState<string | null>(null);
 
   // Fetch state logo
   useEffect(() => {
@@ -116,6 +119,24 @@ export function EventCalendar({
       }
     };
     fetchStateLogo();
+  }, []);
+
+  // Fetch Equestrian Victoria logo
+  useEffect(() => {
+    const fetchEVLogo = async () => {
+      try {
+        const response = await fetch('/api/ev-settings');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.imageUrl && data.imageUrl.startsWith('data:image')) {
+            setEvLogo(data.imageUrl);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching EV logo:', error);
+      }
+    };
+    fetchEVLogo();
   }, []);
 
   // Initialize PDF defaults based on user authentication
@@ -713,7 +734,7 @@ export function EventCalendar({
       
     {view === 'month' && (
       <div className='p-4'>
-        <CalendarGrid month={currentDate} events={filteredEvents} onEventClick={handleEventClick} today={today} clubs={clubs} zones={zones} stateLogo={stateLogo}/>
+        <CalendarGrid month={currentDate} events={filteredEvents} onEventClick={handleEventClick} today={today} clubs={clubs} zones={zones} stateLogo={stateLogo} evLogo={evLogo}/>
       </div>
     )}
       
@@ -724,7 +745,7 @@ export function EventCalendar({
             key={month.toString()}
             className="bg-white rounded-lg shadow p-4 flex flex-col w-full"
           >
-            <CalendarGrid month={month} events={filteredEvents} onEventClick={handleEventClick} isYearView={true} today={today} clubs={clubs} zones={zones} stateLogo={stateLogo} />
+            <CalendarGrid month={month} events={filteredEvents} onEventClick={handleEventClick} isYearView={true} today={today} clubs={clubs} zones={zones} stateLogo={stateLogo} evLogo={evLogo} />
           </div>
         ))}
       </div>
@@ -777,6 +798,7 @@ const CalendarGrid = ({
   clubs,
   zones,
   stateLogo,
+  evLogo,
 }: {
   month: Date;
   events: Event[];
@@ -786,6 +808,7 @@ const CalendarGrid = ({
   clubs: Club[];
   zones: Zone[];
   stateLogo: string | null;
+  evLogo: string | null;
 }) => {
   const start = startOfWeek(startOfMonth(month), { weekStartsOn });
   const end = endOfWeek(endOfMonth(month), { weekStartsOn });
@@ -819,6 +842,11 @@ const CalendarGrid = ({
   const getEventLogo = (event: Event) => {
     // Don't show logo for public holidays
     if (event.source === 'public_holiday') return null;
+    
+    // For Equestrian Victoria events, use EV logo
+    if (event.source === 'equestrian_victoria') {
+      return evLogo || (event.clubId ? getClubLogo(event.clubId) : null);
+    }
     
     // For state events, use state logo
     if (event.source === 'state') {
@@ -991,12 +1019,12 @@ const CalendarGrid = ({
                                   </div>
                                 </div>
                                 
-                                {/* Event Logo - Full height right side (Club, Zone, or State) */}
+                                {/* Event Logo - Full height right side (Club, Zone, State, or EV) */}
                                 {getEventLogo(event) && (
                                   <div className="flex-shrink-0 flex items-center">
                                     <img 
                                       src={getEventLogo(event)!} 
-                                      alt={`${event.source === 'state' ? 'State' : event.source === 'zone' ? 'Zone' : getClubName(event.clubId, event)} logo`}
+                                      alt={`${event.source === 'equestrian_victoria' ? 'Equestrian Victoria' : event.source === 'state' ? 'State' : event.source === 'zone' ? 'Zone' : getClubName(event.clubId, event)} logo`}
                                       className={cn(
                                         "rounded object-contain bg-white border border-gray-200 max-w-full max-h-full",
                                         isYearView ? "w-10 h-10" : "w-14 h-14"

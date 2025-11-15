@@ -198,7 +198,7 @@ export interface EventType {
 }
 
 export type EventStatus = 'proposed' | 'approved' | 'rejected' | 'public_holiday';
-export type EventSource = 'pca' | 'zone' | 'state' | 'public_holiday';
+export type EventSource = 'pca' | 'zone' | 'state' | 'equestrian_victoria' | 'public_holiday';
 export type EventScheduleStatus = 'missing' | 'pending' | 'approved' | 'rejected';
 
 export interface AIReviewIssue {

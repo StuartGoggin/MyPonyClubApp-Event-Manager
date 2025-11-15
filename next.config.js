@@ -1,8 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Restored for full Next.js functionality with Firebase App Hosting
-  // output: 'export', // Removed - using server-side rendering
-  // trailingSlash: true, // Removed - using default Next.js routing
+  // Enable standalone output for Firebase App Hosting
+  output: 'standalone',
   
   // Enable image optimization for server deployment
   images: {

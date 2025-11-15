@@ -297,6 +297,10 @@ export async function getAllEvents(): Promise<Event[]> {
         if (data.date && typeof data.date.toDate === 'function') {
           data.date = data.date.toDate();
         }
+        // Clean event name - remove priority suffixes
+        if (data.name) {
+          data.name = data.name.replace(/\s*\(Priority\s+\d+[^)]*\)\s*$/i, '').trim();
+        }
         events.push({ id: doc.id, ...data } as Event);
       }
     });

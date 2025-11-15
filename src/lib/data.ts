@@ -427,6 +427,10 @@ export const getEvents = async (): Promise<Event[]> => {
         if (data.updatedAt && typeof data.updatedAt.toDate === 'function') {
             data.updatedAt = data.updatedAt.toDate();
         }
+        // Clean event name - remove priority suffixes
+        if (data.name) {
+            data.name = data.name.replace(/\s*\(Priority\s+\d+[^)]*\)\s*$/i, '').trim();
+        }
         return {
             id: doc.id,
             ...data,
@@ -449,6 +453,10 @@ export const getEventById = async (id: string) => {
     if (!docSnap.exists) return undefined;
     const data = docSnap.data();
     if (!data) return undefined;
+    // Clean event name - remove priority suffixes
+    if (data.name) {
+        data.name = data.name.replace(/\s*\(Priority\s+\d+[^)]*\)\s*$/i, '').trim();
+    }
     return {
         id: docSnap.id,
         ...data,

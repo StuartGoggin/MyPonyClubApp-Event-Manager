@@ -482,16 +482,56 @@ export function ZoneEventApproval({
                       {/* Event Type */}
                       <div className="flex items-start gap-2">
                         <FileText className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                        <div>
+                        <div className="flex-1">
                           <span className="text-xs font-medium text-muted-foreground block">Event Type</span>
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-col gap-2">
                             <span className="text-sm font-semibold">{getEventTypeName(event.eventTypeId)}</span>
-                            {event.isQualifier && (
-                              <Badge variant="secondary" className="text-xs">
-                                <Trophy className="h-3 w-3 mr-1" />
-                                Zone Qualifier
-                              </Badge>
-                            )}
+                            
+                            {/* Event Indicators */}
+                            <div className="flex flex-wrap gap-1.5">
+                              {/* Priority Badge */}
+                              {event.priority && (
+                                <Badge 
+                                  variant="outline" 
+                                  className={cn(
+                                    "text-xs font-medium",
+                                    event.priority === 1 ? "bg-red-50 text-red-700 border-red-300" :
+                                    event.priority === 2 ? "bg-orange-50 text-orange-700 border-orange-300" :
+                                    event.priority === 3 ? "bg-yellow-50 text-yellow-700 border-yellow-300" :
+                                    "bg-blue-50 text-blue-700 border-blue-300"
+                                  )}
+                                >
+                                  <Star className="h-3 w-3 mr-1" />
+                                  Priority {event.priority}
+                                </Badge>
+                              )}
+                              
+                              {/* Traditional Event Badge */}
+                              {event.isHistoricallyTraditional ? (
+                                <Badge variant="outline" className="text-xs font-medium bg-purple-50 text-purple-700 border-purple-300">
+                                  <CalendarLucide className="h-3 w-3 mr-1" />
+                                  Traditional
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-xs font-medium bg-gray-50 text-gray-500 border-gray-300">
+                                  <CalendarLucide className="h-3 w-3 mr-1 opacity-50" />
+                                  Non-Traditional
+                                </Badge>
+                              )}
+                              
+                              {/* Qualifier Badge */}
+                              {event.isQualifier ? (
+                                <Badge variant="outline" className="text-xs font-medium bg-amber-50 text-amber-700 border-amber-300">
+                                  <Trophy className="h-3 w-3 mr-1" />
+                                  Qualifier
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-xs font-medium bg-gray-50 text-gray-500 border-gray-300">
+                                  <Trophy className="h-3 w-3 mr-1 opacity-50" />
+                                  Non-Qualifier
+                                </Badge>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -707,21 +747,61 @@ export function ZoneEventApproval({
                       {/* Event Type */}
                       <div className="flex items-start gap-2">
                         <FileText className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                        <div>
+                        <div className="flex-1">
                           <span className="text-xs font-medium text-muted-foreground block">Event Type</span>
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-col gap-2">
                             <span className="text-sm font-semibold">{getEventTypeName(event.eventTypeId)}</span>
-                            {event.isQualifier && (
-                              <Badge variant="secondary" className="text-xs">
-                                <Trophy className="h-3 w-3 mr-1" />
-                                Qualifier
-                              </Badge>
-                            )}
+                            
+                            {/* Event Indicators */}
+                            <div className="flex flex-wrap gap-1.5">
+                              {/* Priority Badge */}
+                              {event.priority && (
+                                <Badge 
+                                  variant="outline" 
+                                  className={cn(
+                                    "text-xs font-medium",
+                                    event.priority === 1 ? "bg-red-50 text-red-700 border-red-300" :
+                                    event.priority === 2 ? "bg-orange-50 text-orange-700 border-orange-300" :
+                                    event.priority === 3 ? "bg-yellow-50 text-yellow-700 border-yellow-300" :
+                                    "bg-blue-50 text-blue-700 border-blue-300"
+                                  )}
+                                >
+                                  <Star className="h-3 w-3 mr-1" />
+                                  Priority {event.priority}
+                                </Badge>
+                              )}
+                              
+                              {/* Traditional Event Badge */}
+                              {event.isHistoricallyTraditional ? (
+                                <Badge variant="outline" className="text-xs font-medium bg-purple-50 text-purple-700 border-purple-300">
+                                  <CalendarLucide className="h-3 w-3 mr-1" />
+                                  Traditional
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-xs font-medium bg-gray-50 text-gray-500 border-gray-300">
+                                  <CalendarLucide className="h-3 w-3 mr-1 opacity-50" />
+                                  Non-Traditional
+                                </Badge>
+                              )}
+                              
+                              {/* Qualifier Badge */}
+                              {event.isQualifier ? (
+                                <Badge variant="outline" className="text-xs font-medium bg-amber-50 text-amber-700 border-amber-300">
+                                  <Trophy className="h-3 w-3 mr-1" />
+                                  Qualifier
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-xs font-medium bg-gray-50 text-gray-500 border-gray-300">
+                                  <Trophy className="h-3 w-3 mr-1 opacity-50" />
+                                  Non-Qualifier
+                                </Badge>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
 
-                      {/* Coordinator */}
+                      {/* Location */}
                       <div className="flex items-start gap-2">
                         <User className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                         <div>

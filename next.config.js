@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Enable standalone output for Firebase App Hosting
-  output: 'standalone',
+  // Firebase App Hosting will handle the build output configuration
+  // Do not set output mode - let Firebase adapter manage it
   
   // Enable image optimization for server deployment
   images: {

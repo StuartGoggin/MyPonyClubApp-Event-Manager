@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, CheckCircle, Clock, Users, Building, Plus, Activity, Calendar, FileText, XCircle, Filter, AlertTriangle } from 'lucide-react';
+import { MapPin, CheckCircle, Clock, Users, Building, Plus, Activity, Calendar, FileText, XCircle, Filter, AlertTriangle, Settings } from 'lucide-react';
 import { Zone, Club, Event, EventType } from '@/lib/types';
 import { ClubEventSubmission } from '@/components/club-manager/club-event-submission';
 import { ClubEventStatus } from '@/components/club-manager/club-event-status';
@@ -289,10 +289,11 @@ export default function ClubEventManagerDashboard() {
               </div>
 
               {/* Club Selection */}
-              <div className="w-full sm:w-auto sm:max-w-md">
-                {selectedClub ? (
-                  <Select value={selectedClubId} onValueChange={setSelectedClubId}>
-                    <SelectTrigger className="h-12 sm:h-14 border-primary/30 bg-background/90 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:border-primary/50 w-full">
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <div className="flex-1 sm:flex-initial sm:max-w-md">
+                  {selectedClub ? (
+                    <Select value={selectedClubId} onValueChange={setSelectedClubId}>
+                      <SelectTrigger className="h-12 sm:h-14 border-primary/30 bg-background/90 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:border-primary/50 w-full">
                       <SelectValue>
                         <div className="text-left sm:text-right w-full">
                           <div className="text-sm sm:text-lg font-bold text-foreground truncate">
@@ -358,6 +359,20 @@ export default function ClubEventManagerDashboard() {
                         })}
                     </SelectContent>
                   </Select>
+                )}
+                </div>
+                
+                {/* Club Settings Button */}
+                {selectedClub && (
+                  <Button
+                    onClick={() => router.push(`/club-manager/settings?clubId=${selectedClubId}`)}
+                    variant="outline"
+                    size="icon"
+                    className="h-12 w-12 sm:h-14 sm:w-14 rounded-xl border-primary/30 bg-background/90 backdrop-blur-sm hover:bg-primary/10 hover:border-primary/50 transition-all duration-300"
+                    title="Club Settings"
+                  >
+                    <Settings className="h-5 w-5 text-primary" />
+                  </Button>
                 )}
               </div>
             </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -94,9 +94,9 @@ export function PublicHolidaySyncTile() {
   };
 
   // Fetch status on mount
-  useState(() => {
+  useEffect(() => {
     fetchStatus();
-  });
+  }, []);
 
   return (
     <div className="relative overflow-hidden rounded-2xl border border-green-200/50 bg-gradient-to-br from-green-50/80 via-green-50/60 to-emerald-50/40 dark:from-green-950/40 dark:via-green-950/30 dark:to-emerald-950/20 shadow-xl backdrop-blur-sm hover:shadow-2xl transition-all duration-300 hover:scale-105">

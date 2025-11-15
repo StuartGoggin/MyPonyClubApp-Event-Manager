@@ -1,20 +1,6 @@
 import { adminDb, isDatabaseConnected, getDatabaseErrorMessage } from './firebase-admin';
 import type { Zone, Club, EventType, Event } from './types';
 import type { QueryDocumentSnapshot, DocumentData } from 'firebase-admin/firestore';
-import { getYear } from 'date-fns';
-
-// Interface for public holiday API response
-interface PublicHoliday {
-  date: string;
-  localName: string;
-  name: string;
-  countryCode: string;
-  fixed: boolean;
-  global: boolean;
-  counties: string[] | null;
-  launchYear: number | null;
-  types: string[];
-}
 
 // Simple in-memory cache
 interface CacheEntry<T> {
@@ -27,11 +13,9 @@ const cache = {
   zones: null as CacheEntry<Zone[]> | null,
   eventTypes: null as CacheEntry<EventType[]> | null,
   events: null as CacheEntry<Event[]> | null,
-  publicHolidays: null as CacheEntry<Event[]> | null,
 };
 
 const CACHE_TTL = 12 * 60 * 60 * 1000; // 12 hours
-const PUBLIC_HOLIDAYS_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours (holidays don't change often)
 
 function getCached<T>(key: keyof typeof cache, customTTL?: number): T | null {
   const entry = cache[key] as CacheEntry<T> | null;
@@ -215,69 +199,12 @@ export async function getAllEventTypes(): Promise<EventType[]> {
   }
 }
 
-// Fetch public holidays with caching
-async function getPublicHolidays(startYear: number, yearsAhead: number = 5): Promise<Event[]> {
-  // Check cache first
-  const cached = getCached<Event[]>('publicHolidays', PUBLIC_HOLIDAYS_CACHE_TTL);
-  if (cached) {
-    return cached;
-  }
-
-  console.log('🎉 Fetching public holidays from API (cache miss)...');
-  const allHolidays: Event[] = [];
-  
-  // Fetch holidays for current year and next 5 years (6 years total)
-  for (let i = 0; i <= yearsAhead; i++) {
-    const year = startYear + i;
-    
-    try {
-      const response = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/AU`);
-      if (!response.ok) {
-        console.warn(`Failed to fetch public holidays for ${year}:`, response.statusText);
-        continue; // Skip this year but continue with others
-      }
-      
-      const holidays: PublicHoliday[] = await response.json();
-      
-      // Filter for Victorian holidays (AU-VIC) and convert to Event format
-      const yearHolidays = holidays
-        .filter(holiday => holiday.counties === null || holiday.counties?.includes('AU-VIC'))
-        .map((holiday, index) => ({
-          id: `ph-${year}-${index}`,
-          name: holiday.localName,
-          date: new Date(holiday.date),
-          clubId: 'N/A',
-          eventTypeId: 'ph', 
-          status: 'public_holiday' as const,
-          location: 'Victoria',
-          source: 'public_holiday' as const,
-        }));
-      
-      allHolidays.push(...yearHolidays);
-      
-    } catch (error) {
-      console.error(`Error fetching public holidays for ${year}:`, error);
-      // Continue with other years even if one fails
-    }
-  }
-  
-  console.log(`✅ Fetched ${allHolidays.length} public holidays - CACHED for 24 hours`);
-  
-  // Cache the result for 24 hours
-  setCache('publicHolidays', allHolidays);
-  
-  return allHolidays;
-}
-
 export async function getAllEvents(): Promise<Event[]> {
   try {
     // Check cache first
     const cached = getCached<Event[]>('events');
     if (cached) {
-      // Still need to append public holidays (they're cached separately)
-      const currentYear = getYear(new Date());
-      const publicHolidays = await getPublicHolidays(currentYear);
-      return [...cached, ...publicHolidays];
+      return cached;
     }
     
     if (!adminDb) {
@@ -301,21 +228,34 @@ export async function getAllEvents(): Promise<Event[]> {
         if (data.name) {
           data.name = data.name.replace(/\s*\(Priority\s+\d+[^)]*\)\s*$/i, '').trim();
         }
-        events.push({ id: doc.id, ...data } as Event);
+        
+        // Assign source based on event properties
+        let source: 'pca' | 'zone' | 'state' | 'public_holiday' = 'zone';
+        if (data.source === 'public_holiday' || data.status === 'public_holiday') {
+          // Public holiday - use the source from the data
+          source = 'public_holiday';
+        } else if (!data.clubId && !data.zoneId) {
+          // No club or zone - this is a state event
+          source = 'state';
+        } else if (data.zoneId && !data.clubId) {
+          // Has zone but no club - this is a zone event
+          source = 'zone';
+        } else if (data.clubId) {
+          // Has club - this is from PCA (club event)
+          source = 'pca';
+        }
+        
+        events.push({ id: doc.id, ...data, source } as Event);
       }
     });
     
     const queryTime = Date.now() - startTime;
     console.log(`✅ Retrieved ${events.length} events in ${queryTime}ms - CACHED for 12 hours`);
     
-    // Cache the Firestore events
+    // Cache the events (including public holidays which are now stored in Firestore)
     setCache('events', events);
     
-    // Fetch and append public holidays
-    const currentYear = getYear(new Date());
-    const publicHolidays = await getPublicHolidays(currentYear);
-    
-    return [...events, ...publicHolidays];
+    return events;
   } catch (error) {
     console.error('Error fetching events:', error);
     return [];

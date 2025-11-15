@@ -83,6 +83,14 @@ export function AppLayout({ children }: PropsWithChildren) {
       requiredRoles: ['super_user'], // Only super users can access admin
     },
     {
+      href: '/state-manager',
+      title: 'State Manager',
+      icon: FerrisWheel,
+      label: 'State Manager',
+      requireAuth: true,
+      requiredRoles: ['super_user', 'state_admin'], // Super users and state admins
+    },
+    {
       href: '/zone-manager',
       title: 'Zone Manager',
       icon: MapPin,

@@ -190,7 +190,11 @@ export function EventCalendar({
     if (!Array.isArray(events)) return [];
     if (bypassSourceFiltering) return events;
     if (eventSources.length === 0) return events;
-    return events.filter(event => eventSources.includes(event.source));
+    return events.filter(event => {
+      // Include state events when 'zone' is selected
+      if (event.source === 'state' && eventSources.includes('zone')) return true;
+      return eventSources.includes(event.source);
+    });
   }, [events, eventSources, bypassSourceFiltering]);
 
   const filteredEvents = useMemo(() => {
@@ -215,10 +219,19 @@ export function EventCalendar({
       // Location-based filtering
       filtered = eventsFromSource.filter(event => {
         if (event.source === 'public_holiday') return true;
+        
+        // State events (no clubId and no zoneId) should always be visible
+        if (!event.clubId && !event.zoneId) return true;
+        
         if (selectedClubId !== 'all') {
           return event.clubId === selectedClubId;
         }
         if (selectedZoneId !== 'all') {
+          // Zone events (zoneId but no clubId) match the selected zone
+          if (event.zoneId && !event.clubId) {
+            return event.zoneId === selectedZoneId;
+          }
+          // Club events match if their club is in the selected zone
           const clubIsInZone = clubs.find(c => c.id === event.clubId)?.zoneId === selectedZoneId;
           return clubIsInZone;
         }

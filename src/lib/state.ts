@@ -5,6 +5,6 @@ import { type EventSource as AppEventSource } from './types';
 
 export type EventSource = AppEventSource;
 
-export const eventSourceAtom = atom<EventSource[]>(['pca', 'zone', 'public_holiday']);
+export const eventSourceAtom = atom<EventSource[]>(['pca', 'zone', 'state', 'public_holiday']);
 
 export { JotaiProvider };

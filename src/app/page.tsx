@@ -60,10 +60,14 @@ export default function DashboardPage() {
         console.log('Main dashboard API responses:', { zonesData, clubsData, eventsData, eventTypesData });
 
         // Extract arrays from API responses, ensuring they are always arrays
+        const extractedEvents = Array.isArray(eventsData.events) ? eventsData.events : Array.isArray(eventsData) ? eventsData : [];
         setZones(Array.isArray(zonesData.zones) ? zonesData.zones : Array.isArray(zonesData) ? zonesData : []);
         setClubs(Array.isArray(clubsData.clubs) ? clubsData.clubs : Array.isArray(clubsData) ? clubsData : []);
-        setEvents(Array.isArray(eventsData.events) ? eventsData.events : Array.isArray(eventsData) ? eventsData : []);
+        setEvents(extractedEvents);
         setEventTypes(Array.isArray(eventTypesData.eventTypes) ? eventTypesData.eventTypes : Array.isArray(eventTypesData) ? eventTypesData : []);
+        
+        console.log('📅 Calendar - Total events loaded:', extractedEvents.length);
+        console.log('🎯 Calendar - State events (no zoneId/clubId):', extractedEvents.filter((e: Event) => !e.zoneId && !e.clubId));
 
       } catch (err) {
         console.error('Error fetching dashboard data:', err);

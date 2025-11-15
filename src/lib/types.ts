@@ -198,7 +198,7 @@ export interface EventType {
 }
 
 export type EventStatus = 'proposed' | 'approved' | 'rejected' | 'public_holiday';
-export type EventSource = 'pca' | 'zone' | 'public_holiday';
+export type EventSource = 'pca' | 'zone' | 'state' | 'public_holiday';
 export type EventScheduleStatus = 'missing' | 'pending' | 'approved' | 'rejected';
 
 export interface AIReviewIssue {
@@ -236,7 +236,7 @@ export interface EventSchedule {
 }
 
 // User Management Types
-export type UserRole = 'standard' | 'zone_rep' | 'super_user';
+export type UserRole = 'standard' | 'zone_rep' | 'state_admin' | 'super_user';
 
 export interface User {
   id: string;                      // Firestore document ID

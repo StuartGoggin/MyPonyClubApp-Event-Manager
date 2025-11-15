@@ -6,7 +6,7 @@ const nextConfig = {
   
   // Enable image optimization for server deployment
   images: {
-    unoptimized: false, // Re-enable optimization
+    unoptimized: true, // Disable optimization for Firebase App Hosting compatibility
     remotePatterns: [
       {
         protocol: 'https',

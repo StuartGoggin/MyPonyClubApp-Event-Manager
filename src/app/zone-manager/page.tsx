@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MapPin, CheckCircle, Clock, Users, Building, Plus, FileText, CalendarPlus } from 'lucide-react';
+import { MapPin, CheckCircle, Clock, Users, Building, Plus, FileText, CalendarPlus, Settings } from 'lucide-react';
 import { Zone, Club, Event, EventType } from '@/lib/types';
 import { ZoneEventApproval } from '@/components/zone-manager/zone-event-approval';
 import { ZoneScheduleApproval } from '@/components/zone-manager/zone-schedule-approval';
@@ -15,9 +15,11 @@ import { ZoneEventManagement } from '@/components/zone-manager/zone-event-manage
 import { ZoneEventSubmission } from '@/components/zone-manager/zone-event-submission';
 import { RouteGuard } from '@/components/auth/route-guard';
 import { useAuth } from '@/contexts/auth-context';
+import { useRouter } from 'next/navigation';
 
 function ZoneManagerContent() {
   const { user } = useAuth();
+  const router = useRouter();
   const [zones, setZones] = useState<Zone[]>([]);
   const [clubs, setClubs] = useState<Club[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
@@ -179,36 +181,51 @@ function ZoneManagerContent() {
                 </h1>
               </div>
 
-              {/* Zone Selection */}
-              <div className="w-full sm:w-auto sm:max-w-md">
-                <Select value={selectedZoneId} onValueChange={setSelectedZoneId}>
-                  <SelectTrigger className="h-12 sm:h-14 border-primary/30 bg-background/90 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:border-primary/50 w-full">
-                    <SelectValue>
-                      <div className="text-left sm:text-right w-full">
-                        <div className="text-sm sm:text-lg font-bold text-foreground truncate">
-                          {selectedZone?.name || 'Select Zone'}
-                        </div>
-                      </div>
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl border-primary/20 bg-background/95 backdrop-blur-md">
-                    {zones
-                      .filter(zone => authorizedZones.includes(zone.id))
-                      .map(zone => (
-                        <SelectItem key={zone.id} value={zone.id} className="rounded-lg hover:bg-primary/10 py-3">
-                          <div className="flex items-center gap-3">
-                            <div className="rounded-md bg-primary/20 p-1.5">
-                              <MapPin className="h-3 w-3 text-primary" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="font-bold text-base">{zone.name}</div>
-                            </div>
+              {/* Zone Selection with Settings Button */}
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <div className="flex-1 sm:flex-initial sm:max-w-md">
+                  <Select value={selectedZoneId} onValueChange={setSelectedZoneId}>
+                    <SelectTrigger className="h-12 sm:h-14 border-primary/30 bg-background/90 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:border-primary/50 w-full">
+                      <SelectValue>
+                        <div className="text-left sm:text-right w-full">
+                          <div className="text-sm sm:text-lg font-bold text-foreground truncate">
+                            {selectedZone?.name || 'Select Zone'}
                           </div>
-                        </SelectItem>
-                      ))
-                    }
-                  </SelectContent>
-                </Select>
+                        </div>
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl border-primary/20 bg-background/95 backdrop-blur-md">
+                      {zones
+                        .filter(zone => authorizedZones.includes(zone.id))
+                        .map(zone => (
+                          <SelectItem key={zone.id} value={zone.id} className="rounded-lg hover:bg-primary/10 py-3">
+                            <div className="flex items-center gap-3">
+                              <div className="rounded-md bg-primary/20 p-1.5">
+                                <MapPin className="h-3 w-3 text-primary" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="font-bold text-base">{zone.name}</div>
+                              </div>
+                            </div>
+                          </SelectItem>
+                        ))
+                      }
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Zone Settings Button */}
+                {selectedZone && (
+                  <Button
+                    onClick={() => router.push(`/zone-manager/settings?zoneId=${selectedZoneId}`)}
+                    variant="outline"
+                    size="icon"
+                    className="h-12 w-12 sm:h-14 sm:w-14 rounded-xl border-primary/30 bg-background/90 backdrop-blur-sm hover:bg-primary/10 hover:border-primary/50 transition-all duration-300"
+                    title="Zone Settings"
+                  >
+                    <Settings className="h-5 w-5 text-primary" />
+                  </Button>
+                )}
               </div>
             </div>
             

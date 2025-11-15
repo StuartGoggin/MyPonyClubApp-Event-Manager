@@ -13,38 +13,35 @@ import {
   ArrowLeft, 
   Save, 
   Upload, 
-  Building, 
+  MapPin, 
   Mail, 
-  Phone, 
-  Globe, 
-  MapPin,
+  Phone,
   Loader2,
   Image as ImageIcon,
-  X
+  X,
+  User
 } from 'lucide-react';
-import { Club } from '@/lib/types';
+import { Zone } from '@/lib/types';
 
-function ClubSettingsContent() {
+function ZoneSettingsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const clubId = searchParams.get('clubId');
+  const zoneId = searchParams.get('zoneId');
   const { user, isAuthenticated, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [club, setClub] = useState<Club | null>(null);
+  const [zone, setZone] = useState<Zone | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
-    email: '',
-    phone: '',
-    website: '',
-    physicalAddress: '',
-    postalAddress: '',
-    socialMediaUrl: '',
-    image: ''
+    streetAddress: '',
+    secretaryName: '',
+    secretaryEmail: '',
+    secretaryMobile: '',
+    imageUrl: ''
   });
   const [logoPreview, setLogoPreview] = useState<string>('');
 
@@ -56,56 +53,50 @@ function ClubSettingsContent() {
       return;
     }
 
-    if (!clubId) {
+    if (!zoneId) {
       toast({
         title: 'Error',
-        description: 'No club selected',
+        description: 'No zone selected',
         variant: 'destructive'
       });
-      router.push('/club-manager');
+      router.push('/zone-manager');
       return;
     }
 
-    fetchClubData();
-  }, [isAuthenticated, authLoading, clubId]);
+    fetchZoneData();
+  }, [isAuthenticated, authLoading, zoneId]);
 
-  const fetchClubData = async () => {
-    if (!clubId) return;
+  const fetchZoneData = async () => {
+    if (!zoneId) return;
 
     setLoading(true);
     try {
-      const response = await fetch(`/api/clubs/${clubId}`);
+      const response = await fetch(`/api/zones/${zoneId}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch club data');
+        throw new Error('Failed to fetch zone data');
       }
 
-      const clubData = await response.json();
-      console.log('Club data received:', clubData);
-      console.log('Club image field:', clubData.image);
-      console.log('Club logoUrl field:', clubData.logoUrl);
-      setClub(clubData);
+      const zoneData = await response.json();
+      console.log('Zone data received:', zoneData);
+      console.log('Zone imageUrl field:', zoneData.imageUrl);
+      setZone(zoneData);
       
-      // Get logo from logoUrl first (preferred), then image field
-      // Only use if it's a valid base64 data URI - ignore file paths
+      // Get logo - only use if it's a valid base64 data URI
       let logoData = '';
-      if (clubData.logoUrl && clubData.logoUrl.startsWith('data:image')) {
-        logoData = clubData.logoUrl;
-      } else if (clubData.image && clubData.image.startsWith('data:image')) {
-        logoData = clubData.image;
+      if (zoneData.imageUrl && zoneData.imageUrl.startsWith('data:image')) {
+        logoData = zoneData.imageUrl;
       }
       
       const isValidDataUri = logoData !== '';
       
       // Populate form
       setFormData({
-        name: clubData.name || '',
-        email: clubData.email || clubData.emailAddress || '',
-        phone: clubData.phone || clubData.phoneNumber || '',
-        website: clubData.website || clubData.websiteUrl || '',
-        physicalAddress: clubData.physicalAddress || '',
-        postalAddress: clubData.postalAddress || '',
-        socialMediaUrl: clubData.socialMediaUrl || clubData.socialMedia?.facebook || '',
-        image: isValidDataUri ? logoData : ''
+        name: zoneData.name || '',
+        streetAddress: zoneData.streetAddress || '',
+        secretaryName: zoneData.secretary?.name || '',
+        secretaryEmail: zoneData.secretary?.email || '',
+        secretaryMobile: zoneData.secretary?.mobile || '',
+        imageUrl: isValidDataUri ? logoData : ''
       });
 
       if (isValidDataUri) {
@@ -115,10 +106,10 @@ function ClubSettingsContent() {
         console.log('No valid logo data found (not a base64 data URI):', logoData);
       }
     } catch (error) {
-      console.error('Error fetching club data:', error);
+      console.error('Error fetching zone data:', error);
       toast({
         title: 'Error',
-        description: 'Failed to load club data',
+        description: 'Failed to load zone data',
         variant: 'destructive'
       });
     } finally {
@@ -162,7 +153,7 @@ function ClubSettingsContent() {
       reader.onloadend = () => {
         const base64String = reader.result as string;
         setLogoPreview(base64String);
-        setFormData(prev => ({ ...prev, image: base64String }));
+        setFormData(prev => ({ ...prev, imageUrl: base64String }));
       };
       reader.readAsDataURL(file);
     } catch (error) {
@@ -179,44 +170,44 @@ function ClubSettingsContent() {
 
   const handleRemoveLogo = () => {
     setLogoPreview('');
-    setFormData(prev => ({ ...prev, image: '' }));
+    setFormData(prev => ({ ...prev, imageUrl: '' }));
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
 
   const handleSave = async () => {
-    if (!clubId) return;
+    if (!zoneId) return;
 
     setSaving(true);
     try {
-      console.log('Saving club data...', {
-        clubId,
-        imageLength: formData.image.length,
-        hasImage: !!formData.image
+      console.log('Saving zone data...', {
+        zoneId,
+        imageLength: formData.imageUrl.length,
+        hasImage: !!formData.imageUrl
       });
       
-      const response = await fetch(`/api/clubs/${clubId}`, {
+      const response = await fetch(`/api/zones/${zoneId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          website: formData.website,
-          physicalAddress: formData.physicalAddress,
-          postalAddress: formData.postalAddress,
-          socialMediaUrl: formData.socialMediaUrl,
-          image: formData.image
+          streetAddress: formData.streetAddress,
+          imageUrl: formData.imageUrl,
+          secretary: {
+            name: formData.secretaryName,
+            email: formData.secretaryEmail,
+            mobile: formData.secretaryMobile
+          }
         }),
       });
 
       console.log('Save response status:', response.status);
       
       if (!response.ok) {
-        throw new Error('Failed to update club');
+        throw new Error('Failed to update zone');
       }
 
       const result = await response.json();
@@ -224,16 +215,16 @@ function ClubSettingsContent() {
 
       toast({
         title: 'Success',
-        description: 'Club information updated successfully',
+        description: 'Zone information updated successfully',
       });
 
-      // Refresh club data
-      await fetchClubData();
+      // Refresh zone data
+      await fetchZoneData();
     } catch (error) {
-      console.error('Error saving club data:', error);
+      console.error('Error saving zone data:', error);
       toast({
         title: 'Error',
-        description: 'Failed to save club information',
+        description: 'Failed to save zone information',
         variant: 'destructive'
       });
     } finally {
@@ -246,21 +237,21 @@ function ClubSettingsContent() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-          <p>Loading club settings...</p>
+          <p>Loading zone settings...</p>
         </div>
       </div>
     );
   }
 
-  if (!club) {
+  if (!zone) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Card className="w-full max-w-md">
           <CardContent className="p-6 text-center">
-            <p className="text-red-600 mb-4">Club not found</p>
-            <Button onClick={() => router.push('/club-manager')}>
+            <p className="text-red-600 mb-4">Zone not found</p>
+            <Button onClick={() => router.push('/zone-manager')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Club Manager
+              Back to Zone Manager
             </Button>
           </CardContent>
         </Card>
@@ -276,30 +267,30 @@ function ClubSettingsContent() {
           <div>
             <Button
               variant="outline"
-              onClick={() => router.push('/club-manager')}
+              onClick={() => router.push('/zone-manager')}
               className="mb-4"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Club Manager
+              Back to Zone Manager
             </Button>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-primary via-purple-600 to-accent bg-clip-text text-transparent">
-              Club Settings
+              Zone Settings
             </h1>
             <p className="text-muted-foreground mt-2">
-              Manage your club information and branding
+              Manage zone information and branding
             </p>
           </div>
         </div>
 
-        {/* Club Logo */}
+        {/* Zone Logo */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <ImageIcon className="h-5 w-5" />
-              Club Logo
+              Zone Logo
             </CardTitle>
             <CardDescription>
-              Upload your club logo. Recommended size: 500x500px. Max size: 500KB.
+              Upload your zone logo. Recommended size: 500x500px. Max size: 500KB.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -311,7 +302,7 @@ function ClubSettingsContent() {
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={logoPreview}
-                      alt="Club Logo"
+                      alt="Zone Logo"
                       className="object-contain w-full h-full"
                     />
                   ) : (
@@ -338,7 +329,7 @@ function ClubSettingsContent() {
                   accept="image/*"
                   onChange={handleLogoUpload}
                   className="hidden"
-                  aria-label="Upload club logo"
+                  aria-label="Upload zone logo"
                 />
                 <Button
                   onClick={() => fileInputRef.current?.click()}
@@ -370,132 +361,106 @@ function ClubSettingsContent() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Building className="h-5 w-5" />
+              <MapPin className="h-5 w-5" />
               Basic Information
             </CardTitle>
             <CardDescription>
-              Update your club's basic details
+              Update your zone's basic details
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Club Name</Label>
+              <Label htmlFor="name">Zone Name</Label>
               <Input
                 id="name"
                 value={formData.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
-                placeholder="Enter club name"
+                placeholder="Enter zone name"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="streetAddress">
+                <MapPin className="h-4 w-4 inline mr-2" />
+                Street Address
+              </Label>
+              <Textarea
+                id="streetAddress"
+                value={formData.streetAddress}
+                onChange={(e) => handleInputChange('streetAddress', e.target.value)}
+                placeholder="Enter street address"
+                rows={3}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Secretary Information */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Secretary Information
+            </CardTitle>
+            <CardDescription>
+              Zone secretary contact details
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="secretaryName">Secretary Name</Label>
+              <Input
+                id="secretaryName"
+                value={formData.secretaryName}
+                onChange={(e) => handleInputChange('secretaryName', e.target.value)}
+                placeholder="Enter secretary name"
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="email">
+                <Label htmlFor="secretaryEmail">
                   <Mail className="h-4 w-4 inline mr-2" />
                   Email Address
                 </Label>
                 <Input
-                  id="email"
+                  id="secretaryEmail"
                   type="email"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                  placeholder="club@example.com"
+                  value={formData.secretaryEmail}
+                  onChange={(e) => handleInputChange('secretaryEmail', e.target.value)}
+                  placeholder="secretary@example.com"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="phone">
+                <Label htmlFor="secretaryMobile">
                   <Phone className="h-4 w-4 inline mr-2" />
-                  Phone Number
+                  Mobile Number
                 </Label>
                 <Input
-                  id="phone"
+                  id="secretaryMobile"
                   type="tel"
-                  value={formData.phone}
-                  onChange={(e) => handleInputChange('phone', e.target.value)}
-                  placeholder="(03) 1234 5678"
+                  value={formData.secretaryMobile}
+                  onChange={(e) => handleInputChange('secretaryMobile', e.target.value)}
+                  placeholder="0400 000 000"
                 />
               </div>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="website">
-                <Globe className="h-4 w-4 inline mr-2" />
-                Website URL
-              </Label>
-              <Input
-                id="website"
-                type="url"
-                value={formData.website}
-                onChange={(e) => handleInputChange('website', e.target.value)}
-                placeholder="https://www.yourclub.com"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="socialMedia">
-                <Globe className="h-4 w-4 inline mr-2" />
-                Facebook/Social Media URL
-              </Label>
-              <Input
-                id="socialMedia"
-                type="url"
-                value={formData.socialMediaUrl}
-                onChange={(e) => handleInputChange('socialMediaUrl', e.target.value)}
-                placeholder="https://www.facebook.com/yourclub"
-              />
-            </div>
           </CardContent>
         </Card>
 
-        {/* Location Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MapPin className="h-5 w-5" />
-              Location Information
-            </CardTitle>
-            <CardDescription>
-              Update your club's address details
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="physicalAddress">Physical Address</Label>
-              <Textarea
-                id="physicalAddress"
-                value={formData.physicalAddress}
-                onChange={(e) => handleInputChange('physicalAddress', e.target.value)}
-                placeholder="Enter physical address where events are held"
-                rows={3}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="postalAddress">Postal Address</Label>
-              <Textarea
-                id="postalAddress"
-                value={formData.postalAddress}
-                onChange={(e) => handleInputChange('postalAddress', e.target.value)}
-                placeholder="Enter postal/mailing address"
-                rows={3}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Actions */}
+        {/* Save Button */}
         <div className="flex justify-end gap-4">
           <Button
             variant="outline"
-            onClick={() => router.push('/club-manager')}
+            onClick={() => router.push('/zone-manager')}
           >
             Cancel
           </Button>
           <Button
             onClick={handleSave}
             disabled={saving}
-            className="bg-gradient-to-r from-primary to-accent"
+            className="min-w-[120px]"
           >
             {saving ? (
               <>
@@ -515,14 +480,14 @@ function ClubSettingsContent() {
   );
 }
 
-export default function ClubSettingsPage() {
+export default function ZoneSettingsPage() {
   return (
     <Suspense fallback={
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     }>
-      <ClubSettingsContent />
+      <ZoneSettingsContent />
     </Suspense>
   );
 }

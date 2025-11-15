@@ -362,77 +362,56 @@ export default function ClubEventManagerDashboard() {
               </div>
             </div>
 
-            {/* Status Tiles Row */}
-            {selectedClub && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-                
-                {/* Pending Approval */}
-                <div className="relative overflow-hidden rounded-lg border border-amber-200/60 dark:border-amber-700/60 bg-gradient-to-br from-amber-50/90 to-orange-50/80 dark:from-amber-950/30 dark:to-orange-950/20 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
-                  <div className="p-2 flex items-center justify-between">
-                    <div className="rounded-md bg-amber-100 dark:bg-amber-900/50 p-1.5 border border-amber-300/60 dark:border-amber-700/60 flex-shrink-0">
-                      <Clock className="h-4 w-4 text-amber-700 dark:text-amber-400" />
+            {/* Status Tiles Row - Only show action-required items */}
+            {selectedClub && (() => {
+              const pendingCount = clubEvents.filter(e => e.status === 'proposed').length;
+              const reviewCount = clubEvents.filter(e => e.schedule && e.schedule.status === 'pending').length;
+              const reworkCount = clubEvents.filter(e => e.schedule && e.schedule.status === 'rejected').length;
+              const hasActionItems = pendingCount > 0 || reviewCount > 0 || reworkCount > 0;
+              
+              return hasActionItems ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {/* Pending Approval - Only show if > 0 */}
+                  {pendingCount > 0 && (
+                    <div className="relative overflow-hidden rounded-lg border border-amber-200/60 dark:border-amber-700/60 bg-gradient-to-br from-amber-50/90 to-orange-50/80 dark:from-amber-950/30 dark:to-orange-950/20 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
+                      <div className="p-2 flex items-center justify-between">
+                        <div className="rounded-md bg-amber-100 dark:bg-amber-900/50 p-1.5 border border-amber-300/60 dark:border-amber-700/60 flex-shrink-0">
+                          <Clock className="h-4 w-4 text-amber-700 dark:text-amber-400" />
+                        </div>
+                        <div className="text-2xl font-black text-amber-600 dark:text-amber-500 leading-none">{pendingCount}</div>
+                        <span className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">Pending</span>
+                      </div>
                     </div>
-                    <div className="text-2xl font-black text-amber-600 dark:text-amber-500 leading-none">{clubEvents.filter(e => e.status === 'proposed').length}</div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">Pending</span>
-                  </div>
-                </div>
+                  )}
 
-                {/* Approved Events */}
-                <div className="relative overflow-hidden rounded-lg border border-emerald-200/60 dark:border-emerald-700/60 bg-gradient-to-br from-emerald-50/90 to-green-50/80 dark:from-emerald-950/30 dark:to-green-950/20 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
-                  <div className="p-2 flex items-center justify-between">
-                    <div className="rounded-md bg-emerald-100 dark:bg-emerald-900/50 p-1.5 border border-emerald-300/60 dark:border-emerald-700/60 flex-shrink-0">
-                      <CheckCircle className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
+                  {/* Schedules Under Review - Only show if > 0 */}
+                  {reviewCount > 0 && (
+                    <div className="relative overflow-hidden rounded-lg border border-orange-200/60 dark:border-orange-700/60 bg-gradient-to-br from-orange-50/90 to-amber-50/80 dark:from-orange-950/30 dark:to-amber-950/20 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
+                      <div className="p-2 flex items-center justify-between">
+                        <div className="rounded-md bg-orange-100 dark:bg-orange-900/50 p-1.5 border border-orange-300/60 dark:border-orange-700/60 flex-shrink-0">
+                          <Clock className="h-4 w-4 text-orange-700 dark:text-orange-400" />
+                        </div>
+                        <div className="text-2xl font-black text-orange-600 dark:text-orange-500 leading-none">{reviewCount}</div>
+                        <span className="text-xs font-bold uppercase tracking-wider text-orange-700 dark:text-orange-400">Review</span>
+                      </div>
                     </div>
-                    <div className="text-2xl font-black text-emerald-600 dark:text-emerald-500 leading-none">{clubEvents.filter(e => e.status === 'approved').length}</div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Approved</span>
-                  </div>
-                </div>
+                  )}
 
-                {/* Total Events */}
-                <div className="relative overflow-hidden rounded-lg border border-blue-200/60 dark:border-blue-700/60 bg-gradient-to-br from-blue-50/90 to-cyan-50/80 dark:from-blue-950/30 dark:to-cyan-950/20 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
-                  <div className="p-2 flex items-center justify-between">
-                    <div className="rounded-md bg-blue-100 dark:bg-blue-900/50 p-1.5 border border-blue-300/60 dark:border-blue-700/60 flex-shrink-0">
-                      <Activity className="h-4 w-4 text-blue-700 dark:text-blue-400" />
+                  {/* Schedules Needing Rework - Only show if > 0 */}
+                  {reworkCount > 0 && (
+                    <div className="relative overflow-hidden rounded-lg border border-red-200/60 dark:border-red-700/60 bg-gradient-to-br from-red-50/90 to-rose-50/80 dark:from-red-950/30 dark:to-rose-950/20 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
+                      <div className="p-2 flex items-center justify-between">
+                        <div className="rounded-md bg-red-100 dark:bg-red-900/50 p-1.5 border border-red-300/60 dark:border-red-700/60 flex-shrink-0">
+                          <XCircle className="h-4 w-4 text-red-700 dark:text-red-400" />
+                        </div>
+                        <div className="text-2xl font-black text-red-600 dark:text-red-500 leading-none">{reworkCount}</div>
+                        <span className="text-xs font-bold uppercase tracking-wider text-red-700 dark:text-red-400">Rework</span>
+                      </div>
                     </div>
-                    <div className="text-2xl font-black text-blue-600 dark:text-blue-500 leading-none">{clubEvents.length}</div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400">Total</span>
-                  </div>
+                  )}
                 </div>
-
-                {/* Schedules Under Review */}
-                <div className="relative overflow-hidden rounded-lg border border-orange-200/60 dark:border-orange-700/60 bg-gradient-to-br from-orange-50/90 to-amber-50/80 dark:from-orange-950/30 dark:to-amber-950/20 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
-                  <div className="p-2 flex items-center justify-between">
-                    <div className="rounded-md bg-orange-100 dark:bg-orange-900/50 p-1.5 border border-orange-300/60 dark:border-orange-700/60 flex-shrink-0">
-                      <Clock className="h-4 w-4 text-orange-700 dark:text-orange-400" />
-                    </div>
-                    <div className="text-2xl font-black text-orange-600 dark:text-orange-500 leading-none">{clubEvents.filter(e => e.schedule && e.schedule.status === 'pending').length}</div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-orange-700 dark:text-orange-400">Review</span>
-                  </div>
-                </div>
-
-                {/* Schedules Needing Rework */}
-                <div className="relative overflow-hidden rounded-lg border border-red-200/60 dark:border-red-700/60 bg-gradient-to-br from-red-50/90 to-rose-50/80 dark:from-red-950/30 dark:to-rose-950/20 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
-                  <div className="p-2 flex items-center justify-between">
-                    <div className="rounded-md bg-red-100 dark:bg-red-900/50 p-1.5 border border-red-300/60 dark:border-red-700/60 flex-shrink-0">
-                      <XCircle className="h-4 w-4 text-red-700 dark:text-red-400" />
-                    </div>
-                    <div className="text-2xl font-black text-red-600 dark:text-red-500 leading-none">{clubEvents.filter(e => e.schedule && e.schedule.status === 'rejected').length}</div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-red-700 dark:text-red-400">Rework</span>
-                  </div>
-                </div>
-
-                {/* Approved Schedules */}
-                <div className="relative overflow-hidden rounded-lg border border-green-200/60 dark:border-green-700/60 bg-gradient-to-br from-green-50/90 to-emerald-50/80 dark:from-green-950/30 dark:to-emerald-950/20 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
-                  <div className="p-2 flex items-center justify-between">
-                    <div className="rounded-md bg-green-100 dark:bg-green-900/50 p-1.5 border border-green-300/60 dark:border-green-700/60 flex-shrink-0">
-                      <FileText className="h-4 w-4 text-green-700 dark:text-green-400" />
-                    </div>
-                    <div className="text-2xl font-black text-green-600 dark:text-green-500 leading-none">{clubEvents.filter(e => e.schedule && e.schedule.status === 'approved').length}</div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-green-700 dark:text-green-400">Ready</span>
-                  </div>
-                </div>
-              </div>
-            )}
+              ) : null;
+            })()}
           </CardContent>
         </Card>
       </div>

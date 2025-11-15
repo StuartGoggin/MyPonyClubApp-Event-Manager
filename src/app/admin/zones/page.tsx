@@ -5,13 +5,18 @@ import { Badge } from '@/components/ui/badge';
 import { MapPin, Users } from 'lucide-react';
 import { getAllZones, getAllClubs } from '@/lib/server-data';
 import ZoneManagementClient from '@/components/admin/zone-management-client';
+import type { Zone, Club } from '@/lib/types';
 
 async function ZonesContent() {
-  const zones = await getAllZones();
-  const clubs = await getAllClubs();
+  const zonesData = await getAllZones();
+  const clubsData = await getAllClubs();
+
+  // Serialize to plain objects to avoid Firestore Timestamp issues
+  const zones: Zone[] = JSON.parse(JSON.stringify(zonesData));
+  const clubs: Club[] = JSON.parse(JSON.stringify(clubsData));
 
   const getClubCountForZone = (zoneId: string) => {
-    return clubs.filter(club => club.zoneId === zoneId).length;
+    return clubs.filter((club: Club) => club.zoneId === zoneId).length;
   };
 
   return (
@@ -88,7 +93,7 @@ async function ZonesContent() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {zones.map(zone => {
+              {zones.map((zone: Zone) => {
                 const clubCount = getClubCountForZone(zone.id);
                 return (
                   <TableRow key={zone.id}>

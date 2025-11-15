@@ -5,14 +5,16 @@ import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { MapPin, CheckCircle, Building, CalendarPlus, FerrisWheel } from 'lucide-react';
+import { MapPin, CheckCircle, Building, CalendarPlus, FerrisWheel, Settings } from 'lucide-react';
 import { Zone, Club, Event, EventType } from '@/lib/types';
 import { StateEventManagement } from '@/components/state-manager/state-event-management';
 import { RouteGuard } from '@/components/auth/route-guard';
 import { useAuth } from '@/contexts/auth-context';
+import { useRouter } from 'next/navigation';
 
 function StateManagerContent() {
   const { user } = useAuth();
+  const router = useRouter();
   const [zones, setZones] = useState<Zone[]>([]);
   const [clubs, setClubs] = useState<Club[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
@@ -112,7 +114,7 @@ function StateManagerContent() {
       <div className="flex-shrink-0 mx-4 mt-4 mb-6">
         <Card className="enhanced-card glass-effect border-2 border-border/40 shadow-lg bg-gradient-to-r from-white/98 via-white/95 to-primary/8">
           <CardContent className="p-3 sm:p-4 space-y-3 sm:space-y-4">
-            {/* Top Row: Logo and Title */}
+            {/* Top Row: Logo, Title, and Settings */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 group">
               {/* Logo and Title */}
               <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
@@ -133,6 +135,17 @@ function StateManagerContent() {
                   MyPonyClub - State Manager
                 </h1>
               </div>
+
+              {/* Settings Button */}
+              <Button
+                onClick={() => router.push('/state-manager/settings')}
+                variant="outline"
+                size="icon"
+                className="h-12 w-12 sm:h-14 sm:w-14 rounded-xl border-primary/30 bg-background/90 backdrop-blur-sm hover:bg-primary/10 hover:border-primary/50 transition-all duration-300"
+                title="State Settings"
+              >
+                <Settings className="h-5 w-5 text-primary" />
+              </Button>
             </div>
             
             {/* State Statistics */}

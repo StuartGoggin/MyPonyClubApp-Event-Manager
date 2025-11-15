@@ -97,6 +97,27 @@ export function EventCalendar({
   // PDF download loading state
   const [isPdfGenerating, setIsPdfGenerating] = useState(false);
 
+  // State logo
+  const [stateLogo, setStateLogo] = useState<string | null>(null);
+
+  // Fetch state logo
+  useEffect(() => {
+    const fetchStateLogo = async () => {
+      try {
+        const response = await fetch('/api/state-settings');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.imageUrl && data.imageUrl.startsWith('data:image')) {
+            setStateLogo(data.imageUrl);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching state logo:', error);
+      }
+    };
+    fetchStateLogo();
+  }, []);
+
   // Initialize PDF defaults based on user authentication
   useEffect(() => {
     // Set default scope to 'zone'
@@ -692,7 +713,7 @@ export function EventCalendar({
       
     {view === 'month' && (
       <div className='p-4'>
-        <CalendarGrid month={currentDate} events={filteredEvents} onEventClick={handleEventClick} today={today} clubs={clubs} zones={zones}/>
+        <CalendarGrid month={currentDate} events={filteredEvents} onEventClick={handleEventClick} today={today} clubs={clubs} zones={zones} stateLogo={stateLogo}/>
       </div>
     )}
       
@@ -703,7 +724,7 @@ export function EventCalendar({
             key={month.toString()}
             className="bg-white rounded-lg shadow p-4 flex flex-col w-full"
           >
-            <CalendarGrid month={month} events={filteredEvents} onEventClick={handleEventClick} isYearView={true} today={today} clubs={clubs} zones={zones} />
+            <CalendarGrid month={month} events={filteredEvents} onEventClick={handleEventClick} isYearView={true} today={today} clubs={clubs} zones={zones} stateLogo={stateLogo} />
           </div>
         ))}
       </div>
@@ -755,6 +776,7 @@ const CalendarGrid = ({
   today,
   clubs,
   zones,
+  stateLogo,
 }: {
   month: Date;
   events: Event[];
@@ -763,6 +785,7 @@ const CalendarGrid = ({
   today: Date;
   clubs: Club[];
   zones: Zone[];
+  stateLogo: string | null;
 }) => {
   const start = startOfWeek(startOfMonth(month), { weekStartsOn });
   const end = endOfWeek(endOfMonth(month), { weekStartsOn });
@@ -782,6 +805,33 @@ const CalendarGrid = ({
   const getClubLogo = (clubId: string | undefined) => {
     if (!clubId) return null;
     return clubs.find(club => club.id === clubId)?.logoUrl || null;
+  };
+
+  // Helper function to get zone logo URL from zoneId
+  const getZoneLogo = (zoneId: string | undefined) => {
+    if (!zoneId) return null;
+    const zoneLogo = zones.find(zone => zone.id === zoneId)?.imageUrl || null;
+    // Only return if it's a valid base64 data URI
+    return zoneLogo && zoneLogo.startsWith('data:image') ? zoneLogo : null;
+  };
+
+  // Helper function to get the appropriate logo for an event
+  const getEventLogo = (event: Event) => {
+    // Don't show logo for public holidays
+    if (event.source === 'public_holiday') return null;
+    
+    // For state events, use state logo
+    if (event.source === 'state') {
+      return stateLogo || (event.clubId ? getClubLogo(event.clubId) : null);
+    }
+    
+    // For zone events, try zone logo first, then club logo
+    if (event.source === 'zone' && event.zoneId) {
+      return getZoneLogo(event.zoneId) || (event.clubId ? getClubLogo(event.clubId) : null);
+    }
+    
+    // For club events, use club logo
+    return event.clubId ? getClubLogo(event.clubId) : null;
   };
   
   const weeks: Date[][] = [];
@@ -941,12 +991,12 @@ const CalendarGrid = ({
                                   </div>
                                 </div>
                                 
-                                {/* Club Logo - Full height right side */}
-                                {event.source !== 'public_holiday' && getClubLogo(event.clubId) && (
+                                {/* Event Logo - Full height right side (Club, Zone, or State) */}
+                                {getEventLogo(event) && (
                                   <div className="flex-shrink-0 flex items-center">
                                     <img 
-                                      src={getClubLogo(event.clubId)!} 
-                                      alt={`${getClubName(event.clubId, event)} logo`}
+                                      src={getEventLogo(event)!} 
+                                      alt={`${event.source === 'state' ? 'State' : event.source === 'zone' ? 'Zone' : getClubName(event.clubId, event)} logo`}
                                       className={cn(
                                         "rounded object-contain bg-white border border-gray-200 max-w-full max-h-full",
                                         isYearView ? "w-10 h-10" : "w-14 h-14"

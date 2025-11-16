@@ -79,6 +79,8 @@ export function EVEventsManagement({ onEventsUpdate }: EVEventsManagementProps) 
     name: '',
     date: '',
     location: '',
+    latitude: '',
+    longitude: '',
     description: '',
     eventLink: '',
     discipline: '',
@@ -147,6 +149,8 @@ export function EVEventsManagement({ onEventsUpdate }: EVEventsManagementProps) 
       name: event.name || '',
       date: eventDate.toISOString().split('T')[0],
       location: event.location || '',
+      latitude: event.latitude?.toString() || '',
+      longitude: event.longitude?.toString() || '',
       description: event.description || '',
       eventLink: event.eventLink || '',
       discipline: event.discipline || '',
@@ -558,6 +562,32 @@ export function EVEventsManagement({ onEventsUpdate }: EVEventsManagementProps) 
                     value={editForm.location}
                     onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
                     placeholder="Location"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-latitude">Latitude</Label>
+                  <Input
+                    id="edit-latitude"
+                    value={editForm.latitude}
+                    onChange={(e) => setEditForm({ ...editForm, latitude: e.target.value })}
+                    placeholder="e.g., -38.3526"
+                    disabled
+                    className="bg-muted"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-longitude">Longitude</Label>
+                  <Input
+                    id="edit-longitude"
+                    value={editForm.longitude}
+                    onChange={(e) => setEditForm({ ...editForm, longitude: e.target.value })}
+                    placeholder="e.g., 145.1361"
+                    disabled
+                    className="bg-muted"
                   />
                 </div>
               </div>

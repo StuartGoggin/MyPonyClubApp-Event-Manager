@@ -1,9 +1,13 @@
 import { onRequest } from 'firebase-functions/v2/https';
+import { defineSecret } from 'firebase-functions/params';
 import * as logger from 'firebase-functions/logger';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 
 const BASE_URL = 'https://www.vic.equestrian.org.au';
+
+// Define the secret for Google Maps API Key
+const googleMapsApiKey = defineSecret('GOOGLE_MAPS_API_KEY');
 
 // Define Event type (adjust based on your actual event structure)
 interface Event {
@@ -12,8 +16,11 @@ interface Event {
   start_date: string;
   end_date: string;
   discipline: string | null;
-  location: string | null;
+  location: string;
+  latitude?: number;
+  longitude?: number;
   tier: string | null;
+  description: string | null;
 }
 
 /**
@@ -52,12 +59,62 @@ function getDateRange(startDateStr: string, endDateStr: string): string[] {
 }
 
 /**
+ * Geocode a location string to latitude/longitude using Google Maps Geocoding API
+ * @param location The location string to geocode
+ * @returns Object with latitude and longitude, or null if geocoding fails
+ */
+async function geocodeLocation(location: string): Promise<{ latitude: number; longitude: number } | null> {
+  try {
+    const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY || googleMapsApiKey.value();
+    
+    if (!GOOGLE_MAPS_API_KEY) {
+      logger.warn('GOOGLE_MAPS_API_KEY not set, skipping geocoding');
+      return null;
+    }
+
+    // Clean up the location string
+    const cleanLocation = location.trim();
+    
+    // Add "Victoria, Australia" to improve accuracy for Victorian locations
+    let searchQuery = cleanLocation;
+    if (!cleanLocation.toLowerCase().includes('victoria') && !cleanLocation.toLowerCase().includes('australia')) {
+      searchQuery = `${cleanLocation}, Victoria, Australia`;
+    } else if (!cleanLocation.toLowerCase().includes('australia')) {
+      searchQuery = `${cleanLocation}, Australia`;
+    }
+    
+    // Add region biasing to Victoria, Australia
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(searchQuery)}&region=au&components=country:AU|administrative_area:Victoria&key=${GOOGLE_MAPS_API_KEY}`;
+    
+    logger.debug(`Geocoding location: "${location}" as "${searchQuery}"`);
+    const response = await axios.get(url, { timeout: 5000 });
+    
+    if (response.data.status === 'OK' && response.data.results.length > 0) {
+      const result = response.data.results[0];
+      const { lat, lng } = result.geometry.location;
+      const formattedAddress = result.formatted_address;
+      logger.debug(`✅ Geocoded "${location}" to: ${lat}, ${lng} (${formattedAddress})`);
+      return { latitude: lat, longitude: lng };
+    } else {
+      logger.warn(`❌ Geocoding failed for "${location}": ${response.data.status}`);
+      if (response.data.error_message) {
+        logger.warn(`Error message: ${response.data.error_message}`);
+      }
+      return null;
+    }
+  } catch (error) {
+    logger.error(`Error geocoding location "${location}":`, error);
+    return null;
+  }
+}
+
+/**
  * Extracts specific details (discipline, location, tier) from an individual event page.
  * @param eventUrl The full URL of the event's detail page.
  * @param eventName The event name used to infer tier.
  * @returns An object containing the extracted details.
  */
-async function extractEventDetails(eventUrl: string, eventName: string): Promise<{ discipline: string | null, location: string | null, tier: string | null }> {
+async function extractEventDetails(eventUrl: string, eventName: string): Promise<{ discipline: string | null, location: string, latitude?: number, longitude?: number, tier: string | null, description: string | null }> {
   try {
     logger.debug(`Fetching event details from: ${eventUrl}`);
     const response = await axios.get(eventUrl, { timeout: 10000 });
@@ -65,25 +122,76 @@ async function extractEventDetails(eventUrl: string, eventName: string): Promise
     
     const $ = cheerio.load(response.data);
 
-    let location: string | null = null;
+    let location: string = 'Victoria'; // Default to Victoria
     let discipline: string | null = null;
+    let description: string | null = null;
 
-    // The new website structure uses <dt> and <dd> tags for details
-    const dtElements = $('.tribe-events-single-section.tribe-events-event-meta dt');
-    logger.debug(`Found ${dtElements.length} dt elements on page`);
-    
-    $('.tribe-events-single-section.tribe-events-event-meta dt').each((_, dt) => {
-      const term = $(dt).text().trim().toLowerCase();
-      logger.debug(`Processing dt element: "${term}"`);
-      
-      if (term.includes('location:')) {
-        location = $(dt).next('dd').text().trim();
-        logger.debug(`Found location: ${location}`);
-      } else if (term.includes('sports')) {
-        discipline = $(dt).next('dd').text().trim();
-        logger.debug(`Found discipline: ${discipline}`);
+    // First, try to extract from the atc_event block (Add to Calendar elements)
+    const atcLocation = $('.atc_location');
+    if (atcLocation.length > 0) {
+      const locationText = atcLocation.text().trim();
+      if (locationText) {
+        location = locationText;
+        logger.debug(`Found location from atc_location: ${location}`);
       }
-    });
+    }
+
+    const atcDescription = $('.atc_description');
+    if (atcDescription.length > 0) {
+      const descText = atcDescription.text().trim();
+      if (descText) {
+        description = descText;
+        logger.debug(`Found description from atc_description: ${description.substring(0, 100)}...`);
+      }
+    }
+
+    // Fallback: Try the old website structure with <dt> and <dd> tags
+    if (location === 'Victoria' || !discipline) {
+      const dtElements = $('.tribe-events-single-section.tribe-events-event-meta dt');
+      logger.debug(`Found ${dtElements.length} dt elements on page`);
+      
+      $('.tribe-events-single-section.tribe-events-event-meta dt').each((_, dt) => {
+        const term = $(dt).text().trim().toLowerCase();
+        logger.debug(`Processing dt element: "${term}"`);
+        
+        if (term.includes('location:') && location === 'Victoria') {
+          const locationText = $(dt).next('dd').text().trim();
+          if (locationText) {
+            location = locationText;
+            logger.debug(`Found location from dt/dd: ${location}`);
+          }
+        } else if (term.includes('sports') && !discipline) {
+          discipline = $(dt).next('dd').text().trim();
+          logger.debug(`Found discipline from dt/dd: ${discipline}`);
+        }
+      });
+    }
+
+    // Fallback for description if not found in atc_description
+    if (!description) {
+      const descriptionSelectors = [
+        '.tribe-events-single-event-description',
+        '.tribe-events-content',
+        'article .entry-content',
+        '.event-description'
+      ];
+
+      for (const selector of descriptionSelectors) {
+        const descElement = $(selector);
+        if (descElement.length > 0) {
+          const descText = descElement.text().trim();
+          if (descText && descText.length > 0) {
+            description = descText;
+            logger.debug(`Found description using fallback selector "${selector}": ${description.substring(0, 100)}...`);
+            break;
+          }
+        }
+      }
+    }
+
+    if (!description) {
+      logger.debug('No description found using any selector');
+    }
 
     // Infer tier from event name as it's not explicitly listed
     let tier: string | null = null;
@@ -99,10 +207,22 @@ async function extractEventDetails(eventUrl: string, eventName: string): Promise
     }
     logger.debug(`Inferred tier: ${tier || 'none'}`);
 
-    return { discipline, location, tier };
+    // Geocode the location to get latitude/longitude
+    let latitude: number | undefined;
+    let longitude: number | undefined;
+    
+    if (location && location !== 'Victoria') {
+      const coordinates = await geocodeLocation(location);
+      if (coordinates) {
+        latitude = coordinates.latitude;
+        longitude = coordinates.longitude;
+      }
+    }
+
+    return { discipline, location, latitude, longitude, tier, description };
   } catch (error) {
     logger.error(`Failed to extract details from ${eventUrl}`, error);
-    return { discipline: null, location: null, tier: null };
+    return { discipline: null, location: 'Victoria', tier: null, description: null };
   }
 }
 
@@ -319,6 +439,7 @@ export const scrapeEquestrianEvents = onRequest(
     cors: true,           // Enable CORS for cross-origin requests
     // invoker: 'private', // Uncomment to require authentication
     region: 'asia-east1', // Match your project region
+    secrets: [googleMapsApiKey], // Declare the secret this function uses
   },
   async (request, response) => {
     try {

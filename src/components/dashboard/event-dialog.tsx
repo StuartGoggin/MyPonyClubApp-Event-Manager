@@ -96,26 +96,47 @@ export function EventDialog({
 
   // Get distance to nearby event
   const getEventDistance = (nearbyEvent: Event): string | null => {
-    if (!club?.latitude || !club?.longitude) {
-      console.log('No coordinates for current club:', club?.name);
+    // Try to use event coordinates first, fall back to club coordinates
+    let sourceLat: number | undefined;
+    let sourceLng: number | undefined;
+    
+    if (event.latitude && event.longitude) {
+      sourceLat = event.latitude;
+      sourceLng = event.longitude;
+    } else if (club?.latitude && club?.longitude) {
+      sourceLat = club.latitude;
+      sourceLng = club.longitude;
+    } else {
+      console.log('No coordinates for source event or club');
       return null;
     }
     
-    // Find the club for the nearby event
-    const nearbyClub = clubs.find(c => c.id === nearbyEvent.clubId);
-    if (!nearbyClub?.latitude || !nearbyClub?.longitude) {
-      console.log('No coordinates for nearby club:', nearbyClub?.name);
-      return null;
+    // Try to use nearby event coordinates first, fall back to its club coordinates
+    let targetLat: number | undefined;
+    let targetLng: number | undefined;
+    
+    if (nearbyEvent.latitude && nearbyEvent.longitude) {
+      targetLat = nearbyEvent.latitude;
+      targetLng = nearbyEvent.longitude;
+    } else {
+      const nearbyClub = clubs.find(c => c.id === nearbyEvent.clubId);
+      if (nearbyClub?.latitude && nearbyClub?.longitude) {
+        targetLat = nearbyClub.latitude;
+        targetLng = nearbyClub.longitude;
+      } else {
+        console.log('No coordinates for nearby event or its club');
+        return null;
+      }
     }
     
     const distance = calculateDistance(
-      club.latitude,
-      club.longitude,
-      nearbyClub.latitude,
-      nearbyClub.longitude
+      sourceLat,
+      sourceLng,
+      targetLat,
+      targetLng
     );
     
-    console.log(`Distance between ${club.name} and ${nearbyClub.name}: ${Math.round(distance)}km`);
+    console.log(`Distance to nearby event: ${Math.round(distance)}km`);
     return `${Math.round(distance)}km away`;
   };
 

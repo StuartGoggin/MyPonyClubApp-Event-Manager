@@ -356,6 +356,8 @@ export interface Event {
   eventTypeId: string;
   status: EventStatus;
   location: string;
+  latitude?: number;      // Geocoded latitude for location
+  longitude?: number;     // Geocoded longitude for location
   source: EventSource;
 
 

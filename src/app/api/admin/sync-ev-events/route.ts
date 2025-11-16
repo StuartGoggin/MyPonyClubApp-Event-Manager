@@ -9,8 +9,11 @@ interface EvEvent {
   start_date: string;
   end_date: string;
   discipline: string | null;
-  location: string | null;
+  location: string;
+  latitude?: number;
+  longitude?: number;
   tier: string | null;
+  description: string | null;
 }
 
 interface SyncConfig {
@@ -218,12 +221,14 @@ async function syncEvEvents(config: SyncConfig): Promise<SyncResult> {
           name: event.name,
           date: eventDate,
           eventLink: event.url,
-          description: event.tier ? `Tier: ${event.tier}` : null,
+          description: event.description || (event.tier ? `Tier: ${event.tier}` : null),
           clubId: null,
           zoneId: null,
           eventTypeId: 'ev_event', // Generic EV event type
           status: 'ev_event' as const,
-          location: event.location || 'Victoria',
+          location: event.location,
+          latitude: event.latitude || null,
+          longitude: event.longitude || null,
           source: 'ev_scraper' as const,
           discipline: event.discipline,
           tier: event.tier,

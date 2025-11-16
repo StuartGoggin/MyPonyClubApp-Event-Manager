@@ -62,8 +62,15 @@ export function EventDialog({
   currentUser,
 }: EventDialogProps) {
   if (!event || !eventType) return null;
-  // For public holidays, club might be undefined.
-  if (event.source !== 'public_holiday' && !club) return null;
+  
+  // Only require club for club-level events
+  // State, Zone, and Equestrian Victoria events don't need a club
+  const requiresClub = event.source !== 'public_holiday' && 
+                       event.source !== 'state' && 
+                       event.source !== 'zone' && 
+                       event.source !== 'equestrian_victoria';
+  
+  if (requiresClub && !club) return null;
 
   // Calculate distance between two coordinates using Haversine formula
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {

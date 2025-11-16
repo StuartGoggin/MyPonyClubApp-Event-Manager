@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { useRouter } from 'next/navigation';
 import { EventCalendar } from '@/components/dashboard/event-calendar';
 import { Badge } from '@/components/ui/badge';
+import { WebScraperSection } from '@/components/ev-manager/web-scraper-section';
 
 function EVManagerContent() {
   const { user } = useAuth();
@@ -205,7 +206,7 @@ function EVManagerContent() {
         </div>
 
         {/* Event Calendar */}
-        <Card className="shadow-xl">
+        <Card className="shadow-xl mb-8">
           <CardContent className="p-6">
             <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
               <Trophy className="h-6 w-6 text-purple-600" />
@@ -227,6 +228,9 @@ function EVManagerContent() {
             />
           </CardContent>
         </Card>
+
+        {/* Web Scraper Section */}
+        <WebScraperSection />
       </div>
     </div>
   );

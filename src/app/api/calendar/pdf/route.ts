@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
 
     // Apply scope filtering (all events, zone events, or club events)
     if (filterScope === 'zone' && zoneId) {
-      // Filter events for specific zone (includes zone-level events, club events in zone, and public holidays)
+      // Filter events for specific zone (includes zone-level events, club events in zone, state events, and public holidays)
       const zoneClubs = clubs.filter(club => club.zoneId === zoneId);
       const zoneClubIds = zoneClubs.map(club => club.id);
       filteredEvents = filteredEvents.filter(event => 
@@ -62,6 +62,8 @@ export async function GET(request: NextRequest) {
         (event.zoneId === zoneId && !event.clubId) ||
         // Club events within the zone
         (event.clubId && zoneClubIds.includes(event.clubId)) ||
+        // State events (include all state events when viewing zone)
+        event.source === 'state' ||
         // Public holidays
         event.status === 'public_holiday' ||
         event.source === 'public_holiday'

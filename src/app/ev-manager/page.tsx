@@ -234,7 +234,7 @@ function EVManagerContent() {
 
 export default function EVManagerPage() {
   return (
-    <RouteGuard allowedRoles={['state_admin', 'super_user']}>
+    <RouteGuard requiredRoles={['state_admin', 'super_user']}>
       <EVManagerContent />
     </RouteGuard>
   );

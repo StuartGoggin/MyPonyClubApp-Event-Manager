@@ -275,23 +275,39 @@ export default function ClubEventManagerDashboard() {
           <div className="relative flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <div className="relative bg-white/20 backdrop-blur-sm rounded-xl overflow-hidden h-20 w-auto aspect-[16/10] flex items-center justify-center p-2">
-                <Image
-                  src="/myponyclub-logo-club-manager.png"
-                  alt="Club Manager Logo"
-                  fill
-                  className="object-contain drop-shadow-lg"
-                  priority
-                />
+                {selectedClub?.image && selectedClub.image.startsWith('data:image') ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={selectedClub.image}
+                    alt={`${selectedClub.name} Logo`}
+                    className="object-contain w-full h-full drop-shadow-lg"
+                  />
+                ) : selectedClub?.logoUrl && selectedClub.logoUrl.startsWith('data:image') ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={selectedClub.logoUrl}
+                    alt={`${selectedClub.name} Logo`}
+                    className="object-contain w-full h-full drop-shadow-lg"
+                  />
+                ) : (
+                  <Image
+                    src="/myponyclub-logo-club-manager.png"
+                    alt="Club Manager Logo"
+                    fill
+                    className="object-contain drop-shadow-lg"
+                    priority
+                  />
+                )}
               </div>
               <div className="text-center sm:text-left">
                 <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-                  Club Manager
+                  {selectedClub ? selectedClub.name : 'Club Manager'}
                   <Badge variant="outline" className="bg-white/20 text-white border-white/40">
                     Club Level
                   </Badge>
                 </h1>
                 <p className="text-blue-100 mt-1">
-                  Manage your club's events and schedules
+                  {selectedClub ? `Manage ${selectedClub.name}'s events and schedules` : 'Manage your club\'s events and schedules'}
                 </p>
               </div>
             </div>

@@ -220,8 +220,8 @@ export function EventCalendar({
       const zone = zones.find(z => z.id === event.zoneId);
       return zone ? `${zone.name} (Zone Event)` : 'Zone Event';
     }
-    if (!clubId) return 'Unknown Club';
-    return clubs.find(club => club.id === clubId)?.name || 'Unknown Club';
+    if (!clubId) return '';
+    return clubs.find(club => club.id === clubId)?.name || '';
   };
 
   const filteredClubs = useMemo(() => {
@@ -989,8 +989,8 @@ const CalendarGrid = ({
       const zone = zones.find(z => z.id === event.zoneId);
       return zone ? `${zone.name} (Zone Event)` : 'Zone Event';
     }
-    if (!clubId) return 'Unknown Club';
-    return clubs.find(club => club.id === clubId)?.name || 'Unknown Club';
+    if (!clubId) return '';
+    return clubs.find(club => club.id === clubId)?.name || '';
   };
 
   // Helper function to get club logo URL from clubId

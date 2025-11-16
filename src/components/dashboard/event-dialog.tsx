@@ -62,7 +62,7 @@ export function EventDialog({
   onOpenChange,
   currentUser,
 }: EventDialogProps) {
-  if (!event || !eventType) return null;
+  if (!event) return null;
   
   // Only require club for club-level events
   // State, Zone, Equestrian Victoria, and EV Scraper events don't need a club
@@ -73,6 +73,13 @@ export function EventDialog({
                        event.source !== 'ev_scraper';
   
   if (requiresClub && !club) return null;
+  
+  // For EV events and public holidays, eventType may not exist - that's okay
+  const requiresEventType = event.status !== 'ev_event' && 
+                            event.status !== 'public_holiday' &&
+                            event.source !== 'public_holiday';
+  
+  if (requiresEventType && !eventType) return null;
 
   // Calculate distance between two coordinates using Haversine formula
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
@@ -208,7 +215,7 @@ export function EventDialog({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Tag className="h-4 w-4" />
-                <span>{eventType.name}</span>
+                <span>{eventType?.name || (event.status === 'ev_event' ? 'EV Event' : 'Event')}</span>
                 {event.isQualifier && (
                   <Badge variant="secondary" className="ml-2">
                     <Award className="h-3 w-3 mr-1" />

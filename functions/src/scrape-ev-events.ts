@@ -174,9 +174,9 @@ async function scrapeEventsForMonth(year: number, month: number, discipline?: st
     eventItems.each((idx, item) => {
       // Find the event title link within each item
       const titleLink = $(item).find('a').first();
-      const url = titleLink.attr('href');
+      const relativeUrl = titleLink.attr('href');
       
-      if (!url) {
+      if (!relativeUrl) {
         logger.debug(`Skipping item ${idx} - no URL found`);
         return;
       }
@@ -186,6 +186,10 @@ async function scrapeEventsForMonth(year: number, month: number, discipline?: st
         logger.debug(`Skipping item ${idx} - no event name found`);
         return;
       }
+      
+      // Construct full URL from relative path
+      // If it's already a full URL (starts with http), use as-is, otherwise prepend BASE_URL
+      const url = relativeUrl.startsWith('http') ? relativeUrl : `${BASE_URL}${relativeUrl}`;
       
       logger.debug(`Event ${idx + 1}: "${name}"`);
       logger.debug(`Event URL: ${url}`);

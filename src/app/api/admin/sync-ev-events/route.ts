@@ -79,7 +79,7 @@ async function syncEVEvents(eventsData: EVEventData[]): Promise<SyncResult> {
       .get();
 
     const existingEvents = new Map<string, any>();
-    existingEventsSnapshot.docs.forEach(doc => {
+    existingEventsSnapshot.docs.forEach((doc: any) => {
       const data = doc.data();
       // Create key from name + start date
       const key = `${data.name}_${new Date(data.date.toDate()).toISOString().split('T')[0]}`;

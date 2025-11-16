@@ -18,6 +18,13 @@ export async function GET(request: NextRequest) {
     const zoneId = searchParams.get('zoneId');
     const clubId = searchParams.get('clubId');
     const format = searchParams.get('format') || 'standard';
+    
+    // Event type filters
+    const includeClubEvents = searchParams.get('includeClubEvents') === 'true';
+    const includeZoneEvents = searchParams.get('includeZoneEvents') === 'true';
+    const includeStateEvents = searchParams.get('includeStateEvents') === 'true';
+    const includeEVEvents = searchParams.get('includeEVEvents') === 'true';
+    const includePublicHolidays = searchParams.get('includePublicHolidays') === 'true';
 
     // Fetch real events from Firestore using cached functions
     const [events, clubs, eventTypes, zones] = await Promise.all([
@@ -77,6 +84,25 @@ export async function GET(request: NextRequest) {
       );
     }
     // If filterScope === 'all', no additional filtering needed
+
+    // Apply event type filtering
+    filteredEvents = filteredEvents.filter(event => {
+      // Determine event category
+      const isPublicHoliday = event.status === 'public_holiday' || event.source === 'public_holiday';
+      const isEVEvent = event.source === 'ev_scraper' || event.source === 'equestrian_victoria' || event.status === 'ev_event';
+      const isStateEvent = event.source === 'state';
+      const isZoneEvent = event.zoneId && !event.clubId;
+      const isClubEvent = event.clubId && !isPublicHoliday && !isEVEvent && !isStateEvent;
+      
+      // Apply filters
+      if (isPublicHoliday && !includePublicHolidays) return false;
+      if (isEVEvent && !includeEVEvents) return false;
+      if (isStateEvent && !includeStateEvents) return false;
+      if (isZoneEvent && !includeZoneEvents) return false;
+      if (isClubEvent && !includeClubEvents) return false;
+      
+      return true;
+    });
 
     // Enhance events with additional information
     const enhancedEvents = filteredEvents.map(event => {

@@ -781,166 +781,226 @@ function generateZoneFormatPDF(options: CalendarPDFOptions): Buffer {
             
             yPosition += rowHeight;
           } else {
-            // Show events for this day - consolidate multiple events into one row
-            // Check if we need a new page (leave space for footer)
-            if (yPosition > pageHeight - 25) {
-              doc.addPage();
-              pageNumber++;
-              yPosition = marginTop;
-              drawTableHeader();
-            }
-
-            let currentX = startX;
+            // Show events for this day - list vertically (one row per event)
+            const numEvents = dayEvents.length;
             const rowHeight = 8;
+            let startYPosition = yPosition;
+            let pageBreakOccurred = false;
+            
+            dayEvents.forEach((event, eventIndex) => {
+          // Check if we need a new page (leave space for footer)
+          if (yPosition > pageHeight - 25) {
+            // If we had a merged cell started, we need to track that we broke the page
+            if (numEvents > 1 && eventIndex > 0) {
+              pageBreakOccurred = true;
+              // Draw the merged cell for events on previous page
+              const eventsOnPreviousPage = eventIndex;
+              const mergedCellHeight = eventsOnPreviousPage * rowHeight;
+              
+              doc.setDrawColor(...colors.border);
+              doc.rect(startX, startYPosition - 1, columns[0].width, mergedCellHeight);
+              
+              const eventDate = new Date(dayEvents[0].date);
+              const dateText = eventDate.getDate() + getOrdinalSuffix(eventDate.getDate()) + ' ' + 
+                              eventDate.toLocaleDateString('en-AU', { month: 'short', year: 'numeric' });
+              doc.setFont('helvetica', 'normal');
+              doc.setFontSize(8);
+              doc.setTextColor(...colors.text);
+              
+              const textY = startYPosition + (mergedCellHeight / 2) + 1.5;
+              doc.text(dateText, startX + 2, textY);
+            }
+            
+            doc.addPage();
+            pageNumber++;
+            yPosition = marginTop;
+            drawTableHeader();
+            
+            // Reset start position for new page
+            startYPosition = yPosition;
+          }
 
-            // Alternating row background
-            if (dayIndex % 2 === 1) {
-              doc.setFillColor(...colors.altRow);
+          let currentX = startX;
+
+          // Alternating row background (but skip date column if multiple events)
+          if (eventIndex % 2 === 1) {
+            doc.setFillColor(...colors.altRow);
+            // If multiple events, only fill club and event columns (skip date column)
+            if (numEvents > 1) {
+              doc.rect(startX + columns[0].width, yPosition - 1, tableWidth - columns[0].width, rowHeight, 'F');
+            } else {
               doc.rect(startX, yPosition - 1, tableWidth, rowHeight, 'F');
             }
+          }
 
-            doc.setTextColor(...colors.text);
+          doc.setTextColor(...colors.text);
+          
+          // Determine event type for badge
+          const eventName = event.name?.toLowerCase() || '';
+          const eventType = event.eventType?.toLowerCase() || '';
+          const eventStatus = (event as any).status?.toLowerCase() || '';
+          const eventSource = (event as any).source?.toLowerCase() || '';
+          const clubName = event.club || '';
+          let eventTypeBadge = '';
+          let badgeColor: { bg: readonly [number, number, number]; text: readonly [number, number, number] } = eventTypeColors['Zone Qualifier']; // Default
+          
+          // Check if it's a pending/proposed event (NOT approved)
+          if (eventStatus === 'proposed' || eventStatus === 'pending') {
+            eventTypeBadge = 'Pending Approval';
+            badgeColor = eventTypeColors['Pending Approval'];
+          }
+          // Check if it's an EV event (Equestrian Victoria scraped events)
+          else if (eventSource === 'ev_scraper' || eventSource === 'equestrian_victoria' || eventStatus === 'ev_event') {
+            eventTypeBadge = 'EV';
+            badgeColor = eventTypeColors['EV'];
+          }
+          // Check if it's a state event (by source field or club name)
+          else if (eventSource === 'state' || clubName === 'State Event') {
+            eventTypeBadge = 'State Event';
+            badgeColor = eventTypeColors['State Event'];
+          }
+          // Check if it's a zone event (club name contains "Zone Event" or club field contains zone name)
+          else {
+            const isZoneEvent = clubName.includes('(Zone Event)') || clubName.toLowerCase().includes('zone') && clubName.includes('Event');
             
-            // Draw row borders and content
-            columns.forEach((col, colIndex) => {
-              // Draw cell border
-              doc.setDrawColor(...colors.border);
-              doc.rect(currentX, yPosition - 1, col.width, rowHeight);
-              
-              let cellText = '';
-              switch (colIndex) {
-                case 0: // Date - show once for all events on this day
-                  const eventDate = new Date(dayEvents[0].date);
+            // Check if it's a public holiday (by status or name)
+            if (eventStatus === 'public_holiday' || eventName.includes('holiday') || eventName.includes('public holiday')) {
+              eventTypeBadge = 'Public Holiday';
+              badgeColor = eventTypeColors['Public Holiday'];
+            } else if (isZoneEvent) {
+              // Zone-level events get special badge
+              eventTypeBadge = 'Zone Event';
+              badgeColor = eventTypeColors['Zone Event'];
+            } else if ((event as any).isQualifier === true) {
+              // Check the isQualifier field from Firestore
+              eventTypeBadge = 'Zone Qualifier';
+              badgeColor = eventTypeColors['Zone Qualifier'];
+            } else if (eventType.includes('meeting') || eventName.includes('meeting')) {
+              eventTypeBadge = 'Zone Meeting';
+              badgeColor = eventTypeColors['Zone Meeting'];
+            } else if (eventType.includes('state') || eventName.includes('state')) {
+              eventTypeBadge = 'State Event';
+              badgeColor = eventTypeColors['State Event'];
+            } else if (eventType.includes('certificate') || eventType.includes('assessment') || eventName.includes('certificate') || eventName.includes('assessment')) {
+              eventTypeBadge = 'Zone Certificate';
+              badgeColor = eventTypeColors['Zone Certificate'];
+            }
+          }
+          
+          // Draw row borders and content
+          columns.forEach((col, colIndex) => {
+            // Draw cell border
+            doc.setDrawColor(...colors.border);
+            
+            let cellText = '';
+            switch (colIndex) {
+              case 0: // Date - already drawn as merged cell if multiple events, otherwise draw normally
+                if (numEvents === 1) {
+                  doc.rect(currentX, yPosition - 1, col.width, rowHeight);
+                  const eventDate = new Date(event.date);
                   const dateText = eventDate.getDate() + getOrdinalSuffix(eventDate.getDate()) + ' ' + 
                                   eventDate.toLocaleDateString('en-AU', { month: 'short', year: 'numeric' });
                   doc.setFont('helvetica', 'normal');
                   doc.setFontSize(8);
                   doc.setTextColor(...colors.text);
                   doc.text(dateText, currentX + 2, yPosition + 4);
-                  break;
-                  
-                case 1: // Club/Zone - combine all clubs if multiple events
-                  const uniqueClubs = Array.from(new Set(dayEvents.map(e => e.club).filter(c => c)));
-                  cellText = uniqueClubs.join(', ') || '';
-                  
-                  doc.setFont('helvetica', 'normal');
-                  doc.setFontSize(8);
-                  const availableWidth = col.width - 4;
-                  let clubDisplayText = cellText;
-                  
-                  if (doc.getTextWidth(cellText) > availableWidth) {
-                    while (doc.getTextWidth(clubDisplayText + '...') > availableWidth && clubDisplayText.length > 0) {
-                      clubDisplayText = clubDisplayText.substring(0, clubDisplayText.length - 1);
-                    }
-                    clubDisplayText += '...';
+                }
+                // Skip drawing border if already drawn as merged cell (numEvents > 1)
+                break;
+                
+              case 1: // Club/Zone
+                doc.rect(currentX, yPosition - 1, col.width, rowHeight);
+                cellText = event.club || '';
+                // Use actual text width measurement instead of character count
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(8);
+                const availableWidth = col.width - 4; // Leave 2mm padding on each side
+                let clubDisplayText = cellText;
+                
+                // Only truncate if the actual text width exceeds available space
+                if (doc.getTextWidth(cellText) > availableWidth) {
+                  // Binary search for the right length
+                  while (doc.getTextWidth(clubDisplayText + '...') > availableWidth && clubDisplayText.length > 0) {
+                    clubDisplayText = clubDisplayText.substring(0, clubDisplayText.length - 1);
                   }
+                  clubDisplayText += '...';
+                } else {
+                  clubDisplayText = cellText;
+                }
+                
+                doc.text(clubDisplayText, currentX + 2, yPosition + 4);
+                break;
+                
+              case 2: // Event with badge
+                doc.rect(currentX, yPosition - 1, col.width, rowHeight);
+                const eventText = event.name || 'Unnamed Event';
+                
+                // Draw badge if event type is identified
+                let badgeX = currentX + 2;
+                if (eventTypeBadge) {
+                  doc.setFont('helvetica', 'bold');
+                  doc.setFontSize(7);
+                  const badgeTextWidth = doc.getTextWidth(eventTypeBadge);
+                  const badgeWidth = badgeTextWidth + 4;
+                  const badgeHeight = 4;
                   
-                  doc.text(clubDisplayText, currentX + 2, yPosition + 4);
-                  break;
+                  // Draw rounded badge
+                  doc.setFillColor(badgeColor.bg[0], badgeColor.bg[1], badgeColor.bg[2]);
+                  doc.roundedRect(badgeX, yPosition + 0.5, badgeWidth, badgeHeight, 1, 1, 'F');
                   
-                case 2: // Event - show all events with badges on same line
-                  let badgeX = currentX + 2;
-                  const remainingWidth = col.width - 4;
+                  // Draw badge text
+                  doc.setTextColor(badgeColor.text[0], badgeColor.text[1], badgeColor.text[2]);
+                  doc.text(eventTypeBadge, badgeX + 2, yPosition + 3.5);
                   
-                  dayEvents.forEach((event, eventIndex) => {
-                    // Determine event type for badge
-                    const eventName = event.name?.toLowerCase() || '';
-                    const eventType = event.eventType?.toLowerCase() || '';
-                    const eventStatus = (event as any).status?.toLowerCase() || '';
-                    const eventSource = (event as any).source?.toLowerCase() || '';
-                    const clubName = event.club || '';
-                    let eventTypeBadge = '';
-                    let badgeColor: { bg: readonly [number, number, number]; text: readonly [number, number, number] } = eventTypeColors['Zone Qualifier'];
-                    
-                    // Determine badge type (same logic as before)
-                    if (eventStatus === 'proposed' || eventStatus === 'pending') {
-                      eventTypeBadge = 'Pending Approval';
-                      badgeColor = eventTypeColors['Pending Approval'];
-                    } else if (eventSource === 'ev_scraper' || eventSource === 'equestrian_victoria' || eventStatus === 'ev_event') {
-                      eventTypeBadge = 'EV';
-                      badgeColor = eventTypeColors['EV'];
-                    } else if (eventSource === 'state' || clubName === 'State Event') {
-                      eventTypeBadge = 'State Event';
-                      badgeColor = eventTypeColors['State Event'];
-                    } else {
-                      const isZoneEvent = clubName.includes('(Zone Event)') || clubName.toLowerCase().includes('zone') && clubName.includes('Event');
-                      
-                      if (eventStatus === 'public_holiday' || eventName.includes('holiday') || eventName.includes('public holiday')) {
-                        eventTypeBadge = 'Public Holiday';
-                        badgeColor = eventTypeColors['Public Holiday'];
-                      } else if (isZoneEvent) {
-                        eventTypeBadge = 'Zone Event';
-                        badgeColor = eventTypeColors['Zone Event'];
-                      } else if ((event as any).isQualifier === true) {
-                        eventTypeBadge = 'Zone Qualifier';
-                        badgeColor = eventTypeColors['Zone Qualifier'];
-                      } else if (eventType.includes('meeting') || eventName.includes('meeting')) {
-                        eventTypeBadge = 'Zone Meeting';
-                        badgeColor = eventTypeColors['Zone Meeting'];
-                      } else if (eventType.includes('state') || eventName.includes('state')) {
-                        eventTypeBadge = 'State Event';
-                        badgeColor = eventTypeColors['State Event'];
-                      } else if (eventType.includes('certificate') || eventType.includes('assessment') || eventName.includes('certificate') || eventName.includes('assessment')) {
-                        eventTypeBadge = 'Zone Certificate';
-                        badgeColor = eventTypeColors['Zone Certificate'];
-                      }
-                    }
-                    
-                    const eventText = event.name || 'Unnamed Event';
-                    
-                    // Check if we have room for this event
-                    const spaceRemaining = currentX + col.width - badgeX - 2;
-                    if (spaceRemaining < 10) return; // Skip if no room
-                    
-                    // Draw badge if event type is identified
-                    if (eventTypeBadge) {
-                      doc.setFont('helvetica', 'bold');
-                      doc.setFontSize(7);
-                      const badgeTextWidth = doc.getTextWidth(eventTypeBadge);
-                      const badgeWidth = badgeTextWidth + 4;
-                      const badgeHeight = 4;
-                      
-                      // Check if badge fits
-                      if (badgeX + badgeWidth <= currentX + col.width - 2) {
-                        doc.setFillColor(badgeColor.bg[0], badgeColor.bg[1], badgeColor.bg[2]);
-                        doc.roundedRect(badgeX, yPosition + 0.5, badgeWidth, badgeHeight, 1, 1, 'F');
-                        doc.setTextColor(badgeColor.text[0], badgeColor.text[1], badgeColor.text[2]);
-                        doc.text(eventTypeBadge, badgeX + 2, yPosition + 3.5);
-                        badgeX += badgeWidth + 2;
-                      }
-                    }
-                    
-                    // Draw event name in BOLD
-                    doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(8);
-                    doc.setTextColor(...colors.text);
-                    const remainingSpace = currentX + col.width - badgeX - 2;
-                    const maxEventChars = Math.floor(remainingSpace / 2.2);
-                    let displayText = eventText;
-                    if (displayText.length > maxEventChars) {
-                      displayText = displayText.substring(0, maxEventChars - 3) + '...';
-                    }
-                    
-                    // Only draw if we have space
-                    if (badgeX + doc.getTextWidth(displayText) <= currentX + col.width - 2) {
-                      doc.text(displayText, badgeX, yPosition + 4);
-                      badgeX += doc.getTextWidth(displayText) + 3;
-                      
-                      // Add separator if not last event
-                      if (eventIndex < dayEvents.length - 1 && badgeX + 5 < currentX + col.width - 2) {
-                        doc.setFont('helvetica', 'normal');
-                        doc.text('|', badgeX, yPosition + 4);
-                        badgeX += 5;
-                      }
-                    }
-                  });
-                  break;
-              }
-              
-              currentX += col.width;
+                  badgeX += badgeWidth + 3;
+                }
+                
+                // Draw event name in BOLD
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(8);
+                doc.setTextColor(...colors.text);
+                const remainingWidth = col.width - (badgeX - currentX) - 2;
+                const maxEventChars = Math.floor(remainingWidth / 2.2);
+                let displayText = eventText;
+                if (displayText.length > maxEventChars) {
+                  displayText = displayText.substring(0, maxEventChars - 3) + '...';
+                }
+                doc.text(displayText, badgeX, yPosition + 4);
+                break;
+            }
+            
+            currentX += col.width;
+          });
+          
+          yPosition += rowHeight;
             });
             
-            yPosition += rowHeight;
+            // After all events for this day are drawn, draw the merged date cell on top
+            // (only for events that stayed on the same page)
+            if (numEvents > 1) {
+              // Calculate how many rows from startYPosition to current yPosition
+              const actualRowsOnThisPage = Math.floor((yPosition - startYPosition) / rowHeight);
+              
+              if (actualRowsOnThisPage > 0) {
+                const mergedCellHeight = actualRowsOnThisPage * rowHeight;
+                
+                // Draw merged cell border
+                doc.setDrawColor(...colors.border);
+                doc.rect(startX, startYPosition - 1, columns[0].width, mergedCellHeight);
+                
+                // Calculate vertical center position for text
+                const eventDate = new Date(dayEvents[0].date);
+                const dateText = eventDate.getDate() + getOrdinalSuffix(eventDate.getDate()) + ' ' + 
+                                eventDate.toLocaleDateString('en-AU', { month: 'short', year: 'numeric' });
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(8);
+                doc.setTextColor(...colors.text);
+                
+                // Center text vertically in merged cell
+                const textY = startYPosition + (mergedCellHeight / 2) + 1.5;
+                doc.text(dateText, startX + 2, textY);
+              }
+            }
           }
         });
       }

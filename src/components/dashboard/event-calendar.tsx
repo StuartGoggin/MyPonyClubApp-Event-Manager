@@ -92,12 +92,16 @@ export function EventCalendar({
   const [pdfFilterScope, setPdfFilterScope] = useState<'all' | 'zone' | 'club'>('zone');
   const [pdfSelectedZone, setPdfSelectedZone] = useState<string>('');
   const [pdfSelectedClub, setPdfSelectedClub] = useState<string>('');
-  // PDF format state - default to zone format
-  const [pdfFormat, setPdfFormat] = useState<'standard' | 'zone'>('zone');
   // PDF section collapsible state - hidden by default
   const [isPdfSectionVisible, setIsPdfSectionVisible] = useState(false);
   // PDF download loading state
   const [isPdfGenerating, setIsPdfGenerating] = useState(false);
+  // Event type filters for PDF
+  const [pdfIncludeClubEvents, setPdfIncludeClubEvents] = useState(true);
+  const [pdfIncludeZoneEvents, setPdfIncludeZoneEvents] = useState(true);
+  const [pdfIncludeStateEvents, setPdfIncludeStateEvents] = useState(true);
+  const [pdfIncludeEVEvents, setPdfIncludeEVEvents] = useState(true);
+  const [pdfIncludePublicHolidays, setPdfIncludePublicHolidays] = useState(true);
 
   // State logo
   const [stateLogo, setStateLogo] = useState<string | null>(null);
@@ -164,7 +168,12 @@ export function EventCalendar({
         filterScope: pdfFilterScope,
         zoneId: pdfFilterScope === 'zone' ? pdfSelectedZone : '',
         clubId: pdfFilterScope === 'club' ? pdfSelectedClub : '',
-        format: pdfFormat,
+        format: 'zone', // Always use zone format
+        includeClubEvents: String(pdfIncludeClubEvents),
+        includeZoneEvents: String(pdfIncludeZoneEvents),
+        includeStateEvents: String(pdfIncludeStateEvents),
+        includeEVEvents: String(pdfIncludeEVEvents),
+        includePublicHolidays: String(pdfIncludePublicHolidays),
       });
       const res = await fetch(`/api/calendar/pdf?${params.toString()}`);
       if (!res.ok) {
@@ -358,166 +367,250 @@ export function EventCalendar({
         <div className="w-full">
           {/* Collapsible Header */}
           <div 
-            className="flex items-center justify-between p-2 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg border border-border/40 shadow-sm cursor-pointer hover:from-primary/15 hover:to-accent/15 transition-colors"
+            className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50 dark:from-blue-950/30 dark:via-purple-950/30 dark:to-pink-950/30 rounded-lg border border-blue-200/60 dark:border-blue-800/60 shadow-sm cursor-pointer hover:shadow-md transition-all duration-200 group"
             onClick={() => setIsPdfSectionVisible(!isPdfSectionVisible)}
           >
-            <div className="flex items-center gap-2">
-              <svg className="h-4 w-4 text-primary" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2C11.4477 2 11 2.44772 11 3V13.5858L7.70711 10.2929C7.31658 9.90237 6.68342 9.90237 6.29289 10.2929C5.90237 10.6834 5.90237 11.3166 6.29289 11.7071L11.2929 16.7071C11.6834 17.0976 12.3166 17.0976 12.7071 16.7071L17.7071 11.7071C18.0976 11.3166 18.0976 10.6834 17.7071 10.2929C17.3166 9.90237 16.6834 9.90237 16.2929 10.2929L13 13.5858V3C13 2.44772 12.5523 2 12 2Z"/>
-                <path d="M4 19C4 18.4477 4.44772 18 5 18H19C19.5523 18 20 18.4477 20 19C20 19.5523 19.5523 20 19 20H5C4.44772 20 4 19.5523 4 19Z"/>
-              </svg>
-              <span className="text-xs font-semibold text-primary">Download Calendar</span>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg shadow-sm group-hover:scale-105 transition-transform">
+                <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C11.4477 2 11 2.44772 11 3V13.5858L7.70711 10.2929C7.31658 9.90237 6.68342 9.90237 6.29289 10.2929C5.90237 10.6834 5.90237 11.3166 6.29289 11.7071L11.2929 16.7071C11.6834 17.0976 12.3166 17.0976 12.7071 16.7071L17.7071 11.7071C18.0976 11.3166 18.0976 10.6834 17.7071 10.2929C17.3166 9.90237 16.6834 9.90237 16.2929 10.2929L13 13.5858V3C13 2.44772 12.5523 2 12 2Z"/>
+                  <path d="M4 19C4 18.4477 4.44772 18 5 18H19C19.5523 18 20 18.4477 20 19C20 19.5523 19.5523 20 19 20H5C4.44772 20 4 19.5523 4 19Z"/>
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-sm font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
+                  Download Calendar PDF
+                </h3>
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  Customize and export your event calendar
+                </p>
+              </div>
             </div>
             <ChevronDown 
-              className={`h-4 w-4 text-primary transition-transform duration-200 ${isPdfSectionVisible ? 'rotate-180' : ''}`}
+              className={`h-5 w-5 text-blue-600 dark:text-blue-400 transition-transform duration-300 group-hover:text-purple-600 dark:group-hover:text-purple-400 ${isPdfSectionVisible ? 'rotate-180' : ''}`}
             />
           </div>
       
           {/* Collapsible Content */}
           {isPdfSectionVisible && (
-            <div className="mt-2 p-3 bg-gradient-to-r from-primary/5 to-accent/5 rounded-lg border border-border/30">
-              <div className="flex flex-col gap-3">
-                {/* Scope Selection Row */}
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    <label className="text-xs font-semibold text-primary whitespace-nowrap">Scope:</label>
+            <div className="mt-3 p-4 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 shadow-inner">
+              <div className="space-y-4">
+                {/* Event Types Section */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="h-px flex-1 bg-gradient-to-r from-transparent via-gray-300 dark:via-gray-700 to-transparent"></div>
+                    <label className="text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">
+                      Event Types to Include
+                    </label>
+                    <div className="h-px flex-1 bg-gradient-to-r from-transparent via-gray-300 dark:via-gray-700 to-transparent"></div>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                    <div className="flex items-center space-x-2 p-2.5 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all group">
+                      <Checkbox
+                        id="pdf-club-events"
+                        checked={pdfIncludeClubEvents}
+                        onCheckedChange={(checked) => setPdfIncludeClubEvents(checked as boolean)}
+                        className="border-gray-400 dark:border-gray-600 group-hover:border-blue-500"
+                      />
+                      <label
+                        htmlFor="pdf-club-events"
+                        className="text-sm font-medium leading-none cursor-pointer select-none text-gray-700 dark:text-gray-300 group-hover:text-blue-700 dark:group-hover:text-blue-300"
+                      >
+                        Club Events
+                      </label>
+                    </div>
+                    <div className="flex items-center space-x-2 p-2.5 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-green-300 dark:hover:border-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-all group">
+                      <Checkbox
+                        id="pdf-zone-events"
+                        checked={pdfIncludeZoneEvents}
+                        onCheckedChange={(checked) => setPdfIncludeZoneEvents(checked as boolean)}
+                        className="border-gray-400 dark:border-gray-600 group-hover:border-green-500"
+                      />
+                      <label
+                        htmlFor="pdf-zone-events"
+                        className="text-sm font-medium leading-none cursor-pointer select-none text-gray-700 dark:text-gray-300 group-hover:text-green-700 dark:group-hover:text-green-300"
+                      >
+                        Zone Events
+                      </label>
+                    </div>
+                    <div className="flex items-center space-x-2 p-2.5 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-orange-300 dark:hover:border-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950/30 transition-all group">
+                      <Checkbox
+                        id="pdf-state-events"
+                        checked={pdfIncludeStateEvents}
+                        onCheckedChange={(checked) => setPdfIncludeStateEvents(checked as boolean)}
+                        className="border-gray-400 dark:border-gray-600 group-hover:border-orange-500"
+                      />
+                      <label
+                        htmlFor="pdf-state-events"
+                        className="text-sm font-medium leading-none cursor-pointer select-none text-gray-700 dark:text-gray-300 group-hover:text-orange-700 dark:group-hover:text-orange-300"
+                      >
+                        State Events
+                      </label>
+                    </div>
+                    <div className="flex items-center space-x-2 p-2.5 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950/30 transition-all group">
+                      <Checkbox
+                        id="pdf-ev-events"
+                        checked={pdfIncludeEVEvents}
+                        onCheckedChange={(checked) => setPdfIncludeEVEvents(checked as boolean)}
+                        className="border-gray-400 dark:border-gray-600 group-hover:border-purple-500"
+                      />
+                      <label
+                        htmlFor="pdf-ev-events"
+                        className="text-sm font-medium leading-none cursor-pointer select-none text-gray-700 dark:text-gray-300 group-hover:text-purple-700 dark:group-hover:text-purple-300"
+                      >
+                        EV Events
+                      </label>
+                    </div>
+                    <div className="flex items-center space-x-2 p-2.5 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-pink-300 dark:hover:border-pink-600 hover:bg-pink-50 dark:hover:bg-pink-950/30 transition-all group">
+                      <Checkbox
+                        id="pdf-public-holidays"
+                        checked={pdfIncludePublicHolidays}
+                        onCheckedChange={(checked) => setPdfIncludePublicHolidays(checked as boolean)}
+                        className="border-gray-400 dark:border-gray-600 group-hover:border-pink-500"
+                      />
+                      <label
+                        htmlFor="pdf-public-holidays"
+                        className="text-sm font-medium leading-none cursor-pointer select-none text-gray-700 dark:text-gray-300 group-hover:text-pink-700 dark:group-hover:text-pink-300"
+                      >
+                        Public Holidays
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator className="bg-gray-200 dark:bg-gray-800" />
+
+                {/* Scope Section */}
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-300">
+                    Scope
+                  </label>
+                  <div className="flex items-center gap-2 flex-wrap">
                     <Select value={pdfFilterScope} onValueChange={(value: 'all' | 'zone' | 'club') => {
                       setPdfFilterScope(value);
                       if (value !== 'zone') setPdfSelectedZone('');
                       if (value !== 'club') setPdfSelectedClub('');
                     }}>
-                      <SelectTrigger className="h-6 text-xs min-w-[130px] px-2 py-0.5 border-primary/40 bg-gradient-to-r from-primary/5 to-accent/5">
+                      <SelectTrigger className="h-9 w-auto min-w-[160px] bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600 transition-colors">
                         <SelectValue placeholder="Select scope" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all" className="text-xs">All Events</SelectItem>
-                        <SelectItem value="zone" className="text-xs">Zone Events</SelectItem>
-                        <SelectItem value="club" className="text-xs">Club Events</SelectItem>
+                        <SelectItem value="all">All Events</SelectItem>
+                        <SelectItem value="zone">Zone Events</SelectItem>
+                        <SelectItem value="club">Club Events</SelectItem>
                       </SelectContent>
                     </Select>
-                  </div>
-                  
-                  {/* Zone Selection */}
-                  {pdfFilterScope === 'zone' && (
-                    <Select value={pdfSelectedZone} onValueChange={setPdfSelectedZone}>
-                      <SelectTrigger className="h-6 text-xs min-w-[120px] px-2 py-0.5 border-primary/40 bg-gradient-to-r from-primary/5 to-accent/5">
-                        <SelectValue placeholder="Select zone" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {zones.map(zone => (
-                          <SelectItem key={zone.id} value={zone.id} className="text-xs">
-                            {zone.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                  
-                  {/* Club Selection - Zone and Club on same row */}
-                  {pdfFilterScope === 'club' && (
-                    <>
-                      <Select value={pdfSelectedZone} onValueChange={(zoneId) => {
-                        setPdfSelectedZone(zoneId);
-                        setPdfSelectedClub(''); // Reset club selection when zone changes
-                      }}>
-                        <SelectTrigger className="h-6 text-xs min-w-[120px] px-2 py-0.5 border-primary/40 bg-gradient-to-r from-primary/5 to-accent/5">
-                          <SelectValue placeholder="Select zone first" />
+                    
+                    {/* Zone Selection */}
+                    {pdfFilterScope === 'zone' && (
+                      <Select value={pdfSelectedZone} onValueChange={setPdfSelectedZone}>
+                        <SelectTrigger className="h-9 w-auto min-w-[200px] bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-700">
+                          <SelectValue placeholder="Select zone" />
                         </SelectTrigger>
                         <SelectContent>
                           {zones.map(zone => (
-                            <SelectItem key={zone.id} value={zone.id} className="text-xs">
+                            <SelectItem key={zone.id} value={zone.id}>
                               {zone.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
-                      <Select value={pdfSelectedClub} onValueChange={setPdfSelectedClub} disabled={!pdfSelectedZone}>
-                        <SelectTrigger className="h-6 text-xs min-w-[150px] px-2 py-0.5 border-primary/40 bg-gradient-to-r from-primary/5 to-accent/5">
-                          <SelectValue placeholder={pdfSelectedZone ? "Select club" : "Select zone first"} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {pdfFilteredClubs.map(club => (
-                            <SelectItem key={club.id} value={club.id} className="text-xs">
-                              {club.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </>
-                  )}
-                </div>
-
-                {/* Format Selection Row */}
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    <label className="text-xs font-semibold text-primary whitespace-nowrap">Format:</label>
-                    <Select value={pdfFormat} onValueChange={(value: 'standard' | 'zone') => setPdfFormat(value)}>
-                      <SelectTrigger className="h-6 text-xs min-w-[130px] px-2 py-0.5 border-primary/40 bg-gradient-to-r from-primary/5 to-accent/5">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="standard" className="text-xs">Standard Format</SelectItem>
-                        <SelectItem value="zone" className="text-xs">Zone Format</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    )}
+                    
+                    {/* Club Selection */}
+                    {pdfFilterScope === 'club' && (
+                      <>
+                        <Select value={pdfSelectedZone} onValueChange={(zoneId) => {
+                          setPdfSelectedZone(zoneId);
+                          setPdfSelectedClub('');
+                        }}>
+                          <SelectTrigger className="h-9 w-auto min-w-[200px] bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-700">
+                            <SelectValue placeholder="Select zone first" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {zones.map(zone => (
+                              <SelectItem key={zone.id} value={zone.id}>
+                                {zone.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Select value={pdfSelectedClub} onValueChange={setPdfSelectedClub} disabled={!pdfSelectedZone}>
+                          <SelectTrigger className="h-9 w-auto min-w-[240px] bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-700">
+                            <SelectValue placeholder={pdfSelectedZone ? "Select club" : "Select zone first"} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {pdfFilteredClubs.map(club => (
+                              <SelectItem key={club.id} value={club.id}>
+                                {club.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </>
+                    )}
                   </div>
                 </div>
+
+                <Separator className="bg-gray-200 dark:bg-gray-800" />
                 
-                {/* Date Range and Download Controls */}
-                <div className="flex items-center gap-4 w-full">
-                  {/* Date Range Selector - Left Side */}
-                  <div className="flex gap-1">
+                {/* Date Range Section */}
+                <div className="space-y-3">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-300">
+                    Date Range
+                  </label>
+                  <div className="flex gap-2">
                     <Button
-                      variant={pdfScope === 'month' ? 'secondary' : 'outline'}
+                      variant={pdfScope === 'month' ? 'default' : 'outline'}
                       size="sm"
-                      className={pdfScope === 'month' ? 'premium-button px-2 py-1 text-xs' : 'premium-button-outline px-2 py-1 text-xs'}
+                      className={pdfScope === 'month' ? 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700' : ''}
                       onClick={() => setPdfScope('month')}
                     >
                       This Month
                     </Button>
                     <Button
-                      variant={pdfScope === 'year' ? 'secondary' : 'outline'}
+                      variant={pdfScope === 'year' ? 'default' : 'outline'}
                       size="sm"
-                      className={pdfScope === 'year' ? 'premium-button px-2 py-1 text-xs' : 'premium-button-outline px-2 py-1 text-xs'}
+                      className={pdfScope === 'year' ? 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700' : ''}
                       onClick={() => setPdfScope('year')}
                     >
                       This Year
                     </Button>
                     <Button
-                      variant={pdfScope === 'custom' ? 'secondary' : 'outline'}
+                      variant={pdfScope === 'custom' ? 'default' : 'outline'}
                       size="sm"
-                      className={pdfScope === 'custom' ? 'premium-button px-2 py-1 text-xs' : 'premium-button-outline px-2 py-1 text-xs'}
+                      className={pdfScope === 'custom' ? 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700' : ''}
                       onClick={() => setPdfScope('custom')}
                     >
                       Custom Range
                     </Button>
                   </div>
                   
-                  {/* Date Selectors - Center, taking remaining space */}
-                  <div className="flex items-center gap-2 flex-1 justify-center">
+                  {/* Date Selectors */}
+                  <div className="flex items-center gap-2 flex-wrap">
                     {pdfScope === 'month' && (
                       <>
                         <Select value={String(selectedMonth)} onValueChange={(value) => setSelectedMonth(Number(value))}>
-                          <SelectTrigger className="h-6 text-xs min-w-[90px] px-2 py-0.5 border-primary/40 bg-gradient-to-r from-primary/5 to-accent/5">
+                          <SelectTrigger className="h-9 w-32 bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-700">
                             <SelectValue>
                               {monthOptions.find(m => m.value === selectedMonth)?.label}
                             </SelectValue>
                           </SelectTrigger>
                           <SelectContent>
                             {monthOptions.map(m => (
-                              <SelectItem key={m.value} value={String(m.value)} className="text-xs">
+                              <SelectItem key={m.value} value={String(m.value)}>
                                 {m.label}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                         <Select value={String(pdfYear)} onValueChange={(value) => setPdfYear(Number(value))}>
-                          <SelectTrigger className="h-6 text-xs min-w-[70px] px-2 py-0.5 border-primary/40 bg-gradient-to-r from-primary/5 to-accent/5">
+                          <SelectTrigger className="h-9 w-24 bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-700">
                             <SelectValue>{pdfYear}</SelectValue>
                           </SelectTrigger>
                           <SelectContent>
                             {yearOptions.map(y => (
-                              <SelectItem key={y} value={String(y)} className="text-xs">
+                              <SelectItem key={y} value={String(y)}>
                                 {y}
                               </SelectItem>
                             ))}
@@ -527,12 +620,12 @@ export function EventCalendar({
                     )}
                     {pdfScope === 'year' && (
                       <Select value={String(pdfYear)} onValueChange={(value) => setPdfYear(Number(value))}>
-                        <SelectTrigger className="h-6 text-xs min-w-[70px] px-2 py-0.5 border-primary/40 bg-gradient-to-r from-primary/5 to-accent/5">
+                        <SelectTrigger className="h-9 w-24 bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-700">
                           <SelectValue>{pdfYear}</SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           {yearOptions.map(y => (
-                            <SelectItem key={y} value={String(y)} className="text-xs">
+                            <SelectItem key={y} value={String(y)}>
                               {y}
                             </SelectItem>
                           ))}
@@ -540,51 +633,59 @@ export function EventCalendar({
                       </Select>
                     )}
                     {pdfScope === 'custom' && (
-                      <>
-                        <label htmlFor="pdfStartDate" className="text-xs font-semibold text-primary">Start</label>
-                        <input
-                          id="pdfStartDate"
-                          type="date"
-                          value={pdfStartDate}
-                          onChange={e => setPdfStartDate(e.target.value)}
-                          className="border border-primary/40 rounded px-1 py-0.5 focus:ring-1 focus:ring-primary/40 min-w-[90px] text-xs"
-                          placeholder="Start date"
-                          title="Select start date"
-                        />
-                        <label htmlFor="pdfEndDate" className="text-xs font-semibold text-primary">End</label>
-                        <input
-                          id="pdfEndDate"
-                          type="date"
-                          value={pdfEndDate}
-                          onChange={e => setPdfEndDate(e.target.value)}
-                          className="border border-primary/40 rounded px-1 py-0.5 focus:ring-1 focus:ring-primary/40 min-w-[90px] text-xs"
-                          placeholder="End date"
-                          title="Select end date"
-                        />
-                      </>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <div className="flex items-center gap-2">
+                          <label htmlFor="pdfStartDate" className="text-xs font-medium text-gray-700 dark:text-gray-300">From</label>
+                          <input
+                            id="pdfStartDate"
+                            type="date"
+                            value={pdfStartDate}
+                            onChange={e => setPdfStartDate(e.target.value)}
+                            className="h-9 px-3 border border-gray-300 dark:border-gray-700 rounded-md focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-gray-50 dark:bg-gray-800 text-sm"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <label htmlFor="pdfEndDate" className="text-xs font-medium text-gray-700 dark:text-gray-300">To</label>
+                          <input
+                            id="pdfEndDate"
+                            type="date"
+                            value={pdfEndDate}
+                            onChange={e => setPdfEndDate(e.target.value)}
+                            className="h-9 px-3 border border-gray-300 dark:border-gray-700 rounded-md focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-gray-50 dark:bg-gray-800 text-sm"
+                          />
+                        </div>
+                      </div>
                     )}
                   </div>
-                  
-                  {/* Download Button - Right Side */}
-                  <div className="flex-shrink-0">
-                    <Button
-                      variant="default"
-                      size="sm"
-                      className="premium-button font-bold px-3 py-1 text-sm shadow ring-1 ring-primary/20 hover:ring-accent/30 transition"
-                      onClick={handleDownloadPDF}
-                      disabled={isPdfGenerating || (pdfScope === 'custom' && (!pdfStartDate || !pdfEndDate))}
-                    >
-                      {isPdfGenerating ? (
-                        <>
-                          <span className="mr-1 animate-spin">⏳</span> Generating...
-                        </>
-                      ) : (
-                        <>
-                          <span className="mr-1">📄</span> Download PDF
-                        </>
-                      )}
-                    </Button>
-                  </div>
+                </div>
+
+                {/* Download Button */}
+                <div className="pt-2">
+                  <Button
+                    className="w-full h-11 bg-gradient-to-r from-blue-500 via-purple-600 to-pink-600 hover:from-blue-600 hover:via-purple-700 hover:to-pink-700 text-white font-bold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]"
+                    onClick={handleDownloadPDF}
+                    disabled={isPdfGenerating || (pdfScope === 'custom' && (!pdfStartDate || !pdfEndDate))}
+                  >
+                    {isPdfGenerating ? (
+                      <div className="flex items-center gap-2">
+                        <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>Generating PDF...</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/>
+                          <path d="M14 2v6h6"/>
+                          <path d="M12 18v-6"/>
+                          <path d="M9 15l3 3 3-3"/>
+                        </svg>
+                        <span>Download PDF</span>
+                      </div>
+                    )}
+                  </Button>
                 </div>
               </div>
             </div>

@@ -112,11 +112,12 @@ async function extractEventDetails(eventUrl: string, eventName: string): Promise
  * @param month The month (1-12).
  * @returns A promise that resolves to an array of Event objects.
  */
-async function scrapeEventsForMonth(year: number, month: number): Promise<Event[]> {
+async function scrapeEventsForMonth(year: number, month: number, discipline?: string): Promise<Event[]> {
   // NOTE: The website uses month without zero-padding (e.g., '2025-1' not '2025-01')
   const monthStr = String(month); // No padding needed
-  const targetUrl = `${BASE_URL}/event-calendar/month/${year}-${monthStr}`;
-  logger.info(`Scraping month: ${targetUrl}`);
+  const disciplineSegment = discipline ? `${discipline}/` : '';
+  const targetUrl = `${BASE_URL}/event-calendar/month/${disciplineSegment}${year}-${monthStr}`;
+  logger.info(`Scraping month: ${targetUrl}${discipline ? ` (discipline: ${discipline})` : ''}`);
 
   try {
     logger.debug(`Fetching calendar page for ${year}-${monthStr}...`);
@@ -244,12 +245,15 @@ async function scrapeEventsForMonth(year: number, month: number): Promise<Event[
         }
 
         // Create the base event object
+        // If scraping with a discipline filter, use it to override/set the discipline
         const baseEvent = {
           name,
           url,
           start_date,
           end_date,
-          ...details
+          ...details,
+          // Override discipline if we're scraping a specific discipline URL
+          discipline: discipline || details.discipline
         };
           
         logger.debug(`Created event object:`, baseEvent);
@@ -346,16 +350,43 @@ export const scrapeEquestrianEvents = onRequest(
         return;
       }
 
+      // Extract optional disciplines parameter (comma-separated list)
+      const disciplinesParam = request.query.disciplines;
+      let disciplines: string[] = [];
+      
+      if (disciplinesParam && typeof disciplinesParam === "string" && disciplinesParam.trim() !== "") {
+        disciplines = disciplinesParam.split(',').map(d => d.trim()).filter(d => d.length > 0);
+        logger.info(`Filtering by disciplines: ${disciplines.join(', ')}`);
+      } else {
+        logger.info(`No discipline filter specified, scraping all events`);
+      }
+
       logger.info(`Starting scrape for year: ${parsedYear}`, { 
         ip: request.ip,
-        userAgent: request.headers['user-agent']
+        userAgent: request.headers['user-agent'],
+        disciplines: disciplines.length > 0 ? disciplines : 'all'
       });
 
       // Scrape all 12 months in parallel
       logger.debug(`Creating scrape promises for all 12 months...`);
-      const scrapePromises = Array.from({ length: 12 }, (_, i) => 
-        scrapeEventsForMonth(parsedYear, i + 1)
-      );
+      
+      let scrapePromises: Promise<Event[]>[];
+      
+      if (disciplines.length > 0) {
+        // Scrape each discipline separately for all 12 months
+        scrapePromises = disciplines.flatMap(discipline => 
+          Array.from({ length: 12 }, (_, i) => 
+            scrapeEventsForMonth(parsedYear, i + 1, discipline)
+          )
+        );
+        logger.debug(`Created ${scrapePromises.length} scrape promises (${disciplines.length} disciplines × 12 months)`);
+      } else {
+        // Scrape general calendar (no discipline filter)
+        scrapePromises = Array.from({ length: 12 }, (_, i) => 
+          scrapeEventsForMonth(parsedYear, i + 1)
+        );
+        logger.debug(`Created ${scrapePromises.length} scrape promises (12 months, all events)`);
+      }
 
       logger.debug(`Waiting for all months to complete scraping...`);
       const monthlyResults = await Promise.all(scrapePromises);
@@ -364,10 +395,12 @@ export const scrapeEquestrianEvents = onRequest(
       const allEvents = monthlyResults.flat();
       logger.info(`Total events before deduplication: ${allEvents.length}`);
 
-      // Deduplicate events by URL
+      // Deduplicate events by URL + start date (to preserve multi-day event instances)
       const uniqueEventsMap = new Map<string, Event>();
       for (const event of allEvents) {
-        uniqueEventsMap.set(event.url, event);
+        // Use URL + start_date as unique key to preserve split multi-day events
+        const uniqueKey = `${event.url}|${event.start_date}`;
+        uniqueEventsMap.set(uniqueKey, event);
       }
       const uniqueEvents = Array.from(uniqueEventsMap.values());
 

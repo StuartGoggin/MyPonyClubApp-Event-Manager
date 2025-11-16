@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Globe, RefreshCw, Download, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -19,9 +20,25 @@ interface ScrapedEvent {
   tier: string | null;
 }
 
+// List of disciplines from Equestrian Victoria
+const DISCIPLINES = [
+  { id: 'all', label: 'All Events', slug: '' },
+  { id: 'parequestrian', label: 'Para-Equestrian', slug: 'parequestrian' },
+  { id: 'endurance', label: 'Endurance', slug: 'endurance' },
+  { id: 'dressage', label: 'Dressage', slug: 'dressage' },
+  { id: 'jumping', label: 'Jumping', slug: 'jumping' },
+  { id: 'interschool', label: 'Interschool', slug: 'interschool' },
+  { id: 'vaulting', label: 'Vaulting', slug: 'vaulting' },
+  { id: 'eventing', label: 'Eventing', slug: 'eventing' },
+  { id: 'driving', label: 'Driving', slug: 'driving' },
+  { id: 'education', label: 'Education', slug: 'education' },
+  { id: 'showhorse', label: 'Show Horse', slug: 'showhorse' },
+] as const;
+
 export function WebScraperSection() {
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState<string>(String(currentYear));
+  const [selectedDisciplines, setSelectedDisciplines] = useState<string[]>(['all']);
   const [loading, setLoading] = useState(false);
   const [events, setEvents] = useState<ScrapedEvent[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -30,6 +47,28 @@ export function WebScraperSection() {
   // Generate year options (current year + 2 years forward and 1 year back)
   const yearOptions = Array.from({ length: 4 }, (_, i) => currentYear - 1 + i);
 
+  const handleDisciplineToggle = (disciplineId: string) => {
+    if (disciplineId === 'all') {
+      // If "All Events" is selected, clear other selections
+      setSelectedDisciplines(['all']);
+    } else {
+      setSelectedDisciplines(prev => {
+        // Remove "all" if it was selected
+        const withoutAll = prev.filter(d => d !== 'all');
+        
+        if (prev.includes(disciplineId)) {
+          // Remove this discipline
+          const updated = withoutAll.filter(d => d !== disciplineId);
+          // If nothing left, select "all"
+          return updated.length === 0 ? ['all'] : updated;
+        } else {
+          // Add this discipline
+          return [...withoutAll, disciplineId];
+        }
+      });
+    }
+  };
+
   const handleScrape = async () => {
     setLoading(true);
     setError(null);
@@ -37,8 +76,21 @@ export function WebScraperSection() {
     setEvents([]);
 
     try {
+      // Build disciplines parameter
+      const disciplineSlugs = selectedDisciplines.includes('all') 
+        ? '' 
+        : selectedDisciplines.map(id => {
+            const discipline = DISCIPLINES.find(d => d.id === id);
+            return discipline?.slug || '';
+          }).filter(s => s).join(',');
+
+      const params = new URLSearchParams({
+        year: selectedYear,
+        ...(disciplineSlugs && { disciplines: disciplineSlugs })
+      });
+
       const response = await fetch(
-        `https://scrapeequestrianevents-gt54xuwvaq-de.a.run.app?year=${selectedYear}`
+        `https://scrapeequestrianevents-gt54xuwvaq-de.a.run.app?${params.toString()}`
       );
 
       if (!response.ok) {
@@ -80,13 +132,14 @@ export function WebScraperSection() {
           Web Scraper - Equestrian Victoria Events
         </CardTitle>
         <CardDescription>
-          Scrape events from the Equestrian Victoria website for a selected year
+          Scrape events from the Equestrian Victoria website for a selected year and disciplines
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Controls */}
-        <div className="flex flex-col sm:flex-row gap-4 items-end">
-          <div className="flex-1 space-y-2">
+        <div className="space-y-4">
+          {/* Year Selection */}
+          <div className="space-y-2">
             <label htmlFor="year-select" className="text-sm font-medium">
               Select Year
             </label>
@@ -103,11 +156,37 @@ export function WebScraperSection() {
               </SelectContent>
             </Select>
           </div>
-          <div className="flex gap-2">
+
+          {/* Discipline Selection */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">
+              Select Disciplines
+            </label>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 p-4 border rounded-lg bg-muted/30">
+              {DISCIPLINES.map((discipline) => (
+                <div key={discipline.id} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={discipline.id}
+                    checked={selectedDisciplines.includes(discipline.id)}
+                    onCheckedChange={() => handleDisciplineToggle(discipline.id)}
+                  />
+                  <label
+                    htmlFor={discipline.id}
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  >
+                    {discipline.label}
+                  </label>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-3">
             <Button
               onClick={handleScrape}
-              disabled={loading}
-              className="bg-indigo-600 hover:bg-indigo-700"
+              disabled={loading || selectedDisciplines.length === 0}
+              className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
             >
               {loading ? (
                 <>
@@ -121,11 +200,12 @@ export function WebScraperSection() {
                 </>
               )}
             </Button>
+
             {events.length > 0 && (
               <Button
                 onClick={handleExportJSON}
                 variant="outline"
-                className="border-indigo-600 text-indigo-600 hover:bg-indigo-50"
+                className="border-indigo-300 text-indigo-700 hover:bg-indigo-50"
               >
                 <Download className="mr-2 h-4 w-4" />
                 Export JSON
@@ -212,7 +292,7 @@ export function WebScraperSection() {
         {!loading && events.length === 0 && !error && (
           <div className="text-center py-12 text-muted-foreground">
             <Globe className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>Select a year and click "Scrape Events" to fetch data</p>
+            <p>Select a year and disciplines, then click "Scrape Events" to fetch data</p>
           </div>
         )}
       </CardContent>

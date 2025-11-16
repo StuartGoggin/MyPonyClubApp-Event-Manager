@@ -9,7 +9,6 @@
     "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
     "build": "next build",
     "postbuild": "node scripts/copy-public-to-standalone.js",
-    "build:export": "next build && next export",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
@@ -22,7 +21,10 @@
     "test:email-queue:verbose": "node test-email-queue.js --verbose",
     "test:all": "npm run test:migration && npm run test:apis && npm run test:email-queue",
     "predeploy": "npm run build",
-    "deploy": "npm run predeploy && firebase deploy"
+    "deploy": "npm run predeploy && firebase deploy --only \"functions,apphosting\"",
+    "deploy:functions": "firebase deploy --only functions",
+    "deploy:apphosting": "firebase deploy --only apphosting",
+    "deploy:all": "npm run predeploy && firebase deploy --only \"functions,apphosting\""
   },
   "dependencies": {
     "@firebase/app": "^0.14.5",

@@ -14,6 +14,7 @@ export interface CalendarPDFOptions {
     coordinator?: string;
     zone?: string;
     state?: string;
+    source?: string; // Add source field to identify state events
   }>;
   format?: 'standard' | 'zone';
 }
@@ -801,6 +802,7 @@ function generateZoneFormatPDF(options: CalendarPDFOptions): Buffer {
           const eventName = event.name?.toLowerCase() || '';
           const eventType = event.eventType?.toLowerCase() || '';
           const eventStatus = (event as any).status?.toLowerCase() || '';
+          const eventSource = (event as any).source?.toLowerCase() || '';
           const clubName = event.club || '';
           let eventTypeBadge = '';
           let badgeColor: { bg: readonly [number, number, number]; text: readonly [number, number, number] } = eventTypeColors['Zone Qualifier']; // Default
@@ -809,6 +811,11 @@ function generateZoneFormatPDF(options: CalendarPDFOptions): Buffer {
           if (eventStatus === 'proposed' || eventStatus === 'pending') {
             eventTypeBadge = 'Pending Approval';
             badgeColor = eventTypeColors['Pending Approval'];
+          }
+          // Check if it's a state event (by source field or club name)
+          else if (eventSource === 'state' || clubName === 'State Event') {
+            eventTypeBadge = 'State Event';
+            badgeColor = eventTypeColors['State Event'];
           }
           // Check if it's a zone event (club name contains "Zone Event" or club field contains zone name)
           else {

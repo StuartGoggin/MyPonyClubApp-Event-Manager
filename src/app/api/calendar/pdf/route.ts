@@ -88,18 +88,22 @@ export async function GET(request: NextRequest) {
       // Check if this is a zone-level event (has zoneId but no clubId)
       const isZoneEvent = event.zoneId && !event.clubId;
       
+      // Check if this is a state-level event
+      const isStateEvent = event.source === 'state';
+      
       return {
   name: event.name || eventType?.name || 'Event',
   date: event.date.toISOString().split('T')[0], // Convert Date to YYYY-MM-DD string
   status: event.status || 'pending',
-  club: isPublicHoliday ? '' : isZoneEvent ? `${zone?.name || 'Zone'} (Zone Event)` : (club?.name || ''),
+  club: isPublicHoliday ? '' : isStateEvent ? 'State Event' : isZoneEvent ? `${zone?.name || 'Zone'} (Zone Event)` : (club?.name || ''),
   eventType: eventType?.name,
   location: event.location || club?.physicalAddress || (club?.address ? ((Object.prototype.hasOwnProperty.call(club.address, 'suburb') ? (club.address as any).suburb : (club.address as any).town) || '') : ''),
   contact: event.coordinatorContact || club?.email || club?.phone,
   coordinator: event.coordinatorName,
   zone: zone?.name || 'Unknown Zone',
   state: 'VIC', // Default to VIC for now - can be enhanced later
-  isQualifier: event.isQualifier || false
+  isQualifier: event.isQualifier || false,
+  source: event.source // Pass the source field to PDF generator
       };
     });
 

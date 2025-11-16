@@ -31,6 +31,7 @@ const multiEventRequestSchema = z.object({
     name: z.string().min(3, { message: 'Event name must be at least 3 characters.' }),
     eventTypeId: z.string({ required_error: 'Please select an event type.' }).min(1, 'Please select an event type.'),
     location: z.string().min(3, { message: 'Location must be at least 3 characters.' }),
+    eventLink: z.string().url().optional().or(z.literal('')),
     isQualifier: z.boolean().default(false),
     isHistoricallyTraditional: z.boolean().default(false),
     date: z.date({ required_error: 'Please select a date for this event.' }),

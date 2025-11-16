@@ -104,6 +104,7 @@ interface EventFormData {
   date: string;
   eventTypeId: string;
   location: string;
+  eventLink: string;
   description: string;
   coordinatorName: string;
   coordinatorContact: string;
@@ -114,6 +115,7 @@ const emptyFormData: EventFormData = {
   date: '',
   eventTypeId: '',
   location: '',
+  eventLink: '',
   description: '',
   coordinatorName: '',
   coordinatorContact: ''
@@ -171,6 +173,7 @@ export function StateEventManagement({
       date: formatDateForInput(event.date),
       eventTypeId: event.eventTypeId || '',
       location: event.location || '',
+      eventLink: event.eventLink || '',
       description: event.description || '',
       coordinatorName: event.coordinatorName || '',
       coordinatorContact: event.coordinatorContact || ''
@@ -566,6 +569,17 @@ export function StateEventManagement({
             </div>
 
             <div className="grid gap-2">
+              <Label htmlFor="add-eventLink">Event Link (URL)</Label>
+              <Input
+                id="add-eventLink"
+                type="url"
+                value={formData.eventLink}
+                onChange={(e) => setFormData({ ...formData, eventLink: e.target.value })}
+                placeholder="https://example.com/event"
+              />
+            </div>
+
+            <div className="grid gap-2">
               <Label htmlFor="add-description">Description</Label>
               <Textarea
                 id="add-description"
@@ -680,6 +694,17 @@ export function StateEventManagement({
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                 placeholder="Event location"
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="edit-eventLink">Event Link (URL)</Label>
+              <Input
+                id="edit-eventLink"
+                type="url"
+                value={formData.eventLink}
+                onChange={(e) => setFormData({ ...formData, eventLink: e.target.value })}
+                placeholder="https://example.com/event"
               />
             </div>
 

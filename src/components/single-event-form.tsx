@@ -162,6 +162,21 @@ export function SingleEventForm({
         )}
       />
 
+      {/* Event Link */}
+      <FormField
+        control={control}
+        name={`events.${eventIndex}.eventLink`}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Event Link (URL)</FormLabel>
+            <FormControl>
+              <Input placeholder="https://example.com/event" type="url" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
       {/* Qualifier and Historical Checkboxes */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormField

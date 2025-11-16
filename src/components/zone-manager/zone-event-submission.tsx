@@ -39,6 +39,7 @@ export function ZoneEventSubmission({
     eventTypeId: '',
     zoneId: defaultZoneId || '', // Initialize with default zone
     location: '',
+    eventLink: '',
     coordinatorName: '',
     coordinatorContact: '',
     isQualifier: false,
@@ -66,6 +67,7 @@ export function ZoneEventSubmission({
         eventTypeId: formData.eventTypeId,
         zoneId: formData.zoneId,
         location: formData.location,
+        eventLink: formData.eventLink,
         coordinatorName: formData.coordinatorName,
         coordinatorContact: formData.coordinatorContact,
         isQualifier: formData.isQualifier,
@@ -106,6 +108,7 @@ export function ZoneEventSubmission({
           eventTypeId: '',
           zoneId: defaultZoneId || '', // Reset to default zone
           location: '',
+          eventLink: '',
           coordinatorName: '',
           coordinatorContact: '',
           isQualifier: false,
@@ -296,6 +299,21 @@ export function ZoneEventSubmission({
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                 placeholder="Enter event location (address, venue, etc.)"
+                className="enhanced-input bg-white/90 backdrop-blur-sm border border-border/50 shadow-sm"
+              />
+            </div>
+
+            {/* Event Link */}
+            <div className="space-y-2">
+              <Label htmlFor="eventLink" className="text-sm font-semibold">
+                Event Link (URL)
+              </Label>
+              <Input
+                id="eventLink"
+                type="url"
+                value={formData.eventLink}
+                onChange={(e) => setFormData({ ...formData, eventLink: e.target.value })}
+                placeholder="https://example.com/event"
                 className="enhanced-input bg-white/90 backdrop-blur-sm border border-border/50 shadow-sm"
               />
             </div>

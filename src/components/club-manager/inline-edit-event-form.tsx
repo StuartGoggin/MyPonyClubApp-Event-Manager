@@ -33,6 +33,7 @@ export function InlineEditEventForm({
     date: '',
     eventTypeId: '',
     location: '',
+    eventLink: '',
     coordinatorName: '',
     coordinatorContact: '',
     isQualifier: false,
@@ -90,6 +91,7 @@ export function InlineEditEventForm({
         date: eventDate,
         eventTypeId: matchingEventTypeId,
         location: event.location || '',
+        eventLink: event.eventLink || '',
         coordinatorName: event.coordinatorName || '',
         coordinatorContact: event.coordinatorContact || '',
         isQualifier: event.isQualifier || false,
@@ -242,6 +244,19 @@ export function InlineEditEventForm({
               onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
               className="mt-1"
               placeholder="Event location"
+            />
+          </div>
+
+          {/* Event Link */}
+          <div>
+            <Label htmlFor="eventLink" className="text-sm font-medium">Event Link (URL)</Label>
+            <Input
+              id="eventLink"
+              type="url"
+              value={formData.eventLink}
+              onChange={(e) => setFormData(prev => ({ ...prev, eventLink: e.target.value }))}
+              className="mt-1"
+              placeholder="https://example.com/event"
             />
           </div>
 

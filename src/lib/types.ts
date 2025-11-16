@@ -360,6 +360,7 @@ export interface Event {
 
 
   description?: string;
+  eventLink?: string;      // URL link to event details/registration
   // New fields from form
   coordinatorName?: string;
   coordinatorContact?: string;
@@ -384,6 +385,7 @@ export interface EventRequestDetails {
   name: string;
   eventTypeId: string;
   location: string;
+  eventLink?: string;
   isQualifier?: boolean;
   isHistoricallyTraditional?: boolean;  // Track if this is a traditional event with historical date significance
   date: Date;  // Single preferred date for this event

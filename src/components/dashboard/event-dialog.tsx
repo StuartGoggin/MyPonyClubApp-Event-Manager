@@ -26,7 +26,8 @@ import {
   Award,
   Building2,
   XCircle,
-  Navigation
+  Navigation,
+  ExternalLink
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import React from 'react';
@@ -213,6 +214,21 @@ export function EventDialog({
               <div className="flex items-center gap-2 text-sm">
                 <MapPin className="h-4 w-4 text-muted-foreground" />
                 <span>{event.location}</span>
+              </div>
+            )}
+
+            {event.eventLink && (
+              <div className="flex items-center gap-2 text-sm">
+                <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                <a 
+                  href={event.eventLink} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline flex items-center gap-1"
+                >
+                  View Event Details
+                  <ExternalLink className="h-3 w-3" />
+                </a>
               </div>
             )}
           </div>

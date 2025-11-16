@@ -7,8 +7,19 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
@@ -136,8 +147,10 @@ export function StateEventManagement({
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<EventFormData>(emptyFormData);
+  const [selectedEventIds, setSelectedEventIds] = useState<Set<string>>(new Set());
 
   const getEventTypeName = (eventTypeId: string | undefined) => {
     if (!eventTypeId) return 'Unknown Type';
@@ -280,6 +293,77 @@ export function StateEventManagement({
     }
   };
 
+  // Bulk delete handlers
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allIds = new Set(filteredEvents.map(e => e.id));
+      setSelectedEventIds(allIds);
+    } else {
+      setSelectedEventIds(new Set());
+    }
+  };
+
+  const handleSelectEvent = (eventId: string, checked: boolean) => {
+    const newSelection = new Set(selectedEventIds);
+    if (checked) {
+      newSelection.add(eventId);
+    } else {
+      newSelection.delete(eventId);
+    }
+    setSelectedEventIds(newSelection);
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedEventIds.size === 0) return;
+    setIsBulkDeleteDialogOpen(true);
+  };
+
+  const confirmBulkDelete = async () => {
+    if (selectedEventIds.size === 0) return;
+
+    setIsSubmitting(true);
+    try {
+      const deletePromises = Array.from(selectedEventIds).map(eventId =>
+        fetch(`/api/events/${eventId}`, {
+          method: 'DELETE'
+        })
+      );
+
+      const results = await Promise.allSettled(deletePromises);
+      
+      const successful = results.filter(r => r.status === 'fulfilled').length;
+      const failed = results.filter(r => r.status === 'rejected').length;
+
+      if (successful > 0) {
+        toast({
+          title: 'Success',
+          description: `Deleted ${successful} event${successful > 1 ? 's' : ''} successfully${failed > 0 ? ` (${failed} failed)` : ''}`,
+        });
+      }
+
+      if (failed > 0 && successful === 0) {
+        toast({
+          title: 'Error',
+          description: 'Failed to delete selected events',
+          variant: 'destructive'
+        });
+      }
+
+      setSelectedEventIds(new Set());
+      onEventUpdate();
+      setIsBulkDeleteDialogOpen(false);
+    } catch (error) {
+      console.error('Error during bulk delete:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete events. Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const exportEvents = async () => {
     try {
       // Export state-level events (no zone filter)
@@ -305,97 +389,145 @@ export function StateEventManagement({
     }
   };
 
-  const EventTable = ({ events }: { events: Event[] }) => (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Event Details</TableHead>
-          <TableHead>Date</TableHead>
-          <TableHead>Coordinator</TableHead>
-          <TableHead className="text-right">Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {events.length === 0 ? (
-          <TableRow>
-            <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-              No state events found
-            </TableCell>
-          </TableRow>
-        ) : (
-          events.map(event => (
-            <TableRow key={event.id}>
-              <TableCell>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <div className="font-medium">{event.name}</div>
-                    {event.source === 'public_holiday' && (
-                      <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
-                        Public Holiday
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {getEventTypeName(event.eventTypeId)}
-                  </div>
-                  {event.location && (
-                    <div className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
-                      <MapPin className="h-3 w-3" />
-                      {event.location}
-                    </div>
-                  )}
-                  {event.description && (
-                    <div className="text-sm text-muted-foreground mt-1">
-                      {event.description}
-                    </div>
-                  )}
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  {formatDate(event.date)}
-                </div>
-              </TableCell>
-              <TableCell>
-                {event.coordinatorName ? (
-                  <div>
-                    <div className="font-medium">{event.coordinatorName}</div>
-                    {event.coordinatorContact && (
-                      <div className="text-sm text-muted-foreground">{event.coordinatorContact}</div>
-                    )}
-                  </div>
-                ) : (
-                  <span className="text-muted-foreground text-sm">—</span>
-                )}
-              </TableCell>
-              <TableCell className="text-right">
-                <div className="flex justify-end gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleEditEvent(event)}
-                  >
-                    <Edit3 className="h-4 w-4 mr-1" />
-                    Edit
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="text-red-600 border-red-600 hover:bg-red-50"
-                    onClick={() => handleDeleteEvent(event)}
-                  >
-                    <Trash2 className="h-4 w-4 mr-1" />
-                    Delete
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))
+  const EventTable = ({ events }: { events: Event[] }) => {
+    const allSelected = events.length > 0 && events.every(e => selectedEventIds.has(e.id));
+    const someSelected = events.some(e => selectedEventIds.has(e.id)) && !allSelected;
+    
+    return (
+      <div className="space-y-3">
+        {/* Bulk Actions Bar */}
+        {selectedEventIds.size > 0 && (
+          <div className="flex items-center justify-between bg-muted p-3 rounded-lg">
+            <span className="text-sm font-medium">
+              {selectedEventIds.size} event{selectedEventIds.size > 1 ? 's' : ''} selected
+            </span>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setSelectedEventIds(new Set())}
+              >
+                Clear Selection
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={handleBulkDelete}
+              >
+                <Trash2 className="h-4 w-4 mr-1" />
+                Delete Selected ({selectedEventIds.size})
+              </Button>
+            </div>
+          </div>
         )}
-      </TableBody>
-    </Table>
-  );
+
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-12">
+                <Checkbox
+                  checked={allSelected}
+                  onCheckedChange={handleSelectAll}
+                  aria-label="Select all events"
+                  className={someSelected ? "data-[state=checked]:bg-primary/50" : ""}
+                />
+              </TableHead>
+              <TableHead>Event Details</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead>Coordinator</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {events.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                  No state events found
+                </TableCell>
+              </TableRow>
+            ) : (
+              events.map(event => (
+                <TableRow key={event.id}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedEventIds.has(event.id)}
+                      onCheckedChange={(checked) => handleSelectEvent(event.id, !!checked)}
+                      aria-label={`Select ${event.name}`}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <div className="font-medium">{event.name}</div>
+                        {event.source === 'public_holiday' && (
+                          <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                            Public Holiday
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {getEventTypeName(event.eventTypeId)}
+                      </div>
+                      {event.location && (
+                        <div className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          {event.location}
+                        </div>
+                      )}
+                      {event.description && (
+                        <div className="text-sm text-muted-foreground mt-1">
+                          {event.description}
+                        </div>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      {formatDate(event.date)}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {event.coordinatorName ? (
+                      <div>
+                        <div className="font-medium">{event.coordinatorName}</div>
+                        {event.coordinatorContact && (
+                          <div className="text-sm text-muted-foreground">{event.coordinatorContact}</div>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleEditEvent(event)}
+                      >
+                        <Edit3 className="h-4 w-4 mr-1" />
+                        Edit
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-red-600 border-red-600 hover:bg-red-50"
+                        onClick={() => handleDeleteEvent(event)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Delete
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -803,6 +935,49 @@ export function StateEventManagement({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <AlertDialog open={isBulkDeleteDialogOpen} onOpenChange={setIsBulkDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Trash2 className="h-5 w-5 text-red-600" />
+              Delete Multiple Events
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete {selectedEventIds.size} event{selectedEventIds.size > 1 ? 's' : ''}? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="max-h-60 overflow-y-auto space-y-2 p-4 bg-muted rounded-lg">
+            {Array.from(selectedEventIds).slice(0, 10).map(eventId => {
+              const event = events.find(e => e.id === eventId);
+              return event ? (
+                <div key={eventId} className="text-sm">
+                  <span className="font-medium">{event.name}</span>
+                  <span className="text-muted-foreground"> • {formatDate(event.date)}</span>
+                </div>
+              ) : null;
+            })}
+            {selectedEventIds.size > 10 && (
+              <div className="text-sm text-muted-foreground italic">
+                ...and {selectedEventIds.size - 10} more
+              </div>
+            )}
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isSubmitting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmBulkDelete}
+              disabled={isSubmitting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isSubmitting ? 'Deleting...' : `Delete ${selectedEventIds.size} Event${selectedEventIds.size > 1 ? 's' : ''}`}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

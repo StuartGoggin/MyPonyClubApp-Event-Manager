@@ -562,6 +562,7 @@ function generateZoneFormatPDF(options: CalendarPDFOptions): Buffer {
       'State Event': { bg: [245, 158, 11] as const, text: [255, 255, 255] as const }, // Amber
       'Zone Certificate': { bg: [139, 92, 246] as const, text: [255, 255, 255] as const }, // Purple
       'Public Holiday': { bg: [34, 197, 94] as const, text: [255, 255, 255] as const }, // Green (was Red)
+      'EV': { bg: [168, 85, 247] as const, text: [255, 255, 255] as const, fullName: 'Equestrian Victoria' }, // Purple for EV
     };
 
     // Draw legend in RIGHT COLUMN (vertical layout)
@@ -577,24 +578,27 @@ function generateZoneFormatPDF(options: CalendarPDFOptions): Buffer {
     const badgeSpacing = 2;
 
     legendItems.forEach(([label, colorScheme], index) => {
+      // Use fullName if available (for EV), otherwise use the label
+      const displayLabel = 'fullName' in colorScheme ? colorScheme.fullName : label;
+      
       // Calculate badge dimensions
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(7);
       const textWidth = doc.getTextWidth(label);
       const badgeWidth = textWidth + 4; // Padding
 
-      // Draw label text
+      // Draw label text (full name like "Equestrian Victoria")
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7);
       doc.setTextColor(...colors.text);
-      doc.text(label, rightColumnX, legendY);
+      doc.text(displayLabel, rightColumnX, legendY);
 
       // Draw rounded rectangle badge next to label
       const badgeX = rightColumnX + 30; // Fixed position for alignment
       doc.setFillColor(colorScheme.bg[0], colorScheme.bg[1], colorScheme.bg[2]);
       doc.roundedRect(badgeX, legendY - 3.5, badgeWidth, badgeHeight, 1, 1, 'F');
 
-      // Draw badge text
+      // Draw badge text (short label like "EV")
       doc.setTextColor(colorScheme.text[0], colorScheme.text[1], colorScheme.text[2]);
       doc.text(label, badgeX + 2, legendY);
 
@@ -811,6 +815,11 @@ function generateZoneFormatPDF(options: CalendarPDFOptions): Buffer {
           if (eventStatus === 'proposed' || eventStatus === 'pending') {
             eventTypeBadge = 'Pending Approval';
             badgeColor = eventTypeColors['Pending Approval'];
+          }
+          // Check if it's an EV event (Equestrian Victoria scraped events)
+          else if (eventSource === 'ev_scraper' || eventSource === 'equestrian_victoria' || eventStatus === 'ev_event') {
+            eventTypeBadge = 'EV';
+            badgeColor = eventTypeColors['EV'];
           }
           // Check if it's a state event (by source field or club name)
           else if (eventSource === 'state' || clubName === 'State Event') {

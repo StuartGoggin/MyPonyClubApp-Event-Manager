@@ -269,6 +269,7 @@ export let eventTypesMock: EventType[] = [
   { id: '5', name: 'Mounted Games' },
   { id: '6', name: 'Certificate Assessment' },
   { id: 'ph', name: 'Public Holiday'},
+  { id: 'ev_event', name: 'EV Event'},
 ];
 
 interface PublicHoliday {

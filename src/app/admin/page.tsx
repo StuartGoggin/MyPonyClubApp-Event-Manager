@@ -13,6 +13,7 @@ import { BackupScheduleTile } from '@/components/admin/backup-schedule-tile';
 import { BackupHistoryTile } from '@/components/admin/backup-history-tile';
 import { DashboardStatsCards } from '@/components/admin/dashboard-stats-cards';
 import { PublicHolidaySyncTile } from '@/components/admin/public-holiday-sync-tile';
+import { EvEventsSyncTile } from '@/components/admin/ev-events-sync-tile';
 
 // Force dynamic rendering to ensure fresh data
 export const dynamic = 'force-dynamic';
@@ -359,6 +360,9 @@ async function AdminDashboardContent() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* Public Holiday Sync */}
           <PublicHolidaySyncTile />
+          
+          {/* EV Events Sync */}
+          <EvEventsSyncTile />
         </div>
       </div>
 

@@ -11,7 +11,8 @@ import { useAuth } from '@/contexts/auth-context';
 import { useRouter } from 'next/navigation';
 import { EventCalendar } from '@/components/dashboard/event-calendar';
 import { Badge } from '@/components/ui/badge';
-import { WebScraperSection } from '@/components/ev-manager/web-scraper-section';
+import { EvEventsSyncTile } from '@/components/admin/ev-events-sync-tile';
+import { EVEventsManagement } from '@/components/ev-manager/ev-events-management';
 
 function EVManagerContent() {
   const { user } = useAuth();
@@ -61,9 +62,9 @@ function EVManagerContent() {
     }
   };
 
-  // Filter for Equestrian Victoria events
+  // Filter for Equestrian Victoria events (both legacy and new scraped events)
   const evEvents = Array.isArray(events) ? events.filter(event => 
-    event.source === 'equestrian_victoria'
+    event.source === 'equestrian_victoria' || event.source === 'ev_scraper'
   ) : [];
   
   console.log('🏇 EV Manager - EV events filtered:', evEvents.length, evEvents);
@@ -229,8 +230,11 @@ function EVManagerContent() {
           </CardContent>
         </Card>
 
-        {/* Web Scraper Section */}
-        <WebScraperSection />
+        {/* EV Events Sync Configuration */}
+        <EvEventsSyncTile />
+
+        {/* Event Management Section */}
+        <EVEventsManagement onEventsUpdate={fetchData} />
       </div>
     </div>
   );

@@ -6,12 +6,9 @@ import { useState, useEffect } from 'react';
 import { AppHeader } from '@/components/layout/app-header';
 import { useAuth } from '@/contexts/auth-context';
 import Link from 'next/link';
-import { Calendar, PlusCircle, Database, FerrisWheel, Shield, Settings, MapPin, Building, ChevronLeft, ChevronRight, Menu, X, Trophy } from 'lucide-react';
+import { Calendar, PlusCircle, FerrisWheel, Shield, Settings, MapPin, Building, ChevronLeft, ChevronRight, Menu, X, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { useAtom } from 'jotai';
-import { eventSourceAtom, type EventSource } from '@/lib/state';
 import { NavigationItem, filterNavigationByRole, UserRole } from '@/lib/access-control';
 
 export function AppLayout({ children }: PropsWithChildren) {
@@ -21,7 +18,6 @@ export function AppLayout({ children }: PropsWithChildren) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isClient, setIsClient] = useState(false);
-  const [eventSources, setEventSources] = useAtom(eventSourceAtom);
   const { user, isAuthenticated } = useAuth();
 
   // Hydration-safe client detection
@@ -128,18 +124,6 @@ export function AppLayout({ children }: PropsWithChildren) {
     return <>{children}</>;
   }
 
-  const handleSourceChange = (source: EventSource, checked: boolean) => {
-    setEventSources(prev => {
-      const newSources = new Set(prev);
-      if (checked) {
-        newSources.add(source);
-      } else {
-        newSources.delete(source);
-      }
-      return Array.from(newSources);
-    });
-  };
-
   return (
     <div className="min-h-screen bg-background">
       {/* Beautiful full-width header */}
@@ -209,46 +193,9 @@ export function AppLayout({ children }: PropsWithChildren) {
               ))}
             </div>
             
-            {/* Separator */}
-            <div className="border-t border-border/40 my-4"></div>
-            
-            {/* Event Sources */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-muted-foreground font-medium">
-                <Database className="text-primary h-4 w-4" />
-                <span className="text-sm">Event Sources</span>
-              </div>
-              <div className="space-y-3 pl-2">
-                  <div className="flex items-center space-x-2 opacity-50 cursor-not-allowed">
-                    <Checkbox 
-                      id="pca" 
-                      disabled
-                      checked={false} 
-                    />
-                    <Label htmlFor="pca" className="text-sm font-medium leading-none text-muted-foreground cursor-not-allowed">PCA Event Calendar (Coming Soon)</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="zone" 
-                      onCheckedChange={(checked) => handleSourceChange('zone', !!checked)} 
-                      checked={eventSources.includes('zone')} 
-                    />
-                    <Label htmlFor="zone" className="text-sm font-medium leading-none">Zone Calendars</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="public_holiday" 
-                      onCheckedChange={(checked) => handleSourceChange('public_holiday', !!checked)} 
-                      checked={eventSources.includes('public_holiday')} 
-                    />
-                    <Label htmlFor="public_holiday" className="text-sm font-medium leading-none flex items-center gap-1.5">
-                      <FerrisWheel className="h-3.5 w-3.5" /> Public Holidays
-                    </Label>
-                  </div>
-                </div>
-              </div>
-            </div>
+            {/* Separator removed - Event Sources moved to calendar filter */}
           </div>
+        </div>
         
         {/* Main Content Area - now takes full width with sidebar hovering */}
         <div className="flex-1 flex flex-col w-full">

@@ -197,8 +197,8 @@ export interface EventType {
   name: string;
 }
 
-export type EventStatus = 'proposed' | 'approved' | 'rejected' | 'public_holiday';
-export type EventSource = 'pca' | 'zone' | 'state' | 'equestrian_victoria' | 'public_holiday';
+export type EventStatus = 'proposed' | 'approved' | 'rejected' | 'public_holiday' | 'ev_event';
+export type EventSource = 'pca' | 'zone' | 'state' | 'equestrian_victoria' | 'public_holiday' | 'ev_scraper';
 export type EventScheduleStatus = 'missing' | 'pending' | 'approved' | 'rejected';
 
 export interface AIReviewIssue {
@@ -361,6 +361,8 @@ export interface Event {
 
   description?: string;
   eventLink?: string;      // URL link to event details/registration
+  discipline?: string;     // For EV events: dressage, jumping, eventing, etc.
+  tier?: string;          // For EV events: State, National, etc.
   // New fields from form
   coordinatorName?: string;
   coordinatorContact?: string;

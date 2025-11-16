@@ -21,8 +21,10 @@ import {
   addDays,
   getDaysInMonth,
 } from 'date-fns';
-import { ChevronLeft, ChevronRight, ChevronDown, CheckCircle, Clock, Pin, Route, FerrisWheel, AlertCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, CheckCircle, Clock, Pin, Route, FerrisWheel, AlertCircle, Database } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { type Event, type Club, type EventType, type Zone } from '@/lib/types';
 import { EventDialog } from './event-dialog';
@@ -78,7 +80,7 @@ export function EventCalendar({
   const [view, setView] = useState<'month' | 'year'>('month');
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [isDialogOpen, setDialogOpen] = useState(false);
-  const [eventSources] = useAtom(eventSourceAtom);
+  const [eventSources, setEventSources] = useAtom(eventSourceAtom);
   const [filterMode, setFilterMode] = useState<'location' | 'distance'>('location');
   // PDF export state - default to year scope and next year
   const nextYear = currentYear + 1;
@@ -324,7 +326,10 @@ export function EventCalendar({
 
   const selectedEvent = events.find(e => e.id === selectedEventId);
   const selectedClub = clubs.find(c => c.id === selectedEvent?.clubId);
-  const selectedZone = zones.find(z => z.id === selectedClub?.zoneId);
+  // For zone events or EV events, look up zone directly from event.zoneId
+  const selectedZone = selectedEvent?.zoneId 
+    ? zones.find(z => z.id === selectedEvent.zoneId)
+    : zones.find(z => z.id === selectedClub?.zoneId);
   const selectedEventType = eventTypes.find(et => et.id === selectedEvent?.eventTypeId);
 
   const getNearbyEvents = (event: Event) => {
@@ -729,6 +734,69 @@ export function EventCalendar({
                 </div>
               </>
             )}
+
+            {/* Event Source Filter */}
+            {!bypassSourceFiltering && (
+              <>
+                <div className="hidden sm:block w-px h-6 bg-border/40 mx-1"></div>
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
+                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                    <Database className="h-4 w-4" />
+                    <span className="hidden sm:inline">Event Sources:</span>
+                  </div>
+                  <div className="flex flex-wrap gap-x-4 gap-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="source-zone" 
+                        checked={eventSources.includes('zone')}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setEventSources([...eventSources, 'zone']);
+                          } else {
+                            setEventSources(eventSources.filter(s => s !== 'zone'));
+                          }
+                        }}
+                      />
+                      <Label htmlFor="source-zone" className="text-sm font-medium cursor-pointer">
+                        Zone
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="source-ev" 
+                        checked={eventSources.includes('ev_scraper')}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setEventSources([...eventSources, 'ev_scraper']);
+                          } else {
+                            setEventSources(eventSources.filter(s => s !== 'ev_scraper'));
+                          }
+                        }}
+                      />
+                      <Label htmlFor="source-ev" className="text-sm font-medium cursor-pointer">
+                        EV Events
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="source-holiday" 
+                        checked={eventSources.includes('public_holiday')}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setEventSources([...eventSources, 'public_holiday']);
+                          } else {
+                            setEventSources(eventSources.filter(s => s !== 'public_holiday'));
+                          }
+                        }}
+                      />
+                      <Label htmlFor="source-holiday" className="text-sm font-medium cursor-pointer flex items-center gap-1.5">
+                        <FerrisWheel className="h-3.5 w-3.5" /> Holidays
+                      </Label>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
       </div>
     </div>
       
@@ -843,8 +911,8 @@ const CalendarGrid = ({
     // Don't show logo for public holidays
     if (event.source === 'public_holiday') return null;
     
-    // For Equestrian Victoria events, use EV logo
-    if (event.source === 'equestrian_victoria') {
+    // For Equestrian Victoria events (both legacy and scraped), use EV logo
+    if (event.source === 'equestrian_victoria' || event.source === 'ev_scraper') {
       return evLogo || (event.clubId ? getClubLogo(event.clubId) : null);
     }
     
@@ -954,12 +1022,15 @@ const CalendarGrid = ({
                                 "rounded-lg sm:rounded-xl shadow-sm border p-1 sm:p-2 text-left transition hover:ring-2 hover:ring-primary inline-block max-w-full",
                                 // Zone events get distinctive brighter background
                                 event.zoneId && !event.clubId ? "bg-gradient-to-br from-blue-100 to-indigo-100 hover:from-blue-200 hover:to-indigo-200 border-blue-300" :
+                                // EV events get purple background
+                                event.status === 'ev_event' ? "bg-gradient-to-br from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-150 border-purple-300" :
                                 // Only apply bg-white for non-public holidays and non-zone events
                                 !(event.status === 'public_holiday' || event.source === 'public_holiday') && "bg-white",
                                 event.status === 'approved' ? 'event-approved' :
                                 event.status === 'proposed' ? 'event-proposed' :
                                 (event.status === 'public_holiday' || event.source === 'public_holiday') ? 'event-holiday' :
                                 event.status === 'rejected' ? 'event-rejected' :
+                                event.status === 'ev_event' ? 'event-default' :
                                 'event-default',
                                 isYearView ? "text-xs" : "text-sm"
                               )}
@@ -973,6 +1044,7 @@ const CalendarGrid = ({
                                      event.status === 'proposed' ? <AlertCircle className={cn("h-2.5 w-2.5 sm:h-3 sm:w-3 text-amber-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
                                      (event.status === 'public_holiday' || event.source === 'public_holiday') ? <FerrisWheel className={cn("h-2.5 w-2.5 sm:h-3 sm:w-3 text-white flex-shrink-0", { "h-2 w-2": isYearView })}/> :
                                      event.status === 'rejected' ? <Clock className={cn("h-2.5 w-2.5 sm:h-3 sm:w-3 text-red-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
+                                     event.status === 'ev_event' ? <CheckCircle className={cn("h-2.5 w-2.5 sm:h-3 sm:w-3 text-purple-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
                                      <Clock className={cn("h-2.5 w-2.5 sm:h-3 sm:w-3 text-accent flex-shrink-0", { "h-2 w-2": isYearView })}/>}
                                   </div>
                                   <div className="flex-1 min-w-0 space-y-0.5">
@@ -982,6 +1054,7 @@ const CalendarGrid = ({
                                       event.status === 'proposed' ? 'text-amber-800' :
                                       (event.status === 'public_holiday' || event.source === 'public_holiday') ? 'text-white font-bold' :
                                       event.status === 'rejected' ? 'text-red-700' :
+                                      event.status === 'ev_event' ? 'text-purple-700' :
                                       'text-accent'
                                     )}>{event.name}</div>
                                     {event.source !== 'public_holiday' && (
@@ -1013,6 +1086,13 @@ const CalendarGrid = ({
                                           isYearView ? "px-1 py-0.5 text-[7px]" : "px-1.5 py-0.5 text-[8px]"
                                         )}>
                                           Rejected
+                                        </span>
+                                      )}
+                                      {event.status === 'ev_event' && (
+                                        <span className={cn("inline-flex items-center rounded-full font-medium bg-purple-100 text-purple-700 border border-purple-200",
+                                          isYearView ? "px-1 py-0.5 text-[7px]" : "px-1 sm:px-1.5 py-0.5 text-[7px] sm:text-[8px]"
+                                        )}>
+                                          EV Event
                                         </span>
                                       )}
                                     </div>

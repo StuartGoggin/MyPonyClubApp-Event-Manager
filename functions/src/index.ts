@@ -10,3 +10,4 @@ export { runBackupsFixed, triggerBackupFixed } from './backup-fixed';
 export { testSimple } from './test-simple';
 export { runBackupsSimple, triggerBackupSimple } from './backup-simple';
 export { scrapeEquestrianEvents } from './scrape-ev-events';
+export { runEvEventsSync } from './ev-sync-runner';

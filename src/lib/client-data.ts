@@ -46,5 +46,7 @@ export const eventTypesMock: EventType[] = [
     { id: 'championships', name: 'Championships' },
     { id: 'clinic', name: 'Clinic' },
     { id: 'training', name: 'Training Day' },
-    { id: 'fundraising', name: 'Fund Raising Event' }
+    { id: 'fundraising', name: 'Fund Raising Event' },
+    { id: 'ph', name: 'Public Holiday'},
+    { id: 'ev_event', name: 'EV Event'}
 ];

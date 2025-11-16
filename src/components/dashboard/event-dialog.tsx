@@ -65,11 +65,12 @@ export function EventDialog({
   if (!event || !eventType) return null;
   
   // Only require club for club-level events
-  // State, Zone, and Equestrian Victoria events don't need a club
+  // State, Zone, Equestrian Victoria, and EV Scraper events don't need a club
   const requiresClub = event.source !== 'public_holiday' && 
                        event.source !== 'state' && 
                        event.source !== 'zone' && 
-                       event.source !== 'equestrian_victoria';
+                       event.source !== 'equestrian_victoria' &&
+                       event.source !== 'ev_scraper';
   
   if (requiresClub && !club) return null;
 
@@ -139,6 +140,13 @@ export function EventDialog({
           <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200">
             <FerrisWheel className="mr-1 h-3 w-3" />
             Public Holiday
+          </Badge>
+        );
+      case 'ev_event':
+        return (
+          <Badge variant="secondary" className="bg-purple-100 text-purple-800 border-purple-200">
+            <CheckCircle className="mr-1 h-3 w-3" />
+            EV Event
           </Badge>
         );
       default:

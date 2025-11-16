@@ -230,19 +230,26 @@ export async function getAllEvents(): Promise<Event[]> {
         }
         
         // Assign source based on event properties
-        let source: 'pca' | 'zone' | 'state' | 'public_holiday' = 'zone';
-        if (data.source === 'public_holiday' || data.status === 'public_holiday') {
-          // Public holiday - use the source from the data
-          source = 'public_holiday';
-        } else if (!data.clubId && !data.zoneId) {
-          // No club or zone - this is a state event
-          source = 'state';
-        } else if (data.zoneId && !data.clubId) {
-          // Has zone but no club - this is a zone event
-          source = 'zone';
-        } else if (data.clubId) {
-          // Has club - this is from PCA (club event)
-          source = 'pca';
+        // Check if source is already set in Firestore (for ev_scraper, equestrian_victoria, etc.)
+        let source = data.source;
+        
+        // If no source is set, infer it from event properties
+        if (!source) {
+          if (data.status === 'public_holiday') {
+            source = 'public_holiday';
+          } else if (!data.clubId && !data.zoneId) {
+            // No club or zone - this is a state event
+            source = 'state';
+          } else if (data.zoneId && !data.clubId) {
+            // Has zone but no club - this is a zone event
+            source = 'zone';
+          } else if (data.clubId) {
+            // Has club - this is from PCA (club event)
+            source = 'pca';
+          } else {
+            // Fallback
+            source = 'zone';
+          }
         }
         
         events.push({ id: doc.id, ...data, source } as Event);

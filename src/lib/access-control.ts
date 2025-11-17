@@ -14,17 +14,17 @@ export interface NavigationItem {
 /**
  * Helper to get user roles as array, supporting both legacy single role and new multi-role
  */
-export function getUserRoles(user: { role?: UserRole; roles?: UserRole[] } | undefined | null): UserRole[] {
+export function getUserRoles(user: { role?: string | UserRole; roles?: UserRole[] | string[] } | undefined | null): UserRole[] {
   if (!user) return [];
   
   // Prefer roles array if it exists and has values
   if (user.roles && user.roles.length > 0) {
-    return user.roles;
+    return user.roles as UserRole[];
   }
   
   // Fall back to single role
   if (user.role) {
-    return [user.role];
+    return [user.role as UserRole];
   }
   
   return [];
@@ -65,7 +65,7 @@ export function hasAccess(userRole: UserRole | UserRole[] | undefined, requiredR
 /**
  * Check if user has a specific role
  */
-export function hasRole(user: { role?: UserRole; roles?: UserRole[] } | undefined | null, roleToCheck: UserRole): boolean {
+export function hasRole(user: { role?: string | UserRole; roles?: UserRole[] | string[] } | undefined | null, roleToCheck: UserRole): boolean {
   const userRoles = getUserRoles(user);
   return userRoles.includes(roleToCheck);
 }

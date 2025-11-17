@@ -137,7 +137,7 @@ export function AppLayout({ children }: PropsWithChildren) {
   ];
 
   // Flatten and filter navigation items based on user role and authentication status
-  const userRoles = getUserRoles(user as any);
+  const userRoles = getUserRoles(user);
   const visibleNavigationGroups = navigationGroups.map(group => ({
     ...group,
     items: filterNavigationByRole(group.items, userRoles, isAuthenticated)

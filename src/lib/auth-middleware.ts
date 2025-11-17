@@ -19,6 +19,7 @@ async function getCurrentUser(request: NextRequest): Promise<User | null> {
       ponyClubId: 'ADMIN001',
       mobileNumber: '+61400000000',
       role: 'super_user',
+      roles: ['super_user'],
       clubId: 'admin-club',
       zoneId: 'admin-zone',
       firstName: 'Admin',

@@ -143,6 +143,7 @@ export class UserService {
         clubId: userData.clubId || "",
         zoneId: userData.zoneId || "",
         role: userData.role || "standard",
+        roles: userData.roles || [userData.role || "standard"],
         isActive: userData.isActive !== undefined ? userData.isActive : true,
         address: userData.address || "",
         emergencyContact: userData.emergencyContact || "",

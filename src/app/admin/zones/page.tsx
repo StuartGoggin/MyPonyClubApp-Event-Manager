@@ -7,6 +7,9 @@ import { getAllZones, getAllClubs } from '@/lib/server-data';
 import ZoneManagementClient from '@/components/admin/zone-management-client';
 import type { Zone, Club } from '@/lib/types';
 
+// Force dynamic rendering for this admin page
+export const dynamic = 'force-dynamic';
+
 async function ZonesContent() {
   const zonesData = await getAllZones();
   const clubsData = await getAllClubs();

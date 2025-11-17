@@ -21,6 +21,13 @@ const nextConfig = {
     NEXT_PUBLIC_FIREBASE_PROJECT_ID: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
   },
   
+  // Suppress build warnings for expected dynamic server usage in API routes
+  logging: {
+    fetches: {
+      fullUrl: false,
+    },
+  },
+  
   // Webpack configuration
   webpack: (config, { isServer }) => {
     config.experiments = {

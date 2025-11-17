@@ -117,7 +117,7 @@ async function geocodeLocation(location: string): Promise<{ latitude: number; lo
 async function extractEventDetails(eventUrl: string, eventName: string): Promise<{ discipline: string | null, location: string, latitude?: number, longitude?: number, tier: string | null, description: string | null }> {
   try {
     logger.debug(`Fetching event details from: ${eventUrl}`);
-    const response = await axios.get(eventUrl, { timeout: 10000 });
+    const response = await axios.get(eventUrl, { timeout: 20000 }); // Increased timeout to 20s for slow pages
     logger.debug(`Successfully fetched event page for: ${eventName}`);
     
     const $ = cheerio.load(response.data);
@@ -222,7 +222,7 @@ async function extractEventDetails(eventUrl: string, eventName: string): Promise
     return { discipline, location, latitude, longitude, tier, description };
   } catch (error) {
     logger.error(`Failed to extract details from ${eventUrl}`, error);
-    return { discipline: null, location: 'Victoria', tier: null, description: null };
+    return { discipline: null, location: 'Victoria', latitude: undefined, longitude: undefined, tier: null, description: null };
   }
 }
 

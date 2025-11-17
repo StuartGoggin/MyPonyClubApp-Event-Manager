@@ -18,7 +18,7 @@ if ($Search) {
         --limit=$Lines `
         --project=ponyclub-events `
         --region=asia-east1 `
-        --format=`"value(timestamp,severity,log)`" | 
+        --format='value(timestamp,severity,log)' | 
         Select-String -Pattern $Search -Context 0 |
         ForEach-Object {
             $line = $_.Line
@@ -37,7 +37,7 @@ if ($Search) {
         --limit=$Lines `
         --project=ponyclub-events `
         --region=asia-east1 `
-        --format=`"value(timestamp,severity,log)`" |
+        --format='value(timestamp,severity,log)' |
         ForEach-Object {
             if ($_ -match 'ERROR|WARN') {
                 Write-Host $_ -ForegroundColor Red

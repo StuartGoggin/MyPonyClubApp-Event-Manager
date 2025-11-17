@@ -21,7 +21,7 @@ while ($true) {
         --limit=50 `
         --project=ponycloud-events `
         --region=asia-east1 `
-        --format=`"table(timestamp,severity,log)`" 2>$null
+        --format='table(timestamp,severity,log)' 2>$null
     
     if ($logs) {
         # Parse and display new logs

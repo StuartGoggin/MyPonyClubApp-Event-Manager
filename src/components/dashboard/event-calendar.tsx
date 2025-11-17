@@ -362,32 +362,32 @@ export function EventCalendar({
 
   return (
     <div className="enhanced-card rounded-lg border shadow-lg glass-effect">
-      <div className="flex flex-col gap-4 p-4 border-b border-border/50">
+      <div className="flex flex-col gap-4 p-3 sm:p-4 border-b border-border/50">
         {/* PDF Export Controls - Collapsible Section */}
         <div className="w-full">
           {/* Collapsible Header */}
           <div 
-            className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50 dark:from-blue-950/30 dark:via-purple-950/30 dark:to-pink-950/30 rounded-lg border border-blue-200/60 dark:border-blue-800/60 shadow-sm cursor-pointer hover:shadow-md transition-all duration-200 group"
+            className="flex items-center justify-between p-2.5 sm:p-3 bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50 dark:from-blue-950/30 dark:via-purple-950/30 dark:to-pink-950/30 rounded-lg border border-blue-200/60 dark:border-blue-800/60 shadow-sm cursor-pointer hover:shadow-md transition-all duration-200 group"
             onClick={() => setIsPdfSectionVisible(!isPdfSectionVisible)}
           >
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg shadow-sm group-hover:scale-105 transition-transform">
-                <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <div className="p-1.5 sm:p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg shadow-sm group-hover:scale-105 transition-transform flex-shrink-0">
+                <svg className="h-4 w-4 sm:h-5 sm:w-5 text-white" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 2C11.4477 2 11 2.44772 11 3V13.5858L7.70711 10.2929C7.31658 9.90237 6.68342 9.90237 6.29289 10.2929C5.90237 10.6834 5.90237 11.3166 6.29289 11.7071L11.2929 16.7071C11.6834 17.0976 12.3166 17.0976 12.7071 16.7071L17.7071 11.7071C18.0976 11.3166 18.0976 10.6834 17.7071 10.2929C17.3166 9.90237 16.6834 9.90237 16.2929 10.2929L13 13.5858V3C13 2.44772 12.5523 2 12 2Z"/>
                   <path d="M4 19C4 18.4477 4.44772 18 5 18H19C19.5523 18 20 18.4477 20 19C20 19.5523 19.5523 20 19 20H5C4.44772 20 4 19.5523 4 19Z"/>
                 </svg>
               </div>
-              <div>
-                <h3 className="text-sm font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
+              <div className="min-w-0 flex-1">
+                <h3 className="text-xs sm:text-sm font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent truncate">
                   Download Calendar PDF
                 </h3>
-                <p className="text-xs text-gray-600 dark:text-gray-400">
+                <p className="text-xs text-gray-600 dark:text-gray-400 hidden sm:block">
                   Customize and export your event calendar
                 </p>
               </div>
             </div>
             <ChevronDown 
-              className={`h-5 w-5 text-blue-600 dark:text-blue-400 transition-transform duration-300 group-hover:text-purple-600 dark:group-hover:text-purple-400 ${isPdfSectionVisible ? 'rotate-180' : ''}`}
+              className={`h-5 w-5 text-blue-600 dark:text-blue-400 transition-transform duration-300 group-hover:text-purple-600 dark:group-hover:text-purple-400 flex-shrink-0 ${isPdfSectionVisible ? 'rotate-180' : ''}`}
             />
           </div>
       
@@ -694,28 +694,28 @@ export function EventCalendar({
       </div>
     
     {/* Enhanced Navigation and Filter Section */}
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4 p-3 sm:p-0">
       {/* Top Row: Month/Year Navigation and View Toggle */}
-      <div className="flex flex-wrap items-center gap-4">
-        <div className="flex items-center gap-3 p-1.5 bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900 rounded-xl border border-border/40 shadow-md">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3 sm:gap-4">
+        <div className="flex items-center justify-between gap-2 sm:gap-3 p-1.5 bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900 rounded-xl border border-border/40 shadow-md">
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={prev} 
-            className="h-8 w-8 rounded-lg text-muted-foreground hover:bg-slate-200/50 dark:hover:bg-slate-700/50 hover:text-foreground transition-all duration-200"
+            className="h-9 w-9 sm:h-8 sm:w-8 rounded-lg text-muted-foreground hover:bg-slate-200/50 dark:hover:bg-slate-700/50 hover:text-foreground transition-all duration-200 flex-shrink-0"
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="h-5 w-5 sm:h-4 sm:w-4" />
           </Button>
-          <h2 className="text-lg sm:text-xl font-semibold font-headline bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent px-2 min-w-[140px] text-center">
+          <h2 className="text-base sm:text-lg md:text-xl font-semibold font-headline bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent px-1 sm:px-2 min-w-[120px] sm:min-w-[140px] text-center flex-1">
             {view === 'month' ? format(currentDate, 'MMMM yyyy') : format(currentDate, 'yyyy')}
           </h2>
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={next} 
-            className="h-8 w-8 rounded-lg text-muted-foreground hover:bg-slate-200/50 dark:hover:bg-slate-700/50 hover:text-foreground transition-all duration-200"
+            className="h-9 w-9 sm:h-8 sm:w-8 rounded-lg text-muted-foreground hover:bg-slate-200/50 dark:hover:bg-slate-700/50 hover:text-foreground transition-all duration-200 flex-shrink-0"
           >
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-5 w-5 sm:h-4 sm:w-4" />
           </Button>
         </div>
         
@@ -724,7 +724,7 @@ export function EventCalendar({
             variant="ghost"
             size="sm" 
             onClick={() => setView('month')}
-            className={`rounded-lg transition-all duration-200 ${
+            className={`rounded-lg transition-all duration-200 flex-1 sm:flex-none ${
               view === 'month' 
                 ? 'bg-gradient-to-r from-primary/90 to-accent/90 text-white shadow-lg border border-primary/40' 
                 : 'text-muted-foreground hover:bg-slate-200/50 dark:hover:bg-slate-700/50'
@@ -736,7 +736,7 @@ export function EventCalendar({
             variant="ghost"
             size="sm" 
             onClick={() => setView('year')}
-            className={`rounded-lg transition-all duration-200 ${
+            className={`rounded-lg transition-all duration-200 flex-1 sm:flex-none ${
               view === 'year' 
                 ? 'bg-gradient-to-r from-primary/90 to-accent/90 text-white shadow-lg border border-primary/40' 
                 : 'text-muted-foreground hover:bg-slate-200/50 dark:hover:bg-slate-700/50'
@@ -747,15 +747,15 @@ export function EventCalendar({
         </div>
       </div>
       
-      {/* Filter Section */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-2 p-3 sm:p-1.5 bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900 rounded-xl border border-border/40 shadow-md">
-            {/* Filter Mode Buttons */}
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-1">
+      {/* Filter Section - Single line on desktop with framed groups */}
+      <div className="flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-2 p-3 bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900 rounded-xl border border-border/40 shadow-md">
+            {/* Filter Mode Group - Framed */}
+            <div className="flex flex-col sm:flex-row gap-2 p-2 rounded-lg bg-white/40 dark:bg-slate-900/40 border border-slate-200/50 dark:border-slate-700/50">
               <Button 
                 variant={filterMode === 'location' ? 'secondary' : 'ghost'} 
                 size="sm" 
                 onClick={() => setFilterMode('location')}
-                className={`rounded-lg transition-all duration-200 py-2 sm:py-1.5 ${
+                className={`rounded-lg transition-all duration-200 justify-start sm:justify-center ${
                   filterMode === 'location' 
                     ? 'bg-gradient-to-r from-primary/90 to-accent/90 text-white shadow-lg border border-primary/40' 
                     : 'text-muted-foreground hover:bg-slate-200/50 dark:hover:bg-slate-700/50'
@@ -767,7 +767,7 @@ export function EventCalendar({
                 variant={filterMode === 'distance' ? 'secondary' : 'ghost'} 
                 size="sm" 
                 onClick={() => setFilterMode('distance')}
-                className={`rounded-lg transition-all duration-200 py-2 sm:py-1.5 ${
+                className={`rounded-lg transition-all duration-200 justify-start sm:justify-center ${
                   filterMode === 'distance' 
                     ? 'bg-gradient-to-r from-primary/90 to-accent/90 text-white shadow-lg border border-primary/40' 
                     : 'text-muted-foreground hover:bg-slate-200/50 dark:hover:bg-slate-700/50'
@@ -777,11 +777,9 @@ export function EventCalendar({
               </Button>
             </div>
             
-            {/* Filter Controls - Inline on desktop, stacked on mobile */}
+            {/* Filter Controls Group - Framed */}
             {filterMode === 'location' ? (
-              <>
-                <div className="hidden sm:block w-px h-6 bg-border/40 mx-1"></div>
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-2 w-full sm:w-auto">
+              <div className="flex flex-col sm:flex-row gap-2 p-2 rounded-lg bg-white/40 dark:bg-slate-900/40 border border-slate-200/50 dark:border-slate-700/50">
                   <Select value={selectedZoneId} onValueChange={handleZoneChange}>
                     <SelectTrigger className="w-full sm:w-[180px] h-10 sm:h-9 text-sm border-primary/30 bg-background/50 backdrop-blur-sm rounded-lg shadow-sm hover:shadow-md transition-all duration-300 hover:border-primary/50">
                       <SelectValue placeholder="Select Zone" />
@@ -805,11 +803,8 @@ export function EventCalendar({
                     </SelectContent>
                   </Select>
                 </div>
-              </>
             ) : (
-              <>
-                <div className="hidden sm:block w-px h-6 bg-border/40 mx-1"></div>
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-2 w-full sm:w-auto">
+              <div className="flex flex-col sm:flex-row gap-2 p-2 rounded-lg bg-white/40 dark:bg-slate-900/40 border border-slate-200/50 dark:border-slate-700/50">
                   <Select value={homeClubId ?? ''} onValueChange={(val) => setHomeClubId(val === 'none' ? null : val)}>
                     <SelectTrigger className="w-full sm:w-[200px] h-10 sm:h-9 text-sm border-primary/30 bg-background/50 backdrop-blur-sm rounded-lg shadow-sm hover:shadow-md transition-all duration-300 hover:border-primary/50">
                       <SelectValue placeholder="Select a home club" />
@@ -833,17 +828,14 @@ export function EventCalendar({
                     </SelectContent>
                   </Select>
                 </div>
-              </>
             )}
 
-            {/* Event Source Filter */}
+            {/* Event Source Filter Group - Framed */}
             {!bypassSourceFiltering && (
-              <>
-                <div className="hidden sm:block w-px h-6 bg-border/40 mx-1"></div>
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
-                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                    <Database className="h-4 w-4" />
-                    <span className="hidden sm:inline">Event Sources:</span>
+              <div className="flex flex-col lg:flex-row gap-2 p-2 rounded-lg bg-white/40 dark:bg-slate-900/40 border border-slate-200/50 dark:border-slate-700/50 lg:flex-1">
+                  <div className="flex items-center gap-2 text-xs sm:text-sm font-medium text-muted-foreground whitespace-nowrap">
+                    <Database className="h-4 w-4 flex-shrink-0" />
+                    <span>Event Sources:</span>
                   </div>
                   <div className="flex flex-wrap gap-x-4 gap-y-2">
                     <div className="flex items-center space-x-2">
@@ -896,7 +888,6 @@ export function EventCalendar({
                     </div>
                   </div>
                 </div>
-              </>
             )}
       </div>
     </div>

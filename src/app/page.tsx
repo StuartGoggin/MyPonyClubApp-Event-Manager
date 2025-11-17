@@ -82,13 +82,13 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="relative overflow-hidden rounded-2xl border border-border/40 bg-gradient-to-br from-background via-background/95 to-primary/5 shadow-2xl backdrop-blur-sm p-8">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-emerald-500/5"></div>
-          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-primary/10 to-transparent rounded-full blur-2xl"></div>
-          <div className="relative text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-6"></div>
-            <p className="text-muted-foreground text-lg">Loading event calendar...</p>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+        <div className="container mx-auto p-4 sm:p-6 lg:p-8">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <div className="h-12 w-12 animate-spin mx-auto mb-4 border-4 border-primary border-t-transparent rounded-full" />
+              <p className="text-muted-foreground">Loading event calendar...</p>
+            </div>
           </div>
         </div>
       </div>
@@ -97,18 +97,18 @@ export default function DashboardPage() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="relative overflow-hidden rounded-2xl border border-border/40 bg-gradient-to-br from-background via-background/95 to-red/5 shadow-2xl backdrop-blur-sm p-8">
-          <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 via-orange-500/5 to-red-500/5"></div>
-          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-red/10 to-transparent rounded-full blur-2xl"></div>
-          <div className="relative text-center">
-            <p className="text-red-500 mb-6 text-lg">{error}</p>
-            <button 
-              onClick={() => window.location.reload()} 
-              className="relative px-6 py-3 rounded-xl bg-gradient-to-r from-primary/20 to-accent/20 border border-primary/40 backdrop-blur-sm hover:from-primary/30 hover:to-accent/30 transition-all duration-300 hover:scale-105 hover:shadow-lg"
-            >
-              Retry
-            </button>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+        <div className="container mx-auto p-4 sm:p-6 lg:p-8">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <p className="text-red-600 mb-4">{error}</p>
+              <button 
+                onClick={() => window.location.reload()} 
+                className="px-6 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
+                Retry
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -116,70 +116,66 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Glass Header Panel */}
-      <div className="relative overflow-hidden rounded-2xl border border-border/40 bg-gradient-to-br from-background via-background/95 to-primary/5 shadow-2xl backdrop-blur-sm">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-emerald-500/5"></div>
-        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-primary/10 to-transparent rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-accent/10 to-transparent rounded-full blur-3xl"></div>
-        
-        <div className="relative p-6">
-          <div className="flex items-center gap-3 group">
-            {/* Logo with beautiful effects */}
-            <div className="relative flex-shrink-0">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent rounded-lg sm:rounded-xl opacity-30 blur-lg animate-pulse group-hover:opacity-50 transition-opacity duration-300"></div>
-              <div className="relative rounded-lg sm:rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/40 backdrop-blur-sm group-hover:border-primary/60 transition-all duration-300 group-hover:scale-105 overflow-hidden h-7 sm:h-8 md:h-9 w-14 sm:w-16 md:w-18">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+      <div className="container mx-auto p-4 sm:p-6 lg:p-8">
+        {/* Modern Header */}
+        <div className="mb-6 sm:mb-8 relative overflow-hidden rounded-xl sm:rounded-2xl bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 dark:from-blue-900 dark:via-purple-900 dark:to-indigo-900 p-4 sm:p-8 shadow-2xl">
+          <div className="absolute inset-0 bg-grid-white/10 [mask-image:linear-gradient(0deg,white,transparent)]" />
+          <div className="relative">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="p-1.5 sm:p-2 bg-white/20 backdrop-blur-sm rounded-lg sm:rounded-xl flex-shrink-0">
                 <Image
                   src="/myponyclub-logo-calendar-events.png"
-                  alt="MyPonyClub Event Calendar Logo"
-                  fill
-                  className="object-cover drop-shadow-lg transition-transform duration-300"
+                  alt="Event Calendar Logo"
+                  width={48}
+                  height={48}
+                  className="drop-shadow-lg sm:w-16 sm:h-16"
                   priority
                 />
               </div>
-            </div>
-            
-            {/* Title matching main app style */}
-            <h1 className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-primary via-purple-600 to-accent bg-clip-text text-transparent">
-              MyPonyClub - Event Calendar
-            </h1>
-          </div>
-        </div>
-      </div>
-      
-      {databaseWarning && (
-        <div className="relative overflow-hidden rounded-2xl border border-amber-200/50 bg-gradient-to-br from-amber-50/80 via-amber-50/60 to-orange-50/40 dark:from-amber-950/40 dark:via-amber-950/30 dark:to-orange-950/20 shadow-xl backdrop-blur-sm">
-          <div className="absolute inset-0 bg-gradient-to-r from-amber-400/5 to-orange-400/5"></div>
-          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-amber-400/10 to-transparent rounded-full blur-2xl"></div>
-          
-          <div className="relative p-4 border-l-4 border-amber-500">
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 rounded-xl bg-amber-100 dark:bg-amber-900/50 p-2 border border-amber-200 dark:border-amber-700">
-                <svg className="h-5 w-5 text-amber-600 dark:text-amber-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.19-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-amber-800 dark:text-amber-200 uppercase tracking-wide">
-                  Database Connection Warning
-                </h3>
-                <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
-                  {databaseWarning}
+              <div className="min-w-0 flex-1">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white truncate">
+                  Event Calendar
+                </h1>
+                <p className="text-blue-100 mt-0.5 sm:mt-1 text-xs sm:text-sm">
+                  Manage your clubs events
                 </p>
               </div>
             </div>
           </div>
         </div>
-      )}
-      
-      <EventCalendar 
-        events={events} 
-        clubs={clubs} 
-        eventTypes={eventTypes} 
-        zones={zones} 
-        today={new Date()}
-        currentUser={user} 
-      />
+        
+        {databaseWarning && (
+          <div className="mb-6 relative overflow-hidden rounded-xl border border-amber-200/50 bg-gradient-to-br from-amber-50/80 via-amber-50/60 to-orange-50/40 dark:from-amber-950/40 dark:via-amber-950/30 dark:to-orange-950/20 shadow-lg">
+            <div className="p-4 border-l-4 border-amber-500">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 rounded-lg bg-amber-100 dark:bg-amber-900/50 p-2">
+                  <svg className="h-5 w-5 text-amber-600 dark:text-amber-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.19-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-amber-800 dark:text-amber-200">
+                    Database Connection Warning
+                  </h3>
+                  <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                    {databaseWarning}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        <EventCalendar 
+          events={events} 
+          clubs={clubs} 
+          eventTypes={eventTypes} 
+          zones={zones} 
+          today={new Date()}
+          currentUser={user} 
+        />
+      </div>
     </div>
   );
 }

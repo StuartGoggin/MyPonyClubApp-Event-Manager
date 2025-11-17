@@ -59,33 +59,8 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Apply scope filtering (all events, zone events, or club events)
-    if (filterScope === 'zone' && zoneId) {
-      // Filter events for specific zone (includes zone-level events, club events in zone, state events, and public holidays)
-      const zoneClubs = clubs.filter(club => club.zoneId === zoneId);
-      const zoneClubIds = zoneClubs.map(club => club.id);
-      filteredEvents = filteredEvents.filter(event => 
-        // Zone-level events (events with zoneId but no clubId)
-        (event.zoneId === zoneId && !event.clubId) ||
-        // Club events within the zone
-        (event.clubId && zoneClubIds.includes(event.clubId)) ||
-        // State events (include all state events when viewing zone)
-        event.source === 'state' ||
-        // Public holidays
-        event.status === 'public_holiday' ||
-        event.source === 'public_holiday'
-      );
-    } else if (filterScope === 'club' && clubId) {
-      // Filter events for specific club (but keep public holidays)
-      filteredEvents = filteredEvents.filter(event => 
-        event.clubId === clubId ||
-        event.status === 'public_holiday' ||
-        event.source === 'public_holiday'
-      );
-    }
-    // If filterScope === 'all', no additional filtering needed
-
-    // Apply event type filtering
+    // STEP 1: Apply event type filtering first
+    // This determines which categories of events to include (club, zone, state, EV, public holidays)
     filteredEvents = filteredEvents.filter(event => {
       // Determine event category
       const isPublicHoliday = event.status === 'public_holiday' || event.source === 'public_holiday';
@@ -94,7 +69,7 @@ export async function GET(request: NextRequest) {
       const isZoneEvent = event.zoneId && !event.clubId;
       const isClubEvent = event.clubId && !isPublicHoliday && !isEVEvent && !isStateEvent;
       
-      // Apply filters
+      // Apply event type filters
       if (isPublicHoliday && !includePublicHolidays) return false;
       if (isEVEvent && !includeEVEvents) return false;
       if (isStateEvent && !includeStateEvents) return false;
@@ -103,6 +78,46 @@ export async function GET(request: NextRequest) {
       
       return true;
     });
+
+    // STEP 2: Apply zone/club scope filtering
+    // This only filters which zone/club events to include (state, EV, and public holidays are always included if enabled above)
+    if (filterScope === 'zone' && zoneId) {
+      // Filter for specific zone: only include zone-level events and club events from this zone
+      const zoneClubs = clubs.filter(club => club.zoneId === zoneId);
+      const zoneClubIds = zoneClubs.map(club => club.id);
+      filteredEvents = filteredEvents.filter(event => {
+        // Determine event category
+        const isPublicHoliday = event.status === 'public_holiday' || event.source === 'public_holiday';
+        const isEVEvent = event.source === 'ev_scraper' || event.source === 'equestrian_victoria' || event.status === 'ev_event';
+        const isStateEvent = event.source === 'state';
+        
+        // Always include public holidays, EV events, and state events (already filtered by event type above)
+        if (isPublicHoliday || isEVEvent || isStateEvent) {
+          return true;
+        }
+        
+        // For zone/club events, only include those in the selected zone
+        return (event.zoneId === zoneId && !event.clubId) || // Zone-level events
+               (event.clubId && zoneClubIds.includes(event.clubId)); // Club events within the zone
+      });
+    } else if (filterScope === 'club' && clubId) {
+      // Filter for specific club: only include events from this club
+      filteredEvents = filteredEvents.filter(event => {
+        // Determine event category
+        const isPublicHoliday = event.status === 'public_holiday' || event.source === 'public_holiday';
+        const isEVEvent = event.source === 'ev_scraper' || event.source === 'equestrian_victoria' || event.status === 'ev_event';
+        const isStateEvent = event.source === 'state';
+        
+        // Always include public holidays, EV events, and state events (already filtered by event type above)
+        if (isPublicHoliday || isEVEvent || isStateEvent) {
+          return true;
+        }
+        
+        // For club events, only include those for the selected club
+        return event.clubId === clubId;
+      });
+    }
+    // If filterScope === 'all', no zone/club scope filtering - all events are included based on event type filters
 
     // Enhance events with additional information
     const enhancedEvents = filteredEvents.map(event => {

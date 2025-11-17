@@ -55,70 +55,93 @@ export function AppLayout({ children }: PropsWithChildren) {
   }, [pathname]);
   
   // Navigation items with role-based access control
-  const navigationItems: NavigationItem[] = [
+  // Navigation items grouped by zones
+  const navigationGroups: { label: string; items: NavigationItem[] }[] = [
     {
-      href: '/',
-      title: 'View Calendar',
-      icon: Calendar,
-      label: 'View Calendar',
-      // Public access - no role requirements
+      label: 'Calendar',
+      items: [
+        {
+          href: '/',
+          title: 'View Calendar',
+          icon: Calendar,
+          label: 'View Calendar',
+          // Public access - no role requirements
+        },
+        {
+          href: '/request-event',
+          title: 'Request Event',
+          icon: PlusCircle,
+          label: 'Request Event',
+          // Public access - no authentication required
+        },
+      ]
     },
     {
-      href: '/request-event',
-      title: 'Request Event',
-      icon: PlusCircle,
-      label: 'Request Event',
-      // Public access - no authentication required
+      label: 'Management',
+      items: [
+        {
+          href: '/club-manager',
+          title: 'Club Manager',
+          icon: Building,
+          label: 'Club Manager',
+          requireAuth: true,
+          // All authenticated users can access club manager functionality
+        },
+        {
+          href: '/zone-manager',
+          title: 'Zone Manager',
+          icon: MapPin,
+          label: 'Zone Manager',
+          requireAuth: true,
+          requiredRoles: ['super_user', 'zone_rep'], // Super users and zone reps
+        },
+        {
+          href: '/state-manager',
+          title: 'State Manager',
+          icon: FerrisWheel,
+          label: 'State Manager',
+          requireAuth: true,
+          requiredRoles: ['super_user', 'state_admin'], // Super users and state admins
+        },
+        {
+          href: '/ev-manager',
+          title: 'EV Manager',
+          icon: Trophy,
+          label: 'EV Manager',
+          requireAuth: true,
+          requiredRoles: ['super_user', 'state_admin'], // Super users and state admins
+        },
+        {
+          href: '/public-holiday-manager',
+          title: 'Public Holiday Manager',
+          icon: Calendar,
+          label: 'Public Holidays',
+          requireAuth: true,
+          requiredRoles: ['super_user', 'public_holiday_manager'], // Super users and public holiday managers
+        },
+      ]
     },
     {
-      href: '/admin',
-      title: 'Admin Dashboard',
-      icon: Shield,
-      label: 'Admin',
-      requireAuth: true,
-      requiredRoles: ['super_user'], // Only super users can access admin
-    },
-    {
-      href: '/state-manager',
-      title: 'State Manager',
-      icon: FerrisWheel,
-      label: 'State Manager',
-      requireAuth: true,
-      requiredRoles: ['super_user', 'state_admin'], // Super users and state admins
-    },
-    {
-      href: '/zone-manager',
-      title: 'Zone Manager',
-      icon: MapPin,
-      label: 'Zone Manager',
-      requireAuth: true,
-      requiredRoles: ['super_user', 'zone_rep'], // Super users and zone reps
-    },
-    {
-      href: '/club-manager',
-      title: 'Club Manager',
-      icon: Building,
-      label: 'Club Manager',
-      requireAuth: true,
-      // All authenticated users can access club manager functionality
-    },
-    {
-      href: '/ev-manager',
-      title: 'EV Manager',
-      icon: Trophy,
-      label: 'EV Manager',
-      requireAuth: true,
-      requiredRoles: ['super_user', 'state_admin'], // Super users and state admins
-    },
+      label: 'Administration',
+      items: [
+        {
+          href: '/admin',
+          title: 'Admin Dashboard',
+          icon: Shield,
+          label: 'Admin',
+          requireAuth: true,
+          requiredRoles: ['super_user'], // Only super users can access admin
+        },
+      ]
+    }
   ];
 
-  // Filter navigation items based on user role and authentication status
-  const userRoles = getUserRoles(user);
-  const visibleNavigationItems = filterNavigationByRole(
-    navigationItems,
-    userRoles,
-    isAuthenticated
-  );
+  // Flatten and filter navigation items based on user role and authentication status
+  const userRoles = getUserRoles(user as any);
+  const visibleNavigationGroups = navigationGroups.map(group => ({
+    ...group,
+    items: filterNavigationByRole(group.items, userRoles, isAuthenticated)
+  })).filter(group => group.items.length > 0); // Only show groups with visible items
   
   // If this is an embed route, just return children without any app layout
   if (pathname?.startsWith('/embed')) {
@@ -178,19 +201,38 @@ export function AppLayout({ children }: PropsWithChildren) {
           
           {/* Sidebar Content */}
           <div className="flex flex-col p-4 space-y-2">
-            {/* Navigation Menu */}
-            <div className="space-y-1">
-              {visibleNavigationItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-primary/10 hover:text-primary"
-                  title={item.title}
-                  onClick={() => setSidebarCollapsed(true)}
-                >
-                  <item.icon className="h-4 w-4" />
-                  <span>{item.label}</span>
-                </Link>
+            {/* Navigation Menu - Grouped */}
+            <div className="space-y-4">
+              {visibleNavigationGroups.map((group, groupIndex) => (
+                <div key={group.label}>
+                  {/* Group Label */}
+                  <div className="px-3 mb-2">
+                    <p className="text-xs font-semibold text-muted-foreground/60 uppercase tracking-wider">
+                      {group.label}
+                    </p>
+                  </div>
+                  
+                  {/* Group Items */}
+                  <div className="space-y-1">
+                    {group.items.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-primary/10 hover:text-primary"
+                        title={item.title}
+                        onClick={() => setSidebarCollapsed(true)}
+                      >
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.label}</span>
+                      </Link>
+                    ))}
+                  </div>
+                  
+                  {/* Separator between groups (except for last group) */}
+                  {groupIndex < visibleNavigationGroups.length - 1 && (
+                    <div className="my-3 border-t border-border/40" />
+                  )}
+                </div>
               ))}
             </div>
             

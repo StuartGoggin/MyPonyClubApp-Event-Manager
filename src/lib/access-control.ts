@@ -1,6 +1,6 @@
 // Role-based access control utilities
 
-export type UserRole = 'super_user' | 'state_admin' | 'zone_rep' | 'club_manager' | 'event_secretary' | 'standard';
+export type UserRole = 'super_user' | 'state_admin' | 'zone_rep' | 'club_manager' | 'public_holiday_manager' | 'event_secretary' | 'standard';
 
 export interface NavigationItem {
   href: string;

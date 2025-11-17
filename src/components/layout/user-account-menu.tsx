@@ -20,10 +20,14 @@ function getRoleDisplayName(role: string): string {
   switch (role) {
     case 'super_user':
       return 'Super User';
+    case 'state_admin':
+      return 'State Admin';
     case 'zone_rep':
       return 'Zone Rep';
     case 'club_manager':
       return 'Club Manager';
+    case 'public_holiday_manager':
+      return 'Public Holiday Manager';
     case 'event_secretary':
       return 'Event Secretary';
     case 'standard':
@@ -37,9 +41,13 @@ function getRoleBadgeVariant(role: string): "default" | "secondary" | "destructi
   switch (role) {
     case 'super_user':
       return 'destructive';
+    case 'state_admin':
+      return 'destructive';
     case 'zone_rep':
       return 'default';
     case 'club_manager':
+      return 'secondary';
+    case 'public_holiday_manager':
       return 'secondary';
     default:
       return 'outline';

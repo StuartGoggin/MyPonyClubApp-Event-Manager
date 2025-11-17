@@ -51,6 +51,7 @@ export function UserActionsDialog({ user, isOpen, onClose, onUserUpdated }: User
       case 'state_admin': return 'State Admin';
       case 'zone_rep': return 'Zone Rep';
       case 'club_manager': return 'Club Manager';
+      case 'public_holiday_manager': return 'Public Holiday Manager';
       case 'standard': return 'Standard';
       default: return role;
     }
@@ -62,6 +63,7 @@ export function UserActionsDialog({ user, isOpen, onClose, onUserUpdated }: User
       case 'state_admin': return 'destructive' as const;
       case 'zone_rep': return 'default' as const;
       case 'club_manager': return 'default' as const;
+      case 'public_holiday_manager': return 'secondary' as const;
       case 'standard': return 'secondary' as const;
       default: return 'outline' as const;
     }
@@ -221,7 +223,7 @@ export function UserActionsDialog({ user, isOpen, onClose, onUserUpdated }: User
               <span className="font-medium">Change User Roles (select multiple)</span>
             </div>
             <div className="space-y-2 rounded-lg border p-3">
-              {['standard', 'club_manager', 'zone_rep', 'state_admin', 'super_user'].map(role => (
+              {['standard', 'club_manager', 'zone_rep', 'state_admin', 'public_holiday_manager', 'super_user'].map(role => (
                 <div key={role} className="flex items-center space-x-2">
                   <input
                     type="checkbox"

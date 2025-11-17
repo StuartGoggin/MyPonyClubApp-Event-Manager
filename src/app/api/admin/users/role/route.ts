@@ -17,7 +17,7 @@ export async function PATCH(request: NextRequest) {
     const rolesArray = Array.isArray(roles) ? roles : [roles];
     
     // Validate roles
-    const validRoles = ['standard', 'club_manager', 'zone_rep', 'state_admin', 'super_user'];
+    const validRoles = ['standard', 'club_manager', 'zone_rep', 'state_admin', 'public_holiday_manager', 'super_user'];
     const invalidRoles = rolesArray.filter((role: string) => !validRoles.includes(role));
     
     if (invalidRoles.length > 0) {
@@ -40,6 +40,7 @@ export async function PATCH(request: NextRequest) {
     // Update with both roles array and legacy role field (highest privilege)
     const primaryRole = rolesArray.includes('super_user') ? 'super_user' :
                        rolesArray.includes('state_admin') ? 'state_admin' :
+                       rolesArray.includes('public_holiday_manager') ? 'public_holiday_manager' :
                        rolesArray.includes('zone_rep') ? 'zone_rep' :
                        rolesArray.includes('club_manager') ? 'club_manager' : 'standard';
     

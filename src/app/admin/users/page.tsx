@@ -219,7 +219,10 @@ function UserManagementContent() {
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
       case 'super_user': return 'destructive';
+      case 'state_admin': return 'destructive';
       case 'zone_rep': return 'default';
+      case 'club_manager': return 'default';
+      case 'public_holiday_manager': return 'secondary';
       case 'standard': return 'secondary';
       default: return 'outline';
     }
@@ -228,7 +231,10 @@ function UserManagementContent() {
   const getRoleDisplayName = (role: string) => {
     switch (role) {
       case 'super_user': return 'Super User';
+      case 'state_admin': return 'State Admin';
       case 'zone_rep': return 'Zone Rep';
+      case 'club_manager': return 'Club Manager';
+      case 'public_holiday_manager': return 'Public Holiday Manager';
       case 'standard': return 'Standard';
       default: return role;
     }

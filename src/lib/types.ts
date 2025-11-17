@@ -236,7 +236,7 @@ export interface EventSchedule {
 }
 
 // User Management Types
-export type UserRole = 'standard' | 'club_manager' | 'zone_rep' | 'state_admin' | 'super_user';
+export type UserRole = 'standard' | 'club_manager' | 'zone_rep' | 'state_admin' | 'public_holiday_manager' | 'super_user';
 
 export interface User {
   id: string;                      // Firestore document ID

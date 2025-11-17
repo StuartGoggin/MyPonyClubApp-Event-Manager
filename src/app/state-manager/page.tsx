@@ -62,22 +62,23 @@ function StateManagerContent() {
     }
   };
 
-  // Filter for state-level events and public holidays (events without zoneId or clubId)
+  // Filter for state-level events only (source: 'state')
   const stateEvents = Array.isArray(events) ? events.filter(event => 
-    !event.zoneId && !event.clubId
+    event.source === 'state' && !event.zoneId && !event.clubId
   ) : [];
   
-  // Separate state events from public holidays
-  const regularStateEvents = stateEvents.filter(event => event.source !== 'public_holiday');
-  const publicHolidays = stateEvents.filter(event => event.source === 'public_holiday');
+  // Also get public holidays for statistics only
+  const publicHolidays = Array.isArray(events) ? events.filter(event => 
+    event.source === 'public_holiday'
+  ) : [];
   
-  console.log('🎯 State Manager - State events filtered:', regularStateEvents.length, regularStateEvents);
-  console.log('🎉 State Manager - Public holidays:', publicHolidays.length, publicHolidays);
+  console.log('🎯 State Manager - State events filtered:', stateEvents.length, stateEvents);
+  console.log('🎉 State Manager - Public holidays (for stats only):', publicHolidays.length);
 
   // Dashboard statistics
-  const totalStateEvents = regularStateEvents.length;
+  const totalStateEvents = stateEvents.length;
   const totalPublicHolidays = publicHolidays.length;
-  const upcomingStateEvents = regularStateEvents.filter(event => 
+  const upcomingStateEvents = stateEvents.filter(event => 
     new Date(event.date) >= new Date()
   ).length;
   const totalZones = zones.length;

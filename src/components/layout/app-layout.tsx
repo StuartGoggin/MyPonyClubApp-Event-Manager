@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { Calendar, PlusCircle, FerrisWheel, Shield, Settings, MapPin, Building, ChevronLeft, ChevronRight, Menu, X, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { NavigationItem, filterNavigationByRole, UserRole } from '@/lib/access-control';
+import { NavigationItem, filterNavigationByRole, UserRole, getUserRoles } from '@/lib/access-control';
 
 export function AppLayout({ children }: PropsWithChildren) {
   const pathname = usePathname();
@@ -113,9 +113,10 @@ export function AppLayout({ children }: PropsWithChildren) {
   ];
 
   // Filter navigation items based on user role and authentication status
+  const userRoles = getUserRoles(user);
   const visibleNavigationItems = filterNavigationByRole(
     navigationItems,
-    user?.role as UserRole,
+    userRoles,
     isAuthenticated
   );
   

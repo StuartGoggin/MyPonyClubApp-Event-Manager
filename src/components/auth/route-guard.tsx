@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
-import { hasAccess, UserRole } from '@/lib/access-control';
+import { hasAccess, UserRole, getUserRoles } from '@/lib/access-control';
 
 interface RouteGuardProps {
   children: React.ReactNode;
@@ -32,8 +32,9 @@ export function RouteGuard({
       return;
     }
 
-    // Check role-based access
-    if (requiredRoles && !hasAccess(user?.role as UserRole, requiredRoles)) {
+    // Check role-based access - support both single role and multi-role
+    const userRoles = getUserRoles(user);
+    if (requiredRoles && !hasAccess(userRoles, requiredRoles)) {
       // Redirect based on user role or to home if no access
       if (!isAuthenticated) {
         router.push(`${redirectTo}?redirect=${encodeURIComponent(pathname)}`);
@@ -62,7 +63,8 @@ export function RouteGuard({
     return null;
   }
 
-  if (requiredRoles && !hasAccess(user?.role as UserRole, requiredRoles)) {
+  const userRoles = getUserRoles(user);
+  if (requiredRoles && !hasAccess(userRoles, requiredRoles)) {
     return null;
   }
 

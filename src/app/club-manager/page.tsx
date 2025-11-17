@@ -12,6 +12,7 @@ import { ClubEventSubmission } from '@/components/club-manager/club-event-submis
 import { ClubEventStatus } from '@/components/club-manager/club-event-status';
 import { useAuth } from '@/contexts/auth-context';
 import { useRouter } from 'next/navigation';
+import { getUserRoles, hasRole } from '@/lib/access-control';
 
 export default function ClubEventManagerDashboard() {
   const { user, isAuthenticated, loading: authLoading } = useAuth();
@@ -33,13 +34,20 @@ export default function ClubEventManagerDashboard() {
   const hasClubAccess = (clubId: string, userZoneId?: string): boolean => {
     if (!user) return false;
     
+    const userRoles = getUserRoles(user);
+    
     // Super users and zone reps have access to all clubs
-    if (user.role === 'super_user' || user.role === 'zone_rep') {
+    if (userRoles.includes('super_user') || userRoles.includes('zone_rep')) {
       return true;
     }
     
     // Standard users can only access their own club
-    if (user.role === 'standard') {
+    if (userRoles.includes('standard') && !userRoles.includes('club_manager')) {
+      return user.clubId === clubId;
+    }
+    
+    // Club managers can access their own club
+    if (userRoles.includes('club_manager')) {
       return user.clubId === clubId;
     }
     
@@ -50,18 +58,20 @@ export default function ClubEventManagerDashboard() {
   const getAuthorizedClubIds = (allClubs: Club[], userRole: string, userClubId?: string, userZoneId?: string): string[] => {
     if (!user) return [];
     
+    const userRoles = getUserRoles(user);
+    
     // Super users can access all clubs
-    if (userRole === 'super_user') {
+    if (userRoles.includes('super_user')) {
       return allClubs.map(club => club.id);
     }
     
     // Zone reps can access all clubs in their zone
-    if (userRole === 'zone_rep' && userZoneId) {
+    if (userRoles.includes('zone_rep') && userZoneId) {
       return allClubs.filter(club => club.zoneId === userZoneId).map(club => club.id);
     }
     
-    // Standard users can only access their own club
-    if (userRole === 'standard' && userClubId) {
+    // Club managers and standard users can only access their own club
+    if ((userRoles.includes('club_manager') || userRoles.includes('standard')) && userClubId) {
       return allClubs.some(club => club.id === userClubId) ? [userClubId] : [];
     }
     

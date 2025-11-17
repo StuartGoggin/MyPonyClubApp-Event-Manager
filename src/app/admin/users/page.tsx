@@ -25,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { RouteGuard } from '@/components/auth/route-guard';
+import { getUserRoles } from '@/lib/access-control';
 
 function UserManagementContent() {
   const [users, setUsers] = useState<User[]>([]);
@@ -253,8 +254,9 @@ function UserManagementContent() {
       `${user.firstName || ''} ${user.lastName || ''}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase()));
 
-    // Role filter
-    const roleMatch = roleFilter === 'all' || user.role === roleFilter;
+    // Role filter - check if user has the role in their roles array
+    const userRoles = getUserRoles(user);
+    const roleMatch = roleFilter === 'all' || userRoles.includes(roleFilter as any);
 
     // Status filter
     const statusMatch = statusFilter === 'all' || 
@@ -270,8 +272,9 @@ function UserManagementContent() {
     return searchMatch && roleMatch && statusMatch && clubMatch && zoneMatch;
   });
 
-  // Get unique values for filter dropdowns
-  const uniqueRoles = [...new Set(users.map(user => user.role))].sort();
+  // Get unique values for filter dropdowns - collect all roles from all users
+  const allRoles = users.flatMap(user => getUserRoles(user));
+  const uniqueRoles = [...new Set(allRoles)].sort();
   
   // Filter clubs based on selected zone
   const availableClubs = zoneFilter === 'all' 
@@ -523,9 +526,13 @@ function UserManagementContent() {
                           <TableCell>{getClubName(user.clubId)}</TableCell>
                           <TableCell>{getZoneName(user.zoneId)}</TableCell>
                           <TableCell>
-                            <Badge variant={getRoleBadgeVariant(user.role)}>
-                              {getRoleDisplayName(user.role)}
-                            </Badge>
+                            <div className="flex gap-1 flex-wrap">
+                              {getUserRoles(user).map(role => (
+                                <Badge key={role} variant={getRoleBadgeVariant(role)}>
+                                  {getRoleDisplayName(role)}
+                                </Badge>
+                              ))}
+                            </div>
                           </TableCell>
                           <TableCell>
                             <Badge variant={user.isActive ? "default" : "secondary"}>

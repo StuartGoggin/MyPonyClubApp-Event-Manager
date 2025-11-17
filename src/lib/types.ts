@@ -236,13 +236,14 @@ export interface EventSchedule {
 }
 
 // User Management Types
-export type UserRole = 'standard' | 'zone_rep' | 'state_admin' | 'super_user';
+export type UserRole = 'standard' | 'club_manager' | 'zone_rep' | 'state_admin' | 'super_user';
 
 export interface User {
   id: string;                      // Firestore document ID
   ponyClubId: string;             // Unique Pony Club identifier
   mobileNumber: string;           // Registered mobile phone number
-  role: UserRole;                 // User's access level
+  role: UserRole;                 // User's primary access level (legacy, deprecated)
+  roles: UserRole[];              // User's access levels (supports multiple roles)
   clubId: string;                 // Associated club ID
   zoneId: string;                 // Associated zone ID
   

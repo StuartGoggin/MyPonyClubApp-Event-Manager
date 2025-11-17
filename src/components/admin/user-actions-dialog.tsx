@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { User } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -29,17 +29,28 @@ interface UserActionsDialogProps {
 }
 
 export function UserActionsDialog({ user, isOpen, onClose, onUserUpdated }: UserActionsDialogProps) {
-  const [selectedRole, setSelectedRole] = useState<string>('');
+  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [emailLoading, setEmailLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Initialize selected roles when dialog opens
+  useEffect(() => {
+    if (user && isOpen) {
+      // Use roles array if available, otherwise fall back to single role
+      const currentRoles = user.roles && user.roles.length > 0 ? user.roles : [user.role];
+      setSelectedRoles(currentRoles);
+    }
+  }, [user, isOpen]);
 
   if (!user) return null;
 
   const getRoleDisplayName = (role: string) => {
     switch (role) {
       case 'super_user': return 'Super User';
+      case 'state_admin': return 'State Admin';
       case 'zone_rep': return 'Zone Rep';
+      case 'club_manager': return 'Club Manager';
       case 'standard': return 'Standard';
       default: return role;
     }
@@ -48,14 +59,22 @@ export function UserActionsDialog({ user, isOpen, onClose, onUserUpdated }: User
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
       case 'super_user': return 'destructive' as const;
+      case 'state_admin': return 'destructive' as const;
       case 'zone_rep': return 'default' as const;
+      case 'club_manager': return 'default' as const;
       case 'standard': return 'secondary' as const;
       default: return 'outline' as const;
     }
   };
 
   const handleRoleChange = async () => {
-    if (!selectedRole || selectedRole === user.role) return;
+    if (selectedRoles.length === 0) return;
+
+    // Check if roles have actually changed
+    const currentRoles = user.roles && user.roles.length > 0 ? user.roles : [user.role];
+    const rolesChanged = JSON.stringify([...selectedRoles].sort()) !== JSON.stringify([...currentRoles].sort());
+    
+    if (!rolesChanged) return;
 
     try {
       setLoading(true);
@@ -68,22 +87,21 @@ export function UserActionsDialog({ user, isOpen, onClose, onUserUpdated }: User
         },
         body: JSON.stringify({
           userId: user.id,
-          role: selectedRole,
+          roles: selectedRoles,
         }),
       });
 
       const data = await response.json();
 
       if (data.success) {
-        setMessage({ type: 'success', text: 'User role updated successfully' });
+        setMessage({ type: 'success', text: 'User roles updated successfully' });
         onUserUpdated();
-        setSelectedRole('');
       } else {
-        setMessage({ type: 'error', text: data.error || 'Failed to update user role' });
+        setMessage({ type: 'error', text: data.error || 'Failed to update user roles' });
       }
     } catch (error) {
-      console.error('Error updating user role:', error);
-      setMessage({ type: 'error', text: 'Network error: Failed to update user role' });
+      console.error('Error updating user roles:', error);
+      setMessage({ type: 'error', text: 'Network error: Failed to update user roles' });
     } finally {
       setLoading(false);
     }
@@ -129,8 +147,20 @@ export function UserActionsDialog({ user, isOpen, onClose, onUserUpdated }: User
 
   const handleClose = () => {
     setMessage(null);
-    setSelectedRole('');
+    setSelectedRoles([]);
     onClose();
+  };
+
+  const toggleRole = (role: string) => {
+    setSelectedRoles(prev => {
+      if (prev.includes(role)) {
+        // Don't allow removing all roles
+        if (prev.length === 1) return prev;
+        return prev.filter(r => r !== role);
+      } else {
+        return [...prev, role];
+      }
+    });
   };
 
   return (
@@ -152,11 +182,15 @@ export function UserActionsDialog({ user, isOpen, onClose, onUserUpdated }: User
               <span className="text-sm font-medium">Pony Club ID:</span>
               <span className="text-sm">{user.ponyClubId}</span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Current Role:</span>
-              <Badge variant={getRoleBadgeVariant(user.role)}>
-                {getRoleDisplayName(user.role)}
-              </Badge>
+            <div className="flex flex-col gap-2">
+              <span className="text-sm font-medium">Current Roles:</span>
+              <div className="flex flex-wrap gap-1">
+                {(user.roles && user.roles.length > 0 ? user.roles : [user.role]).map(role => (
+                  <Badge key={role} variant={getRoleBadgeVariant(role)}>
+                    {getRoleDisplayName(role)}
+                  </Badge>
+                ))}
+              </div>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Mobile:</span>
@@ -184,31 +218,38 @@ export function UserActionsDialog({ user, isOpen, onClose, onUserUpdated }: User
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Shield className="h-4 w-4" />
-              <span className="font-medium">Change User Role</span>
+              <span className="font-medium">Change User Roles (select multiple)</span>
             </div>
-            <div className="flex gap-2">
-              <Select value={selectedRole} onValueChange={setSelectedRole}>
-                <SelectTrigger className="flex-1">
-                  <SelectValue placeholder="Select new role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="standard">Standard</SelectItem>
-                  <SelectItem value="zone_rep">Zone Rep</SelectItem>
-                  <SelectItem value="super_user">Super User</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button
-                onClick={handleRoleChange}
-                disabled={!selectedRole || selectedRole === user.role || loading}
-                size="sm"
-              >
-                {loading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  'Update'
-                )}
-              </Button>
+            <div className="space-y-2 rounded-lg border p-3">
+              {['standard', 'club_manager', 'zone_rep', 'state_admin', 'super_user'].map(role => (
+                <div key={role} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id={`role-${role}`}
+                    checked={selectedRoles.includes(role)}
+                    onChange={() => toggleRole(role)}
+                    className="h-4 w-4 rounded border-gray-300"
+                  />
+                  <label
+                    htmlFor={`role-${role}`}
+                    className="text-sm font-medium cursor-pointer flex-1"
+                  >
+                    {getRoleDisplayName(role)}
+                  </label>
+                </div>
+              ))}
             </div>
+            <Button
+              onClick={handleRoleChange}
+              disabled={selectedRoles.length === 0 || loading}
+              className="w-full"
+            >
+              {loading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                'Update Roles'
+              )}
+            </Button>
           </div>
 
           {/* Email Credentials Section */}

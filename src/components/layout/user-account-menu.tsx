@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { User, LogOut, Settings, UserCheck, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
+import { getUserRoles } from '@/lib/access-control';
 
 function getRoleDisplayName(role: string): string {
   switch (role) {
@@ -82,6 +83,10 @@ export function UserAccountMenu() {
     setIsOpen(false);
   };
 
+  // Get user roles - support both single and multi-role
+  const userRoles = getUserRoles(user);
+  const displayRole = userRoles[0] || 'standard'; // Show first role as primary
+
   return (
     <div className="flex items-center gap-3 pl-4 border-l border-border/40">
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
@@ -100,12 +105,17 @@ export function UserAccountMenu() {
               <span className="text-sm font-semibold text-foreground">
                 {user.firstName} {user.lastName}
               </span>
-              <Badge 
-                variant={getRoleBadgeVariant(user.role)} 
-                className="text-xs px-2 py-0 h-4 font-medium"
-              >
-                {getRoleDisplayName(user.role)}
-              </Badge>
+              <div className="flex gap-1 flex-wrap">
+                {userRoles.map(role => (
+                  <Badge 
+                    key={role}
+                    variant={getRoleBadgeVariant(role)} 
+                    className="text-xs px-2 py-0 h-4 font-medium"
+                  >
+                    {getRoleDisplayName(role)}
+                  </Badge>
+                ))}
+              </div>
             </div>
             <ChevronDown className="h-3 w-3 text-muted-foreground ml-1" />
           </Button>

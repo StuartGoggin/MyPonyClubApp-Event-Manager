@@ -11,7 +11,30 @@ export interface NavigationItem {
   requireAuth?: boolean;
 }
 
-export function hasAccess(userRole: UserRole | undefined, requiredRoles?: UserRole[]): boolean {
+/**
+ * Helper to get user roles as array, supporting both legacy single role and new multi-role
+ */
+export function getUserRoles(user: { role?: UserRole; roles?: UserRole[] } | undefined | null): UserRole[] {
+  if (!user) return [];
+  
+  // Prefer roles array if it exists and has values
+  if (user.roles && user.roles.length > 0) {
+    return user.roles;
+  }
+  
+  // Fall back to single role
+  if (user.role) {
+    return [user.role];
+  }
+  
+  return [];
+}
+
+/**
+ * Check if user has any of the required roles
+ * Supports both single role (legacy) and multiple roles (new)
+ */
+export function hasAccess(userRole: UserRole | UserRole[] | undefined, requiredRoles?: UserRole[]): boolean {
   // If no roles are required, allow access
   if (!requiredRoles || requiredRoles.length === 0) {
     return true;
@@ -22,18 +45,34 @@ export function hasAccess(userRole: UserRole | undefined, requiredRoles?: UserRo
     return false;
   }
 
+  // Convert userRole to array if it's a single role (backward compatibility)
+  const userRoles = Array.isArray(userRole) ? userRole : [userRole];
+  
+  // If user has no roles, deny access
+  if (userRoles.length === 0) {
+    return false;
+  }
+
   // Super user has access to everything
-  if (userRole === 'super_user') {
+  if (userRoles.includes('super_user')) {
     return true;
   }
 
-  // Check if user's role is in the required roles
-  return requiredRoles.includes(userRole);
+  // Check if user has any of the required roles
+  return userRoles.some(role => requiredRoles.includes(role));
+}
+
+/**
+ * Check if user has a specific role
+ */
+export function hasRole(user: { role?: UserRole; roles?: UserRole[] } | undefined | null, roleToCheck: UserRole): boolean {
+  const userRoles = getUserRoles(user);
+  return userRoles.includes(roleToCheck);
 }
 
 export function filterNavigationByRole(
   navigationItems: NavigationItem[], 
-  userRole: UserRole | undefined, 
+  userRole: UserRole | UserRole[] | undefined, 
   isAuthenticated: boolean
 ): NavigationItem[] {
   return navigationItems.filter(item => {

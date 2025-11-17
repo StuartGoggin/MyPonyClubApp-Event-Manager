@@ -16,6 +16,7 @@ import { ZoneEventSubmission } from '@/components/zone-manager/zone-event-submis
 import { RouteGuard } from '@/components/auth/route-guard';
 import { useAuth } from '@/contexts/auth-context';
 import { useRouter } from 'next/navigation';
+import { hasRole, getUserRoles } from '@/lib/access-control';
 
 function ZoneManagerContent() {
   const { user } = useAuth();
@@ -66,11 +67,12 @@ function ZoneManagerContent() {
 
       // Set authorized zones based on user role
       const zonesArray = zonesData.zones || zonesData || [];
+      const userRoles = getUserRoles(user);
       
-      if (user?.role === 'super_user') {
+      if (userRoles.includes('super_user')) {
         // Super users can access all zones
         setAuthorizedZones(zonesArray.map((zone: Zone) => zone.id));
-      } else if (user?.role === 'zone_rep' && user?.zoneId) {
+      } else if (userRoles.includes('zone_rep') && user?.zoneId) {
         // Zone reps can only access their assigned zone
         setAuthorizedZones([user.zoneId]);
       } else {

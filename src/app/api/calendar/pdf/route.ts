@@ -19,12 +19,9 @@ export async function GET(request: NextRequest) {
     const clubId = searchParams.get('clubId');
     const format = searchParams.get('format') || 'standard';
     
-    // Event type filters
-    const includeClubEvents = searchParams.get('includeClubEvents') === 'true';
-    const includeZoneEvents = searchParams.get('includeZoneEvents') === 'true';
-    const includeStateEvents = searchParams.get('includeStateEvents') === 'true';
-    const includeEVEvents = searchParams.get('includeEVEvents') === 'true';
-    const includePublicHolidays = searchParams.get('includePublicHolidays') === 'true';
+    // Event sources (comma-separated list: 'pca', 'zone', 'state', 'ev_scraper', 'equestrian_victoria', 'public_holiday')
+    const eventSourcesParam = searchParams.get('eventSources') || '';
+    const eventSources = eventSourcesParam.split(',').filter(s => s.length > 0);
 
     // Fetch real events from Firestore using cached functions
     const [events, clubs, eventTypes, zones] = await Promise.all([
@@ -59,8 +56,15 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // STEP 1: Apply event type filtering first
-    // This determines which categories of events to include (club, zone, state, EV, public holidays)
+    // STEP 1: Apply event source filtering first
+    // Map event sources to event categories to include
+    // Event sources: 'pca' (club events), 'zone', 'state', 'ev_scraper', 'equestrian_victoria', 'public_holiday'
+    const includeClubEvents = eventSources.includes('pca');
+    const includeZoneEvents = eventSources.includes('zone');
+    const includeStateEvents = eventSources.includes('state');
+    const includeEVEvents = eventSources.includes('ev_scraper') || eventSources.includes('equestrian_victoria');
+    const includePublicHolidays = eventSources.includes('public_holiday');
+    
     filteredEvents = filteredEvents.filter(event => {
       // Determine event category
       const isPublicHoliday = event.status === 'public_holiday' || event.source === 'public_holiday';
@@ -69,7 +73,7 @@ export async function GET(request: NextRequest) {
       const isZoneEvent = event.zoneId && !event.clubId;
       const isClubEvent = event.clubId && !isPublicHoliday && !isEVEvent && !isStateEvent;
       
-      // Apply event type filters
+      // Apply event type filters based on event sources
       if (isPublicHoliday && !includePublicHolidays) return false;
       if (isEVEvent && !includeEVEvents) return false;
       if (isStateEvent && !includeStateEvents) return false;

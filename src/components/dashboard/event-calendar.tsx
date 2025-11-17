@@ -32,7 +32,7 @@ import { useRouter } from 'next/navigation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { useAtom } from 'jotai';
-import { eventSourceAtom } from '@/lib/state';
+import { eventSourceAtom, type EventSource } from '@/lib/state';
 
 interface EventCalendarProps {
   events: Event[];
@@ -96,12 +96,8 @@ export function EventCalendar({
   const [isPdfSectionVisible, setIsPdfSectionVisible] = useState(false);
   // PDF download loading state
   const [isPdfGenerating, setIsPdfGenerating] = useState(false);
-  // Event type filters for PDF
-  const [pdfIncludeClubEvents, setPdfIncludeClubEvents] = useState(true);
-  const [pdfIncludeZoneEvents, setPdfIncludeZoneEvents] = useState(true);
-  const [pdfIncludeStateEvents, setPdfIncludeStateEvents] = useState(true);
-  const [pdfIncludeEVEvents, setPdfIncludeEVEvents] = useState(true);
-  const [pdfIncludePublicHolidays, setPdfIncludePublicHolidays] = useState(true);
+  // PDF event sources - independent from main calendar event sources
+  const [pdfEventSources, setPdfEventSources] = useState<EventSource[]>(['pca', 'zone', 'state', 'public_holiday']);
 
   // State logo
   const [stateLogo, setStateLogo] = useState<string | null>(null);
@@ -169,11 +165,7 @@ export function EventCalendar({
         zoneId: pdfFilterScope === 'zone' ? pdfSelectedZone : '',
         clubId: pdfFilterScope === 'club' ? pdfSelectedClub : '',
         format: 'zone', // Always use zone format
-        includeClubEvents: String(pdfIncludeClubEvents),
-        includeZoneEvents: String(pdfIncludeZoneEvents),
-        includeStateEvents: String(pdfIncludeStateEvents),
-        includeEVEvents: String(pdfIncludeEVEvents),
-        includePublicHolidays: String(pdfIncludePublicHolidays),
+        eventSources: pdfEventSources.join(','), // Send PDF-specific event sources
       });
       const res = await fetch(`/api/calendar/pdf?${params.toString()}`);
       if (!res.ok) {
@@ -394,104 +386,77 @@ export function EventCalendar({
           {/* Collapsible Content */}
           {isPdfSectionVisible && (
             <div className="mt-3 p-4 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 shadow-inner">
-              <div className="space-y-4">
-                {/* Event Types Section */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="h-px flex-1 bg-gradient-to-r from-transparent via-gray-300 dark:via-gray-700 to-transparent"></div>
-                    <label className="text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">
-                      Event Types to Include
-                    </label>
-                    <div className="h-px flex-1 bg-gradient-to-r from-transparent via-gray-300 dark:via-gray-700 to-transparent"></div>
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                    <div className="flex items-center space-x-2 p-2.5 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all group">
-                      <Checkbox
-                        id="pdf-club-events"
-                        checked={pdfIncludeClubEvents}
-                        onCheckedChange={(checked) => setPdfIncludeClubEvents(checked as boolean)}
-                        className="border-gray-400 dark:border-gray-600 group-hover:border-blue-500"
+              {/* Responsive Layout: Single line on desktop with framed groups */}
+              <div className="flex flex-col lg:flex-row gap-4">
+                {/* Event Sources Group - Framed */}
+                <div className="flex flex-col gap-2 p-3 rounded-lg bg-white/40 dark:bg-slate-900/40 border border-slate-200/50 dark:border-slate-700/50 lg:flex-1">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-300">
+                    Event Sources
+                  </label>
+                  <div className="flex flex-wrap gap-x-4 gap-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="pdf-source-zone" 
+                        checked={pdfEventSources.includes('zone')}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setPdfEventSources([...pdfEventSources, 'zone']);
+                          } else {
+                            setPdfEventSources(pdfEventSources.filter(s => s !== 'zone'));
+                          }
+                        }}
                       />
-                      <label
-                        htmlFor="pdf-club-events"
-                        className="text-sm font-medium leading-none cursor-pointer select-none text-gray-700 dark:text-gray-300 group-hover:text-blue-700 dark:group-hover:text-blue-300"
-                      >
-                        Club Events
-                      </label>
+                      <Label htmlFor="pdf-source-zone" className="text-sm font-medium cursor-pointer">
+                        Zone
+                      </Label>
                     </div>
-                    <div className="flex items-center space-x-2 p-2.5 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-green-300 dark:hover:border-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition-all group">
-                      <Checkbox
-                        id="pdf-zone-events"
-                        checked={pdfIncludeZoneEvents}
-                        onCheckedChange={(checked) => setPdfIncludeZoneEvents(checked as boolean)}
-                        className="border-gray-400 dark:border-gray-600 group-hover:border-green-500"
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="pdf-source-ev" 
+                        checked={pdfEventSources.includes('ev_scraper')}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setPdfEventSources([...pdfEventSources, 'ev_scraper']);
+                          } else {
+                            setPdfEventSources(pdfEventSources.filter(s => s !== 'ev_scraper'));
+                          }
+                        }}
                       />
-                      <label
-                        htmlFor="pdf-zone-events"
-                        className="text-sm font-medium leading-none cursor-pointer select-none text-gray-700 dark:text-gray-300 group-hover:text-green-700 dark:group-hover:text-green-300"
-                      >
-                        Zone Events
-                      </label>
-                    </div>
-                    <div className="flex items-center space-x-2 p-2.5 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-orange-300 dark:hover:border-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950/30 transition-all group">
-                      <Checkbox
-                        id="pdf-state-events"
-                        checked={pdfIncludeStateEvents}
-                        onCheckedChange={(checked) => setPdfIncludeStateEvents(checked as boolean)}
-                        className="border-gray-400 dark:border-gray-600 group-hover:border-orange-500"
-                      />
-                      <label
-                        htmlFor="pdf-state-events"
-                        className="text-sm font-medium leading-none cursor-pointer select-none text-gray-700 dark:text-gray-300 group-hover:text-orange-700 dark:group-hover:text-orange-300"
-                      >
-                        State Events
-                      </label>
-                    </div>
-                    <div className="flex items-center space-x-2 p-2.5 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950/30 transition-all group">
-                      <Checkbox
-                        id="pdf-ev-events"
-                        checked={pdfIncludeEVEvents}
-                        onCheckedChange={(checked) => setPdfIncludeEVEvents(checked as boolean)}
-                        className="border-gray-400 dark:border-gray-600 group-hover:border-purple-500"
-                      />
-                      <label
-                        htmlFor="pdf-ev-events"
-                        className="text-sm font-medium leading-none cursor-pointer select-none text-gray-700 dark:text-gray-300 group-hover:text-purple-700 dark:group-hover:text-purple-300"
-                      >
+                      <Label htmlFor="pdf-source-ev" className="text-sm font-medium cursor-pointer">
                         EV Events
-                      </label>
+                      </Label>
                     </div>
-                    <div className="flex items-center space-x-2 p-2.5 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-pink-300 dark:hover:border-pink-600 hover:bg-pink-50 dark:hover:bg-pink-950/30 transition-all group">
-                      <Checkbox
-                        id="pdf-public-holidays"
-                        checked={pdfIncludePublicHolidays}
-                        onCheckedChange={(checked) => setPdfIncludePublicHolidays(checked as boolean)}
-                        className="border-gray-400 dark:border-gray-600 group-hover:border-pink-500"
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="pdf-source-holiday" 
+                        checked={pdfEventSources.includes('public_holiday')}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setPdfEventSources([...pdfEventSources, 'public_holiday']);
+                          } else {
+                            setPdfEventSources(pdfEventSources.filter(s => s !== 'public_holiday'));
+                          }
+                        }}
                       />
-                      <label
-                        htmlFor="pdf-public-holidays"
-                        className="text-sm font-medium leading-none cursor-pointer select-none text-gray-700 dark:text-gray-300 group-hover:text-pink-700 dark:group-hover:text-pink-300"
-                      >
-                        Public Holidays
-                      </label>
+                      <Label htmlFor="pdf-source-holiday" className="text-sm font-medium cursor-pointer">
+                        Holidays
+                      </Label>
                     </div>
                   </div>
                 </div>
 
-                <Separator className="bg-gray-200 dark:bg-gray-800" />
-
-                {/* Scope Section */}
-                <div className="space-y-2">
+                {/* Scope Group - Framed */}
+                <div className="flex flex-col gap-2 p-3 rounded-lg bg-white/40 dark:bg-slate-900/40 border border-slate-200/50 dark:border-slate-700/50 lg:flex-1">
                   <label className="text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-300">
                     Scope
                   </label>
-                  <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex flex-wrap items-center gap-2">
                     <Select value={pdfFilterScope} onValueChange={(value: 'all' | 'zone' | 'club') => {
                       setPdfFilterScope(value);
                       if (value !== 'zone') setPdfSelectedZone('');
                       if (value !== 'club') setPdfSelectedClub('');
                     }}>
-                      <SelectTrigger className="h-9 w-auto min-w-[160px] bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600 transition-colors">
+                      <SelectTrigger className="h-9 w-auto min-w-[140px] bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-700">
                         <SelectValue placeholder="Select scope" />
                       </SelectTrigger>
                       <SelectContent>
@@ -501,10 +466,9 @@ export function EventCalendar({
                       </SelectContent>
                     </Select>
                     
-                    {/* Zone Selection */}
                     {pdfFilterScope === 'zone' && (
                       <Select value={pdfSelectedZone} onValueChange={setPdfSelectedZone}>
-                        <SelectTrigger className="h-9 w-auto min-w-[200px] bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-700">
+                        <SelectTrigger className="h-9 w-auto min-w-[160px] bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-700">
                           <SelectValue placeholder="Select zone" />
                         </SelectTrigger>
                         <SelectContent>
@@ -517,15 +481,14 @@ export function EventCalendar({
                       </Select>
                     )}
                     
-                    {/* Club Selection */}
                     {pdfFilterScope === 'club' && (
                       <>
                         <Select value={pdfSelectedZone} onValueChange={(zoneId) => {
                           setPdfSelectedZone(zoneId);
                           setPdfSelectedClub('');
                         }}>
-                          <SelectTrigger className="h-9 w-auto min-w-[200px] bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-700">
-                            <SelectValue placeholder="Select zone first" />
+                          <SelectTrigger className="h-9 w-auto min-w-[140px] bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-700">
+                            <SelectValue placeholder="Select zone" />
                           </SelectTrigger>
                           <SelectContent>
                             {zones.map(zone => (
@@ -536,7 +499,7 @@ export function EventCalendar({
                           </SelectContent>
                         </Select>
                         <Select value={pdfSelectedClub} onValueChange={setPdfSelectedClub} disabled={!pdfSelectedZone}>
-                          <SelectTrigger className="h-9 w-auto min-w-[240px] bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-700">
+                          <SelectTrigger className="h-9 w-auto min-w-[160px] bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-700">
                             <SelectValue placeholder={pdfSelectedZone ? "Select club" : "Select zone first"} />
                           </SelectTrigger>
                           <SelectContent>
@@ -552,46 +515,27 @@ export function EventCalendar({
                   </div>
                 </div>
 
-                <Separator className="bg-gray-200 dark:bg-gray-800" />
-                
-                {/* Date Range Section */}
-                <div className="space-y-3">
+                {/* Date Range Group - Framed */}
+                <div className="flex flex-col gap-2 p-3 rounded-lg bg-white/40 dark:bg-slate-900/40 border border-slate-200/50 dark:border-slate-700/50 lg:flex-1">
                   <label className="text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-300">
                     Date Range
                   </label>
-                  <div className="flex gap-2">
-                    <Button
-                      variant={pdfScope === 'month' ? 'default' : 'outline'}
-                      size="sm"
-                      className={pdfScope === 'month' ? 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700' : ''}
-                      onClick={() => setPdfScope('month')}
-                    >
-                      This Month
-                    </Button>
-                    <Button
-                      variant={pdfScope === 'year' ? 'default' : 'outline'}
-                      size="sm"
-                      className={pdfScope === 'year' ? 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700' : ''}
-                      onClick={() => setPdfScope('year')}
-                    >
-                      This Year
-                    </Button>
-                    <Button
-                      variant={pdfScope === 'custom' ? 'default' : 'outline'}
-                      size="sm"
-                      className={pdfScope === 'custom' ? 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700' : ''}
-                      onClick={() => setPdfScope('custom')}
-                    >
-                      Custom Range
-                    </Button>
-                  </div>
-                  
-                  {/* Date Selectors */}
-                  <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Select value={pdfScope} onValueChange={(value: 'month' | 'year' | 'custom') => setPdfScope(value)}>
+                      <SelectTrigger className="h-9 w-auto min-w-[140px] bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-700">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="month">Month</SelectItem>
+                        <SelectItem value="year">Year</SelectItem>
+                        <SelectItem value="custom">Custom</SelectItem>
+                      </SelectContent>
+                    </Select>
+
                     {pdfScope === 'month' && (
                       <>
                         <Select value={String(selectedMonth)} onValueChange={(value) => setSelectedMonth(Number(value))}>
-                          <SelectTrigger className="h-9 w-32 bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-700">
+                          <SelectTrigger className="h-9 w-auto min-w-[100px] bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-700">
                             <SelectValue>
                               {monthOptions.find(m => m.value === selectedMonth)?.label}
                             </SelectValue>
@@ -605,7 +549,7 @@ export function EventCalendar({
                           </SelectContent>
                         </Select>
                         <Select value={String(pdfYear)} onValueChange={(value) => setPdfYear(Number(value))}>
-                          <SelectTrigger className="h-9 w-24 bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-700">
+                          <SelectTrigger className="h-9 w-auto min-w-[90px] bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-700">
                             <SelectValue>{pdfYear}</SelectValue>
                           </SelectTrigger>
                           <SelectContent>
@@ -618,9 +562,10 @@ export function EventCalendar({
                         </Select>
                       </>
                     )}
+                    
                     {pdfScope === 'year' && (
                       <Select value={String(pdfYear)} onValueChange={(value) => setPdfYear(Number(value))}>
-                        <SelectTrigger className="h-9 w-24 bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-700">
+                        <SelectTrigger className="h-9 w-auto min-w-[90px] bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-700">
                           <SelectValue>{pdfYear}</SelectValue>
                         </SelectTrigger>
                         <SelectContent>
@@ -632,36 +577,32 @@ export function EventCalendar({
                         </SelectContent>
                       </Select>
                     )}
+                    
                     {pdfScope === 'custom' && (
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <div className="flex items-center gap-2">
-                          <label htmlFor="pdfStartDate" className="text-xs font-medium text-gray-700 dark:text-gray-300">From</label>
-                          <input
-                            id="pdfStartDate"
-                            type="date"
-                            value={pdfStartDate}
-                            onChange={e => setPdfStartDate(e.target.value)}
-                            className="h-9 px-3 border border-gray-300 dark:border-gray-700 rounded-md focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-gray-50 dark:bg-gray-800 text-sm"
-                          />
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <label htmlFor="pdfEndDate" className="text-xs font-medium text-gray-700 dark:text-gray-300">To</label>
-                          <input
-                            id="pdfEndDate"
-                            type="date"
-                            value={pdfEndDate}
-                            onChange={e => setPdfEndDate(e.target.value)}
-                            className="h-9 px-3 border border-gray-300 dark:border-gray-700 rounded-md focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-gray-50 dark:bg-gray-800 text-sm"
-                          />
-                        </div>
-                      </div>
+                      <>
+                        <input
+                          type="date"
+                          value={pdfStartDate}
+                          onChange={(e) => setPdfStartDate(e.target.value)}
+                          placeholder="Start Date"
+                          className="h-9 px-3 rounded-md border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm"
+                        />
+                        <input
+                          type="date"
+                          value={pdfEndDate}
+                          onChange={(e) => setPdfEndDate(e.target.value)}
+                          placeholder="End Date"
+                          className="h-9 px-3 rounded-md border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm"
+                        />
+                      </>
                     )}
                   </div>
                 </div>
+              </div>
 
-                {/* Download Button */}
-                <div className="pt-2">
-                  <Button
+              {/* Download Button - Full Width Below */}
+              <div className="mt-4">
+                <Button
                     className="w-full h-11 bg-gradient-to-r from-blue-500 via-purple-600 to-pink-600 hover:from-blue-600 hover:via-purple-700 hover:to-pink-700 text-white font-bold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]"
                     onClick={handleDownloadPDF}
                     disabled={isPdfGenerating || (pdfScope === 'custom' && (!pdfStartDate || !pdfEndDate))}
@@ -688,13 +629,12 @@ export function EventCalendar({
                   </Button>
                 </div>
               </div>
-            </div>
           )}
         </div>
       </div>
     
-    {/* Enhanced Navigation and Filter Section */}
-    <div className="space-y-3 sm:space-y-4 p-3 sm:p-0">
+      {/* Enhanced Navigation and Filter Section */}
+      <div className="space-y-3 sm:space-y-4 p-3 sm:p-0">
       {/* Top Row: Month/Year Navigation and View Toggle */}
       <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3 sm:gap-4">
         <div className="flex items-center justify-between gap-2 sm:gap-3 p-1.5 bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900 rounded-xl border border-border/40 shadow-md">

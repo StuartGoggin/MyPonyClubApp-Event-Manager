@@ -2,7 +2,15 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { HelpCircle } from 'lucide-react';
 import { UserAccountMenu } from './user-account-menu';
+import { Button } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 export function AppHeader() {
   return (
@@ -49,6 +57,27 @@ export function AppHeader() {
 
           {/* Right side - User info */}
           <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+            {/* Help Guide Icon */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    asChild
+                    className="h-8 w-8 rounded-full hover:bg-white/20 transition-all duration-300"
+                  >
+                    <Link href="/user-guide.html" target="_blank">
+                      <HelpCircle className="h-5 w-5 text-white/80 hover:text-white transition-colors" />
+                    </Link>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>User Guide</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
             {/* User account menu */}
             <UserAccountMenu />
           </div>

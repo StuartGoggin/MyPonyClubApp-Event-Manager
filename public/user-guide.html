@@ -542,6 +542,15 @@
                     </ul>
                 </li>
                 
+                <!-- Request Event Section -->
+                <li><a href="#request-event" class="nav-link">📝 Request Event</a>
+                    <ul>
+                        <li><a href="#request-overview" class="nav-link">Overview</a></li>
+                        <li><a href="#request-form" class="nav-link">Using the Request Form</a></li>
+                        <li><a href="#request-confirmation" class="nav-link">After Submission</a></li>
+                    </ul>
+                </li>
+                
                 <!-- Club Manager Section -->
                 <li><a href="#club-manager" class="nav-link">🏇 Club Manager</a>
                     <ul>
@@ -1429,6 +1438,298 @@
                         <li>✅ Optimized layout for A4/Letter paper</li>
                     </ul>
                 </div>
+            </div>
+        </section>
+
+        <!-- REQUEST EVENT SECTION -->
+        <section id="request-event" class="section" style="background: linear-gradient(to bottom, #fef3c7 0%, #ffffff 100%);">
+            <div style="font-size: 4rem; text-align: center; margin-bottom: 1rem;">📝</div>
+            <h2>📝 Request Event</h2>
+            <p>Anyone can request an event to be added to the calendar using the embedded request form. No login required!</p>
+        </section>
+
+        <!-- Request Overview Section -->
+        <section id="request-overview" class="section">
+            <h2>Overview</h2>
+            <p>The Event Request feature allows anyone to suggest events to be added to the MyPonyClub calendar. This is perfect for:</p>
+
+            <div class="color-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+                <div class="color-card">
+                    <div class="color-box" style="background: linear-gradient(135deg, #dbeafe, #bfdbfe); display: flex; align-items: center; justify-content: center; font-size: 2rem;">
+                        🏇
+                    </div>
+                    <div>
+                        <strong>Club Members</strong><br>
+                        <small>Suggest events for your club without needing manager access</small>
+                    </div>
+                </div>
+                <div class="color-card">
+                    <div class="color-box" style="background: linear-gradient(135deg, #d1fae5, #a7f3d0); display: flex; align-items: center; justify-content: center; font-size: 2rem;">
+                        👥
+                    </div>
+                    <div>
+                        <strong>Community Members</strong><br>
+                        <small>Propose community events or activities</small>
+                    </div>
+                </div>
+                <div class="color-card">
+                    <div class="color-box" style="background: linear-gradient(135deg, #fef3c7, #fde68a); display: flex; align-items: center; justify-content: center; font-size: 2rem;">
+                        📅
+                    </div>
+                    <div>
+                        <strong>External Events</strong><br>
+                        <small>Share relevant equestrian events happening in the area</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tip">
+                <span class="tip-icon">💡 Important:</span> Requested events are <strong>not automatically added</strong> to the calendar. They are submitted to administrators for review and approval.
+            </div>
+
+            <h3>How It Works</h3>
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                <div style="position: relative;">
+                    <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 0.5rem;">
+                        <div style="width: 40px; height: 40px; background: #3b82f6; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">1</div>
+                        <h4 style="margin: 0;">Fill Out the Form</h4>
+                    </div>
+                    <p style="margin-left: 56px;">Complete the embedded request form with event details (name, date, location, description, etc.)</p>
+                </div>
+
+                <div style="text-align: center; font-size: 2rem; color: #9ca3af; margin: -0.5rem 0;">↓</div>
+
+                <div style="position: relative;">
+                    <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 0.5rem;">
+                        <div style="width: 40px; height: 40px; background: #10b981; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">2</div>
+                        <h4 style="margin: 0;">Submit Request</h4>
+                    </div>
+                    <p style="margin-left: 56px;">Click submit and your request is sent to the system administrators</p>
+                </div>
+
+                <div style="text-align: center; font-size: 2rem; color: #9ca3af; margin: -0.5rem 0;">↓</div>
+
+                <div style="position: relative;">
+                    <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 0.5rem;">
+                        <div style="width: 40px; height: 40px; background: #f59e0b; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">3</div>
+                        <h4 style="margin: 0;">Admin Review</h4>
+                    </div>
+                    <p style="margin-left: 56px;">Administrators review your request and decide whether to add it to the calendar</p>
+                </div>
+
+                <div style="text-align: center; font-size: 2rem; color: #9ca3af; margin: -0.5rem 0;">↓</div>
+
+                <div style="position: relative;">
+                    <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 0.5rem;">
+                        <div style="width: 40px; height: 40px; background: #8b5cf6; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">4</div>
+                        <h4 style="margin: 0;">Email Notification</h4>
+                    </div>
+                    <p style="margin-left: 56px;">You'll receive an email confirming your submission (make sure to provide a valid email address)</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Request Form Section -->
+        <section id="request-form" class="section">
+            <h2>Using the Request Form</h2>
+            <p>The event request form is embedded directly into the public calendar page for easy access.</p>
+
+            <h3>Accessing the Form</h3>
+            <div class="interactive-demo">
+                <div class="demo-header">
+                    <span class="demo-icon">🌐</span>
+                    <span>How to Find the Request Form</span>
+                </div>
+                <ol>
+                    <li>Visit <a href="https://myponyclub.events/" target="_blank" style="color: var(--primary-color); font-weight: 600;">https://myponyclub.events/</a></li>
+                    <li>Look for the <strong>"Request Event"</strong> button or embedded form on the page</li>
+                    <li>The form may be in a dedicated section or accessible via a button/link</li>
+                </ol>
+            </div>
+
+            <h3>Form Fields</h3>
+            <p>When filling out the request form, you'll need to provide the following information:</p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Field</th>
+                        <th>Required?</th>
+                        <th>Description</th>
+                        <th>Example</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Event Name</strong></td>
+                        <td>✅ Yes</td>
+                        <td>Name of the event</td>
+                        <td>"Spring Dressage Day"</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Event Date</strong></td>
+                        <td>✅ Yes</td>
+                        <td>When the event will take place</td>
+                        <td>15/03/2026</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Location</strong></td>
+                        <td>✅ Yes</td>
+                        <td>Where the event will be held</td>
+                        <td>"Werribee Park Equestrian Centre"</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Description</strong></td>
+                        <td>⚪ Optional</td>
+                        <td>Details about the event</td>
+                        <td>"A fun dressage competition for all levels..."</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Your Name</strong></td>
+                        <td>✅ Yes</td>
+                        <td>Who is requesting this event</td>
+                        <td>"Sarah Johnson"</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Your Email</strong></td>
+                        <td>✅ Yes</td>
+                        <td>For confirmation and updates</td>
+                        <td>"sarah@example.com"</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Club/Organization</strong></td>
+                        <td>⚪ Optional</td>
+                        <td>Associated club or group</td>
+                        <td>"Western Port Pony Club"</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Zone</strong></td>
+                        <td>⚪ Optional</td>
+                        <td>Relevant zone if applicable</td>
+                        <td>"Zone 9"</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Best Practices</h3>
+            <div class="color-grid" style="grid-template-columns: 1fr 1fr;">
+                <div style="background: #dcfce7; border-left: 4px solid #10b981; padding: 1.5rem; border-radius: 0.5rem;">
+                    <h4 style="color: #047857; margin-top: 0;">✅ Do</h4>
+                    <ul style="color: #065f46; margin: 0;">
+                        <li>Provide accurate dates and times</li>
+                        <li>Include detailed location information</li>
+                        <li>Use a valid email address</li>
+                        <li>Write a clear, descriptive event name</li>
+                        <li>Include relevant details in description</li>
+                        <li>Double-check all information before submitting</li>
+                    </ul>
+                </div>
+
+                <div style="background: #fee2e2; border-left: 4px solid #ef4444; padding: 1.5rem; border-radius: 0.5rem;">
+                    <h4 style="color: #dc2626; margin-top: 0;">❌ Don't</h4>
+                    <ul style="color: #991b1b; margin: 0;">
+                        <li>Submit duplicate requests</li>
+                        <li>Use fake or invalid email addresses</li>
+                        <li>Leave required fields empty</li>
+                        <li>Submit spam or inappropriate content</li>
+                        <li>Request events that have already passed</li>
+                        <li>Include personal/sensitive information unnecessarily</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Request Confirmation Section -->
+        <section id="request-confirmation" class="section">
+            <h2>After Submission</h2>
+            
+            <h3>What Happens Next?</h3>
+            <div class="workflow-steps">
+                <div class="workflow-step">
+                    <h4>📧 Confirmation Email</h4>
+                    <p>You'll receive an email confirming that your request was submitted successfully. This email will include:</p>
+                    <ul>
+                        <li>Summary of the event details you submitted</li>
+                        <li>Timestamp of submission</li>
+                        <li>Information about the review process</li>
+                    </ul>
+                </div>
+
+                <div class="workflow-step">
+                    <h4>👁️ Admin Review</h4>
+                    <p>Administrators will review your request and determine if it should be added to the calendar. They may:</p>
+                    <ul>
+                        <li>Approve and add the event directly</li>
+                        <li>Contact you for more information</li>
+                        <li>Decline if the event doesn't fit the calendar criteria</li>
+                    </ul>
+                </div>
+
+                <div class="workflow-step">
+                    <h4>📅 Event Added (If Approved)</h4>
+                    <p>If approved, the event will appear on the public calendar at <a href="https://myponyclub.events/" target="_blank">myponyclub.events</a></p>
+                </div>
+            </div>
+
+            <div class="note">
+                <span class="note-icon">⏱️ Processing Time:</span> Event requests are typically reviewed within 3-5 business days. During busy periods (e.g., start of season), it may take longer.
+            </div>
+
+            <h3>Common Questions</h3>
+            <div class="accordion-container">
+                <div class="accordion-item">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <span>Can I edit my request after submitting?</span>
+                        <span class="accordion-icon">▼</span>
+                    </div>
+                    <div class="accordion-content">
+                        <p>No, once submitted, you cannot edit the request. If you need to make changes, contact the administrators via the email you received or submit a new request with the correct information.</p>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <span>Will I be notified if my request is approved or declined?</span>
+                        <span class="accordion-icon">▼</span>
+                    </div>
+                    <div class="accordion-content">
+                        <p>Currently, you'll receive a confirmation email upon submission. For approval status, check the public calendar or contact administrators directly.</p>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <span>Can I request recurring events?</span>
+                        <span class="accordion-icon">▼</span>
+                    </div>
+                    <div class="accordion-content">
+                        <p>The request form handles single events. For recurring events (e.g., weekly lessons), submit one request and mention in the description that it's recurring, or contact club managers directly.</p>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <span>Who can see my submitted request?</span>
+                        <span class="accordion-icon">▼</span>
+                    </div>
+                    <div class="accordion-content">
+                        <p>Only system administrators can see submitted requests. Your request is not publicly visible until it's approved and added to the calendar.</p>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <span>What if I don't receive a confirmation email?</span>
+                        <span class="accordion-icon">▼</span>
+                    </div>
+                    <div class="accordion-content">
+                        <p>Check your spam/junk folder first. If you still don't see it within a few minutes, the submission may not have gone through. Try submitting again or contact support.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tip">
+                <span class="tip-icon">💡 Alternative:</span> If you're a club member and need to create official club events regularly, consider asking your club manager for access to the Club Manager dashboard where you can create events directly.
             </div>
         </section>
 

@@ -144,12 +144,18 @@ export default function ClubEventManagerDashboard() {
         return;
       }
 
-      // Auto-select user's primary club or first authorized club
+      // Auto-select user's primary club if they have one, otherwise first authorized club
       let defaultClubId = '';
-      if (user?.role === 'standard' && user?.clubId && authorizedClubIds.includes(user.clubId)) {
+      
+      // Priority 1: User's assigned club (for all roles)
+      if (user?.clubId && authorizedClubIds.includes(user.clubId)) {
         defaultClubId = user.clubId;
-      } else if (authorizedClubIds.length > 0) {
+        console.log('Club Manager: Auto-selected user\'s assigned club:', defaultClubId);
+      } 
+      // Priority 2: First authorized club (fallback)
+      else if (authorizedClubIds.length > 0) {
         defaultClubId = authorizedClubIds[0];
+        console.log('Club Manager: Auto-selected first authorized club:', defaultClubId);
       }
       
       if (defaultClubId) {

@@ -567,6 +567,9 @@
                     <ul>
                         <li><a href="#zone-dashboard" class="nav-link">Dashboard Overview</a></li>
                         <li><a href="#zone-approvals" class="nav-link">Event Approvals</a></li>
+                        <li><a href="#schedule-approvals" class="nav-link">Schedule Approvals</a></li>
+                        <li><a href="#zone-calendar-management" class="nav-link">Zone Calendar Management</a></li>
+                        <li><a href="#zone-best-practices" class="nav-link">Best Practices</a></li>
                     </ul>
                 </li>
                 
@@ -2072,26 +2075,508 @@
         <section id="zone-rep" class="section" style="background: linear-gradient(to bottom, #fffbeb 0%, #ffffff 100%);">
             <img src="/myponyclub-logo-zone-manager.png" alt="Zone Manager" style="height: 80px; margin-bottom: 1rem;">
             <h2>⭐ Zone Representative Guide</h2>
-            <p>Complete guide for zone representatives to review and approve club events.</p>
+            <p>Complete guide for zone representatives to review and approve club events, manage schedules, and coordinate zone-wide activities.</p>
         </section>
 
         <!-- Zone Dashboard -->
         <section id="zone-dashboard" class="section">
             <h2>Dashboard Overview</h2>
-            <p>Your zone representative dashboard shows all pending approvals and zone events.</p>
+            <p>Your zone representative dashboard provides a central location to manage all events and approvals for your zone.</p>
             
-            <div class="note">
-                <span class="note-icon">📝 Note:</span> See the <a href="ZONE_MANAGER_QUICK_START.md">Zone Manager Quick Start Guide</a> for detailed information.
+            <h3>Accessing the Zone Dashboard</h3>
+            <ol>
+                <li>Log in to the system with your zone representative credentials</li>
+                <li>You'll automatically see the <strong>Zone Manager Dashboard</strong></li>
+                <li>Your zone will be pre-selected based on your account settings</li>
+            </ol>
+
+            <h3>Dashboard Features</h3>
+            
+            <div class="color-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+                <div class="color-card">
+                    <div class="color-box" style="background: linear-gradient(135deg, #fef3c7, #fde68a); display: flex; align-items: center; justify-content: center; font-size: 2.5rem;">
+                        ⏳
+                    </div>
+                    <div>
+                        <strong>Pending Approvals</strong><br>
+                        <small>Events waiting for your review and approval</small>
+                    </div>
+                </div>
+                <div class="color-card">
+                    <div class="color-box" style="background: linear-gradient(135deg, #dbeafe, #bfdbfe); display: flex; align-items: center; justify-content: center; font-size: 2.5rem;">
+                        📄
+                    </div>
+                    <div>
+                        <strong>Schedule Reviews</strong><br>
+                        <small>Uploaded schedules awaiting approval</small>
+                    </div>
+                </div>
+                <div class="color-card">
+                    <div class="color-box" style="background: linear-gradient(135deg, #d1fae5, #a7f3d0); display: flex; align-items: center; justify-content: center; font-size: 2.5rem;">
+                        ✅
+                    </div>
+                    <div>
+                        <strong>Approved Events</strong><br>
+                        <small>All approved events in your zone</small>
+                    </div>
+                </div>
+                <div class="color-card">
+                    <div class="color-box" style="background: linear-gradient(135deg, #fce7f3, #fbcfe8); display: flex; align-items: center; justify-content: center; font-size: 2.5rem;">
+                        🎯
+                    </div>
+                    <div>
+                        <strong>Zone Events</strong><br>
+                        <small>Create and manage zone-wide events</small>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Statistics Cards</h3>
+            <p>Your dashboard displays key metrics at a glance:</p>
+            <ul>
+                <li><strong>Pending Approvals Count</strong> - Number of events waiting for your review</li>
+                <li><strong>Pending Schedules Count</strong> - Number of schedules awaiting approval</li>
+                <li><strong>Approved This Month</strong> - Events you've approved in the current month</li>
+                <li><strong>Total Zone Events</strong> - All events in your zone</li>
+            </ul>
+
+            <div class="tip">
+                <span class="tip-icon">💡 Quick Tip:</span> The dashboard auto-refreshes, but you can manually refresh by clicking the refresh button in the top-right corner.
             </div>
         </section>
 
         <!-- Event Approvals -->
         <section id="zone-approvals" class="section">
             <h2>Event Approvals</h2>
-            <p>Review and approve or reject events submitted by clubs in your zone.</p>
+            <p>As a zone representative, you review and approve events submitted by clubs in your zone. This ensures proper coordination and avoids scheduling conflicts.</p>
             
+            <h3>The Approval Process</h3>
+            <p>Events follow a structured approval workflow as shown in the Event Approval Railway diagram in the Introduction section. Your role focuses on reviewing date submissions.</p>
+
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; border-radius: 0.5rem; margin: 2rem 0;">
+                <h3 style="color: white; margin-top: 0;">Your Approval Workflow</h3>
+                
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <div style="background: rgba(255,255,255,0.1); padding: 1.5rem; border-radius: 0.5rem; border-left: 4px solid #fbbf24;">
+                        <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 0.5rem;">
+                            <div style="width: 40px; height: 40px; background: #fbbf24; color: #1f2937; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">1</div>
+                            <h4 style="margin: 0; color: white;">Review Event Details</h4>
+                        </div>
+                        <p style="margin-left: 56px;">Check event name, date, time, location, and club information</p>
+                    </div>
+
+                    <div style="text-align: center; font-size: 2rem; color: rgba(255,255,255,0.5); margin: -0.5rem 0;">↓</div>
+
+                    <div style="background: rgba(255,255,255,0.1); padding: 1.5rem; border-radius: 0.5rem; border-left: 4px solid #3b82f6;">
+                        <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 0.5rem;">
+                            <div style="width: 40px; height: 40px; background: #3b82f6; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">2</div>
+                            <h4 style="margin: 0; color: white;">Check for Conflicts</h4>
+                        </div>
+                        <p style="margin-left: 56px;">Verify no scheduling conflicts with other zone events</p>
+                    </div>
+
+                    <div style="text-align: center; font-size: 2rem; color: rgba(255,255,255,0.5); margin: -0.5rem 0;">↓</div>
+
+                    <div style="background: rgba(255,255,255,0.1); padding: 1.5rem; border-radius: 0.5rem; border-left: 4px solid #10b981;">
+                        <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 0.5rem;">
+                            <div style="width: 40px; height: 40px; background: #10b981; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">3</div>
+                            <h4 style="margin: 0; color: white;">Make Decision</h4>
+                        </div>
+                        <p style="margin-left: 56px;">Approve or reject with clear feedback</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3>How to Approve an Event</h3>
+            <div class="workflow-steps">
+                <div class="workflow-step">
+                    <h4>Navigate to Pending Approvals</h4>
+                    <p>Click on the <strong>"Pending Approvals"</strong> section on your dashboard to see all events awaiting review</p>
+                </div>
+
+                <div class="workflow-step">
+                    <h4>Review Event Details</h4>
+                    <p>Click on an event to view full details including:</p>
+                    <ul>
+                        <li>Event name and description</li>
+                        <li>Proposed date and time</li>
+                        <li>Location and venue</li>
+                        <li>Club submitting the event</li>
+                        <li>Event type and category</li>
+                    </ul>
+                </div>
+
+                <div class="workflow-step">
+                    <h4>Check the Zone Calendar</h4>
+                    <p>Verify there are no conflicts with:</p>
+                    <ul>
+                        <li>Other club events in your zone</li>
+                        <li>Zone-wide activities</li>
+                        <li>State-level events</li>
+                        <li>Public holidays</li>
+                    </ul>
+                </div>
+
+                <div class="workflow-step">
+                    <h4>Approve the Event</h4>
+                    <p>If everything looks good:</p>
+                    <ol>
+                        <li>Click the <strong>"Approve"</strong> button</li>
+                        <li>Optionally add a message to the club (e.g., "Approved - looking forward to this event!")</li>
+                        <li>Click <strong>"Confirm Approval"</strong></li>
+                    </ol>
+                </div>
+
+                <div class="workflow-step">
+                    <h4>Notification Sent</h4>
+                    <p>The club manager will receive an automatic email notification that their event has been approved and they can now upload the schedule</p>
+                </div>
+            </div>
+
+            <h3>How to Reject an Event</h3>
+            <div class="warning">
+                <span class="warning-icon">⚠️ Important:</span> When rejecting an event, always provide clear, constructive feedback explaining why it was rejected and what the club needs to do to get approval.
+            </div>
+
+            <div class="workflow-steps">
+                <div class="workflow-step">
+                    <h4>Click "Reject"</h4>
+                    <p>On the event review screen, click the <strong>"Reject"</strong> button</p>
+                </div>
+
+                <div class="workflow-step">
+                    <h4>Provide Detailed Feedback</h4>
+                    <p>In the rejection message field, clearly explain:</p>
+                    <ul>
+                        <li><strong>Why</strong> the event is being rejected</li>
+                        <li><strong>What</strong> needs to be changed</li>
+                        <li><strong>How</strong> the club can resubmit</li>
+                    </ul>
+                    <p><strong>Example:</strong> "This date conflicts with the Zone Championship event on March 15th. Please choose an alternative date. The following weekends are available: March 22, March 29, or April 5."</p>
+                </div>
+
+                <div class="workflow-step">
+                    <h4>Confirm Rejection</h4>
+                    <p>Click <strong>"Confirm Rejection"</strong> to finalize</p>
+                </div>
+
+                <div class="workflow-step">
+                    <h4>Club Receives Notification</h4>
+                    <p>The club manager will receive an email with your feedback and can update the event and resubmit</p>
+                </div>
+            </div>
+
+            <h3>Common Rejection Reasons</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Reason</th>
+                        <th>Example Feedback</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Date Conflict</strong></td>
+                        <td>"This conflicts with Zone Rally on [date]. Please choose an alternative weekend."</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Too Close to Another Event</strong></td>
+                        <td>"This is only 3 days after [club]'s event. Please space events at least 1 week apart."</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Incomplete Information</strong></td>
+                        <td>"Please provide venue address and contact details before approval."</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Venue Unavailable</strong></td>
+                        <td>"This venue is not available on this date. Please confirm venue booking first."</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Needs Coordination</strong></td>
+                        <td>"This requires state-level approval due to multiple zones. I'll coordinate with other zones."</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="tip">
+                <span class="tip-icon">💡 Best Practice:</span> Aim to review and respond to event requests within 48 hours, especially during the busy planning season after the AGM.
+            </div>
+        </section>
+
+        <!-- Schedule Approvals Section -->
+        <section id="schedule-approvals" class="section">
+            <h2>Schedule Approvals</h2>
+            <p>After approving an event's date, clubs must upload a detailed schedule. You'll review and approve these schedules to ensure events are properly organized.</p>
+
+            <h3>What is a Schedule?</h3>
+            <p>An event schedule is a PDF document that includes:</p>
+            <ul>
+                <li>✅ Detailed timeline of activities (e.g., "9:00 AM - Registration", "10:00 AM - Dressage begins")</li>
+                <li>✅ Age divisions and classes</li>
+                <li>✅ Entry fees and requirements</li>
+                <li>✅ Officials and judges</li>
+                <li>✅ Safety information and rules</li>
+                <li>✅ Contact details for inquiries</li>
+            </ul>
+
+            <h3>Schedule Approval Workflow</h3>
+            <div class="workflow-steps">
+                <div class="workflow-step">
+                    <h4>Club Uploads Schedule</h4>
+                    <p>After date approval, the club manager uploads the event schedule PDF to the system</p>
+                </div>
+
+                <div class="workflow-step">
+                    <h4>You Receive Notification</h4>
+                    <p>You'll see the schedule in your <strong>"Pending Schedule Reviews"</strong> section and receive an email notification</p>
+                </div>
+
+                <div class="workflow-step">
+                    <h4>Review the Schedule</h4>
+                    <p>Download and review the PDF to ensure it's complete and meets requirements</p>
+                </div>
+
+                <div class="workflow-step">
+                    <h4>Approve or Request Changes</h4>
+                    <p>Either approve the schedule or reject with feedback for improvements</p>
+                </div>
+
+                <div class="workflow-step">
+                    <h4>Event Fully Approved</h4>
+                    <p>Once the schedule is approved, the event becomes "Fully Approved" and is published on the public calendar</p>
+                </div>
+            </div>
+
+            <h3>Schedule Review Checklist</h3>
+            <div class="interactive-demo">
+                <div class="demo-header">
+                    <span class="demo-icon">✓</span>
+                    <span>What to Check</span>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Check Item</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>☑️ <strong>Document Quality</strong></td>
+                            <td>PDF is clear, readable, and professionally formatted</td>
+                        </tr>
+                        <tr>
+                            <td>☑️ <strong>Event Details Match</strong></td>
+                            <td>Date, location, and event name match what was approved</td>
+                        </tr>
+                        <tr>
+                            <td>☑️ <strong>Timeline Included</strong></td>
+                            <td>Clear schedule of activities with times</td>
+                        </tr>
+                        <tr>
+                            <td>☑️ <strong>Entry Information</strong></td>
+                            <td>Fees, age groups, and entry process clearly stated</td>
+                        </tr>
+                        <tr>
+                            <td>☑️ <strong>Safety Requirements</strong></td>
+                            <td>Helmet rules, safety equipment, medical requirements</td>
+                        </tr>
+                        <tr>
+                            <td>☑️ <strong>Contact Details</strong></td>
+                            <td>Who to contact with questions or for entries</td>
+                        </tr>
+                        <tr>
+                            <td>☑️ <strong>Officials Listed</strong></td>
+                            <td>Judges, stewards, or other officials identified</td>
+                        </tr>
+                        <tr>
+                            <td>☑️ <strong>Compliance</strong></td>
+                            <td>Follows PCV guidelines and insurance requirements</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>How to Approve a Schedule</h3>
+            <ol>
+                <li>Go to <strong>"Pending Schedule Reviews"</strong> on your dashboard</li>
+                <li>Click on the event to view details</li>
+                <li>Click <strong>"View Schedule"</strong> to download and review the PDF</li>
+                <li>If everything is in order, click <strong>"Approve Schedule"</strong></li>
+                <li>Optionally add a message (e.g., "Great schedule - everything looks good!")</li>
+                <li>Click <strong>"Confirm Approval"</strong></li>
+            </ol>
+
+            <h3>How to Reject a Schedule</h3>
+            <ol>
+                <li>Click <strong>"Reject Schedule"</strong> on the review screen</li>
+                <li>Provide specific feedback on what needs to be fixed</li>
+                <li>Click <strong>"Confirm Rejection"</strong></li>
+            </ol>
+
+            <p><strong>Example Rejection Feedback:</strong> "Please update the schedule to include: 1) Entry fees for each division, 2) Closing date for entries, and 3) Emergency contact information. Once updated, please resubmit for approval."</p>
+
             <div class="note">
-                <span class="note-icon">📝 Coming Soon:</span> Detailed approval workflow documentation will be added here.
+                <span class="note-icon">📝 Note:</span> Clubs can update and resubmit schedules multiple times until approval. Each submission will appear in your pending reviews.
+            </div>
+        </section>
+
+        <!-- Zone Calendar Management -->
+        <section id="zone-calendar-management" class="section">
+            <h2>Zone Calendar Management</h2>
+            <p>In addition to approving club events, you can create and manage zone-wide events that apply to all clubs in your zone.</p>
+
+            <h3>What are Zone Events?</h3>
+            <p>Zone events are activities organized at the zone level, such as:</p>
+            <ul>
+                <li>🏆 Zone Championships and competitions</li>
+                <li>📚 Zone training days and clinics</li>
+                <li>🎪 Zone rallies and social events</li>
+                <li>📅 Zone committee meetings</li>
+                <li>⭐ Inter-zone competitions</li>
+            </ul>
+
+            <h3>Creating a Zone Event</h3>
+            <div class="workflow-steps">
+                <div class="workflow-step">
+                    <h4>Click "Create Zone Event"</h4>
+                    <p>On your dashboard, click the <strong>"Create Zone Event"</strong> button</p>
+                </div>
+
+                <div class="workflow-step">
+                    <h4>Fill in Event Details</h4>
+                    <p>Complete the event creation form:</p>
+                    <ul>
+                        <li><strong>Event Name:</strong> Clear, descriptive name (e.g., "Zone 5 Dressage Championship 2026")</li>
+                        <li><strong>Date & Time:</strong> When the event will occur</li>
+                        <li><strong>Location:</strong> Venue name and address</li>
+                        <li><strong>Description:</strong> What the event is about</li>
+                        <li><strong>Event Type:</strong> Select appropriate category</li>
+                        <li><strong>Is Public:</strong> Check if open to all clubs (not just your zone)</li>
+                    </ul>
+                </div>
+
+                <div class="workflow-step">
+                    <h4>Set Event Visibility</h4>
+                    <p>Choose who can see this event:</p>
+                    <ul>
+                        <li><strong>Zone-only:</strong> Only clubs in your zone</li>
+                        <li><strong>Public:</strong> All clubs across all zones</li>
+                    </ul>
+                </div>
+
+                <div class="workflow-step">
+                    <h4>Add Schedule (Optional)</h4>
+                    <p>Upload a PDF schedule with event details, just like club events</p>
+                </div>
+
+                <div class="workflow-step">
+                    <h4>Save and Publish</h4>
+                    <p>Click <strong>"Create Event"</strong> to publish immediately to the calendar</p>
+                </div>
+            </div>
+
+            <div class="tip">
+                <span class="tip-icon">💡 Pro Tip:</span> Zone events are automatically approved and don't require schedule approval. They bypass the normal approval workflow since you're creating them directly.
+            </div>
+
+            <h3>Managing Existing Zone Events</h3>
+            <p>You can edit or delete zone events you've created:</p>
+            <ul>
+                <li><strong>Edit:</strong> Click on a zone event and select "Edit Event" to update details</li>
+                <li><strong>Delete:</strong> Remove events that are cancelled or no longer needed</li>
+                <li><strong>Add Schedule Later:</strong> Upload schedules to existing events at any time</li>
+            </ul>
+
+            <div class="warning">
+                <span class="warning-icon">⚠️ Important:</span> Zone events appear prominently on the calendar. Make sure all details are accurate before publishing, as clubs will see them immediately.
+            </div>
+        </section>
+
+        <!-- Best Practices Section -->
+        <section id="zone-best-practices" class="section">
+            <h2>Best Practices for Zone Representatives</h2>
+
+            <h3>Communication</h3>
+            <div class="workflow-steps">
+                <div class="workflow-step">
+                    <h4>Be Responsive</h4>
+                    <p>Aim to review event requests within 24-48 hours, especially during peak planning season</p>
+                </div>
+
+                <div class="workflow-step">
+                    <h4>Provide Clear Feedback</h4>
+                    <p>When rejecting, always explain specifically what needs to change and suggest alternatives</p>
+                </div>
+
+                <div class="workflow-step">
+                    <h4>Coordinate with Clubs</h4>
+                    <p>If there's a potential conflict, reach out to clubs directly to find a solution that works for everyone</p>
+                </div>
+
+                <div class="workflow-step">
+                    <h4>Keep Clubs Informed</h4>
+                    <p>Share the zone calendar regularly so clubs can plan around zone events and avoid conflicts</p>
+                </div>
+            </div>
+
+            <h3>Conflict Resolution</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Scenario</th>
+                        <th>Best Practice</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Two clubs request same date</strong></td>
+                        <td>First-come-first-served, or contact both clubs to negotiate. Consider venue capacity if both can proceed.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Event too close to zone event</strong></td>
+                        <td>Reject politely and suggest alternative dates. Explain importance of spacing events.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Incomplete schedule submitted</strong></td>
+                        <td>Reject with specific list of missing items. Offer to help if club needs guidance.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Last-minute event request</strong></td>
+                        <td>Review quickly but ensure it doesn't conflict. Consider if adequate preparation time exists.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Cross-zone event</strong></td>
+                        <td>Coordinate with neighboring zone reps. May need state admin involvement for major events.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Annual Planning Tips</h3>
+            <div class="color-grid" style="grid-template-columns: 1fr 1fr;">
+                <div style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 1.5rem; border-radius: 0.5rem;">
+                    <h4 style="color: #1e40af; margin-top: 0;">Early in the Year (Jan-Feb)</h4>
+                    <ul style="color: #1e3a8a;">
+                        <li>Create zone-wide events first</li>
+                        <li>Share zone calendar with clubs</li>
+                        <li>Encourage clubs to submit events early</li>
+                        <li>Block out key dates (state events, holidays)</li>
+                    </ul>
+                </div>
+
+                <div style="background: #f0fdf4; border-left: 4px solid #10b981; padding: 1.5rem; border-radius: 0.5rem;">
+                    <h4 style="color: #047857; margin-top: 0;">During the Season (Mar-Nov)</h4>
+                    <ul style="color: #065f46;">
+                        <li>Review requests promptly</li>
+                        <li>Monitor for conflicts</li>
+                        <li>Update zone events as needed</li>
+                        <li>Maintain communication with clubs</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="tip">
+                <span class="tip-icon">💡 Helpful Resource:</span> Keep a spreadsheet or notes of major zone events throughout the year to quickly reference when reviewing new requests.
             </div>
         </section>
 

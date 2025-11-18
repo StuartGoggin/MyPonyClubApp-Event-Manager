@@ -1,0 +1,2015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyPonyClub Event Manager - User Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #2563eb;
+            --primary-dark: #1e40af;
+            --secondary-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+            --border-color: #e5e7eb;
+            --bg-light: #f9fafb;
+            --bg-card: #ffffff;
+            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: var(--bg-light);
+        }
+
+        /* Header */
+        .header {
+            background: var(--primary-color);
+            color: white;
+            padding: 1.5rem 0;
+            box-shadow: var(--shadow-lg);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        /* Navigation Sidebar */
+        .nav-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            z-index: 1001;
+            font-size: 1.5rem;
+        }
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 100px;
+            bottom: 0;
+            width: 280px;
+            background: var(--bg-card);
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+            padding: 1rem;
+            box-shadow: var(--shadow);
+            z-index: 50;
+        }
+
+        .sidebar nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar nav ul li {
+            margin: 0;
+        }
+
+        .sidebar nav ul li a {
+            display: block;
+            padding: 0.75rem 2rem;
+            color: var(--text-dark);
+            text-decoration: none;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar nav ul li a:hover {
+            background: var(--bg-light);
+            border-left-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .sidebar nav ul li a.active {
+            background: var(--bg-light);
+            border-left-color: var(--primary-color);
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .sidebar nav ul ul {
+            margin-left: 1rem;
+        }
+
+        .sidebar nav ul ul li a {
+            font-size: 0.9rem;
+            padding: 0.5rem 2rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 280px;
+            margin-top: 130px;
+            padding: 2rem;
+            max-width: 1200px;
+        }
+
+        .section {
+            background: var(--bg-card);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .section h2 {
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            font-size: 1.75rem;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .section h3 {
+            color: var(--text-dark);
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+            font-size: 1.35rem;
+        }
+
+        .section h4 {
+            color: var(--text-dark);
+            margin-top: 1rem;
+            margin-bottom: 0.75rem;
+            font-size: 1.1rem;
+        }
+
+        /* Interactive Elements */
+        .interactive-demo {
+            background: var(--bg-light);
+            border: 2px solid var(--primary-color);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .demo-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .demo-icon {
+            font-size: 1.5rem;
+        }
+
+        /* Color Coding Demo */
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .color-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .color-box {
+            width: 40px;
+            height: 40px;
+            border-radius: 0.25rem;
+            flex-shrink: 0;
+        }
+
+        /* Status Indicators */
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .status-card {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .status-icon {
+            font-size: 1.5rem;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            background: white;
+            box-shadow: var(--shadow);
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+
+        thead {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        tbody tr:hover {
+            background: var(--bg-light);
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            border-radius: 0.5rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+            margin: 0.25rem;
+        }
+
+        .btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-secondary {
+            background: var(--secondary-color);
+        }
+
+        .btn-danger {
+            background: var(--danger-color);
+        }
+
+        .btn-warning {
+            background: var(--warning-color);
+        }
+
+        /* Filter Demo */
+        .filter-demo {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .filter-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            background: white;
+        }
+
+        /* Keyboard Shortcuts */
+        .shortcuts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .shortcut-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .key {
+            background: var(--text-dark);
+            color: white;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.25rem;
+            font-family: monospace;
+            font-weight: 600;
+        }
+
+        /* Tips and Notes */
+        .tip, .note, .warning {
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0.5rem;
+            border-left: 4px solid;
+        }
+
+        .tip {
+            background: #dbeafe;
+            border-left-color: var(--primary-color);
+        }
+
+        .note {
+            background: #dcfce7;
+            border-left-color: var(--secondary-color);
+        }
+
+        .warning {
+            background: #fef3c7;
+            border-left-color: var(--warning-color);
+        }
+
+        .tip-icon, .note-icon, .warning-icon {
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+
+        /* Workflow Steps */
+        .workflow-steps {
+            counter-reset: step;
+        }
+
+        .workflow-step {
+            position: relative;
+            padding-left: 3rem;
+            padding-bottom: 2rem;
+            border-left: 3px solid var(--border-color);
+            margin-left: 1.5rem;
+        }
+
+        .workflow-step:last-child {
+            border-left-color: transparent;
+            padding-bottom: 0;
+        }
+
+        .workflow-step::before {
+            counter-increment: step;
+            content: counter(step);
+            position: absolute;
+            left: -1.5rem;
+            top: 0;
+            width: 3rem;
+            height: 3rem;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+
+        .workflow-step h4 {
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-toggle {
+                display: block;
+            }
+
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+                top: 0;
+                width: 100%;
+                z-index: 1000;
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .color-grid,
+            .status-grid,
+            .shortcuts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            .sidebar,
+            .nav-toggle {
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .section {
+                page-break-inside: avoid;
+            }
+        }
+
+        /* Accordion for mobile */
+        .accordion-toggle {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .accordion-toggle::after {
+            content: ' ▼';
+            font-size: 0.8em;
+        }
+
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .accordion-content.active {
+            max-height: 2000px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <img src="/Logo.png" alt="MyPonyClub Events Logo" style="height: 60px; margin-bottom: 1rem; display: block;">
+            <h1>� MyPonyClub Event Manager - Complete User Guide</h1>
+            <p>Everything you need to know about using the system</p>
+        </div>
+    </div>
+
+    <!-- Mobile Navigation Toggle -->
+    <button class="nav-toggle" onclick="toggleNav()">☰</button>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+        <nav>
+            <ul>
+                <!-- Spacer sections -->
+                <li><a href="#" class="nav-link" style="opacity: 0; pointer-events: none;">&nbsp;</a></li>
+                <li><a href="#" class="nav-link" style="opacity: 0; pointer-events: none;">&nbsp;</a></li>
+                
+                <!-- Introduction Section -->
+                <li><a href="#introduction" class="nav-link">📖 Introduction</a>
+                    <ul>
+                        <li><a href="#welcome" class="nav-link">Welcome</a></li>
+                        <li><a href="#how-to-access" class="nav-link">How to Access</a></li>
+                        <li><a href="#getting-started" class="nav-link">Getting Started</a></li>
+                        <li><a href="#understanding-process" class="nav-link">Understanding the Process</a></li>
+                        <li><a href="#roles" class="nav-link">Understanding Your Role</a></li>
+                    </ul>
+                </li>
+                
+                <!-- Calendar Viewer Section -->
+                <li><a href="#calendar-viewer" class="nav-link">📅 Calendar Viewer</a>
+                    <ul>
+                        <li><a href="#calendar-accessing" class="nav-link">Accessing Calendar</a></li>
+                        <li><a href="#calendar-viewing" class="nav-link">Viewing Events</a></li>
+                        <li><a href="#calendar-filtering" class="nav-link">Filtering Events</a></li>
+                        <li><a href="#calendar-exporting" class="nav-link">Exporting Calendar</a></li>
+                    </ul>
+                </li>
+                
+                <!-- Club Manager Section -->
+                <li><a href="#club-manager" class="nav-link">🏇 Club Manager</a>
+                    <ul>
+                        <li><a href="#club-dashboard" class="nav-link">Dashboard Overview</a></li>
+                        <li><a href="#club-creating-events" class="nav-link">Creating Events</a></li>
+                        <li><a href="#club-managing-events" class="nav-link">Managing Events</a></li>
+                        <li><a href="#club-schedules" class="nav-link">Uploading Schedules</a></li>
+                        <li><a href="#club-settings" class="nav-link">Club Settings</a></li>
+                    </ul>
+                </li>
+                
+                <!-- Zone Representative Section (placeholder) -->
+                <li><a href="#zone-rep" class="nav-link">⭐ Zone Representative</a>
+                    <ul>
+                        <li><a href="#zone-dashboard" class="nav-link">Dashboard Overview</a></li>
+                        <li><a href="#zone-approvals" class="nav-link">Event Approvals</a></li>
+                    </ul>
+                </li>
+                
+                <!-- Admin Section (placeholder) -->
+                <li><a href="#admin" class="nav-link">👑 Administrator</a>
+                    <ul>
+                        <li><a href="#admin-overview" class="nav-link">Admin Overview</a></li>
+                    </ul>
+                </li>
+                
+                <li><a href="#troubleshooting" class="nav-link">Troubleshooting</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- INTRODUCTION SECTION HEADER -->
+        <section id="introduction" class="section" style="background: linear-gradient(to bottom, #f0f9ff 0%, #ffffff 100%); padding: 3rem 2rem; text-align: center; border-bottom: 3px solid #3b82f6;">
+            <div style="max-width: 800px; margin: 0 auto;">
+                <h1 style="font-size: 2.5rem; margin-bottom: 1rem; color: #1e40af;">📖 Introduction</h1>
+                <p style="font-size: 1.25rem; color: #64748b; margin-bottom: 0;">Everything you need to know to get started with MyPonyClub Event Manager</p>
+                <div style="margin-top: 1.5rem; padding: 1rem; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <p style="margin: 0; color: #475569;"><strong>Quick Start:</strong> New to the system? Follow the sections below in order to understand how to access and use MyPonyClub Event Manager.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Welcome Section -->
+        <section id="welcome" class="section">
+            <h2>Welcome to MyPonyClub Event Manager</h2>
+            <p>MyPonyClub Event Manager is a comprehensive platform designed to streamline event management across Pony Club Victoria. The system enables clubs to create and submit events, zone representatives to review and approve them, and provides a public calendar for everyone to view all Pony Club activities.</p>
+            
+            <div class="tip">
+                <span class="tip-icon">💡 Navigation Tip:</span> Use the sidebar menu to jump to the section relevant to your role, or browse through all features to get a complete understanding of the system.
+            </div>
+            
+            <h3>Key Features</h3>
+            <div class="status-grid">
+                <div class="status-card">
+                    <span class="status-icon">📝</span>
+                    <div>
+                        <strong>Event Request Management</strong><br>
+                        <small>Submit and track event requests</small>
+                    </div>
+                </div>
+                <div class="status-card">
+                    <span class="status-icon">✅</span>
+                    <div>
+                        <strong>Multi-level Approval</strong><br>
+                        <small>Zone and state-level review process</small>
+                    </div>
+                </div>
+                <div class="status-card">
+                    <span class="status-icon">📅</span>
+                    <div>
+                        <strong>Calendar Management</strong><br>
+                        <small>Import and export zone calendars</small>
+                    </div>
+                </div>
+                <div class="status-card">
+                    <span class="status-icon">🔔</span>
+                    <div>
+                        <strong>Email Notifications</strong><br>
+                        <small>Automated updates and reminders</small>
+                    </div>
+                </div>
+                <div class="status-card">
+                    <span class="status-icon">🏖️</span>
+                    <div>
+                        <strong>Public Holiday Integration</strong><br>
+                        <small>Automatic conflict detection</small>
+                    </div>
+                </div>
+                <div class="status-card">
+                    <span class="status-icon">👥</span>
+                    <div>
+                        <strong>User Management</strong><br>
+                        <small>Role-based access control</small>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- How to Access Section -->
+        <section id="how-to-access" class="section">
+            <h2>How to Access the Application</h2>
+            
+            <h3>Public Calendar Access (No Login Required)</h3>
+            <p>Anyone can view Pony Club events without needing an account or logging in.</p>
+            
+            <div class="interactive-demo">
+                <div class="demo-header">
+                    <span class="demo-icon">🌐</span>
+                    <span>Public Calendar URL</span>
+                </div>
+                <p><strong>Main Calendar:</strong> <a href="https://myponyclub.events/" target="_blank" style="color: var(--primary-color); font-weight: 600;">https://myponyclub.events/</a></p>
+                <ul>
+                    <li>✅ No login required to view events</li>
+                    <li>✅ Shows all approved and pending events</li>
+                    <li>✅ Fully interactive filtering and exporting</li>
+                    <li>✅ Mobile-friendly responsive design</li>
+                </ul>
+            </div>
+
+            <h3>Management Access (Login Required)</h3>
+            <p>If you need to create events, approve events, or perform administrative tasks, you'll need to log in.</p>
+            
+            <h4>Who Needs to Login?</h4>
+            <div class="status-grid">
+                <div class="status-card">
+                    <span class="status-icon">🏇</span>
+                    <div>
+                        <strong>Club Managers</strong><br>
+                        <small>Create and manage club events</small>
+                    </div>
+                </div>
+                <div class="status-card">
+                    <span class="status-icon">⭐</span>
+                    <div>
+                        <strong>Zone Representatives</strong><br>
+                        <small>Approve and manage zone events</small>
+                    </div>
+                </div>
+                <div class="status-card">
+                    <span class="status-icon">👑</span>
+                    <div>
+                        <strong>Administrators</strong><br>
+                        <small>System-wide management</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="note">
+                <span class="note-icon">📝 Important:</span> Login credentials are provided by your administrator. You'll need your Pony Club ID and mobile number to access the system.
+            </div>
+        </section>
+
+        <!-- Getting Started Section -->
+        <section id="getting-started" class="section">
+            <h2>Getting Started</h2>
+            
+            <h3>First Time Login</h3>
+            <p>If you need to manage events (as a club manager, zone rep, or administrator), you'll need to log in to access the system.</p>
+            
+            <div class="workflow-steps">
+                <div class="workflow-step">
+                    <h4>Step 1: Access the Application</h4>
+                    <p>Navigate to your organization's MyPonyClub Event Manager URL</p>
+                    <p>You'll be directed to the login page</p>
+                </div>
+                
+                <div class="workflow-step">
+                    <h4>Step 2: Enter Your Credentials</h4>
+                    <ul>
+                        <li><strong>Pony Club ID:</strong> Enter your PC ID (e.g., PC123456 or MID number)</li>
+                        <li><strong>Mobile Number:</strong> Enter your mobile in Australian format (e.g., 0412345678)</li>
+                    </ul>
+                    <p>Click <strong>"Login"</strong> to continue</p>
+                </div>
+                
+                <div class="workflow-step">
+                    <h4>Step 3: Initial Setup</h4>
+                    <ul>
+                        <li>On first login, verify your details are correct</li>
+                        <li>Your role and club association will be pre-configured by your administrator</li>
+                        <li>If you see an "Access Denied" message, contact your administrator</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>Understanding the Interface</h3>
+            
+            <h4>Navigation Bar</h4>
+            <ul>
+                <li><strong>Logo</strong> (top left) - Returns to your role's home dashboard</li>
+                <li><strong>Navigation Buttons</strong> - Access different sections based on your role</li>
+                <li><strong>User Menu</strong> (top right) - Shows your name, role, and logout option</li>
+            </ul>
+
+            <h4>Dashboard Layout</h4>
+            <ul>
+                <li><strong>Statistics Cards</strong> - Quick overview of key metrics relevant to your role</li>
+                <li><strong>Action Buttons</strong> - Primary functions for your role (e.g., "Add Event", "Approve Events")</li>
+                <li><strong>Data Tables</strong> - Sortable, searchable lists of events, clubs, users, etc.</li>
+                <li><strong>Filter Controls</strong> - Refine displayed information by date, status, zone, etc.</li>
+            </ul>
+
+            <div class="note">
+                <span class="note-icon">📝 Note:</span> If you only need to view events (not manage them), you don't need to log in. Simply visit <a href="https://myponyclub.events/" target="_blank">https://myponyclub.events/</a> to access the public calendar.
+            </div>
+        </section>
+
+        <!-- Roles Section -->
+        <section id="roles" class="section">
+            <h2>Understanding Your Role</h2>
+            <p>The MyPonyClub Event Manager uses a role-based system to provide different features and permissions based on your position within the organization. Understanding your role helps you navigate to the right features quickly.</p>
+            
+            <h3>Role Hierarchy</h3>
+            <p>The system uses a multi-tier structure where higher-level roles have broader oversight:</p>
+            
+            <div class="interactive-demo">
+                <div class="demo-header">
+                    <span class="demo-icon">📊</span>
+                    <span>Organization Structure</span>
+                </div>
+                <pre style="background: #f8fafc; padding: 1.5rem; border-radius: 8px; overflow-x: auto; font-size: 0.85rem; line-height: 1.6;">
+┌─────────────────────────────────────────┐
+│         Super User (Admin)              │
+│    Full system access & management      │
+└────────────────┬────────────────────────┘
+                 │
+        ┌────────┴────────┐
+        │                 │
+┌───────▼────────┐  ┌────▼──────────────┐
+│  State Manager │  │   EV Manager      │
+│  State-level   │  │   EV Program      │
+│  oversight     │  │   coordination    │
+└───────┬────────┘  └───────────────────┘
+        │
+   ┌────┴────┐
+   │         │
+┌──▼─────────▼──┐
+│  Zone Rep     │
+│  Zone-level   │
+│  approval     │
+└──┬────────────┘
+   │
+┌──▼────────────┐
+│ Club Manager  │
+│  Club events  │
+│  submission   │
+└───────────────┘
+                </pre>
+            </div>
+
+            <h3>Role Descriptions & Permissions</h3>
+            
+            <h4>1. Calendar Viewer (Public Access)</h4>
+            <p><strong>Purpose:</strong> View Pony Club events without needing to log in</p>
+            <p><strong>Permissions:</strong></p>
+            <ul>
+                <li>✅ View all approved and pending events on public calendar</li>
+                <li>✅ Filter events by date, zone, club, event type</li>
+                <li>✅ Export calendar to PDF</li>
+                <li>❌ No login required</li>
+            </ul>
+
+            <h4>2. Club Manager</h4>
+            <p><strong>Purpose:</strong> Manage individual club events and submit them for approval</p>
+            <p><strong>Permissions:</strong></p>
+            <ul>
+                <li>✅ Submit event requests for their club</li>
+                <li>✅ Edit pending or rejected events</li>
+                <li>✅ View event approval status and feedback</li>
+                <li>✅ Upload event schedules (PDF files)</li>
+                <li>✅ View their club's event history</li>
+                <li>❌ Cannot approve their own club's events</li>
+            </ul>
+
+            <h4>3. Zone Representative</h4>
+            <p><strong>Purpose:</strong> Review and approve club events within their assigned zone</p>
+            <p><strong>Permissions:</strong></p>
+            <ul>
+                <li>✅ View all events in their zone</li>
+                <li>✅ Approve or reject club event requests</li>
+                <li>✅ Add feedback and comments to events</li>
+                <li>✅ Manage zone calendar</li>
+                <li>✅ Access zone-level statistics</li>
+                <li>✅ Export zone event reports</li>
+            </ul>
+
+            <h4>4. State Manager</h4>
+            <p><strong>Purpose:</strong> Oversee all zones and provide state-level coordination</p>
+            <p><strong>Permissions:</strong></p>
+            <ul>
+                <li>✅ View events across all zones</li>
+                <li>✅ Manage state-level settings</li>
+                <li>✅ Override zone decisions (if needed)</li>
+                <li>✅ Manage public holidays</li>
+                <li>✅ Generate state-wide reports</li>
+                <li>✅ Access advanced analytics</li>
+            </ul>
+
+            <h4>5. Super User (Administrator)</h4>
+            <p><strong>Purpose:</strong> Full system administration and configuration</p>
+            <p><strong>Permissions:</strong></p>
+            <ul>
+                <li>✅ All permissions from other roles</li>
+                <li>✅ User management (create, edit, delete users)</li>
+                <li>✅ Club and zone configuration</li>
+                <li>✅ Event type management</li>
+                <li>✅ System settings and maintenance</li>
+                <li>✅ Database operations</li>
+                <li>✅ Import/export data</li>
+            </ul>
+
+            <div class="note">
+                <span class="note-icon">📝 Multi-Role Support:</span> Users can have multiple roles simultaneously. For example, you might be both a Club Manager and a Zone Representative. The system shows all available dashboards and your permissions are cumulative (you get all rights from all roles).
+            </div>
+        </section>
+
+        <!-- Understanding the Process Section -->
+        <section id="understanding-process" class="section">
+            <h2>Understanding the Process</h2>
+            <p>Events in MyPonyClub Event Manager go through an approval workflow to ensure proper coordination and scheduling. Here's how the process works:</p>
+
+            <h3>Event Approval Railway</h3>
+            <p>Your event progresses through these stations from submission to full approval:</p>
+
+            <!-- Station 1: Date Submitted -->
+            <div style="display: flex; gap: 1.5rem; margin: 2rem 0; align-items: flex-start;">
+                <div style="flex-shrink: 0; width: 50px; height: 50px; background: #2563eb; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: bold; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);">
+                    1
+                </div>
+                <div style="flex: 1;">
+                    <h4 style="margin-top: 0; color: #1e293b; font-size: 1.3rem;">Date Submitted</h4>
+                    <p style="color: #64748b; margin: 0.5rem 0;">Your event date has been proposed and is awaiting zone manager review</p>
+                    <ul style="margin-top: 1rem; color: #475569;">
+                        <li><strong>Status:</strong> 📅 Proposed</li>
+                        <li><strong>What happens:</strong> Zone manager reviews the date for conflicts</li>
+                        <li><strong>Your action:</strong> Wait for approval notification</li>
+                        <li><strong>Timeline:</strong> Typically reviewed after the AGM as part of a planning activity for the zone</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div style="width: 2px; height: 40px; background: linear-gradient(to bottom, #2563eb, #10b981); margin-left: 25px;"></div>
+
+            <!-- Station 2: Date Approved -->
+            <div style="display: flex; gap: 1.5rem; margin: 2rem 0; align-items: flex-start;">
+                <div style="flex-shrink: 0; width: 50px; height: 50px; background: #10b981; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: bold; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);">
+                    2
+                </div>
+                <div style="flex: 1;">
+                    <h4 style="margin-top: 0; color: #1e293b; font-size: 1.3rem;">Date Approved</h4>
+                    <p style="color: #64748b; margin: 0.5rem 0;">Great! Your event date has been confirmed by the zone manager</p>
+                    <ul style="margin-top: 1rem; color: #475569;">
+                        <li><strong>Status:</strong> ✅ Date Confirmed</li>
+                        <li><strong>What happens:</strong> Event is now scheduled on the calendar</li>
+                        <li><strong>Your action:</strong> Upload your event schedule document (PDF)</li>
+                        <li><strong>Required:</strong> Detailed schedule with times and activities</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div style="width: 2px; height: 40px; background: linear-gradient(to bottom, #10b981, #f59e0b); margin-left: 25px;"></div>
+
+            <!-- Station 3: Schedule Required -->
+            <div style="display: flex; gap: 1.5rem; margin: 2rem 0; align-items: flex-start;">
+                <div style="flex-shrink: 0; width: 50px; height: 50px; background: #f59e0b; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: bold; box-shadow: 0 4px 6px rgba(245, 158, 11, 0.3);">
+                    3
+                </div>
+                <div style="flex: 1;">
+                    <h4 style="margin-top: 0; color: #1e293b; font-size: 1.3rem;">Schedule Required</h4>
+                    <p style="color: #64748b; margin: 0.5rem 0;">Your event needs a detailed schedule document to proceed</p>
+                    <ul style="margin-top: 1rem; color: #475569;">
+                        <li><strong>Status:</strong> 📄 Missing Schedule</li>
+                        <li><strong>What's needed:</strong> PDF with event timeline and activities</li>
+                        <li><strong>Your action:</strong> Upload schedule through your dashboard</li>
+                        <li><strong>Format:</strong> PDF format recommended for best compatibility</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div style="width: 2px; height: 40px; background: linear-gradient(to bottom, #f59e0b, #8b5cf6); margin-left: 25px;"></div>
+
+            <!-- Station 4: Schedule Submitted -->
+            <div style="display: flex; gap: 1.5rem; margin: 2rem 0; align-items: flex-start;">
+                <div style="flex-shrink: 0; width: 50px; height: 50px; background: #8b5cf6; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: bold; box-shadow: 0 4px 6px rgba(139, 92, 246, 0.3);">
+                    4
+                </div>
+                <div style="flex: 1;">
+                    <h4 style="margin-top: 0; color: #1e293b; font-size: 1.3rem;">Schedule Submitted</h4>
+                    <p style="color: #64748b; margin: 0.5rem 0;">Your schedule is uploaded and awaiting zone manager review</p>
+                    <ul style="margin-top: 1rem; color: #475569;">
+                        <li><strong>Status:</strong> 📄 Schedule Pending Review</li>
+                        <li><strong>What happens:</strong> Zone manager reviews schedule details</li>
+                        <li><strong>Your action:</strong> Wait for schedule approval notification</li>
+                        <li><strong>Timeline:</strong> Usually reviewed within 24-48 hours</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div style="width: 2px; height: 40px; background: linear-gradient(to bottom, #8b5cf6, #ec4899); margin-left: 25px;"></div>
+
+            <!-- Station 5: Fully Approved -->
+            <div style="display: flex; gap: 1.5rem; margin: 2rem 0; align-items: flex-start;">
+                <div style="flex-shrink: 0; width: 50px; height: 50px; background: #ec4899; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: bold; box-shadow: 0 4px 6px rgba(236, 72, 153, 0.3);">
+                    5
+                </div>
+                <div style="flex: 1;">
+                    <h4 style="margin-top: 0; color: #1e293b; font-size: 1.3rem;">Fully Approved 🎉</h4>
+                    <p style="color: #64748b; margin: 0.5rem 0;">Congratulations! Your event is fully approved and published</p>
+                    <ul style="margin-top: 1rem; color: #475569;">
+                        <li><strong>Status:</strong> ✅ Schedule Approved</li>
+                        <li><strong>What happens:</strong> Event is live on the public calendar</li>
+                        <li><strong>Visibility:</strong> Anyone can view your event details</li>
+                        <li><strong>Next steps:</strong> Manage registrations and event details as needed</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 3rem;">Rejection & Revision Loops</h3>
+            <p>If your event is rejected, don't worry! You can revise and resubmit:</p>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;">
+                <!-- Date Rejection -->
+                <div style="border-left: 4px solid #ef4444; padding-left: 1.5rem; background: #fef2f2; padding: 1.5rem; border-radius: 0.5rem;">
+                    <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;">
+                        <div style="width: 40px; height: 40px; background: #ef4444; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                            ❌
+                        </div>
+                        <h4 style="margin: 0; color: #991b1b;">Date Rejected</h4>
+                    </div>
+                    <ul style="color: #7f1d1d; margin: 0;">
+                        <li>Zone manager found a conflict or issue</li>
+                        <li><strong>Action:</strong> Review rejection reason</li>
+                        <li><strong>Next:</strong> Update event date and resubmit</li>
+                        <li>Returns to Station 1 for re-review</li>
+                    </ul>
+                </div>
+
+                <!-- Schedule Rejection -->
+                <div style="border-left: 4px solid #f97316; padding-left: 1.5rem; background: #fff7ed; padding: 1.5rem; border-radius: 0.5rem;">
+                    <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;">
+                        <div style="width: 40px; height: 40px; background: #f97316; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                            ❌
+                        </div>
+                        <h4 style="margin: 0; color: #9a3412;">Schedule Rejected</h4>
+                    </div>
+                    <ul style="color: #7c2d12; margin: 0;">
+                        <li>Schedule needs revision or corrections</li>
+                        <li><strong>Action:</strong> Review feedback from zone manager</li>
+                        <li><strong>Next:</strong> Update schedule document and resubmit</li>
+                        <li>Returns to Station 4 for re-review</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>Station Guide</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Station</th>
+                        <th>Icon</th>
+                        <th>What It Means</th>
+                        <th>Next Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>1. Date Submitted</strong></td>
+                        <td>📅</td>
+                        <td>Event date has been proposed</td>
+                        <td>Wait for zone manager review</td>
+                    </tr>
+                    <tr>
+                        <td><strong>2. Date Approved</strong></td>
+                        <td>✅</td>
+                        <td>Zone manager approved the date</td>
+                        <td>Upload event schedule document</td>
+                    </tr>
+                    <tr>
+                        <td><strong>3. Schedule Required</strong></td>
+                        <td>📄</td>
+                        <td>Schedule document is missing</td>
+                        <td>Club must upload schedule PDF</td>
+                    </tr>
+                    <tr>
+                        <td><strong>4. Schedule Submitted</strong></td>
+                        <td>📄</td>
+                        <td>Schedule uploaded, awaiting review</td>
+                        <td>Wait for zone manager review</td>
+                    </tr>
+                    <tr>
+                        <td><strong>5. Fully Approved</strong></td>
+                        <td>🎉</td>
+                        <td>Event completely approved!</td>
+                        <td>Event is live and published</td>
+                    </tr>
+                    <tr style="background-color: #fee2e2;">
+                        <td><strong>Date Rejected</strong></td>
+                        <td>❌</td>
+                        <td>Zone manager rejected the date</td>
+                        <td>Update event date and resubmit</td>
+                    </tr>
+                    <tr style="background-color: #fed7aa;">
+                        <td><strong>Schedule Rejected</strong></td>
+                        <td>❌</td>
+                        <td>Zone manager rejected schedule</td>
+                        <td>Update schedule and resubmit</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="tip">
+                <span class="tip-icon">💡 Pro Tip:</span> The event status is always visible on your dashboard. Click on any event to see its current station and what action (if any) is needed next.
+            </div>
+        </section>
+
+        <!-- Quick Navigation Section -->
+        <section id="roles" class="section">
+            <h3>Quick Navigation - Jump to Your Role</h3>
+            <p>Click on your role below to jump directly to the relevant section of this guide:</p>
+            
+            <div class="color-grid">
+                <div class="color-card" onclick="location.href='#calendar-viewer'" style="cursor: pointer;">
+                    <div class="color-box" style="background: linear-gradient(to right, #dbeafe, #bfdbfe); display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                        📅
+                    </div>
+                    <div>
+                        <strong>Calendar Viewer</strong><br>
+                        <small>Anyone viewing events</small>
+                    </div>
+                </div>
+                <div class="color-card" onclick="location.href='#club-manager'" style="cursor: pointer;">
+                    <div class="color-box" style="background: linear-gradient(to right, #dcfce7, #bbf7d0); display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                        🏇
+                    </div>
+                    <div>
+                        <strong>Club Manager</strong><br>
+                        <small>Create and manage club events</small>
+                    </div>
+                </div>
+                <div class="color-card" onclick="location.href='#zone-rep'" style="cursor: pointer;">
+                    <div class="color-box" style="background: linear-gradient(to right, #fef3c7, #fed7aa); display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                        ⭐
+                    </div>
+                    <div>
+                        <strong>Zone Representative</strong><br>
+                        <small>Approve zone events</small>
+                    </div>
+                </div>
+                <div class="color-card" onclick="location.href='#admin'" style="cursor: pointer;">
+                    <div class="color-box" style="background: linear-gradient(to right, #faf5ff, #f3e8ff); display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                        👑
+                    </div>
+                    <div>
+                        <strong>Administrator</strong><br>
+                        <small>System-wide management</small>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CALENDAR VIEWER SECTION -->
+        <section id="calendar-viewer" class="section" style="background: linear-gradient(to bottom, #eff6ff 0%, #ffffff 100%);">
+            <img src="/myponyclub-logo-calendar-events.png" alt="Calendar Events" style="height: 80px; margin-bottom: 1rem;">
+            <h2>📅 Calendar Viewer Guide</h2>
+            <p>Learn how to view, filter, and export the event calendar. This section is for anyone wanting to view Pony Club events.</p>
+        </section>
+
+        <!-- Accessing Calendar Section -->
+        <section id="calendar-accessing" class="section">
+            <h2>Accessing the Calendar</h2>
+            
+            <div class="interactive-demo">
+                <div class="demo-header">
+                    <span class="demo-icon">🌐</span>
+                    <span>Access the Calendar</span>
+                </div>
+                <p><strong>URL:</strong> <a href="https://myponyclub.events/" target="_blank" style="color: var(--primary-color); font-weight: 600;">https://myponyclub.events/</a></p>
+                <ul>
+                    <li>✅ Navigate to <strong>https://myponyclub.events/</strong></li>
+                    <li>✅ Available to everyone - no login required</li>
+                    <li>✅ Shows all approved events <em>and</em> events pending approval</li>
+                    <li>✅ Events are color-coded by status (approved, pending, etc.)</li>
+                    <li>✅ Fully interactive with powerful filtering options</li>
+                    <li>✅ Perfect for planning and staying updated on events</li>
+                </ul>
+            </div>
+
+            <div class="tip">
+                <span class="tip-icon">� Bookmark it:</span> Save <strong>https://myponyclub.events/</strong> to your browser favorites for quick access to the calendar anytime!
+            </div>
+        </section>
+
+        <!-- Viewing Events Section -->
+        <section id="calendar-viewing" class="section">
+            <h2>Viewing Events</h2>
+            
+            <div class="workflow-steps">
+                <div class="workflow-step">
+                    <h4>Open the Calendar</h4>
+                    <p>Navigate to <strong>https://myponyclub.events/</strong> in your web browser</p>
+                </div>
+
+                                <div class="workflow-step">
+                    <h4>Choose Your View</h4>
+                    <p>The calendar offers two viewing modes:</p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>View</th>
+                                <th>Best For</th>
+                                <th>Shows</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Month View</strong></td>
+                                <td>Overview of a single month</td>
+                                <td>All events in calendar grid format</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Year View</strong></td>
+                                <td>Long-term planning</td>
+                                <td>All 12 months displayed vertically</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p style="margin-top: 1rem;"><strong>Toggle between views:</strong> Click "Month" or "Year" buttons at the top of the calendar</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Calendar Display Understanding Section -->
+        <section id="calendar-display" class="section">
+            <h2>Understanding the Calendar Display</h2>
+            
+            <h3 id="colors">Event Status Color Coding</h3>
+            <p>Events are color-coded by approval status for easy identification:</p>
+            
+            <div class="color-grid">
+                <div class="color-card">
+                    <div class="color-box" style="background: linear-gradient(to right, #dcfce7, #bbf7d0);"></div>
+                    <div>
+                        <strong>Approved</strong><br>
+                        <small>Events confirmed by zone rep</small>
+                    </div>
+                </div>
+                <div class="color-card">
+                    <div class="color-box" style="background: linear-gradient(to right, #fef3c7, #fed7aa);"></div>
+                    <div>
+                        <strong>Proposed (Pending)</strong><br>
+                        <small>Awaiting zone approval</small>
+                    </div>
+                </div>
+                <div class="color-card">
+                    <div class="color-box" style="background: linear-gradient(to right, #fee2e2, #fecaca);"></div>
+                    <div>
+                        <strong>Rejected</strong><br>
+                        <small>Needs revision by club</small>
+                    </div>
+                </div>
+                <div class="color-card">
+                    <div class="color-box" style="background: #22c55e;"></div>
+                    <div>
+                        <strong>Public Holiday</strong><br>
+                        <small>State/federal holidays</small>
+                    </div>
+                </div>
+                <div class="color-card">
+                    <div class="color-box" style="background: linear-gradient(to right, #faf5ff, #f3e8ff);"></div>
+                    <div>
+                        <strong>EV Event</strong><br>
+                        <small>Equestrian Victoria events</small>
+                    </div>
+                </div>
+                <div class="color-card">
+                    <div class="color-box" style="background: linear-gradient(to right, #dbeafe, #bfdbfe);"></div>
+                    <div>
+                        <strong>Zone Event</strong><br>
+                        <small>Zone-level activities</small>
+                    </div>
+                </div>
+            </div>
+
+            <h3 id="status">Event Status Indicators</h3>
+            <div class="status-grid">
+                <div class="status-card">
+                    <span class="status-icon">✅</span>
+                    <div>
+                        <strong>Approved</strong><br>
+                        <small>Event confirmed</small>
+                    </div>
+                </div>
+                <div class="status-card">
+                    <span class="status-icon">⏳</span>
+                    <div>
+                        <strong>Pending</strong><br>
+                        <small>Awaiting approval</small>
+                    </div>
+                </div>
+                <div class="status-card">
+                    <span class="status-icon">❌</span>
+                    <div>
+                        <strong>Rejected</strong><br>
+                        <small>Needs revision</small>
+                    </div>
+                </div>
+                <div class="status-card">
+                    <span class="status-icon">📅</span>
+                    <div>
+                        <strong>Scheduled</strong><br>
+                        <small>Has uploaded schedule</small>
+                    </div>
+                </div>
+                <div class="status-card">
+                    <span class="status-icon">⚠️</span>
+                    <div>
+                        <strong>Conflict</strong><br>
+                        <small>Warning present</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="note">
+                <span class="note-icon">📝 Note:</span> Click on any event to see complete details including event name, club, date, time, location, status, and any attached schedules.
+            </div>
+        </section>
+
+        <!-- Calendar Filtering Section -->
+        <section id="calendar-filtering" class="section">
+            <h2>Filtering Events</h2>
+            
+            <h3>Interactive Filter Demo</h3>
+            <div class="interactive-demo">
+                <div class="demo-header">
+                    <span class="demo-icon">🔍</span>
+                    <span>Filter Options</span>
+                </div>
+                
+                <h4>Location-Based Filtering</h4>
+                <div class="filter-demo">
+                    <div class="filter-group">
+                        <label>Zone</label>
+                        <select>
+                            <option>All Zones</option>
+                            <option>Metro Zone 1</option>
+                            <option>Metro Zone 2</option>
+                            <option>Regional Zone 1</option>
+                            <option>Regional Zone 2</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Club</label>
+                        <select>
+                            <option>All Clubs</option>
+                            <option>Bayside PC</option>
+                            <option>Country PC</option>
+                            <option>Metro PC</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <h4 style="margin-top: 1.5rem;">Distance-Based Filtering</h4>
+                <div class="filter-demo">
+                    <div class="filter-group">
+                        <label>Home Club</label>
+                        <select>
+                            <option>Select a home club</option>
+                            <option>Bayside PC</option>
+                            <option>Country PC</option>
+                            <option>Metro PC</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Distance</label>
+                        <select>
+                            <option>Within 25 km</option>
+                            <option>Within 50 km</option>
+                            <option>Within 100 km</option>
+                            <option>Within 200 km</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <h4 style="margin-top: 1.5rem;">Event Source Filters</h4>
+                <div style="display: flex; gap: 2rem; flex-wrap: wrap; margin: 1rem 0;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" checked>
+                        <span>Zone Events</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" checked>
+                        <span>EV Events</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" checked>
+                        <span>Public Holidays</span>
+                    </label>
+                </div>
+                
+                <button class="btn">Apply Filters</button>
+                <button class="btn btn-secondary">Clear All</button>
+            </div>
+
+            <h3>Power User: Filter Combinations</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Need to See...</th>
+                        <th>Filters to Apply</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>My club's events</td>
+                        <td>Filter Mode: <strong>Location</strong>, Club: <strong>Your Club</strong></td>
+                    </tr>
+                    <tr>
+                        <td>My zone's events</td>
+                        <td>Filter Mode: <strong>Location</strong>, Zone: <strong>Your Zone</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Nearby events</td>
+                        <td>Filter Mode: <strong>Distance</strong>, Home Club: <strong>Your Club</strong>, Distance: <strong>Within 50 km</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Public holidays only</td>
+                        <td>Event Sources: Uncheck <strong>Zone</strong> & <strong>EV Events</strong>, Keep <strong>Holidays</strong> checked</td>
+                    </tr>
+                    <tr>
+                        <td>EV events only</td>
+                        <td>Event Sources: Uncheck <strong>Zone</strong> & <strong>Holidays</strong>, Keep <strong>EV Events</strong> checked</td>
+                    </tr>
+                    <tr>
+                        <td>Zone events excluding holidays</td>
+                        <td>Event Sources: Check <strong>Zone</strong>, Uncheck <strong>Holidays</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Calendar Exporting Section -->
+        <section id="calendar-exporting" class="section">
+            <h2>Exporting the Calendar</h2>
+            
+            <h3>Export Options</h3>
+            
+            <div class="workflow-steps">
+                <div class="workflow-step">
+                    <h4>Configure PDF Export</h4>
+                    <p>Customize your calendar export with powerful filtering options</p>
+                    
+                    <h5 style="margin-top: 1rem;">1. Choose Export Scope</h5>
+                    <ul>
+                        <li><strong>Month</strong> - Single month export</li>
+                        <li><strong>Year</strong> - Full year calendar (recommended for planning)</li>
+                        <li><strong>Custom Range</strong> - Specify exact start and end dates</li>
+                    </ul>
+                    
+                    <h5 style="margin-top: 1rem;">2. Select Event Sources</h5>
+                    <ul>
+                        <li>☑️ <strong>Zone Events</strong> - Include zone-wide activities</li>
+                        <li>☑️ <strong>EV Events</strong> - Include Equestrian Victoria events</li>
+                        <li>☑️ <strong>Public Holidays</strong> - Include state/federal holidays</li>
+                    </ul>
+                    
+                    <h5 style="margin-top: 1rem;">3. Filter by Location</h5>
+                    <ul>
+                        <li><strong>All Events</strong> - Entire state calendar</li>
+                        <li><strong>Zone Events</strong> - Select specific zone</li>
+                        <li><strong>Club Events</strong> - Select zone, then specific club</li>
+                    </ul>
+                    
+                    <button class="btn" style="margin-top: 1rem;">� Generate PDF</button>
+                </div>
+
+                <div class="workflow-step">
+                    <h4>PDF Features</h4>
+                    <ul>
+                        <li>✅ Color-coded events by status</li>
+                        <li>✅ Event details: name, date, time, location</li>
+                        <li>✅ Club/zone labels</li>
+                        <li>✅ Professional formatting for printing</li>
+                        <li>✅ Optimized layout for A4/Letter paper</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- CLUB MANAGER SECTION -->
+        <section id="club-manager" class="section" style="background: linear-gradient(to bottom, #f0fdf4 0%, #ffffff 100%);">
+            <img src="/myponyclub-logo-club-manager.png" alt="Club Manager" style="height: 80px; margin-bottom: 1rem;">
+            <h2>🏇 Club Manager Guide</h2>
+            <p>Complete guide for club managers to create, manage, and submit events for approval.</p>
+        </section>
+
+        <!-- Club Dashboard -->
+        <section id="club-dashboard" class="section">
+            <h2>Dashboard Overview</h2>
+            <p>Your club manager dashboard provides a central location to manage all your club's events.</p>
+            
+            <h3>Accessing the Club Manager Dashboard</h3>
+            <ol>
+                <li>After logging in, you'll see the <strong>Club Manager</strong> dashboard</li>
+                <li>Your club will be automatically selected from the dropdown</li>
+                <li>If you manage multiple clubs, select the desired club from the dropdown</li>
+            </ol>
+
+            <h3>Dashboard Components</h3>
+            
+            <div class="status-grid">
+                <div class="status-card">
+                    <span class="status-icon">�</span>
+                    <div>
+                        <strong>Total Events</strong><br>
+                        <small>All events for your club</small>
+                    </div>
+                </div>
+                <div class="status-card">
+                    <span class="status-icon">✅</span>
+                    <div>
+                        <strong>Approved</strong><br>
+                        <small>Events approved by zone rep</small>
+                    </div>
+                </div>
+                <div class="status-card">
+                    <span class="status-icon">⏳</span>
+                    <div>
+                        <strong>Pending</strong><br>
+                        <small>Awaiting zone approval</small>
+                    </div>
+                </div>
+                <div class="status-card">
+                    <span class="status-icon">❌</span>
+                    <div>
+                        <strong>Rejected</strong><br>
+                        <small>Events that need revision</small>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Event Status Filters</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Filter</th>
+                        <th>Shows</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>All Events</strong></td>
+                        <td>View complete history</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Upcoming</strong></td>
+                        <td>Future events only</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Past Events</strong></td>
+                        <td>Historical records</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Creating Events -->
+        <section id="club-creating-events" class="section">
+            <h2>Creating Events</h2>
+            <p>Step-by-step guide to creating and submitting new events for your club.</p>
+            
+            <div class="workflow-steps">
+                <div class="workflow-step">
+                    <h4>Step 1: Click "Add Event"</h4>
+                    <p>Click the <strong>"Add Event"</strong> button (green button, top right of your dashboard)</p>
+                </div>
+                
+                <div class="workflow-step">
+                    <h4>Step 2: Fill in Event Details</h4>
+                    <p>Complete all required fields in the event form:</p>
+                    <ul>
+                        <li><strong>Event Type</strong> - Select from dropdown (Rally, Camp, Competition, Training, etc.)</li>
+                        <li><strong>Event Name</strong> - Descriptive name for your event</li>
+                        <li><strong>Date</strong> - Event date (system checks for conflicts automatically)</li>
+                        <li><strong>Start Time</strong> - When the event begins</li>
+                        <li><strong>End Time</strong> - When the event ends</li>
+                        <li><strong>Location</strong> - Where the event takes place</li>
+                        <li><strong>Description</strong> - Detailed information about the event</li>
+                    </ul>
+                </div>
+                
+                <div class="workflow-step">
+                    <h4>Step 3: Add Additional Information</h4>
+                    <ul>
+                        <li>Specify if the event is open to other clubs</li>
+                        <li>Note any special requirements or prerequisites</li>
+                        <li>Include contact information for event coordinator</li>
+                    </ul>
+                </div>
+                
+                <div class="workflow-step">
+                    <h4>Step 4: Submit Event Request</h4>
+                    <p>Click <strong>"Submit Event Request"</strong> to send for approval</p>
+                </div>
+                
+                <div class="workflow-step">
+                    <h4>Step 5: What Happens Next</h4>
+                    <ul>
+                        <li>✅ Event status is set to "Proposed" (Pending)</li>
+                        <li>✅ Zone representative receives notification</li>
+                        <li>✅ You can track status in the Events table</li>
+                        <li>✅ You'll receive email updates on approval/rejection</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="tip">
+                <span class="tip-icon">� Pro Tip:</span> Before submitting, check the calendar for date conflicts with public holidays or other club events in your zone.
+            </div>
+        </section>
+
+        <!-- Managing Events -->
+        <section id="club-managing-events" class="section">
+            <h2>Managing Events</h2>
+            <p>Edit, update, or cancel existing events based on their approval status.</p>
+            
+            <h3>Event Actions by Status</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Available Actions</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Proposed</strong> (Pending)</td>
+                        <td>Edit Details • Cancel Request</td>
+                        <td>Awaiting zone rep review</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Approved</strong></td>
+                        <td>View Details • Upload Schedule • Mark Complete</td>
+                        <td>Event confirmed by zone rep</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Rejected</strong></td>
+                        <td>View Feedback • Edit & Resubmit • Cancel</td>
+                        <td>Needs revision per zone rep feedback</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Scheduled</strong></td>
+                        <td>Upload/Update Schedule • View Schedule</td>
+                        <td>Schedule has been uploaded</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Editing a Rejected Event</h3>
+            <div class="workflow-steps">
+                <div class="workflow-step">
+                    <h4>Step 1: Click Edit Icon</h4>
+                    <p>Find the rejected event in your events list and click the <strong>Edit</strong> icon</p>
+                </div>
+                
+                <div class="workflow-step">
+                    <h4>Step 2: Review Feedback</h4>
+                    <p>Carefully read the zone representative's feedback explaining why the event was rejected</p>
+                    <div class="warning">
+                        <span class="warning-icon">⚠️ Important:</span> Address all points mentioned in the feedback before resubmitting
+                    </div>
+                </div>
+                
+                <div class="workflow-step">
+                    <h4>Step 3: Make Changes</h4>
+                    <p>Update the event details based on the feedback provided</p>
+                </div>
+                
+                <div class="workflow-step">
+                    <h4>Step 4: Resubmit</h4>
+                    <p>Click <strong>"Update Event"</strong> to resubmit for approval</p>
+                    <p>Status automatically changes back to "Proposed"</p>
+                </div>
+            </div>
+
+            <h3>Common Scenarios</h3>
+            
+            <h4 class="accordion-toggle" onclick="toggleAccordion(this)">Scenario: Responding to Event Rejection</h4>
+            <div class="accordion-content">
+                <ol>
+                    <li>Receive email notification of rejection</li>
+                    <li>Log in to your dashboard</li>
+                    <li>Find the rejected event in your events list</li>
+                    <li>Click to view full details and read the zone rep's feedback carefully</li>
+                    <li>Click <strong>"Edit"</strong></li>
+                    <li>Make all requested changes</li>
+                    <li>Add a note explaining your updates</li>
+                    <li>Click <strong>"Update Event"</strong></li>
+                    <li>Event returns to "Pending" status for re-review</li>
+                </ol>
+            </div>
+
+            <h4 class="accordion-toggle" onclick="toggleAccordion(this)">Scenario: Planning Around Public Holidays</h4>
+            <div class="accordion-content">
+                <ol>
+                    <li>Go to the calendar view</li>
+                    <li>Enable <strong>"Public Holidays"</strong> filter</li>
+                    <li>View year ahead in Year View</li>
+                    <li>Note holidays shown in bright green</li>
+                    <li>Choose event dates avoiding holidays</li>
+                    <li>When submitting event, system will warn if conflict exists</li>
+                    <li>Adjust date if needed before final submission</li>
+                </ol>
+            </div>
+
+            <h4 class="accordion-toggle" onclick="toggleAccordion(this)">Scenario: Coordinating with Other Clubs</h4>
+            <div class="accordion-content">
+                <ol>
+                    <li>Filter calendar to show your zone's events</li>
+                    <li>Check what other clubs are planning</li>
+                    <li>Identify potential collaboration opportunities</li>
+                    <li>Mark your event as "Open to other clubs"</li>
+                    <li>Include contact information in description</li>
+                    <li>After approval, share event details with neighboring clubs</li>
+                </ol>
+            </div>
+        </section>
+
+        <!-- Uploading Schedules -->
+        <section id="club-schedules" class="section">
+            <h2>Uploading Event Schedules</h2>
+            <p>Add detailed schedules to your approved events for members and participants to view.</p>
+            
+            <div class="note">
+                <span class="note-icon">📝 Note:</span> You can only upload schedules to events that have been <strong>approved</strong> by your zone representative.
+            </div>
+
+            <h3>How to Upload a Schedule</h3>
+            <div class="workflow-steps">
+                <div class="workflow-step">
+                    <h4>Step 1: Find Your Approved Event</h4>
+                    <p>Locate the approved event in your events list</p>
+                </div>
+                
+                <div class="workflow-step">
+                    <h4>Step 2: Click "Upload Schedule"</h4>
+                    <p>Click the <strong>"Upload Schedule"</strong> button for that event</p>
+                </div>
+                
+                <div class="workflow-step">
+                    <h4>Step 3: Select Your PDF File</h4>
+                    <p><strong>File Requirements:</strong></p>
+                    <ul>
+                        <li>Format: PDF only</li>
+                        <li>Maximum size: 5MB</li>
+                        <li>File must not be corrupted or password-protected</li>
+                    </ul>
+                </div>
+                
+                <div class="workflow-step">
+                    <h4>Step 4: Upload and Confirm</h4>
+                    <p>Click <strong>"Upload"</strong> to complete the process</p>
+                    <p>The schedule becomes viewable to all stakeholders including zone reps and members</p>
+                </div>
+            </div>
+
+            <h3>Schedule Best Practices</h3>
+            <div class="tip">
+                <span class="tip-icon">💡 Tips:</span>
+                <ul>
+                    <li>Include event timeline with start/end times for each activity</li>
+                    <li>List required equipment or prerequisites</li>
+                    <li>Provide contact information for event coordinator</li>
+                    <li>Include parking and venue information</li>
+                    <li>Note any age or skill level requirements</li>
+                    <li>Keep file size reasonable by optimizing images</li>
+                </ul>
+            </div>
+
+            <h3>Updating a Schedule</h3>
+            <p>If you need to update a schedule after uploading:</p>
+            <ol>
+                <li>Click <strong>"Upload Schedule"</strong> again on the same event</li>
+                <li>Select the updated PDF file</li>
+                <li>The new schedule will replace the previous version</li>
+                <li>Participants will see the updated schedule immediately</li>
+            </ol>
+
+            <div class="warning">
+                <span class="warning-icon">⚠️ Troubleshooting:</span> If your schedule won't upload, check that the file is under 5MB and in PDF format. Try reducing the file size by compressing images or re-saving from your PDF editor.
+            </div>
+        </section>
+
+        <!-- Club Settings -->
+        <section id="club-settings" class="section">
+            <h2>Club Settings</h2>
+            <p>Configure your club's information and preferences.</p>
+            
+            <h3>Accessing Club Settings</h3>
+            <p>Click the <strong>"Club Settings"</strong> button on your dashboard to access configuration options.</p>
+
+            <h3>Available Settings</h3>
+            
+            <h4>Club Contact Information</h4>
+            <ul>
+                <li>Primary contact person</li>
+                <li>Contact email address</li>
+                <li>Contact phone number</li>
+                <li>Club physical address</li>
+            </ul>
+
+            <h4>Default Event Settings</h4>
+            <ul>
+                <li>Default event location/venue</li>
+                <li>Standard event start times</li>
+                <li>Default event duration</li>
+                <li>Typical event contact person</li>
+            </ul>
+
+            <h4>Notification Preferences</h4>
+            <ul>
+                <li>Email notifications for event approvals</li>
+                <li>Email notifications for event rejections</li>
+                <li>Reminder emails for upcoming events</li>
+                <li>Weekly summary emails</li>
+            </ul>
+
+            <h4>Club History</h4>
+            <p>View historical information about your club including:</p>
+            <ul>
+                <li>Total events submitted</li>
+                <li>Approval rate statistics</li>
+                <li>Past event managers</li>
+                <li>Club milestones</li>
+            </ul>
+
+            <div class="note">
+                <span class="note-icon">📝 Note:</span> Some settings may only be editable by administrators. Contact your zone representative or state administrator if you need to update restricted fields.
+            </div>
+        </section>
+
+        <!-- ZONE REPRESENTATIVE SECTION -->
+        <section id="zone-rep" class="section" style="background: linear-gradient(to bottom, #fffbeb 0%, #ffffff 100%);">
+            <img src="/myponyclub-logo-zone-manager.png" alt="Zone Manager" style="height: 80px; margin-bottom: 1rem;">
+            <h2>⭐ Zone Representative Guide</h2>
+            <p>Complete guide for zone representatives to review and approve club events.</p>
+        </section>
+
+        <!-- Zone Dashboard -->
+        <section id="zone-dashboard" class="section">
+            <h2>Dashboard Overview</h2>
+            <p>Your zone representative dashboard shows all pending approvals and zone events.</p>
+            
+            <div class="note">
+                <span class="note-icon">📝 Note:</span> See the <a href="ZONE_MANAGER_QUICK_START.md">Zone Manager Quick Start Guide</a> for detailed information.
+            </div>
+        </section>
+
+        <!-- Event Approvals -->
+        <section id="zone-approvals" class="section">
+            <h2>Event Approvals</h2>
+            <p>Review and approve or reject events submitted by clubs in your zone.</p>
+            
+            <div class="note">
+                <span class="note-icon">📝 Coming Soon:</span> Detailed approval workflow documentation will be added here.
+            </div>
+        </section>
+
+        <!-- ADMINISTRATOR SECTION -->
+        <section id="admin" class="section" style="background: linear-gradient(to bottom, #faf5ff 0%, #ffffff 100%);">
+            <h2>👑 Administrator Guide</h2>
+            <p>System-wide administration and management features.</p>
+        </section>
+
+        <!-- Admin Overview -->
+        <section id="admin-overview" class="section">
+            <h2>Administrator Overview</h2>
+            <p>Access to system-wide settings, user management, and advanced features.</p>
+            
+            <div class="note">
+                <span class="note-icon">📝 Coming Soon:</span> Administrator documentation will be added here.
+            </div>
+        </section>
+
+        <!-- Troubleshooting Section -->
+        <section id="troubleshooting" class="section">
+            <h2>Troubleshooting</h2>
+            
+            <h3>Events Not Showing</h3>
+            <div class="warning">
+                <span class="warning-icon">⚠️ Check:</span>
+                <ul>
+                    <li>☑️ Event Sources - ensure Zone, EV Events, or Holidays are checked</li>
+                    <li>☑️ Filter Mode - check if filtering by Location or Distance</li>
+                    <li>☑️ Zone/Club filter - try selecting "All Zones" or "All Clubs"</li>
+                    <li>☑️ Month/Year - verify you're viewing the correct time period</li>
+                </ul>
+                <button class="btn btn-warning">Reset All Filters</button>
+            </div>
+
+            <h3>Common Issues & Solutions</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Issue</th>
+                        <th>Solution</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Calendar won't load</td>
+                        <td>Refresh page (F5), clear browser cache, check internet connection</td>
+                    </tr>
+                    <tr>
+                        <td>PDF download not working</td>
+                        <td>Check pop-up blocker settings, ensure PDF scope and filters are set, try different browser</td>
+                    </tr>
+                    <tr>
+                        <td>Can't see my zone/club</td>
+                        <td>Verify filter settings, check Zone dropdown is set correctly, contact admin if club is missing</td>
+                    </tr>
+                    <tr>
+                        <td>Distance filter not working</td>
+                        <td>Ensure home club is selected first, verify club has geocoded location, try different distance</td>
+                    </tr>
+                    <tr>
+                        <td>Events show wrong colors</td>
+                        <td>Colors indicate status: Green=Approved, Amber=Proposed, Red=Rejected, Bright Green=Holiday, Purple tint=EV Event</td>
+                    </tr>
+                    <tr>
+                        <td>Can't click on events</td>
+                        <td>Ensure JavaScript is enabled, try different browser, refresh page</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Quick Reference Card -->
+        <section class="section" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+            <h2 style="color: white; border-bottom-color: white;">Quick Reference</h2>
+            
+            <h3 style="color: white;">Common Tasks by Role</h3>
+            <table>
+                <thead style="background: rgba(0,0,0,0.2);">
+                    <tr>
+                        <th>Role</th>
+                        <th>Common Tasks</th>
+                    </tr>
+                </thead>
+                <tbody style="background: rgba(255,255,255,0.95); color: #1f2937;">
+                    <tr>
+                        <td><strong>Calendar Viewer</strong></td>
+                        <td>
+                            • Visit https://myponyclub.events/<br>
+                            • Filter by zone/club/distance<br>
+                            • Export calendar as PDF<br>
+                            • View event details
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Club Manager</strong></td>
+                        <td>
+                            • Create new events<br>
+                            • Edit pending events<br>
+                            • Upload event schedules<br>
+                            • Monitor approval status
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Zone Representative</strong></td>
+                        <td>
+                            • Review pending events<br>
+                            • Approve/reject events<br>
+                            • Provide feedback to clubs<br>
+                            • Manage zone calendar
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Administrator</strong></td>
+                        <td>
+                            • Manage users and roles<br>
+                            • System configuration<br>
+                            • Override approvals<br>
+                            • Access all features
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div style="margin-top: 2rem; padding: 1rem; background: rgba(255,255,255,0.1); border-radius: 0.5rem;">
+                <p style="font-size: 1.1rem; margin: 0;">
+                    <strong>💡 Pro Tip:</strong> Bookmark this guide and the calendar URL (https://myponyclub.events/) for quick access!
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Navigation highlighting
+        function updateActiveNav() {
+            const sections = document.querySelectorAll('.section');
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            let current = '';
+            
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (window.pageYOffset >= sectionTop - 200) {
+                    current = section.getAttribute('id');
+                }
+            });
+            
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        }
+
+        window.addEventListener('scroll', updateActiveNav);
+        window.addEventListener('load', updateActiveNav);
+
+        // Smooth scrolling
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                const targetSection = document.querySelector(targetId);
+                
+                if (targetSection) {
+                    const offset = 120;
+                    const targetPosition = targetSection.offsetTop - offset;
+                    
+                    window.scrollTo({
+                        top: targetPosition,
+                        behavior: 'smooth'
+                    });
+                    
+                    // Close mobile nav
+                    if (window.innerWidth <= 768) {
+                        document.getElementById('sidebar').classList.remove('active');
+                    }
+                }
+            });
+        });
+
+        // Mobile navigation toggle
+        function toggleNav() {
+            document.getElementById('sidebar').classList.toggle('active');
+        }
+
+        // Accordion functionality
+        function toggleAccordion(element) {
+            const content = element.nextElementSibling;
+            content.classList.toggle('active');
+        }
+
+        // Initialize all accordions as closed
+        document.addEventListener('DOMContentLoaded', function() {
+            const accordions = document.querySelectorAll('.accordion-content');
+            accordions.forEach(acc => {
+                acc.style.maxHeight = '0';
+            });
+        });
+    </script>
+</body>
+</html>

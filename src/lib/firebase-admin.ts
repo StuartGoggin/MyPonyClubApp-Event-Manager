@@ -27,14 +27,19 @@ function initializeFirebaseAdmin() {
         
         if (serviceAccountStr) {
             // Local development with explicit service account
-            console.log('🔑 Using explicit service account credentials');
-            console.log(`📊 Service account key length: ${serviceAccountStr.length} characters`);
+            const isDev = process.env.NODE_ENV === 'development';
+            if (isDev) {
+                console.log('🔑 Using explicit service account credentials');
+                console.log(`📊 Service account key length: ${serviceAccountStr.length} characters`);
+            }
             
             try {
                 const serviceAccount = JSON.parse(serviceAccountStr);
-                console.log(`✅ Successfully parsed service account JSON`);
-                console.log(`📧 Client email: ${serviceAccount.client_email}`);
-                console.log(`🆔 Project ID: ${serviceAccount.project_id}`);
+                if (isDev) {
+                    console.log(`✅ Successfully parsed service account JSON`);
+                    console.log(`📧 Client email: ${serviceAccount.client_email}`);
+                    console.log(`🆔 Project ID: ${serviceAccount.project_id}`);
+                }
                 
                 // Handle private key formatting - check if it needs newline replacement
                 let formattedPrivateKey = serviceAccount.private_key;
@@ -109,7 +114,9 @@ function initializeFirebaseAdmin() {
         storageInstance = getStorage();
         
         dbConnectionStatus = 'connected';
-        console.log('✅ Firebase Admin SDK initialized successfully');
+        if (process.env.NODE_ENV === 'development') {
+            console.log('✅ Firebase Admin SDK initialized successfully');
+        }
         
     } catch (error: any) {
         console.error('❌ Firebase Admin SDK initialization failed:', error.message);

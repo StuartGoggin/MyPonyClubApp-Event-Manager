@@ -4,7 +4,7 @@ import * as admin from 'firebase-admin';
 export async function GET() {
   try {
     const bucket = admin.storage().bucket();
-    console.log('✅ Storage bucket accessed:', bucket.name);
+    if (process.env.NODE_ENV === 'development') console.log('✅ Storage bucket accessed:', bucket.name);
     
     // Test bucket existence
     const [exists] = await bucket.exists();

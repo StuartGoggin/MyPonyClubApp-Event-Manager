@@ -1,18 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllZones, getAllClubs } from '@/lib/server-data';
 
+const isDev = process.env.NODE_ENV === 'development';
+
 export async function GET(request: NextRequest) {
   try {
-    console.log('🔄 Starting data export process...');
+    if (isDev) console.log('🔄 Starting data export process...');
 
     // Fetch zones and clubs data
-    console.log('📍 Fetching zones...');
+    if (isDev) console.log('📍 Fetching zones...');
     const zones = await getAllZones();
-    console.log(`✅ Retrieved ${zones.length} zones`);
+    if (isDev) console.log(`✅ Retrieved ${zones.length} zones`);
 
-    console.log('🏇 Fetching clubs...');
+    if (isDev) console.log('🏇 Fetching clubs...');
     const clubs = await getAllClubs();
-    console.log(`✅ Retrieved ${clubs.length} clubs`);
+    if (isDev) console.log(`✅ Retrieved ${clubs.length} clubs`);
 
     // Create export data structure
     const exportData = {
@@ -39,7 +41,7 @@ export async function GET(request: NextRequest) {
       }
     };
 
-    console.log('✅ Data export completed successfully');
+    if (isDev) console.log('✅ Data export completed successfully');
 
     // Return the data as JSON
     return NextResponse.json({

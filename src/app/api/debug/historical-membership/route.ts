@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { UserImportDebugger } from '@/lib/user-import-debugger';
 
+const isDev = process.env.NODE_ENV === 'development';
+
 export async function GET() {
   try {
-    console.log('Running historical membership detection test...');
+    if (isDev) console.log('Running historical membership detection test...');
     
     const testResult = UserImportDebugger.testHistoricalMembershipDetection();
     

@@ -3,13 +3,13 @@ import * as admin from 'firebase-admin';
 
 export async function GET() {
   try {
-    console.log('🔍 Listing all available storage buckets...');
+    if (process.env.NODE_ENV === 'development') console.log('🔍 Listing all available storage buckets...');
     
     const storage = admin.storage();
     const projectId = admin.app().options.projectId;
     
-    console.log('📋 Project ID:', projectId);
-    console.log('🔍 Expected bucket name:', `${projectId}.appspot.com`);
+    if (process.env.NODE_ENV === 'development') console.log('📋 Project ID:', projectId);
+    if (process.env.NODE_ENV === 'development') console.log('🔍 Expected bucket name:', `${projectId}.appspot.com`);
     
     // Try different possible bucket names
     const possibleBuckets = [
@@ -25,7 +25,7 @@ export async function GET() {
     
     for (const bucketName of possibleBuckets) {
       try {
-        console.log(`🧪 Testing bucket: ${bucketName}`);
+        if (process.env.NODE_ENV === 'development') console.log(`🧪 Testing bucket: ${bucketName}`);
         const bucket = storage.bucket(bucketName);
         const [exists] = await bucket.exists();
         
@@ -37,13 +37,13 @@ export async function GET() {
             location: metadata.location,
             created: metadata.timeCreated
           });
-          console.log(`✅ Found bucket: ${bucketName}`);
+          if (process.env.NODE_ENV === 'development') console.log(`✅ Found bucket: ${bucketName}`);
         } else {
           results.push({
             name: bucketName,
             exists: false
           });
-          console.log(`❌ Bucket not found: ${bucketName}`);
+          if (process.env.NODE_ENV === 'development') console.log(`❌ Bucket not found: ${bucketName}`);
         }
       } catch (error: any) {
         results.push({
@@ -51,7 +51,7 @@ export async function GET() {
           exists: false,
           error: error.message
         });
-        console.log(`❌ Error checking ${bucketName}:`, error.message);
+        if (process.env.NODE_ENV === 'development') console.log(`❌ Error checking ${bucketName}:`, error.message);
       }
     }
     

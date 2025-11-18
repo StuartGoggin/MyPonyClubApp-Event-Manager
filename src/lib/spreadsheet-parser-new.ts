@@ -8,6 +8,9 @@ export interface SpreadsheetParseResult {
   totalRows: number;
 }
 
+// Only log in development mode
+const isDev = process.env.NODE_ENV === 'development';
+
 export class SpreadsheetParser {
   
   /**
@@ -31,7 +34,7 @@ export class SpreadsheetParser {
     const errors: string[] = [];
     
     try {
-      console.log(`[SpreadsheetParser] Starting to parse file: ${filename}, size: ${fileBuffer.length} bytes`);
+      if (isDev) console.log(`[SpreadsheetParser] Starting to parse file: ${filename}, size: ${fileBuffer.length} bytes`);
       
       // Validate file extension
       const fileValidation = this.validateFileType(filename);
@@ -45,7 +48,7 @@ export class SpreadsheetParser {
       }
       
       // Read workbook from buffer with enhanced options
-      console.log(`[SpreadsheetParser] Reading workbook for ${filename}`);
+      if (isDev) console.log(`[SpreadsheetParser] Reading workbook for ${filename}`);
       const workbook = XLSX.read(fileBuffer, { 
         type: 'buffer',
         cellDates: true,
@@ -53,7 +56,7 @@ export class SpreadsheetParser {
         cellText: false
       });
       
-      console.log(`[SpreadsheetParser] Workbook read successfully. Sheet names: [${workbook.SheetNames.join(', ')}]`);
+      if (isDev) console.log(`[SpreadsheetParser] Workbook read successfully. Sheet names: [${workbook.SheetNames.join(', ')}]`);
       
       // Get first worksheet
       const worksheetName = workbook.SheetNames[0];
@@ -66,7 +69,7 @@ export class SpreadsheetParser {
         };
       }
       
-      console.log(`[SpreadsheetParser] Using worksheet: ${worksheetName}`);
+      if (isDev) console.log(`[SpreadsheetParser] Using worksheet: ${worksheetName}`);
       const worksheet = workbook.Sheets[worksheetName];
       
       if (!worksheet) {
@@ -80,10 +83,10 @@ export class SpreadsheetParser {
       
       // Get worksheet range for debugging
       const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
-      console.log(`[SpreadsheetParser] Worksheet range: ${worksheet['!ref']}, rows: ${range.e.r + 1}, cols: ${range.e.c + 1}`);
+      if (isDev) console.log(`[SpreadsheetParser] Worksheet range: ${worksheet['!ref']}, rows: ${range.e.r + 1}, cols: ${range.e.c + 1}`);
       
       // Convert to JSON array
-      console.log(`[SpreadsheetParser] Converting worksheet to JSON array`);
+      if (isDev) console.log(`[SpreadsheetParser] Converting worksheet to JSON array`);
       const rawData = XLSX.utils.sheet_to_json(worksheet, { 
         header: 1,
         defval: '',
@@ -91,7 +94,7 @@ export class SpreadsheetParser {
         raw: false // This ensures we get string values, not Excel serial dates
       }) as string[][];
       
-      console.log(`[SpreadsheetParser] Raw data extracted: ${rawData.length} rows`);
+      if (isDev) console.log(`[SpreadsheetParser] Raw data extracted: ${rawData.length} rows`);
       
       if (rawData.length === 0) {
         return {
@@ -103,12 +106,12 @@ export class SpreadsheetParser {
       }
       
       // Log first few rows for debugging
-      console.log(`[SpreadsheetParser] First 3 rows:`, rawData.slice(0, 3));
+      if (isDev) console.log(`[SpreadsheetParser] First 3 rows:`, rawData.slice(0, 3));
       
       // Parse headers and data
-      console.log(`[SpreadsheetParser] Starting to parse row data`);
+      if (isDev) console.log(`[SpreadsheetParser] Starting to parse row data`);
       const parseResult = this.parseRowData(rawData);
-      console.log(`[SpreadsheetParser] Parse completed. Valid rows: ${parseResult.data.length}, Errors: ${parseResult.errors.length}`);
+      if (isDev) console.log(`[SpreadsheetParser] Parse completed. Valid rows: ${parseResult.data.length}, Errors: ${parseResult.errors.length}`);
       
       return {
         success: parseResult.errors.length === 0,
@@ -142,7 +145,7 @@ export class SpreadsheetParser {
    */
   static parseCSV(csvContent: string): SpreadsheetParseResult {
     try {
-      console.log(`[SpreadsheetParser] parseCSV: Content length: ${csvContent.length} characters`);
+      if (isDev) console.log(`[SpreadsheetParser] parseCSV: Content length: ${csvContent.length} characters`);
       
       // Convert CSV to workbook
       const workbook = XLSX.read(csvContent, { 
@@ -150,7 +153,7 @@ export class SpreadsheetParser {
         raw: false // Ensure string values
       });
       
-      console.log(`[SpreadsheetParser] CSV workbook created, sheets: [${workbook.SheetNames.join(', ')}]`);
+      if (isDev) console.log(`[SpreadsheetParser] CSV workbook created, sheets: [${workbook.SheetNames.join(', ')}]`);
       
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
       
@@ -170,8 +173,8 @@ export class SpreadsheetParser {
         raw: false
       }) as string[][];
       
-      console.log(`[SpreadsheetParser] CSV raw data: ${rawData.length} rows`);
-      console.log(`[SpreadsheetParser] CSV first 3 rows:`, rawData.slice(0, 3));
+      if (isDev) console.log(`[SpreadsheetParser] CSV raw data: ${rawData.length} rows`);
+      if (isDev) console.log(`[SpreadsheetParser] CSV first 3 rows:`, rawData.slice(0, 3));
       
       const parseResult = this.parseRowData(rawData);
       
@@ -208,7 +211,7 @@ export class SpreadsheetParser {
     const errors: string[] = [];
     const data: UserImportRow[] = [];
     
-    console.log(`[SpreadsheetParser] parseRowData: Processing ${rawData.length} total rows`);
+    if (isDev) console.log(`[SpreadsheetParser] parseRowData: Processing ${rawData.length} total rows`);
     
     if (rawData.length < 2) {
       errors.push('File must contain at least a header row and one data row. Current file has ' + rawData.length + ' rows.');
@@ -217,10 +220,10 @@ export class SpreadsheetParser {
     
     // Parse headers
     const headers = rawData[0].map(h => (h || '').toString().toLowerCase().trim());
-    console.log(`[SpreadsheetParser] Headers found:`, headers);
+    if (isDev) console.log(`[SpreadsheetParser] Headers found:`, headers);
     
     const columnMapping = this.mapHeaders(headers);
-    console.log(`[SpreadsheetParser] Column mapping:`, columnMapping);
+    if (isDev) console.log(`[SpreadsheetParser] Column mapping:`, columnMapping);
     
     // Check for missing required columns
     const missingColumns = this.validateRequiredColumns(columnMapping);
@@ -234,24 +237,24 @@ export class SpreadsheetParser {
       return { data, errors };
     }
     
-    console.log(`[SpreadsheetParser] Processing ${rawData.length - 1} data rows`);
+    if (isDev) console.log(`[SpreadsheetParser] Processing ${rawData.length - 1} data rows`);
     
     // Parse data rows
     for (let i = 1; i < rawData.length; i++) {
       const row = rawData[i];
       
-      console.log(`[SpreadsheetParser] Processing row ${i + 1}:`, row);
+      if (isDev) console.log(`[SpreadsheetParser] Processing row ${i + 1}:`, row);
       
       // Skip empty rows
       if (!row || row.every(cell => !cell || cell.toString().trim() === '')) {
-        console.log(`[SpreadsheetParser] Skipping empty row ${i + 1}`);
+        if (isDev) console.log(`[SpreadsheetParser] Skipping empty row ${i + 1}`);
         continue;
       }
       
       try {
         const userRow = this.parseDataRow(row, columnMapping, i + 1);
         data.push(userRow);
-        console.log(`[SpreadsheetParser] Successfully parsed row ${i + 1}:`, userRow);
+        if (isDev) console.log(`[SpreadsheetParser] Successfully parsed row ${i + 1}:`, userRow);
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Parse error';
         console.error(`[SpreadsheetParser] Error parsing row ${i + 1}:`, errorMessage);
@@ -259,7 +262,7 @@ export class SpreadsheetParser {
       }
     }
     
-    console.log(`[SpreadsheetParser] parseRowData completed: ${data.length} valid rows, ${errors.length} errors`);
+    if (isDev) console.log(`[SpreadsheetParser] parseRowData completed: ${data.length} valid rows, ${errors.length} errors`);
     return { data, errors };
   }
   
@@ -269,16 +272,16 @@ export class SpreadsheetParser {
   private static mapHeaders(headers: string[]): Record<string, number> {
     const mapping: Record<string, number> = {};
     
-    console.log(`[SpreadsheetParser] mapHeaders: Input headers:`, headers);
+    if (isDev) console.log(`[SpreadsheetParser] mapHeaders: Input headers:`, headers);
     
     for (const [fieldName, variants] of Object.entries(this.EXPECTED_HEADERS)) {
-      console.log(`[SpreadsheetParser] Looking for field "${fieldName}" with variants:`, variants);
+      if (isDev) console.log(`[SpreadsheetParser] Looking for field "${fieldName}" with variants:`, variants);
       
       const columnIndex = headers.findIndex(header => {
         const found = variants.some(variant => {
           const matches = header.includes(variant);
           if (matches) {
-            console.log(`[SpreadsheetParser] Found match: "${header}" matches variant "${variant}"`);
+            if (isDev) console.log(`[SpreadsheetParser] Found match: "${header}" matches variant "${variant}"`);
           }
           return matches;
         });
@@ -287,9 +290,9 @@ export class SpreadsheetParser {
       
       if (columnIndex !== -1) {
         mapping[fieldName] = columnIndex;
-        console.log(`[SpreadsheetParser] Mapped "${fieldName}" to column ${columnIndex} ("${headers[columnIndex]}")`);
+        if (isDev) console.log(`[SpreadsheetParser] Mapped "${fieldName}" to column ${columnIndex} ("${headers[columnIndex]}")`);
       } else {
-        console.log(`[SpreadsheetParser] No match found for field "${fieldName}"`);
+        if (isDev) console.log(`[SpreadsheetParser] No match found for field "${fieldName}"`);
       }
     }
     

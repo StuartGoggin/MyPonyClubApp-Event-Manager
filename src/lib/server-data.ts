@@ -28,7 +28,9 @@ function getCached<T>(key: keyof typeof cache, customTTL?: number): T | null {
     return null;
   }
   
-  console.log(`✨ Cache HIT for ${key} (age: ${Math.round(age / 1000)}s)`);
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`✨ Cache HIT for ${key} (age: ${Math.round(age / 1000)}s)`);
+  }
   return entry.data;
 }
 
@@ -82,7 +84,9 @@ export async function getAllZones(): Promise<Zone[]> {
       return [];
     }
     
-    console.log('🔍 Fetching zones from Firestore (cache miss)...');
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🔍 Fetching zones from Firestore (cache miss)...');
+    }
     const zonesSnapshot = await adminDb.collection('zones').get();
     const zones: Zone[] = [];
     
@@ -92,7 +96,9 @@ export async function getAllZones(): Promise<Zone[]> {
       }
     });
     
-    console.log(`✅ Retrieved ${zones.length} zones - CACHED for 12 hours`);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`✅ Retrieved ${zones.length} zones - CACHED for 12 hours`);
+    }
     
     // Cache the result
     setCache('zones', zones);
@@ -125,12 +131,16 @@ export async function getAllClubs(): Promise<Club[]> {
       return [];
     }
     
-    console.log('� Fetching clubs from Firestore (cache miss)...');
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🏇 Fetching clubs from Firestore (cache miss)...');
+    }
     const startTime = Date.now();
     const clubsSnapshot = await adminDb.collection('clubs').get();
     const queryTime = Date.now() - startTime;
     
-    console.log(`📦 Processing ${clubsSnapshot.size} documents...`);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`📦 Processing ${clubsSnapshot.size} documents...`);
+    }
     const processStart = Date.now();
     const clubs: Club[] = [];
     
@@ -143,10 +153,13 @@ export async function getAllClubs(): Promise<Club[]> {
     const processTime = Date.now() - processStart;
     const totalTime = Date.now() - startTime;
     
-    console.log(`⏱️  Timing breakdown:`);
-    console.log(`   - Firestore query: ${queryTime}ms`);
-    console.log(`   - Document processing: ${processTime}ms`);
-    console.log(`   - Total: ${totalTime}ms`);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`⏱️  Timing breakdown:`);
+      console.log(`   - Firestore query: ${queryTime}ms`);
+      console.log(`   - Document processing: ${processTime}ms`);
+      console.log(`   - Total: ${totalTime}ms`);
+      console.log(`✅ Retrieved ${clubs.length} clubs - CACHED for 12 hours`);
+    }
     console.log(`✅ Retrieved ${clubs.length} clubs - CACHED for 12 hours`);
     
     // Cache the result
@@ -177,7 +190,9 @@ export async function getAllEventTypes(): Promise<EventType[]> {
       return [];
     }
     
-    console.log('🔍 Fetching event types from Firestore (cache miss)...');
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🔍 Fetching event types from Firestore (cache miss)...');
+    }
     const eventTypesSnapshot = await adminDb.collection('eventTypes').get();
     const eventTypes: EventType[] = [];
     
@@ -187,7 +202,9 @@ export async function getAllEventTypes(): Promise<EventType[]> {
       }
     });
     
-    console.log(`✅ Retrieved ${eventTypes.length} event types - CACHED for 12 hours`);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`✅ Retrieved ${eventTypes.length} event types - CACHED for 12 hours`);
+    }
     
     // Cache the result
     setCache('eventTypes', eventTypes);
@@ -212,7 +229,9 @@ export async function getAllEvents(): Promise<Event[]> {
       return [];
     }
     
-    console.log('📅 Fetching events from Firestore (cache miss)...');
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('📅 Fetching events from Firestore (cache miss)...');
+    }
     const startTime = Date.now();
     const eventsSnapshot = await adminDb.collection('events').get();
     const events: Event[] = [];
@@ -257,7 +276,9 @@ export async function getAllEvents(): Promise<Event[]> {
     });
     
     const queryTime = Date.now() - startTime;
-    console.log(`✅ Retrieved ${events.length} events in ${queryTime}ms - CACHED for 12 hours`);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`✅ Retrieved ${events.length} events in ${queryTime}ms - CACHED for 12 hours`);
+    }
     
     // Cache the events (including public holidays which are now stored in Firestore)
     setCache('events', events);

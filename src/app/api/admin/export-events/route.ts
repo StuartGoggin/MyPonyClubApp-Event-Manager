@@ -1,26 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllEvents, getAllEventTypes, getAllClubs, getAllZones } from '@/lib/server-data';
 
+const isDev = process.env.NODE_ENV === 'development';
+
 export async function GET(request: NextRequest) {
   try {
-    console.log('🔄 Starting events export process...');
+    if (isDev) console.log('🔄 Starting events export process...');
 
     // Fetch all related data for comprehensive export
-    console.log('📅 Fetching events...');
+    if (isDev) console.log('📅 Fetching events...');
     const events = await getAllEvents();
-    console.log(`✅ Retrieved ${events.length} events`);
+    if (isDev) console.log(`✅ Retrieved ${events.length} events`);
 
-    console.log('🏷️ Fetching event types...');
+    if (isDev) console.log('🏷️ Fetching event types...');
     const eventTypes = await getAllEventTypes();
-    console.log(`✅ Retrieved ${eventTypes.length} event types`);
+    if (isDev) console.log(`✅ Retrieved ${eventTypes.length} event types`);
 
-    console.log('🏇 Fetching clubs for reference...');
+    if (isDev) console.log('🏇 Fetching clubs for reference...');
     const clubs = await getAllClubs();
-    console.log(`✅ Retrieved ${clubs.length} clubs`);
+    if (isDev) console.log(`✅ Retrieved ${clubs.length} clubs`);
 
-    console.log('📍 Fetching zones for reference...');
+    if (isDev) console.log('📍 Fetching zones for reference...');
     const zones = await getAllZones();
-    console.log(`✅ Retrieved ${zones.length} zones`);
+    if (isDev) console.log(`✅ Retrieved ${zones.length} zones`);
 
     // Create mappings for enriched data
     const clubsMap = clubs.reduce((acc, club) => {
@@ -116,7 +118,7 @@ export async function GET(request: NextRequest) {
       }
     };
 
-    console.log('✅ Events export completed successfully');
+    if (isDev) console.log('✅ Events export completed successfully');
 
     // Return the data as JSON
     return NextResponse.json({

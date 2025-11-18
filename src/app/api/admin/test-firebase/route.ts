@@ -1,13 +1,15 @@
 import { NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 
+const isDev = process.env.NODE_ENV === 'development';
+
 export async function GET() {
   try {
     // Enhanced debugging information
     const envVar = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-    console.log('FIREBASE_SERVICE_ACCOUNT_KEY exists:', !!envVar);
-    console.log('NODE_ENV:', process.env.NODE_ENV);
-    console.log('Key length:', envVar?.length || 0);
+    if (isDev) console.log('FIREBASE_SERVICE_ACCOUNT_KEY exists:', !!envVar);
+    if (isDev) console.log('NODE_ENV:', process.env.NODE_ENV);
+    if (isDev) console.log('Key length:', envVar?.length || 0);
     
     // Try to parse the JSON to see if it's valid
     let parseResult = null;

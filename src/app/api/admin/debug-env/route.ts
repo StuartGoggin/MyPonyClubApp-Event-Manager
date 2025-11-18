@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     timestamp: new Date().toISOString()
   };
 
-  console.log('🔧 Environment check:', envInfo);
+  if (process.env.NODE_ENV === 'development') console.log('🔧 Environment check:', envInfo);
   
   return NextResponse.json(envInfo);
 }

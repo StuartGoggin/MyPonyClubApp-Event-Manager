@@ -1,6 +1,9 @@
 import { z } from 'zod';
 import { UserRole } from './types';
 
+// Only log in development mode
+const isDev = process.env.NODE_ENV === 'development';
+
 // Australian mobile number validation (supports various formats)
 const australianMobileRegex = /^(\+?61|0)?[4-5]\d{8}$/;
 
@@ -21,7 +24,7 @@ export const UserImportRowSchema = z.object({
     .transform(s => {
       // Skip validation if empty or missing
       if (!s || s.trim() === '' || s.trim() === 'null' || s.trim() === '0' || s.trim() === '0000000000') {
-        console.log(`[UserValidation] Empty or invalid mobile number, skipping`);
+        if (isDev) console.log(`[UserValidation] Empty or invalid mobile number, skipping`);
         return undefined;
       }
       
@@ -30,7 +33,7 @@ export const UserImportRowSchema = z.object({
       
       // Check if it's a valid Australian mobile number
       if (!australianMobileRegex.test(normalized)) {
-        console.log(`[UserValidation] Invalid mobile number format: "${s}", skipping`);
+        if (isDev) console.log(`[UserValidation] Invalid mobile number format: "${s}", skipping`);
         return undefined;
       }
       
@@ -51,7 +54,7 @@ export const UserImportRowSchema = z.object({
     .transform(s => {
       // Skip validation if empty or missing
       if (!s || s.trim() === '' || s.trim() === 'null') {
-        console.log(`[UserValidation] Empty club name, skipping`);
+        if (isDev) console.log(`[UserValidation] Empty club name, skipping`);
         return undefined;
       }
       
@@ -59,12 +62,12 @@ export const UserImportRowSchema = z.object({
       let clubName = s.trim();
       if (clubName.includes(',')) {
         clubName = clubName.split(',')[0].trim();
-        console.log(`[UserValidation] Multiple clubs found, using first: "${clubName}"`);
+        if (isDev) console.log(`[UserValidation] Multiple clubs found, using first: "${clubName}"`);
       }
       
       // If still empty after processing, return undefined
       if (!clubName || clubName.length < 2) {
-        console.log(`[UserValidation] Club name too short after processing: "${clubName}", skipping`);
+        if (isDev) console.log(`[UserValidation] Club name too short after processing: "${clubName}", skipping`);
         return undefined;
       }
 
@@ -84,7 +87,7 @@ export const UserImportRowSchema = z.object({
     .transform(s => {
       // Skip validation if empty or missing
       if (!s || s.trim() === '' || s.trim() === 'null') {
-        console.log(`[UserValidation] Empty zone name, using default`);
+        if (isDev) console.log(`[UserValidation] Empty zone name, using default`);
         return 'VIC/Southern Metropolitan'; // Use a standardized default
       }
       
@@ -92,7 +95,7 @@ export const UserImportRowSchema = z.object({
       let zoneName = s.trim();
       if (zoneName.includes(',')) {
         zoneName = zoneName.split(',')[0].trim();
-        console.log(`[UserValidation] Multiple zones found, using first: "${zoneName}"`);
+        if (isDev) console.log(`[UserValidation] Multiple zones found, using first: "${zoneName}"`);
       }
       
       // Return the normalized zone name (mapping will be done in service layer)
@@ -102,24 +105,24 @@ export const UserImportRowSchema = z.object({
   role: z.string()
     .optional()
     .transform(s => {
-      console.log(`[UserValidation] Role transform received: "${s}" (type: ${typeof s})`);
+      if (isDev) console.log(`[UserValidation] Role transform received: "${s}" (type: ${typeof s})`);
       
       // If role column is missing or empty, return undefined (no role data)
       if (!s || s.trim() === '' || s.trim() === 'null' || s.trim() === 'undefined') {
-        console.log(`[UserValidation] Role is empty/null/undefined, returning undefined`);
+        if (isDev) console.log(`[UserValidation] Role is empty/null/undefined, returning undefined`);
         return undefined;
       }
       
       // Normalize role names from spreadsheet
       const normalized = s.toLowerCase().trim();
-      console.log(`[UserValidation] Normalized role: "${normalized}"`);
+      if (isDev) console.log(`[UserValidation] Normalized role: "${normalized}"`);
       
       // Check if this is membership status data rather than role data
       if (normalized === 'historical membership' || normalized === 'historical' || 
           normalized.includes('historical') || normalized === 'inactive membership') {
         // Return undefined so this doesn't override existing roles, 
         // and let membershipStatus field handle the membership logic
-        console.log(`[UserValidation] Detected membership status "${s}", not treating as role`);
+        if (isDev) console.log(`[UserValidation] Detected membership status "${s}", not treating as role`);
         return undefined;
       }
       
@@ -127,7 +130,7 @@ export const UserImportRowSchema = z.object({
       if (normalized.includes('riding member') || normalized.includes('non-riding') || 
           normalized.includes('senior') || normalized.includes('junior') ||
           normalized.includes('adult') || normalized.includes('child')) {
-        console.log(`[UserValidation] Detected membership data "${s}" in role field, not treating as role`);
+        if (isDev) console.log(`[UserValidation] Detected membership data "${s}" in role field, not treating as role`);
         return undefined;
       }
       
@@ -138,24 +141,24 @@ export const UserImportRowSchema = z.object({
         case 'user':
         case 'membership':
         case 'active membership':
-          console.log(`[UserValidation] Mapping role "${s}" to standard`);
+          if (isDev) console.log(`[UserValidation] Mapping role "${s}" to standard`);
           return 'standard';
         case 'zone rep':
         case 'zone representative':
         case 'zone_rep':
         case 'zonerep':
-          console.log(`[UserValidation] Mapping role "${s}" to zone_rep`);
+          if (isDev) console.log(`[UserValidation] Mapping role "${s}" to zone_rep`);
           return 'zone_rep';
         case 'super user':
         case 'super_user':
         case 'admin':
         case 'administrator':
         case 'superuser':
-          console.log(`[UserValidation] Mapping role "${s}" to super_user`);
+          if (isDev) console.log(`[UserValidation] Mapping role "${s}" to super_user`);
           return 'super_user';
         default:
           // THIS IS THE PROBLEMATIC FALLBACK - don't default to standard!
-          console.log(`[UserValidation] Unknown role "${s}", returning undefined instead of defaulting to standard`);
+          if (isDev) console.log(`[UserValidation] Unknown role "${s}", returning undefined instead of defaulting to standard`);
           return undefined;
       }
     }),

@@ -4,11 +4,11 @@ import { isDatabaseConnected } from '@/lib/firebase-admin';
 
 export async function GET() {
   try {
-    console.log('🔍 Testing Firebase Storage permissions...');
+    if (process.env.NODE_ENV === 'development') console.log('🔍 Testing Firebase Storage permissions...');
     
     // Ensure Firebase is initialized by importing the admin config
     if (!isDatabaseConnected()) {
-      console.log('❌ Firebase Admin SDK not initialized');
+      if (process.env.NODE_ENV === 'development') console.log('❌ Firebase Admin SDK not initialized');
       return NextResponse.json({
         success: false,
         error: 'Firebase Admin SDK not initialized'
@@ -19,17 +19,17 @@ export async function GET() {
     const storage = admin.storage();
     const bucket = storage.bucket();
     
-    console.log('📦 Bucket name:', bucket.name);
+    if (process.env.NODE_ENV === 'development') console.log('📦 Bucket name:', bucket.name);
     
     // Try to list files (this tests read permission)
-    console.log('📋 Testing bucket access...');
+    if (process.env.NODE_ENV === 'development') console.log('📋 Testing bucket access...');
     const [files] = await bucket.getFiles({ maxResults: 1 });
-    console.log('✅ Bucket access successful. Files found:', files.length);
+    if (process.env.NODE_ENV === 'development') console.log('✅ Bucket access successful. Files found:', files.length);
     
     // Try to get bucket metadata
-    console.log('🔍 Getting bucket metadata...');
+    if (process.env.NODE_ENV === 'development') console.log('🔍 Getting bucket metadata...');
     const [metadata] = await bucket.getMetadata();
-    console.log('✅ Bucket metadata retrieved:', {
+    if (process.env.NODE_ENV === 'development') console.log('✅ Bucket metadata retrieved:', {
       name: metadata.name,
       location: metadata.location,
       created: metadata.timeCreated

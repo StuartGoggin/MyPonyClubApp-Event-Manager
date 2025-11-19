@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -87,15 +87,7 @@ export function EVEventsManagement({ onEventsUpdate }: EVEventsManagementProps) 
     tier: ''
   });
 
-  useEffect(() => {
-    fetchEvents();
-  }, []);
-
-  useEffect(() => {
-    filterEvents();
-  }, [events, searchQuery, disciplineFilter]);
-
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch('/api/events');
@@ -116,9 +108,9 @@ export function EVEventsManagement({ onEventsUpdate }: EVEventsManagementProps) 
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const filterEvents = () => {
+  const filterEvents = useCallback(() => {
     let filtered = [...events];
 
     // Search filter
@@ -140,7 +132,15 @@ export function EVEventsManagement({ onEventsUpdate }: EVEventsManagementProps) 
     filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     setFilteredEvents(filtered);
-  };
+  }, [events, searchQuery, disciplineFilter]);
+
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
+
+  useEffect(() => {
+    filterEvents();
+  }, [filterEvents]);
 
   const handleEdit = (event: Event) => {
     setSelectedEvent(event);

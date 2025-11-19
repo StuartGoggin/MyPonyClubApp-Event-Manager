@@ -25,7 +25,7 @@ export async function GET() {
     });
 
     // Sort by zone, then name
-    zoneReps.sort((a, b) => {
+    zoneReps.sort((a: any, b: any) => {
       const zoneCompare = a.zone.localeCompare(b.zone);
       if (zoneCompare !== 0) return zoneCompare;
       return a.name.localeCompare(b.name);

@@ -29,6 +29,7 @@ export function CommitteeNominationForm({ clubId, clubName, onSubmitSuccess, exi
     clubName,
     zoneId: initialData?.zoneId || '',
     zoneName: initialData?.zoneName || '',
+    year: initialData?.year || new Date().getFullYear(),
     agmDate: initialData?.agmDate || '',
     effectiveDate: initialData?.effectiveDate || '',
     districtCommissioner: initialData?.districtCommissioner || {
@@ -417,12 +418,17 @@ export function CommitteeNominationForm({ clubId, clubName, onSubmitSuccess, exi
                 type="date"
                 value={formData.agmDate}
                 onChange={(e) => {
-                  setFormData(prev => ({ ...prev, agmDate: e.target.value }));
+                  const agmDate = e.target.value;
+                  const year = agmDate ? new Date(agmDate).getFullYear() : new Date().getFullYear();
+                  setFormData(prev => ({ ...prev, agmDate, year }));
                   if (errors.agmDate) setErrors(prev => ({ ...prev, agmDate: '' }));
                 }}
                 className={errors.agmDate ? 'border-red-500' : ''}
               />
               {errors.agmDate && <p className="text-sm text-red-500 mt-1">{errors.agmDate}</p>}
+              {formData.agmDate && (
+                <p className="text-sm text-gray-500 mt-1">Committee Year: {new Date(formData.agmDate).getFullYear()}</p>
+              )}
             </div>
 
             <div>

@@ -15,10 +15,10 @@ export async function POST(
   try {
     const nominationId = params.id;
     const body = await request.json();
-    const { zoneRepId, zoneRepName, zoneRepEmail, zoneName } = body;
+    const { zoneRepId, zoneRepName, message } = body;
 
     // Validate required fields
-    if (!zoneRepId || !zoneRepName || !zoneRepEmail || !zoneName) {
+    if (!zoneRepId || !zoneRepName) {
       return NextResponse.json(
         { error: 'Zone representative details are required' },
         { status: 400 }
@@ -28,10 +28,8 @@ export async function POST(
     // Approve the DC
     await approveDC(
       nominationId,
-      zoneRepId,
       zoneRepName,
-      zoneRepEmail,
-      zoneName
+      message
     );
 
     // Fetch the updated nomination

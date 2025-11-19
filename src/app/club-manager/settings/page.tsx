@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -48,28 +48,7 @@ function ClubSettingsContent() {
   });
   const [logoPreview, setLogoPreview] = useState<string>('');
 
-  useEffect(() => {
-    if (authLoading) return;
-    
-    if (!isAuthenticated) {
-      router.push('/login');
-      return;
-    }
-
-    if (!clubId) {
-      toast({
-        title: 'Error',
-        description: 'No club selected',
-        variant: 'destructive'
-      });
-      router.push('/club-manager');
-      return;
-    }
-
-    fetchClubData();
-  }, [isAuthenticated, authLoading, clubId]);
-
-  const fetchClubData = async () => {
+  const fetchClubData = useCallback(async () => {
     if (!clubId) return;
 
     setLoading(true);
@@ -93,9 +72,12 @@ function ClubSettingsContent() {
       } else if (clubData.image && clubData.image.startsWith('data:image')) {
         logoData = clubData.image;
       }
-      
-      const isValidDataUri = logoData !== '';
-      
+
+      if (logoData) {
+        setLogoPreview(logoData);
+        setInitialLogoPreview(logoData);
+      }
+
       // Populate form
       setFormData({
         name: clubData.name || '',
@@ -105,26 +87,42 @@ function ClubSettingsContent() {
         physicalAddress: clubData.physicalAddress || '',
         postalAddress: clubData.postalAddress || '',
         socialMediaUrl: clubData.socialMediaUrl || clubData.socialMedia?.facebook || '',
-        image: isValidDataUri ? logoData : ''
+        image: logoData
       });
-
-      if (isValidDataUri) {
-        console.log('Setting logo preview - valid base64 data URI, length:', logoData.length);
-        setLogoPreview(logoData);
-      } else {
-        console.log('No valid logo data found (not a base64 data URI):', logoData);
-      }
     } catch (error) {
       console.error('Error fetching club data:', error);
       toast({
         title: 'Error',
-        description: 'Failed to load club data',
+        description: 'Failed to load club settings',
         variant: 'destructive'
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, [clubId, toast]);
+
+  useEffect(() => {
+    if (authLoading) return;
+
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
+
+    if (!clubId) {
+      toast({
+        title: 'Error',
+        description: 'No club selected',
+        variant: 'destructive'
+      });
+      router.push('/club-manager');
+      return;
+    }
+
+    fetchClubData();
+  }, [isAuthenticated, authLoading, clubId, router, toast, fetchClubData]);
+
+  const [initialLogoPreview, setInitialLogoPreview] = useState<string>('');
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));

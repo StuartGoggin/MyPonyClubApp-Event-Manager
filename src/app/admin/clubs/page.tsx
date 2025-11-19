@@ -722,7 +722,7 @@ export default function AdminClubsPage() {
               <div>
                 <Label htmlFor="logoUrl">Club Logo URL</Label>
                 <div className="relative">
-                  <Image className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  {/* <Image className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /> */}
                   <Input
                     id="logoUrl"
                     type="url"

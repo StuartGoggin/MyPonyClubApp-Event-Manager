@@ -5,8 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CommitteeNomination } from '@/types/committee-nomination';
-import { Users2, CheckCircle, XCircle, Clock, FileText, AlertCircle, Edit, Trash2 } from 'lucide-react';
+import { Users2, CheckCircle, XCircle, Clock, FileText, AlertCircle, Edit, Trash2, Calendar } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 interface CommitteeNominationStatusProps {
@@ -17,22 +18,57 @@ interface CommitteeNominationStatusProps {
 
 export function CommitteeNominationStatus({ clubId, onNominateCommittee, onEditNomination }: CommitteeNominationStatusProps) {
   const [nomination, setNomination] = useState<CommitteeNomination | null>(null);
+  const [availableYears, setAvailableYears] = useState<number[]>([]);
+  const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [withdrawing, setWithdrawing] = useState(false);
 
   useEffect(() => {
-    fetchLatestNomination();
+    fetchAvailableYears();
   }, [clubId]);
 
-  const fetchLatestNomination = async () => {
+  useEffect(() => {
+    if (selectedYear !== null) {
+      fetchNominationForYear(selectedYear);
+    }
+  }, [clubId, selectedYear]);
+
+  const fetchAvailableYears = async () => {
+    if (!clubId) return;
+    
+    try {
+      const response = await fetch(`/api/committee-nominations?clubId=${clubId}&years=true`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch available years');
+      }
+
+      const years: number[] = await response.json();
+      setAvailableYears(years);
+      
+      // Set selected year to the most recent year, or current year if no nominations exist
+      if (years.length > 0) {
+        setSelectedYear(years[0]);
+      } else {
+        setSelectedYear(new Date().getFullYear());
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Error fetching available years:', error);
+      setSelectedYear(new Date().getFullYear());
+      setLoading(false);
+    }
+  };
+
+  const fetchNominationForYear = async (year: number) => {
     if (!clubId) return;
     
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch(`/api/committee-nominations?clubId=${clubId}`);
+      const response = await fetch(`/api/committee-nominations?clubId=${clubId}&year=${year}`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch committee nomination');
@@ -65,7 +101,8 @@ export function CommitteeNominationStatus({ clubId, onNominateCommittee, onEditN
       }
 
       // Refresh the nomination data
-      await fetchLatestNomination();
+      await fetchNominationForYear(selectedYear!);
+      await fetchAvailableYears();
     } catch (error) {
       console.error('Error withdrawing nomination:', error);
       alert(error instanceof Error ? error.message : 'Failed to withdraw nomination');
@@ -78,6 +115,10 @@ export function CommitteeNominationStatus({ clubId, onNominateCommittee, onEditN
     if (nomination?.id && onEditNomination) {
       onEditNomination(nomination.id);
     }
+  };
+
+  const handleYearChange = (year: string) => {
+    setSelectedYear(parseInt(year, 10));
   };
 
   if (loading) {
@@ -126,13 +167,39 @@ export function CommitteeNominationStatus({ clubId, onNominateCommittee, onEditN
     return (
       <Card className="border-l-4 border-l-blue-500">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users2 className="h-5 w-5" />
-            Committee Nomination
-          </CardTitle>
-          <CardDescription>
-            Submit your club's committee after the Annual General Meeting
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Users2 className="h-5 w-5" />
+                Committee Nomination {selectedYear}
+              </CardTitle>
+              <CardDescription>
+                Submit your club's committee after the Annual General Meeting
+              </CardDescription>
+            </div>
+            {availableYears.length > 0 && (
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <Select value={selectedYear?.toString() || ''} onValueChange={handleYearChange}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder="Select year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableYears.map((year) => (
+                      <SelectItem key={year} value={year.toString()}>
+                        {year}
+                      </SelectItem>
+                    ))}
+                    {!availableYears.includes(new Date().getFullYear()) && (
+                      <SelectItem value={new Date().getFullYear().toString()}>
+                        {new Date().getFullYear()}
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -141,7 +208,7 @@ export function CommitteeNominationStatus({ clubId, onNominateCommittee, onEditN
             </p>
             <Button onClick={onNominateCommittee} className="w-full" size="lg">
               <FileText className="h-4 w-4 mr-2" />
-              Nominate Committee
+              Nominate Committee for {selectedYear}
             </Button>
           </div>
         </CardContent>
@@ -196,11 +263,35 @@ export function CommitteeNominationStatus({ clubId, onNominateCommittee, onEditN
     <Card className={`border-l-4 ${getStatusColor()}`}>
       <CardHeader>
         <div className="flex items-start justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Users2 className="h-5 w-5" />
-              Committee Nomination {new Date(nomination.agmDate).getFullYear()}
-            </CardTitle>
+          <div className="flex-1">
+            <div className="flex items-center justify-between mb-1">
+              <CardTitle className="flex items-center gap-2">
+                <Users2 className="h-5 w-5" />
+                Committee Nomination {nomination.year}
+              </CardTitle>
+              {availableYears.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <Select value={selectedYear?.toString() || ''} onValueChange={handleYearChange}>
+                    <SelectTrigger className="w-32">
+                      <SelectValue placeholder="Select year" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableYears.map((year) => (
+                        <SelectItem key={year} value={year.toString()}>
+                          {year}
+                        </SelectItem>
+                      ))}
+                      {!availableYears.includes(new Date().getFullYear()) && (
+                        <SelectItem value={new Date().getFullYear().toString()}>
+                          {new Date().getFullYear()}
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
             <CardDescription>
               Submitted {formatDistanceToNow(new Date(nomination.submittedAt), { addSuffix: true })}
             </CardDescription>

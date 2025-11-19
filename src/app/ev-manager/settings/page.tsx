@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -56,29 +56,7 @@ function EVSettingsContent() {
   });
   const [logoPreview, setLogoPreview] = useState<string>('');
 
-  useEffect(() => {
-    if (authLoading) return;
-    
-    if (!isAuthenticated) {
-      router.push('/login');
-      return;
-    }
-
-    // Only state admins and super users can access EV settings
-    if (user?.role !== 'super_user' && user?.role !== 'state_admin') {
-      toast({
-        title: 'Access Denied',
-        description: 'Only state administrators can access Equestrian Victoria settings',
-        variant: 'destructive'
-      });
-      router.push('/ev-manager');
-      return;
-    }
-
-    fetchEVSettings();
-  }, [isAuthenticated, authLoading, user]);
-
-  const fetchEVSettings = async () => {
+  const fetchEVSettings = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch('/api/ev-settings');
@@ -100,32 +78,57 @@ function EVSettingsContent() {
       
       // Populate form
       setFormData({
-        name: data.name || 'Equestrian Victoria',
+        name: data.name || '',
         streetAddress: data.streetAddress || '',
         contactName: data.contactName || '',
         contactEmail: data.contactEmail || '',
         contactMobile: data.contactMobile || '',
-        websiteUrl: data.websiteUrl || 'https://www.vic.equestrian.org.au',
+        websiteUrl: data.websiteUrl || '',
         imageUrl: isValidDataUri ? logoData : ''
       });
 
       if (isValidDataUri) {
-        console.log('Setting logo preview - valid base64 data URI, length:', logoData.length);
+        console.log('Setting EV logo preview - valid base64 data URI, length:', logoData.length);
         setLogoPreview(logoData);
+        setInitialLogoPreview(logoData);
       } else {
-        console.log('No valid logo data found (not a base64 data URI)');
+        console.log('No valid EV logo data found (not a base64 data URI):', logoData);
       }
     } catch (error) {
       console.error('Error fetching EV settings:', error);
       toast({
         title: 'Error',
-        description: 'Failed to load EV settings',
+        description: 'Failed to load Equestrian Victoria settings',
         variant: 'destructive'
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
+
+    // Only state admins and super users can access EV settings
+    if (user?.role !== 'super_user' && user?.role !== 'state_admin') {
+      toast({
+        title: 'Access Denied',
+        description: 'Only state administrators can access Equestrian Victoria settings',
+        variant: 'destructive'
+      });
+      router.push('/ev-manager');
+      return;
+    }
+
+    fetchEVSettings();
+  }, [isAuthenticated, authLoading, user, router, toast, fetchEVSettings]);
+
+  const [initialLogoPreview, setInitialLogoPreview] = useState<string>('');
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -61,11 +61,7 @@ export default function EmailTemplatesPage() {
     search?: string;
   }>({});
 
-  useEffect(() => {
-    fetchTemplates();
-  }, [filter]);
-
-  const fetchTemplates = async () => {
+  const fetchTemplates = useCallback(async () => {
     try {
       setIsLoading(true);
       const params = new URLSearchParams();
@@ -86,7 +82,11 @@ export default function EmailTemplatesPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [filter]);
+
+  useEffect(() => {
+    fetchTemplates();
+  }, [fetchTemplates]);
 
   const initializeTemplates = async () => {
     try {

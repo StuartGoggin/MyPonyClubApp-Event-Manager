@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo, useRef } from 'react';
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -144,13 +144,14 @@ export function MultiEventRequestForm({
     return () => clearTimeout(timer);
   }, []);
 
+  const submittedBy = form.watch('submittedBy');
+
   // Initialize nameSearchTerm with form value
   useEffect(() => {
-    const currentName = form.watch('submittedBy');
-    if (currentName && !nameSearchTerm) {
-      setNameSearchTerm(currentName);
+    if (submittedBy && !nameSearchTerm) {
+      setNameSearchTerm(submittedBy);
     }
-  }, [form.watch('submittedBy'), nameSearchTerm]);
+  }, [submittedBy, nameSearchTerm]);
 
   const { fields: eventFields, append: appendEvent, remove: removeEvent } = useFieldArray({
     control: form.control,
@@ -234,7 +235,7 @@ export function MultiEventRequestForm({
   }, []);
 
   // Silent function to refresh event types (no user notifications)
-  const refreshEventTypes = async () => {
+  const refreshEventTypes = useCallback(async () => {
     try {
       const response = await fetch('/api/event-types');
       if (response.ok) {
@@ -246,7 +247,7 @@ export function MultiEventRequestForm({
       console.error('Silent refresh of event types failed:', error);
       // No user notification - fail silently
     }
-  };
+  }, []);
 
   // Auto-refresh event types when window gains focus (user returns from admin)
   useEffect(() => {
@@ -263,7 +264,7 @@ export function MultiEventRequestForm({
 
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
-  }, []);
+  }, [refreshEventTypes]);
 
   // Silent refresh on component mount (once)
   useEffect(() => {
@@ -275,7 +276,7 @@ export function MultiEventRequestForm({
       
       return () => clearTimeout(timer);
     }
-  }, []);
+  }, [embedMode, propEventTypes, refreshEventTypes]);
 
   // Initialize first event after component mounts (hydration-safe)
   useEffect(() => {

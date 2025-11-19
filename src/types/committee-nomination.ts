@@ -34,6 +34,7 @@ export interface CommitteeNomination {
   clubName: string;
   zoneId: string;
   zoneName: string;
+  year: number; // AGM year - derived from agmDate
   agmDate: string;
   effectiveDate: string;
   submittedAt: string;
@@ -63,6 +64,7 @@ export interface CommitteeNominationFormData {
   clubName: string;
   zoneId: string;
   zoneName: string;
+  year: number; // AGM year - derived from agmDate
   agmDate: string;
   effectiveDate: string;
   

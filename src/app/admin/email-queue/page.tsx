@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -38,7 +38,7 @@ function EmailQueueAdminContent() {
   const [isLoadingLogs, setIsLoadingLogs] = useState(false);
 
   // Fetch data functions
-  const fetchEmails = async () => {
+  const fetchEmails = useCallback(async () => {
     try {
       const params = new URLSearchParams();
       if (filterStatus !== 'all') params.append('status', filterStatus);
@@ -55,9 +55,9 @@ function EmailQueueAdminContent() {
     } catch (error) {
       console.error('Error fetching emails:', error);
     }
-  };
+  }, [filterStatus, filterType]);
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
       const response = await fetch('/api/email-queue?action=stats');
       const result = await response.json();
@@ -70,9 +70,9 @@ function EmailQueueAdminContent() {
     } catch (error) {
       console.error('Error fetching stats:', error);
     }
-  };
+  }, []);
 
-  const fetchConfig = async () => {
+  const fetchConfig = useCallback(async () => {
     try {
       const response = await fetch('/api/email-queue/config');
       const result = await response.json();
@@ -85,7 +85,7 @@ function EmailQueueAdminContent() {
     } catch (error) {
       console.error('Error fetching config:', error);
     }
-  };
+  }, []);
 
   const saveConfig = async () => {
     if (!config) return;
@@ -108,7 +108,7 @@ function EmailQueueAdminContent() {
     }
   };
 
-  const fetchLogs = async () => {
+  const fetchLogs = useCallback(async () => {
     try {
       setIsLoadingLogs(true);
       const response = await fetch('/api/email-queue/logs');
@@ -124,7 +124,7 @@ function EmailQueueAdminContent() {
     } finally {
       setIsLoadingLogs(false);
     }
-  };
+  }, []);
 
   // Load initial data
   useEffect(() => {
@@ -135,14 +135,14 @@ function EmailQueueAdminContent() {
     };
     
     loadData();
-  }, []);
+  }, [fetchEmails, fetchStats, fetchConfig, fetchLogs]);
 
   // Refetch emails when filters change
   useEffect(() => {
     if (!isLoading) {
       fetchEmails();
     }
-  }, [filterStatus, filterType]);
+  }, [fetchEmails, isLoading]);
 
   const refreshData = async () => {
     setIsRefreshing(true);

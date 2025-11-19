@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -44,29 +44,9 @@ function ZoneSettingsContent() {
     imageUrl: ''
   });
   const [logoPreview, setLogoPreview] = useState<string>('');
+  const [initialLogoPreview, setInitialLogoPreview] = useState<string>('');
 
-  useEffect(() => {
-    if (authLoading) return;
-    
-    if (!isAuthenticated) {
-      router.push('/login');
-      return;
-    }
-
-    if (!zoneId) {
-      toast({
-        title: 'Error',
-        description: 'No zone selected',
-        variant: 'destructive'
-      });
-      router.push('/zone-manager');
-      return;
-    }
-
-    fetchZoneData();
-  }, [isAuthenticated, authLoading, zoneId]);
-
-  const fetchZoneData = async () => {
+  const fetchZoneData = useCallback(async () => {
     if (!zoneId) return;
 
     setLoading(true);
@@ -102,6 +82,7 @@ function ZoneSettingsContent() {
       if (isValidDataUri) {
         console.log('Setting logo preview - valid base64 data URI, length:', logoData.length);
         setLogoPreview(logoData);
+        setInitialLogoPreview(logoData);
       } else {
         console.log('No valid logo data found (not a base64 data URI):', logoData);
       }
@@ -115,7 +96,28 @@ function ZoneSettingsContent() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [zoneId, toast]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
+
+    if (!zoneId) {
+      toast({
+        title: 'Error',
+        description: 'No zone selected',
+        variant: 'destructive'
+      });
+      router.push('/zone-manager');
+      return;
+    }
+
+    fetchZoneData();
+  }, [isAuthenticated, authLoading, zoneId, router, toast, fetchZoneData]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));

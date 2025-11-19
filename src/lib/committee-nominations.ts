@@ -14,6 +14,7 @@ export async function createCommitteeNomination(
     clubName: formData.clubName,
     zoneId: formData.zoneId,
     zoneName: formData.zoneName,
+    year: formData.year,
     agmDate: formData.agmDate,
     effectiveDate: formData.effectiveDate,
     submittedAt: new Date().toISOString(),
@@ -198,6 +199,7 @@ export async function getLatestApprovedCommittee(clubId: string): Promise<Commit
   const snapshot = await adminDb.collection(COLLECTION)
     .where('clubId', '==', clubId)
     .where('status', '==', 'approved')
+    .orderBy('year', 'desc')
     .orderBy('effectiveDate', 'desc')
     .limit(1)
     .get();
@@ -211,4 +213,49 @@ export async function getLatestApprovedCommittee(clubId: string): Promise<Commit
     id: doc.id,
     ...doc.data(),
   } as CommitteeNomination;
+}
+
+/**
+ * Get committee nomination for a specific club and year
+ */
+export async function getCommitteeNominationByYear(
+  clubId: string,
+  year: number
+): Promise<CommitteeNomination | null> {
+  const snapshot = await adminDb.collection(COLLECTION)
+    .where('clubId', '==', clubId)
+    .where('year', '==', year)
+    .orderBy('submittedAt', 'desc')
+    .limit(1)
+    .get();
+  
+  if (snapshot.empty) {
+    return null;
+  }
+  
+  const doc = snapshot.docs[0];
+  return {
+    id: doc.id,
+    ...doc.data(),
+  } as CommitteeNomination;
+}
+
+/**
+ * Get all years that have committee nominations for a club
+ */
+export async function getClubCommitteeYears(clubId: string): Promise<number[]> {
+  const snapshot = await adminDb.collection(COLLECTION)
+    .where('clubId', '==', clubId)
+    .orderBy('year', 'desc')
+    .get();
+  
+  const years = new Set<number>();
+  snapshot.docs.forEach((doc: any) => {
+    const data = doc.data();
+    if (data.year) {
+      years.add(data.year);
+    }
+  });
+  
+  return Array.from(years).sort((a, b) => b - a);
 }

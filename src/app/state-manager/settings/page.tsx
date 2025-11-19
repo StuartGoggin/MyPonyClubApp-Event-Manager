@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -53,30 +53,9 @@ function StateSettingsContent() {
     imageUrl: ''
   });
   const [logoPreview, setLogoPreview] = useState<string>('');
+  const [initialLogoPreview, setInitialLogoPreview] = useState<string>('');
 
-  useEffect(() => {
-    if (authLoading) return;
-    
-    if (!isAuthenticated) {
-      router.push('/login');
-      return;
-    }
-
-    // Only super users can access state settings
-    if (user?.role !== 'super_user') {
-      toast({
-        title: 'Access Denied',
-        description: 'Only super users can access state settings',
-        variant: 'destructive'
-      });
-      router.push('/state-manager');
-      return;
-    }
-
-    fetchStateSettings();
-  }, [isAuthenticated, authLoading, user]);
-
-  const fetchStateSettings = async () => {
+  const fetchStateSettings = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch('/api/state-settings');
@@ -110,6 +89,7 @@ function StateSettingsContent() {
       if (isValidDataUri) {
         console.log('Setting logo preview - valid base64 data URI, length:', logoData.length);
         setLogoPreview(logoData);
+        setInitialLogoPreview(logoData);
       } else {
         console.log('No valid logo data found (not a base64 data URI)');
       }
@@ -123,7 +103,29 @@ function StateSettingsContent() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
+
+    // Only super users can access state settings
+    if (user?.role !== 'super_user') {
+      toast({
+        title: 'Access Denied',
+        description: 'Only super users can access state settings',
+        variant: 'destructive'
+      });
+      router.push('/state-manager');
+      return;
+    }
+
+    fetchStateSettings();
+  }, [isAuthenticated, authLoading, user, router, toast, fetchStateSettings]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));

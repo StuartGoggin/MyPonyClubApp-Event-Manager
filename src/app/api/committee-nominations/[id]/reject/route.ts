@@ -15,12 +15,12 @@ export async function POST(
   try {
     const nominationId = params.id;
     const body = await request.json();
-    const { zoneRepId, zoneRepName, zoneRepEmail, zoneName, reason } = body;
+    const { zoneRepName, reason } = body;
 
     // Validate required fields
-    if (!zoneRepId || !zoneRepName || !zoneRepEmail || !zoneName) {
+    if (!zoneRepName) {
       return NextResponse.json(
-        { error: 'Zone representative details are required' },
+        { error: 'Zone representative name is required' },
         { status: 400 }
       );
     }
@@ -35,10 +35,7 @@ export async function POST(
     // Reject the DC
     await rejectDC(
       nominationId,
-      zoneRepId,
       zoneRepName,
-      zoneRepEmail,
-      zoneName,
       reason
     );
 

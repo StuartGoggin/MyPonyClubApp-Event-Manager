@@ -67,8 +67,6 @@ export function ZoneCommitteeApprovals({ zoneId }: ZoneCommitteeApprovalsProps) 
         body: JSON.stringify({
           zoneRepId: user.id,
           zoneRepName: `${user.firstName} ${user.lastName}`,
-          zoneRepEmail: user.email,
-          zoneName: user.zone || '',
         }),
       });
 
@@ -102,10 +100,7 @@ export function ZoneCommitteeApprovals({ zoneId }: ZoneCommitteeApprovalsProps) 
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          zoneRepId: user.id,
           zoneRepName: `${user.firstName} ${user.lastName}`,
-          zoneRepEmail: user.email,
-          zoneName: user.zone || '',
           reason: rejectionReason,
         }),
       });
@@ -217,24 +212,28 @@ export function ZoneCommitteeApprovals({ zoneId }: ZoneCommitteeApprovalsProps) 
 
               {/* Other Committee Members */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-slate-50 rounded-lg p-3 border">
-                  <p className="font-semibold text-sm mb-1">Secretary</p>
-                  <p className="text-sm">{nomination.secretary.name}</p>
-                  <p className="text-xs text-muted-foreground">{nomination.secretary.email}</p>
-                </div>
-                <div className="bg-slate-50 rounded-lg p-3 border">
-                  <p className="font-semibold text-sm mb-1">Treasurer</p>
-                  <p className="text-sm">{nomination.treasurer.name}</p>
-                  <p className="text-xs text-muted-foreground">{nomination.treasurer.email}</p>
-                </div>
+                {nomination.secretary && (
+                  <div className="bg-slate-50 rounded-lg p-3 border">
+                    <p className="font-semibold text-sm mb-1">Secretary</p>
+                    <p className="text-sm">{nomination.secretary.name}</p>
+                    <p className="text-xs text-muted-foreground">{nomination.secretary.email}</p>
+                  </div>
+                )}
+                {nomination.treasurer && (
+                  <div className="bg-slate-50 rounded-lg p-3 border">
+                    <p className="font-semibold text-sm mb-1">Treasurer</p>
+                    <p className="text-sm">{nomination.treasurer.name}</p>
+                    <p className="text-xs text-muted-foreground">{nomination.treasurer.email}</p>
+                  </div>
+                )}
               </div>
 
               {/* Additional Committee Members */}
-              {nomination.additionalCommitteeMembers.length > 0 && (
+              {nomination.additionalCommittee && nomination.additionalCommittee.length > 0 && (
                 <div>
                   <p className="font-semibold text-sm mb-2">Additional Committee Members</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {nomination.additionalCommitteeMembers.map((member, index) => (
+                    {nomination.additionalCommittee.map((member, index) => (
                       <div key={index} className="bg-slate-50 rounded p-2 border text-sm">
                         <span className="font-medium">{member.position}:</span> {member.name}
                       </div>
@@ -242,19 +241,6 @@ export function ZoneCommitteeApprovals({ zoneId }: ZoneCommitteeApprovalsProps) 
                   </div>
                 </div>
               )}
-
-              {/* AGM Minutes */}
-              <div className="flex items-center justify-between border-t pt-3">
-                <a 
-                  href={nomination.agmMinutesUrl} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-blue-600 hover:underline"
-                >
-                  <FileText className="h-4 w-4" />
-                  <span className="font-medium">View AGM Minutes</span>
-                </a>
-              </div>
 
               {/* Approval Actions */}
               <div className="border-t pt-4 space-y-3">

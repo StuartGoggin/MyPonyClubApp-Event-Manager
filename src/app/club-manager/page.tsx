@@ -10,6 +10,9 @@ import { MapPin, CheckCircle, Clock, Users, Building, Plus, Activity, Calendar, 
 import { Zone, Club, Event, EventType } from '@/lib/types';
 import { ClubEventSubmission } from '@/components/club-manager/club-event-submission';
 import { ClubEventStatus } from '@/components/club-manager/club-event-status';
+import { CommitteeNominationStatus } from '@/components/club-manager/committee-nomination-status';
+import { CommitteeNominationForm } from '@/components/forms/committee-nomination-form';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/auth-context';
 import { useRouter } from 'next/navigation';
 import { getUserRoles, hasRole } from '@/lib/access-control';
@@ -29,6 +32,9 @@ export default function ClubEventManagerDashboard() {
   const [eventFilter, setEventFilter] = useState<'all' | 'upcoming' | 'past'>('all');
   const [authorizedClubs, setAuthorizedClubs] = useState<string[]>([]);
   const [accessDenied, setAccessDenied] = useState(false);
+  const [showCommitteeNominationModal, setShowCommitteeNominationModal] = useState(false);
+  const [editingNominationId, setEditingNominationId] = useState<string | null>(null);
+  const [nominationData, setNominationData] = useState<any>(null);
 
   // Helper function to check if user has access to a club
   const hasClubAccess = (clubId: string, userZoneId?: string): boolean => {
@@ -457,6 +463,34 @@ export default function ClubEventManagerDashboard() {
           </div>
         )}
 
+        {/* Committee Nomination Section */}
+        {selectedClub && (
+          <div className="mb-8">
+            <CommitteeNominationStatus
+              clubId={selectedClubId}
+              onNominateCommittee={() => {
+                setEditingNominationId(null);
+                setNominationData(null);
+                setShowCommitteeNominationModal(true);
+              }}
+              onEditNomination={async (nominationId) => {
+                // Fetch the nomination data
+                try {
+                  const response = await fetch(`/api/committee-nominations/${nominationId}`);
+                  if (response.ok) {
+                    const data = await response.json();
+                    setEditingNominationId(nominationId);
+                    setNominationData(data);
+                    setShowCommitteeNominationModal(true);
+                  }
+                } catch (error) {
+                  console.error('Error fetching nomination for edit:', error);
+                }
+              }}
+            />
+          </div>
+        )}
+
       {/* Event Management Section */}
       {selectedClub && (
         <div className="flex-1 mb-8">
@@ -619,6 +653,30 @@ export default function ClubEventManagerDashboard() {
         </div>
       )}
       </div>
+
+      {/* Committee Nomination Modal */}
+      <Dialog open={showCommitteeNominationModal} onOpenChange={setShowCommitteeNominationModal}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingNominationId ? 'Edit' : 'Nominate'} Club Committee</DialogTitle>
+          </DialogHeader>
+          {selectedClub && (
+            <CommitteeNominationForm
+              clubId={selectedClubId}
+              clubName={selectedClub.name}
+              existingNominationId={editingNominationId || undefined}
+              initialData={nominationData}
+              onSubmitSuccess={() => {
+                setShowCommitteeNominationModal(false);
+                setEditingNominationId(null);
+                setNominationData(null);
+                // Refresh the page to show updated status
+                window.location.reload();
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -557,6 +557,7 @@
                         <li><a href="#club-dashboard" class="nav-link">Dashboard Overview</a></li>
                         <li><a href="#club-creating-events" class="nav-link">Creating Events</a></li>
                         <li><a href="#club-managing-events" class="nav-link">Managing Events</a></li>
+                        <li><a href="#club-committee-nominations" class="nav-link">Committee Nominations</a></li>
                         <li><a href="#club-schedules" class="nav-link">Uploading Schedules</a></li>
                         <li><a href="#club-settings" class="nav-link">Club Settings</a></li>
                     </ul>
@@ -1850,9 +1851,336 @@
             </div>
         </section>
 
-        <!-- Managing Events -->
-        <section id="club-managing-events" class="section">
-            <h2>Managing Events</h2>
+        <!-- Committee Nominations -->
+        <section id="club-committee-nominations" class="section">
+            <h2>Committee Nominations</h2>
+            <p>Submit and manage your club's committee nominations following your Annual General Meeting (AGM).</p>
+            
+            <h3>Overview</h3>
+            <p>After your club's AGM, you need to nominate your committee members for the upcoming year. The system allows you to submit, edit, and manage these nominations through a simple approval process.</p>
+
+            <div class="status-grid">
+                <div class="status-card">
+                    <span class="status-icon">📝</span>
+                    <div>
+                        <strong>Submit</strong><br>
+                        <small>Nominate committee after AGM</small>
+                    </div>
+                </div>
+                <div class="status-card">
+                    <span class="status-icon">✏️</span>
+                    <div>
+                        <strong>Edit</strong><br>
+                        <small>Update pending nominations</small>
+                    </div>
+                </div>
+                <div class="status-card">
+                    <span class="status-icon">🗑️</span>
+                    <div>
+                        <strong>Withdraw</strong><br>
+                        <small>Cancel pending submissions</small>
+                    </div>
+                </div>
+                <div class="status-card">
+                    <span class="status-icon">🔄</span>
+                    <div>
+                        <strong>Resubmit</strong><br>
+                        <small>Update rejected nominations</small>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Submitting Committee Nominations</h3>
+            <div class="workflow-steps">
+                <div class="workflow-step">
+                    <h4>Step 1: Access the Committee Nomination Form</h4>
+                    <p>On your Club Manager dashboard, find the <strong>"Committee Nomination"</strong> card and click <strong>"Nominate Committee"</strong></p>
+                </div>
+                
+                <div class="workflow-step">
+                    <h4>Step 2: Enter AGM Details</h4>
+                    <ul>
+                        <li><strong>AGM Date</strong> - The date of your Annual General Meeting (Required)</li>
+                        <li><strong>Effective Date</strong> - When the committee takes effect (Optional)</li>
+                    </ul>
+                </div>
+                
+                <div class="workflow-step">
+                    <h4>Step 3: Nominate Core Committee Positions</h4>
+                    <p>All positions are optional. For each position you can:</p>
+                    <ul>
+                        <li><strong>Search for member</strong> - Start typing a name to search existing members</li>
+                        <li><strong>Auto-populate details</strong> - Email and mobile auto-fill when you select a member</li>
+                        <li><strong>Edit contact info</strong> - Email and mobile fields are always editable</li>
+                    </ul>
+                    
+                    <h5>Available Positions:</h5>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Position</th>
+                                <th>Required</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>District Commissioner</td>
+                                <td>No</td>
+                                <td>Requires zone approval</td>
+                            </tr>
+                            <tr>
+                                <td>President</td>
+                                <td>No</td>
+                                <td>-</td>
+                            </tr>
+                            <tr>
+                                <td>Vice President</td>
+                                <td>No</td>
+                                <td>-</td>
+                            </tr>
+                            <tr>
+                                <td>Secretary</td>
+                                <td>No</td>
+                                <td>-</td>
+                            </tr>
+                            <tr>
+                                <td>Treasurer</td>
+                                <td>No</td>
+                                <td>-</td>
+                            </tr>
+                            <tr>
+                                <td>Zone Representative</td>
+                                <td>No</td>
+                                <td>-</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="workflow-step">
+                    <h4>Step 4: Add Additional Committee Members (Optional)</h4>
+                    <p>Click <strong>"Add Committee Member"</strong> to include other positions like:</p>
+                    <ul>
+                        <li>Chief Instructor</li>
+                        <li>Grounds Manager</li>
+                        <li>Social Coordinator</li>
+                        <li>Any other custom positions</li>
+                    </ul>
+                </div>
+                
+                <div class="workflow-step">
+                    <h4>Step 5: Submit Nomination</h4>
+                    <p>Click <strong>"Submit Committee Nomination"</strong></p>
+                    <ul>
+                        <li>✅ Status set to "Pending DC Approval"</li>
+                        <li>✅ Zone Representative receives notification (if assigned)</li>
+                        <li>✅ Committee details saved to your club profile</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="tip">
+                <span class="tip-icon">💡 Tip:</span> You don't need to fill in all positions. Only submit the AGM date and the positions you have filled at your AGM.
+            </div>
+
+            <h3>Managing Committee Nominations</h3>
+            
+            <h4>Nomination Status Indicators</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Badge Color</th>
+                        <th>Meaning</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>⏳ Pending Approval</td>
+                        <td><span style="background: #fef3c7; color: #92400e; padding: 0.25rem 0.5rem; border-radius: 0.5rem; font-weight: 600;">Yellow</span></td>
+                        <td>Awaiting zone rep review</td>
+                    </tr>
+                    <tr>
+                        <td>✓ Approved</td>
+                        <td><span style="background: #d1fae5; color: #065f46; padding: 0.25rem 0.5rem; border-radius: 0.5rem; font-weight: 600;">Green</span></td>
+                        <td>Committee approved and active</td>
+                    </tr>
+                    <tr>
+                        <td>✗ Rejected</td>
+                        <td><span style="background: #fee2e2; color: #991b1b; padding: 0.25rem 0.5rem; border-radius: 0.5rem; font-weight: 600;">Red</span></td>
+                        <td>Needs revision and resubmission</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>Editing a Pending Nomination</h4>
+            <div class="workflow-steps">
+                <div class="workflow-step">
+                    <h4>When to Edit</h4>
+                    <ul>
+                        <li>You made a mistake in the submitted details</li>
+                        <li>A committee member changed before approval</li>
+                        <li>You need to add or remove positions</li>
+                        <li>Contact information needs updating</li>
+                    </ul>
+                </div>
+                
+                <div class="workflow-step">
+                    <h4>How to Edit</h4>
+                    <ol>
+                        <li>Find the <strong>Committee Nomination</strong> card on your dashboard</li>
+                        <li>Status will show "Pending Approval" with yellow badge</li>
+                        <li>Click the <strong>"Edit Nomination"</strong> button</li>
+                        <li>Form opens with all current data pre-populated</li>
+                        <li>Make your changes</li>
+                        <li>Click <strong>"Update Committee Nomination"</strong></li>
+                    </ol>
+                    
+                    <div class="warning">
+                        <span class="warning-icon">⚠️ Note:</span> Editing a pending nomination resets the approval status, and the zone representative will need to review it again.
+                    </div>
+                </div>
+            </div>
+
+            <h4>Withdrawing a Nomination</h4>
+            <div class="workflow-steps">
+                <div class="workflow-step">
+                    <h4>When to Withdraw</h4>
+                    <ul>
+                        <li>Major changes to committee after AGM</li>
+                        <li>Need to hold another AGM</li>
+                        <li>Submitted by mistake</li>
+                    </ul>
+                </div>
+                
+                <div class="workflow-step">
+                    <h4>How to Withdraw</h4>
+                    <ol>
+                        <li>Click the <strong>"Withdraw"</strong> button (red button) on pending nomination</li>
+                        <li>Confirm withdrawal in the popup dialog</li>
+                        <li>Nomination is marked as "Withdrawn"</li>
+                    </ol>
+                    
+                    <div class="warning">
+                        <span class="warning-icon">⚠️ Warning:</span> Withdrawing a nomination cannot be undone. You'll need to submit a completely new nomination.
+                    </div>
+                </div>
+            </div>
+
+            <h4>Resubmitting a Rejected Nomination</h4>
+            <div class="workflow-steps">
+                <div class="workflow-step">
+                    <h4>Step 1: Review Rejection Reason</h4>
+                    <p>The rejection reason from the zone representative will be displayed in a red alert box on the Committee Nomination card</p>
+                </div>
+                
+                <div class="workflow-step">
+                    <h4>Step 2: Click "Edit & Resubmit Nomination"</h4>
+                    <p>The form will open with all your previous data pre-populated</p>
+                </div>
+                
+                <div class="workflow-step">
+                    <h4>Step 3: Make Required Changes</h4>
+                    <p>Address all points mentioned in the rejection feedback:</p>
+                    <ul>
+                        <li>Update incorrect information</li>
+                        <li>Add missing required positions</li>
+                        <li>Correct contact details</li>
+                        <li>Provide additional documentation if requested</li>
+                    </ul>
+                </div>
+                
+                <div class="workflow-step">
+                    <h4>Step 4: Resubmit</h4>
+                    <p>Click <strong>"Update Committee Nomination"</strong></p>
+                    <ul>
+                        <li>Status changes back to "Pending Approval"</li>
+                        <li>Zone representative receives new notification</li>
+                        <li>Your updates are reviewed</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>Member Autocomplete Feature</h3>
+            <p>When nominating committee members, the system helps you by:</p>
+            <ul>
+                <li><strong>✨ Smart Search</strong> - Start typing any part of a member's name</li>
+                <li><strong>📋 Contact Preview</strong> - See email, mobile, and Pony Club ID in dropdown</li>
+                <li><strong>🔄 Auto-fill</strong> - Email and mobile automatically populate when you select a member</li>
+                <li><strong>✏️ Always Editable</strong> - You can type or edit email/mobile fields even after auto-fill</li>
+            </ul>
+
+            <div class="tip">
+                <span class="tip-icon">💡 Pro Tip:</span> If a member isn't in the system yet, you can still type their name directly and manually enter their email and mobile number.
+            </div>
+
+            <h3>Common Scenarios</h3>
+            
+            <h4 class="accordion-toggle" onclick="toggleAccordion(this)">Scenario: First Time Committee Nomination</h4>
+            <div class="accordion-content">
+                <ol>
+                    <li>Hold your club's AGM and elect committee members</li>
+                    <li>Log in to Club Manager dashboard</li>
+                    <li>Click <strong>"Nominate Committee"</strong></li>
+                    <li>Enter AGM date</li>
+                    <li>Search and select each committee member (or type names manually)</li>
+                    <li>Review auto-filled contact details and edit if needed</li>
+                    <li>Add any additional committee members with custom positions</li>
+                    <li>Click <strong>"Submit Committee Nomination"</strong></li>
+                    <li>Wait for zone representative approval (you'll receive an email notification)</li>
+                </ol>
+            </div>
+
+            <h4 class="accordion-toggle" onclick="toggleAccordion(this)">Scenario: Correcting a Mistake After Submission</h4>
+            <div class="accordion-content">
+                <ol>
+                    <li>Notice error in submitted nomination (wrong email, misspelled name, etc.)</li>
+                    <li>Go to Club Manager dashboard</li>
+                    <li>Find Committee Nomination card showing "Pending Approval"</li>
+                    <li>Click <strong>"Edit Nomination"</strong> button</li>
+                    <li>Form opens with all current data</li>
+                    <li>Fix the incorrect information</li>
+                    <li>Click <strong>"Update Committee Nomination"</strong></li>
+                    <li>Changes are saved and zone rep is notified of the update</li>
+                </ol>
+            </div>
+
+            <h4 class="accordion-toggle" onclick="toggleAccordion(this)">Scenario: Responding to Rejection</h4>
+            <div class="accordion-content">
+                <ol>
+                    <li>Receive email notification that nomination was rejected</li>
+                    <li>Log in to Club Manager dashboard</li>
+                    <li>Committee Nomination card shows "Rejected" status with red badge</li>
+                    <li>Read the rejection reason carefully in the red alert box</li>
+                    <li>Click <strong>"Edit & Resubmit Nomination"</strong></li>
+                    <li>Make all changes requested in the feedback</li>
+                    <li>For example: If DC is not qualified, select a different DC candidate</li>
+                    <li>Click <strong>"Update Committee Nomination"</strong></li>
+                    <li>Status changes back to "Pending Approval" for re-review</li>
+                </ol>
+            </div>
+
+            <h4 class="accordion-toggle" onclick="toggleAccordion(this)">Scenario: Committee Member Changes Mind</h4>
+            <div class="accordion-content">
+                <ol>
+                    <li>A nominated committee member decides they can't serve</li>
+                    <li>If still pending approval, click <strong>"Edit Nomination"</strong></li>
+                    <li>Search for and select the replacement member</li>
+                    <li>Update their contact details</li>
+                    <li>Click <strong>"Update Committee Nomination"</strong></li>
+                    <li><em>Alternative:</em> If you need to completely start over, click <strong>"Withdraw"</strong> and submit a new nomination</li>
+                </ol>
+            </div>
+
+            <div class="warning">
+                <span class="warning-icon">⚠️ Important:</span> Once a committee nomination is approved, you cannot edit or withdraw it. Contact your zone representative if you need to make changes to an approved committee.
+            </div>
+        </section>
+
+        <!-- Managing Events (continued) -->
+        <section id="club-managing-events-continued" class="section">
+            <h2>Advanced Event Management</h2>
             <p>Edit, update, or cancel existing events based on their approval status.</p>
             
             <h3>Event Actions by Status</h3>

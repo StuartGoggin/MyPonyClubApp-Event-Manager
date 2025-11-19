@@ -1,0 +1,77 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { adminDb } from '@/lib/firebase-admin';
+import { UserAutocompleteResult } from '@/types/committee-nomination';
+
+/**
+ * GET /api/users/autocomplete
+ * 
+ * Search users by name and return autocomplete suggestions with contact details.
+ * Used for committee nomination form to look up members and auto-populate their details.
+ * 
+ * Query params:
+ * - q: Search query (minimum 2 characters)
+ * - limit: Maximum results to return (default 10)
+ * 
+ * Returns: Array of UserAutocompleteResult
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const searchParams = request.nextUrl.searchParams;
+    const query = searchParams.get('q') || '';
+    const limit = parseInt(searchParams.get('limit') || '10', 10);
+
+    // Require minimum 2 characters to search
+    if (query.length < 2) {
+      return NextResponse.json(
+        { error: 'Search query must be at least 2 characters' },
+        { status: 400 }
+      );
+    }
+
+    const queryLower = query.toLowerCase();
+
+    // Query users collection
+    const usersSnapshot = await adminDb
+      .collection('users')
+      .get();
+
+    // Filter and map results
+    const results: UserAutocompleteResult[] = usersSnapshot.docs
+      .map((doc: any) => {
+        const data = doc.data();
+        const fullName = `${data.firstName || ''} ${data.lastName || ''}`.trim();
+        return {
+          id: doc.id,
+          name: fullName,
+          ponyClubId: data.ponyClubId || '',
+          email: data.email || '',
+          mobile: data.mobileNumber || '',
+        };
+      })
+      .filter((user: UserAutocompleteResult) => {
+        // Filter by name match (case insensitive)
+        const fullName = user.name.toLowerCase();
+        const firstName = (user.name.split(' ')[0] || '').toLowerCase();
+        const lastName = (user.name.split(' ').slice(1).join(' ') || '').toLowerCase();
+        const firstNameMatch = firstName.includes(queryLower);
+        const lastNameMatch = lastName.includes(queryLower);
+        const fullNameMatch = fullName.includes(queryLower);
+        
+        return firstNameMatch || lastNameMatch || fullNameMatch;
+      })
+      .sort((a: UserAutocompleteResult, b: UserAutocompleteResult) => {
+        // Sort alphabetically by name
+        return a.name.localeCompare(b.name);
+      })
+      .slice(0, limit); // Limit results
+
+    return NextResponse.json(results);
+
+  } catch (error) {
+    console.error('Error in user autocomplete API:', error);
+    return NextResponse.json(
+      { error: 'Failed to search users' },
+      { status: 500 }
+    );
+  }
+}

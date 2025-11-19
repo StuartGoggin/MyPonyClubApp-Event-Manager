@@ -13,6 +13,7 @@ import { ZoneEventApproval } from '@/components/zone-manager/zone-event-approval
 import { ZoneScheduleApproval } from '@/components/zone-manager/zone-schedule-approval';
 import { ZoneEventManagement } from '@/components/zone-manager/zone-event-management';
 import { ZoneEventSubmission } from '@/components/zone-manager/zone-event-submission';
+import { ZoneCommitteeApprovals } from '@/components/zone-manager/zone-committee-approvals';
 import { RouteGuard } from '@/components/auth/route-guard';
 import { useAuth } from '@/contexts/auth-context';
 import { useRouter } from 'next/navigation';
@@ -318,10 +319,10 @@ function ZoneManagerContent() {
           {/* Main Dashboard Tabs */}
           <Tabs defaultValue="approvals" className="space-y-4">
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 mb-4">
-              <TabsList className="flex-1 grid grid-cols-3">
+              <TabsList className="flex-1 grid grid-cols-4">
                 <TabsTrigger value="approvals" className="text-xs sm:text-sm">
                   <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                  <span className="hidden sm:inline">Event Date Approvals</span>
+                  <span className="hidden sm:inline">Event Dates</span>
                   <span className="sm:hidden">Dates</span>
                   {pendingEvents > 0 && (
                     <Badge variant="destructive" className="ml-1 sm:ml-2 text-xs">
@@ -331,17 +332,22 @@ function ZoneManagerContent() {
                 </TabsTrigger>
                 <TabsTrigger value="schedules" className="text-xs sm:text-sm">
                   <FileText className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                  <span className="hidden sm:inline">Event Schedule Approvals</span>
-                  <span className="sm:hidden">Schedules</span>
+                  <span className="hidden sm:inline">Schedules</span>
+                  <span className="sm:hidden">Schedule</span>
                   {pendingSchedules > 0 && (
                     <Badge variant="destructive" className="ml-1 sm:ml-2 text-xs">
                       {pendingSchedules}
                     </Badge>
                   )}
                 </TabsTrigger>
+                <TabsTrigger value="committees" className="text-xs sm:text-sm">
+                  <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Committees</span>
+                  <span className="sm:hidden">Committee</span>
+                </TabsTrigger>
                 <TabsTrigger value="manage" className="text-xs sm:text-sm">
                   <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                  <span className="hidden sm:inline">Manage Events</span>
+                  <span className="hidden sm:inline">Manage</span>
                   <span className="sm:hidden">Manage</span>
                 </TabsTrigger>
               </TabsList>
@@ -385,6 +391,12 @@ function ZoneManagerContent() {
                 clubs={zoneClubs}
                 eventTypes={eventTypes}
                 onEventUpdate={fetchData}
+              />
+            </TabsContent>
+
+            <TabsContent value="committees" className="space-y-4">
+              <ZoneCommitteeApprovals
+                zoneId={selectedZoneId}
               />
             </TabsContent>
 

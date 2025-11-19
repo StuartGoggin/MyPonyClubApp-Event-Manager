@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle, Menu } from 'lucide-react';
 import { UserAccountMenu } from './user-account-menu';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,7 +12,12 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-export function AppHeader() {
+interface AppHeaderProps {
+  onMenuToggle?: () => void;
+  showMenuToggle?: boolean;
+}
+
+export function AppHeader({ onMenuToggle, showMenuToggle = false }: AppHeaderProps) {
   return (
     <div className="relative w-full">
       {/* Beautiful gradient background with glass effect */}
@@ -28,8 +33,20 @@ export function AppHeader() {
         
         {/* Main header content */}
         <div className="relative flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 h-16 sm:h-20">
-          {/* Left side - Logo and App Name */}
+          {/* Left side - Menu Toggle and Logo */}
           <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+            {/* Menu Toggle Button */}
+            {showMenuToggle && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onMenuToggle}
+                className="h-8 w-8 sm:h-9 sm:w-9 rounded-lg bg-white/90 hover:bg-white border border-white/40 shadow-md hover:shadow-lg transition-all duration-300 flex-shrink-0"
+                title="Toggle Navigation Menu"
+              >
+                <Menu className="h-5 w-5 text-primary" />
+              </Button>
+            )}
             <Link href="/" className="flex items-center gap-2 sm:gap-3 group min-w-0 flex-1">
               {/* Logo with beautiful effects */}
               <div className="relative flex-shrink-0">

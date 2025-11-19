@@ -163,38 +163,17 @@ export function AppLayout({ children }: PropsWithChildren) {
   return (
     <div className="min-h-screen bg-background">
       {/* Beautiful full-width header */}
-      <AppHeader />
-      
-      {/* Menu Toggle Button - shows when sidebar is collapsed */}
-      {isClient && sidebarCollapsed && (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setSidebarCollapsed(false)}
-          className="fixed top-24 left-4 z-50 h-10 w-10 bg-background/95 backdrop-blur-sm border border-border/40 shadow-lg hover:bg-primary/10"
-        >
-          <Menu className="h-5 w-5" />
-        </Button>
-      )}
-
-      {/* Overlay when sidebar is open - click to close */}
-      {isClient && !sidebarCollapsed && (
-        <div
-          className="fixed inset-0 top-20 bg-black/20 z-30"
-          onClick={() => setSidebarCollapsed(true)}
-        />
-      )}
+      <AppHeader 
+        onMenuToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+        showMenuToggle={isClient && sidebarCollapsed}
+      />
 
       {/* Content area below header */}
       <div className="h-[calc(100vh-5rem)] flex relative">
-        {/* Sidebar - now fixed/absolute to hover over content */}
+        {/* Sidebar - pushes content to the right when expanded */}
         <div className={`
-          fixed top-20 left-0 h-[calc(100vh-5rem)] z-40
-          transition-all duration-300 border-r border-border/40 bg-background/95 backdrop-blur-sm shadow-lg
-          ${sidebarCollapsed 
-            ? '-translate-x-full opacity-0' 
-            : 'translate-x-0 opacity-100'
-          } w-64
+          h-[calc(100vh-5rem)] transition-all duration-300 border-r border-border/40 bg-background/95 backdrop-blur-sm shadow-lg overflow-hidden
+          ${sidebarCollapsed ? 'w-0' : 'w-64'}
         `}>
           {/* Sidebar Header with close button */}
           <div className="p-4 border-b border-border/40 flex items-center justify-between">
@@ -252,8 +231,8 @@ export function AppLayout({ children }: PropsWithChildren) {
           </div>
         </div>
         
-        {/* Main Content Area - now takes full width with sidebar hovering */}
-        <div className="flex-1 flex flex-col w-full">
+        {/* Main Content Area - adjusts width based on sidebar */}
+        <div className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 p-4 md:p-6">
             <div className="max-w-7xl mx-auto">
               {children}

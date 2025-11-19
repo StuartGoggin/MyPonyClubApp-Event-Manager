@@ -304,13 +304,12 @@ export function ZoneEventApproval({
       {/* Pending Events Section */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <Clock className="h-5 w-5 text-amber-500" />
-            <h2 className="text-xl font-bold">Events Pending Approval</h2>
-            {pendingEvents.length > 0 && (
-              <Badge variant="destructive" className="ml-2">{pendingEvents.length}</Badge>
-            )}
-          </div>
+          <h3 className="text-lg font-semibold">Events Awaiting Approval</h3>
+          {pendingEvents.length > 0 && (
+            <Badge variant="destructive" className="text-sm">
+              {pendingEvents.length} Pending
+            </Badge>
+          )}
         </div>
 
         {pendingEvents.length === 0 ? (

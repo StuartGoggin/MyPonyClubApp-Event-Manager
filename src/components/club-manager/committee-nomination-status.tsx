@@ -262,42 +262,42 @@ export function CommitteeNominationStatus({ clubId, onNominateCommittee, onEditN
   return (
     <Card className={`border-l-4 ${getStatusColor()}`}>
       <CardHeader>
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="flex items-center justify-between mb-1">
-              <CardTitle className="flex items-center gap-2">
-                <Users2 className="h-5 w-5" />
-                Committee Nomination {nomination.year}
-              </CardTitle>
-              {availableYears.length > 0 && (
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <Select value={selectedYear?.toString() || ''} onValueChange={handleYearChange}>
-                    <SelectTrigger className="w-32">
-                      <SelectValue placeholder="Select year" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableYears.map((year) => (
-                        <SelectItem key={year} value={year.toString()}>
-                          {year}
-                        </SelectItem>
-                      ))}
-                      {!availableYears.includes(new Date().getFullYear()) && (
-                        <SelectItem value={new Date().getFullYear().toString()}>
-                          {new Date().getFullYear()}
-                        </SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-            </div>
-            <CardDescription>
-              Submitted {formatDistanceToNow(new Date(nomination.submittedAt), { addSuffix: true })}
-            </CardDescription>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-center gap-2 min-w-0">
+            <Users2 className="h-5 w-5 flex-shrink-0" />
+            <CardTitle className="text-lg sm:text-xl">
+              Committee Nomination {nomination.year}
+            </CardTitle>
           </div>
-          {getStatusBadge()}
+          <div className="flex items-center gap-3 flex-shrink-0">
+            {availableYears.length > 0 && (
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <Select value={selectedYear?.toString() || ''} onValueChange={handleYearChange}>
+                  <SelectTrigger className="w-28">
+                    <SelectValue placeholder="Year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableYears.map((year) => (
+                      <SelectItem key={year} value={year.toString()}>
+                        {year}
+                      </SelectItem>
+                    ))}
+                    {!availableYears.includes(new Date().getFullYear()) && (
+                      <SelectItem value={new Date().getFullYear().toString()}>
+                        {new Date().getFullYear()}
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            {getStatusBadge()}
+          </div>
         </div>
+        <CardDescription className="mt-2">
+          Submitted {formatDistanceToNow(new Date(nomination.submittedAt), { addSuffix: true })}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">

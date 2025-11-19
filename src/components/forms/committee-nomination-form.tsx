@@ -14,6 +14,8 @@ import { AlertCircle, Plus, Trash2, Upload } from 'lucide-react';
 interface CommitteeNominationFormProps {
   clubId: string;
   clubName: string;
+  zoneId?: string;
+  zoneName?: string;
   onSubmitSuccess?: () => void;
   existingNominationId?: string; // For editing existing nominations
   initialData?: Partial<CommitteeNominationFormData>; // Pre-populate form data
@@ -23,12 +25,12 @@ interface FormErrors {
   [key: string]: string;
 }
 
-export function CommitteeNominationForm({ clubId, clubName, onSubmitSuccess, existingNominationId, initialData }: CommitteeNominationFormProps) {
+export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, onSubmitSuccess, existingNominationId, initialData }: CommitteeNominationFormProps) {
   const [formData, setFormData] = useState<CommitteeNominationFormData>({
     clubId,
     clubName,
-    zoneId: initialData?.zoneId || '',
-    zoneName: initialData?.zoneName || '',
+    zoneId: initialData?.zoneId || zoneId || '',
+    zoneName: initialData?.zoneName || zoneName || '',
     year: initialData?.year || new Date().getFullYear(),
     agmDate: initialData?.agmDate || '',
     effectiveDate: initialData?.effectiveDate || '',

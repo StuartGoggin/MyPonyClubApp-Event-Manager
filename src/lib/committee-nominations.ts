@@ -144,19 +144,68 @@ export async function getClubCommitteeNominations(clubId: string): Promise<Commi
 }
 
 /**
- * Get pending DC approvals for a zone
+ * Get pending DC approvals for a zone representative
  */
-export async function getPendingDCApprovals(zoneId: string): Promise<CommitteeNomination[]> {
-  const snapshot = await adminDb.collection(COLLECTION)
-    .where('zoneId', '==', zoneId)
-    .where('districtCommissioner.approvalStatus', '==', 'pending')
-    .orderBy('submittedAt', 'asc')
-    .get();
-  
-  return snapshot.docs.map((doc: any) => ({
-    id: doc.id,
-    ...doc.data(),
-  } as CommitteeNomination));
+export async function getPendingDCApprovals(zoneRepId: string): Promise<CommitteeNomination[]> {
+  try {
+    console.log('getPendingDCApprovals called with zoneRepId:', zoneRepId);
+    
+    // First, get the zone representative's zone ID from the users collection
+    const userDoc = await adminDb.collection('users').doc(zoneRepId).get();
+    
+    if (!userDoc.exists) {
+      console.error('Zone representative not found:', zoneRepId);
+      return [];
+    }
+    
+    const userData = userDoc.data();
+    const zoneId = userData?.zoneId;
+    
+    console.log('Zone representative data:', { zoneId, email: userData?.email });
+    
+    if (!zoneId) {
+      console.error('Zone representative has no zone assigned:', zoneRepId);
+      return [];
+    }
+    
+    // Query nominations for this zone with pending approval
+    console.log('Querying nominations for zoneId:', zoneId);
+    const snapshot = await adminDb.collection(COLLECTION)
+      .where('zoneId', '==', zoneId)
+      .where('districtCommissioner.approvalStatus', '==', 'pending')
+      .orderBy('submittedAt', 'asc')
+      .get();
+    
+    console.log(`Found ${snapshot.docs.length} pending nominations for zone ${zoneId}`);
+    
+    // Log each nomination's details for debugging
+    snapshot.docs.forEach((doc: any) => {
+      const data = doc.data();
+      console.log('Nomination in DB:', {
+        id: doc.id,
+        clubName: data.clubName,
+        zoneId: data.zoneId,
+        dcApprovalStatus: data.districtCommissioner?.approvalStatus,
+        status: data.status,
+      });
+    });
+    
+    const nominations = snapshot.docs.map((doc: any) => ({
+      id: doc.id,
+      ...doc.data(),
+    } as CommitteeNomination));
+    
+    console.log('Nominations:', nominations.map(n => ({ id: n.id, clubName: n.clubName, zoneId: n.zoneId })));
+    
+    return nominations;
+  } catch (error) {
+    console.error('Error in getPendingDCApprovals:', error);
+    // If it's an index error, log the index creation URL
+    if (error instanceof Error && error.message.includes('index')) {
+      console.error('FIRESTORE INDEX REQUIRED - Check the error message for the index creation URL');
+    }
+    throw error;
+  }
 }
 
 /**

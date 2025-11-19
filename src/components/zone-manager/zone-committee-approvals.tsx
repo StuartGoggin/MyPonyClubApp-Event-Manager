@@ -13,9 +13,10 @@ import { useAuth } from '@/contexts/auth-context';
 
 interface ZoneCommitteeApprovalsProps {
   zoneId: string;
+  onUpdate?: () => void;
 }
 
-export function ZoneCommitteeApprovals({ zoneId }: ZoneCommitteeApprovalsProps) {
+export function ZoneCommitteeApprovals({ zoneId, onUpdate }: ZoneCommitteeApprovalsProps) {
   const { user } = useAuth();
   const [nominations, setNominations] = useState<CommitteeNomination[]>([]);
   const [loading, setLoading] = useState(true);
@@ -77,6 +78,9 @@ export function ZoneCommitteeApprovals({ zoneId }: ZoneCommitteeApprovalsProps) 
 
       // Refresh the list
       await fetchPendingNominations();
+      if (onUpdate) {
+        onUpdate();
+      }
     } catch (error) {
       console.error('Error approving nomination:', error);
       alert(`Failed to approve: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -114,6 +118,9 @@ export function ZoneCommitteeApprovals({ zoneId }: ZoneCommitteeApprovalsProps) 
       setRejectionReason('');
       setExpandedNominationId(null);
       await fetchPendingNominations();
+      if (onUpdate) {
+        onUpdate();
+      }
     } catch (error) {
       console.error('Error rejecting nomination:', error);
       alert(`Failed to reject: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -156,8 +163,10 @@ export function ZoneCommitteeApprovals({ zoneId }: ZoneCommitteeApprovalsProps) 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold">Pending Committee Nominations</h2>
-        <Badge variant="secondary">{nominations.length} Pending</Badge>
+        <h3 className="text-lg font-semibold">Committees Awaiting Approval</h3>
+        <Badge variant="destructive" className="text-sm">
+          {nominations.length} Pending
+        </Badge>
       </div>
 
       {nominations.map((nomination) => {

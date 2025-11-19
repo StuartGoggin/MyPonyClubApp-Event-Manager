@@ -23,8 +23,10 @@ const formatDate = (date: Date | string | any) => {
       validDate = new Date(date);
     } else if (date && typeof date === 'object' && date.toDate) {
       validDate = date.toDate();
-    } else if (date && typeof date === 'object' && date.seconds) {
-      validDate = new Date(date.seconds * 1000);
+    } else if (date && typeof date === 'object' && (date.seconds || date._seconds)) {
+      // Handle both Firestore Timestamp formats (seconds and _seconds)
+      const seconds = date.seconds || date._seconds;
+      validDate = new Date(seconds * 1000);
     } else {
       throw new Error('Invalid date format');
     }

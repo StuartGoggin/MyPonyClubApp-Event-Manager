@@ -13,10 +13,26 @@ export async function POST(request: NextRequest) {
   try {
     const formData: CommitteeNominationFormData = await request.json();
 
+    console.log('Submitting committee nomination:', {
+      clubId: formData.clubId,
+      clubName: formData.clubName,
+      zoneId: formData.zoneId,
+      zoneName: formData.zoneName,
+      year: formData.year,
+    });
+
     // Validate required fields
     if (!formData.clubId || !formData.clubName) {
       return NextResponse.json(
         { error: 'Club ID and name are required' },
+        { status: 400 }
+      );
+    }
+
+    if (!formData.zoneId) {
+      console.error('Zone ID is missing from form data!');
+      return NextResponse.json(
+        { error: 'Zone ID is required' },
         { status: 400 }
       );
     }
@@ -34,10 +50,19 @@ export async function POST(request: NextRequest) {
     // Create the nomination
     const nominationId = await createCommitteeNomination(formData);
 
+    console.log('Created nomination with ID:', nominationId);
+
     // Fetch the created nomination to get zone rep details
     const nomination = await getCommitteeNomination(nominationId);
     
     if (nomination) {
+      console.log('Created nomination details:', {
+        id: nomination.id,
+        clubName: nomination.clubName,
+        zoneId: nomination.zoneId,
+        zoneName: nomination.zoneName,
+      });
+      
       // Send email notification to zone rep
       try {
         await sendCommitteeNominationSubmittedEmail(nomination);

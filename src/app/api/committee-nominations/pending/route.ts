@@ -15,6 +15,8 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const zoneRepId = searchParams.get('zoneRepId');
 
+    console.log('Pending nominations API called with zoneRepId:', zoneRepId);
+
     if (!zoneRepId) {
       return NextResponse.json(
         { error: 'Zone representative ID is required' },
@@ -24,12 +26,14 @@ export async function GET(request: NextRequest) {
 
     const pendingNominations = await getPendingDCApprovals(zoneRepId);
 
+    console.log(`Returning ${pendingNominations.length} pending nominations`);
+
     return NextResponse.json(pendingNominations);
 
   } catch (error) {
     console.error('Error fetching pending nominations:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch pending nominations' },
+      { error: 'Failed to fetch pending nominations', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

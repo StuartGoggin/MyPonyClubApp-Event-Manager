@@ -35,6 +35,7 @@ export default function ClubEventManagerDashboard() {
   const [showCommitteeNominationModal, setShowCommitteeNominationModal] = useState(false);
   const [editingNominationId, setEditingNominationId] = useState<string | null>(null);
   const [nominationData, setNominationData] = useState<any>(null);
+  const [committeeRefreshKey, setCommitteeRefreshKey] = useState(0);
 
   // Helper function to check if user has access to a club
   const hasClubAccess = (clubId: string, userZoneId?: string): boolean => {
@@ -467,6 +468,7 @@ export default function ClubEventManagerDashboard() {
         {selectedClub && (
           <div className="mb-8">
             <CommitteeNominationStatus
+              key={`committee-${selectedClubId}-${committeeRefreshKey}`}
               clubId={selectedClubId}
               onNominateCommittee={() => {
                 setEditingNominationId(null);
@@ -664,14 +666,16 @@ export default function ClubEventManagerDashboard() {
             <CommitteeNominationForm
               clubId={selectedClubId}
               clubName={selectedClub.name}
+              zoneId={selectedClub.zoneId}
+              zoneName={selectedZone?.name || ''}
               existingNominationId={editingNominationId || undefined}
               initialData={nominationData}
               onSubmitSuccess={() => {
                 setShowCommitteeNominationModal(false);
                 setEditingNominationId(null);
                 setNominationData(null);
-                // Refresh the page to show updated status
-                window.location.reload();
+                // Trigger a re-render of the CommitteeNominationStatus component
+                setCommitteeRefreshKey(prev => prev + 1);
               }}
             />
           )}

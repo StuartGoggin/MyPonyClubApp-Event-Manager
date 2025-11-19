@@ -30,6 +30,7 @@ function ZoneManagerContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAddZoneEventForm, setShowAddZoneEventForm] = useState(false);
+  const [pendingCommittees, setPendingCommittees] = useState(0);
 
   // Future: This will be replaced with user's authorized zones from authentication
   const [authorizedZones, setAuthorizedZones] = useState<string[]>([]);
@@ -37,6 +38,26 @@ function ZoneManagerContent() {
   useEffect(() => {
     fetchData();
   }, [user]); // Re-fetch when user changes
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchPendingCommitteesCount();
+    }
+  }, [user?.id]);
+
+  const fetchPendingCommitteesCount = async () => {
+    if (!user?.id) return;
+    
+    try {
+      const response = await fetch(`/api/committee-nominations/pending?zoneRepId=${user.id}`);
+      if (response.ok) {
+        const nominations = await response.json();
+        setPendingCommittees(nominations.length);
+      }
+    } catch (error) {
+      console.error('Error fetching pending committees count:', error);
+    }
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -320,35 +341,36 @@ function ZoneManagerContent() {
           <Tabs defaultValue="approvals" className="space-y-4">
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 mb-4">
               <TabsList className="flex-1 grid grid-cols-4">
-                <TabsTrigger value="approvals" className="text-xs sm:text-sm">
-                  <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                  <span className="hidden sm:inline">Event Dates</span>
-                  <span className="sm:hidden">Dates</span>
+                <TabsTrigger value="approvals" className="text-xs sm:text-sm flex items-center">
+                  <Clock className="h-4 w-4 mr-2 flex-shrink-0" />
+                  <span>Event Dates</span>
                   {pendingEvents > 0 && (
-                    <Badge variant="destructive" className="ml-1 sm:ml-2 text-xs">
+                    <Badge variant="destructive" className="ml-2 text-xs">
                       {pendingEvents}
                     </Badge>
                   )}
                 </TabsTrigger>
-                <TabsTrigger value="schedules" className="text-xs sm:text-sm">
-                  <FileText className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                  <span className="hidden sm:inline">Schedules</span>
-                  <span className="sm:hidden">Schedule</span>
+                <TabsTrigger value="schedules" className="text-xs sm:text-sm flex items-center">
+                  <FileText className="h-4 w-4 mr-2 flex-shrink-0" />
+                  <span>Schedules</span>
                   {pendingSchedules > 0 && (
-                    <Badge variant="destructive" className="ml-1 sm:ml-2 text-xs">
+                    <Badge variant="destructive" className="ml-2 text-xs">
                       {pendingSchedules}
                     </Badge>
                   )}
                 </TabsTrigger>
-                <TabsTrigger value="committees" className="text-xs sm:text-sm">
-                  <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                  <span className="hidden sm:inline">Committees</span>
-                  <span className="sm:hidden">Committee</span>
+                <TabsTrigger value="committees" className="text-xs sm:text-sm flex items-center">
+                  <Users className="h-4 w-4 mr-2 flex-shrink-0" />
+                  <span>Committees</span>
+                  {pendingCommittees > 0 && (
+                    <Badge variant="destructive" className="ml-2 text-xs">
+                      {pendingCommittees}
+                    </Badge>
+                  )}
                 </TabsTrigger>
-                <TabsTrigger value="manage" className="text-xs sm:text-sm">
-                  <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                  <span className="hidden sm:inline">Manage</span>
-                  <span className="sm:hidden">Manage</span>
+                <TabsTrigger value="manage" className="text-xs sm:text-sm flex items-center">
+                  <CheckCircle className="h-4 w-4 mr-2 flex-shrink-0" />
+                  <span>Manage</span>
                 </TabsTrigger>
               </TabsList>
 
@@ -397,6 +419,7 @@ function ZoneManagerContent() {
             <TabsContent value="committees" className="space-y-4">
               <ZoneCommitteeApprovals
                 zoneId={selectedZoneId}
+                onUpdate={fetchPendingCommitteesCount}
               />
             </TabsContent>
 

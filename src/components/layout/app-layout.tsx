@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import { AppHeader } from '@/components/layout/app-header';
 import { useAuth } from '@/contexts/auth-context';
 import Link from 'next/link';
-import { Calendar, PlusCircle, FerrisWheel, Shield, Settings, MapPin, Building, ChevronLeft, ChevronRight, Menu, X, Trophy } from 'lucide-react';
+import { Calendar, PlusCircle, FerrisWheel, Shield, Settings, MapPin, Building, ChevronLeft, ChevronRight, Menu, X, Trophy, Users2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { NavigationItem, filterNavigationByRole, UserRole, getUserRoles } from '@/lib/access-control';
@@ -72,6 +72,18 @@ export function AppLayout({ children }: PropsWithChildren) {
           title: 'Request Event',
           icon: PlusCircle,
           label: 'Request Event',
+          // Public access - no authentication required
+        },
+      ]
+    },
+    {
+      label: 'Club',
+      items: [
+        {
+          href: '/nominate-committee',
+          title: 'Club Committee Update',
+          icon: Users2,
+          label: 'Club Committee Update',
           // Public access - no authentication required
         },
       ]

@@ -195,7 +195,7 @@ export async function getPendingDCApprovals(zoneRepId: string): Promise<Committe
       ...doc.data(),
     } as CommitteeNomination));
     
-    console.log('Nominations:', nominations.map(n => ({ id: n.id, clubName: n.clubName, zoneId: n.zoneId })));
+    console.log('Nominations:', nominations.map((n: CommitteeNomination) => ({ id: n.id, clubName: n.clubName, zoneId: n.zoneId })));
     
     return nominations;
   } catch (error) {

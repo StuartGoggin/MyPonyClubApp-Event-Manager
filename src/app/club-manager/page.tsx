@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -62,7 +62,7 @@ export default function ClubEventManagerDashboard() {
   };
 
   // Helper function to get authorized clubs based on user role
-  const getAuthorizedClubIds = (allClubs: Club[], userRole: string, userClubId?: string, userZoneId?: string): string[] => {
+  const getAuthorizedClubIds = useCallback((allClubs: Club[], userRole: string, userClubId?: string, userZoneId?: string): string[] => {
     if (!user) return [];
     
     const userRoles = getUserRoles(user);
@@ -83,26 +83,9 @@ export default function ClubEventManagerDashboard() {
     }
     
     return [];
-  };
+  }, [user]);
 
-  // Check authentication and authorization
-  useEffect(() => {
-    if (authLoading) return;
-    
-    if (!isAuthenticated) {
-      router.push('/login');
-      return;
-    }
-    
-    if (!user) {
-      setAccessDenied(true);
-      return;
-    }
-    
-    fetchData();
-  }, [isAuthenticated, authLoading, user, router]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     console.log('Club Manager: fetchData called - refreshing all data');
     setLoading(true);
     setError(null);
@@ -174,7 +157,24 @@ export default function ClubEventManagerDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, getAuthorizedClubIds]);
+
+  // Check authentication and authorization
+  useEffect(() => {
+    if (authLoading) return;
+    
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
+    
+    if (!user) {
+      setAccessDenied(true);
+      return;
+    }
+    
+    fetchData();
+  }, [isAuthenticated, authLoading, user, router, fetchData]);
 
   const handleEventUpdate = () => {
     console.log('Club Manager: handleEventUpdate called - triggering data refresh');

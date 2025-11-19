@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -35,31 +35,7 @@ function ZoneManagerContent() {
   // Future: This will be replaced with user's authorized zones from authentication
   const [authorizedZones, setAuthorizedZones] = useState<string[]>([]);
 
-  useEffect(() => {
-    fetchData();
-  }, [user]); // Re-fetch when user changes
-
-  useEffect(() => {
-    if (user?.id) {
-      fetchPendingCommitteesCount();
-    }
-  }, [user?.id]);
-
-  const fetchPendingCommitteesCount = async () => {
-    if (!user?.id) return;
-    
-    try {
-      const response = await fetch(`/api/committee-nominations/pending?zoneRepId=${user.id}`);
-      if (response.ok) {
-        const nominations = await response.json();
-        setPendingCommittees(nominations.length);
-      }
-    } catch (error) {
-      console.error('Error fetching pending committees count:', error);
-    }
-  };
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -122,7 +98,31 @@ function ZoneManagerContent() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  const fetchPendingCommitteesCount = useCallback(async () => {
+    if (!user?.id) return;
+    
+    try {
+      const response = await fetch(`/api/committee-nominations/pending?zoneRepId=${user.id}`);
+      if (response.ok) {
+        const nominations = await response.json();
+        setPendingCommittees(nominations.length);
+      }
+    } catch (error) {
+      console.error('Error fetching pending committees count:', error);
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchPendingCommitteesCount();
+    }
+  }, [user?.id, fetchPendingCommitteesCount]);
 
   // Filter data for selected zone with defensive programming
   const selectedZone = zones.find(zone => zone.id === selectedZoneId);

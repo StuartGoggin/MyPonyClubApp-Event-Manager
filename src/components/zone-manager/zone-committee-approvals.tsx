@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,13 +25,7 @@ export function ZoneCommitteeApprovals({ zoneId, onUpdate }: ZoneCommitteeApprov
   const [rejectionReason, setRejectionReason] = useState('');
   const [processing, setProcessing] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (user?.id) {
-      fetchPendingNominations();
-    }
-  }, [user?.id]);
-
-  const fetchPendingNominations = async () => {
+  const fetchPendingNominations = useCallback(async () => {
     if (!user?.id) return;
 
     setLoading(true);
@@ -52,7 +46,13 @@ export function ZoneCommitteeApprovals({ zoneId, onUpdate }: ZoneCommitteeApprov
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchPendingNominations();
+    }
+  }, [user?.id, fetchPendingNominations]);
 
   const handleApprove = async (nomination: CommitteeNomination) => {
     if (!user || !nomination.id) return;

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getClubCommitteeNominations, getCommitteeNominationByYear, getClubCommitteeYears } from '@/lib/committee-nominations';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/committee-nominations
  * 

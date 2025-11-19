@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -24,17 +24,7 @@ export function CommitteeNominationStatus({ clubId, onNominateCommittee, onEditN
   const [error, setError] = useState<string | null>(null);
   const [withdrawing, setWithdrawing] = useState(false);
 
-  useEffect(() => {
-    fetchAvailableYears();
-  }, [clubId]);
-
-  useEffect(() => {
-    if (selectedYear !== null) {
-      fetchNominationForYear(selectedYear);
-    }
-  }, [clubId, selectedYear]);
-
-  const fetchAvailableYears = async () => {
+  const fetchAvailableYears = useCallback(async () => {
     if (!clubId) return;
     
     try {
@@ -59,9 +49,9 @@ export function CommitteeNominationStatus({ clubId, onNominateCommittee, onEditN
       setSelectedYear(new Date().getFullYear());
       setLoading(false);
     }
-  };
+  }, [clubId]);
 
-  const fetchNominationForYear = async (year: number) => {
+  const fetchNominationForYear = useCallback(async (year: number) => {
     if (!clubId) return;
     
     setLoading(true);
@@ -82,7 +72,17 @@ export function CommitteeNominationStatus({ clubId, onNominateCommittee, onEditN
     } finally {
       setLoading(false);
     }
-  };
+  }, [clubId]);
+
+  useEffect(() => {
+    fetchAvailableYears();
+  }, [fetchAvailableYears]);
+
+  useEffect(() => {
+    if (selectedYear !== null) {
+      fetchNominationForYear(selectedYear);
+    }
+  }, [selectedYear, fetchNominationForYear]);
 
   const handleWithdraw = async () => {
     if (!nomination?.id || !confirm('Are you sure you want to withdraw this nomination? This action cannot be undone.')) {

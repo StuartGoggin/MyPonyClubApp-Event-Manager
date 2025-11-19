@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { UserAutocompleteResult } from '@/types/committee-nomination';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/users/autocomplete
  * 

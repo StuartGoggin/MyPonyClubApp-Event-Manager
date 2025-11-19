@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { UserService } from '@/lib/user-service';
 
+export const dynamic = 'force-dynamic';
+
 // GET: Retrieve user names for autocomplete
 export async function GET(request: NextRequest) {
   try {

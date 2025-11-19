@@ -411,12 +411,13 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">AGM Details</h3>
             
-            <div>
-              <Label htmlFor="agmDate">
+            <div className="space-y-2">
+              <Label htmlFor="agmDate" className="block">
                 AGM Date <span className="text-red-500">*</span>
               </Label>
-              <Input
+              <input
                 id="agmDate"
+                name="agmDate"
                 type="date"
                 value={formData.agmDate}
                 onChange={(e) => {
@@ -425,7 +426,11 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
                   setFormData(prev => ({ ...prev, agmDate, year }));
                   if (errors.agmDate) setErrors(prev => ({ ...prev, agmDate: '' }));
                 }}
-                className={errors.agmDate ? 'border-red-500' : ''}
+                className={`block h-10 w-full rounded-md border px-3 py-2 text-sm ${errors.agmDate ? 'border-red-500' : 'border-gray-300'}`}
+                max={new Date().toISOString().split('T')[0]}
+                title="Select the date of your Annual General Meeting"
+                required
+                aria-label="AGM Date"
               />
               {errors.agmDate && <p className="text-sm text-red-500 mt-1">{errors.agmDate}</p>}
               {formData.agmDate && (

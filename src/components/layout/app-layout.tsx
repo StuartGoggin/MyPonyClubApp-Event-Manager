@@ -12,18 +12,29 @@ import { Label } from '@/components/ui/label';
 import { NavigationItem, filterNavigationByRole, UserRole, getUserRoles } from '@/lib/access-control';
 
 export function AppLayout({ children }: PropsWithChildren) {
-  const pathname = usePathname();
-  // Start expanded only on root URL, minimized everywhere else
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(pathname !== '/');
+  let pathname: string | null = null;
+  try {
+    pathname = usePathname();
+  } catch (e) {
+    // usePathname not available during SSR
+    pathname = null;
+  }
+  
+  const [isClient, setIsClient] = useState(false);
+  // Start collapsed by default
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [isClient, setIsClient] = useState(false);
   const { user, isAuthenticated } = useAuth();
 
-  // Hydration-safe client detection
+  // Hydration-safe client detection and initial sidebar state
   useEffect(() => {
     setIsClient(true);
-  }, []);
+    // Set initial sidebar state after client mounts
+    if (pathname === '/') {
+      setSidebarCollapsed(false);
+    }
+  }, [pathname]);
 
   // Update sidebar state when pathname changes
   useEffect(() => {
@@ -169,11 +180,26 @@ export function AppLayout({ children }: PropsWithChildren) {
       />
 
       {/* Content area below header */}
-      <div className="h-[calc(100vh-5rem)] flex relative">
-        {/* Sidebar - pushes content to the right when expanded */}
+      <div className="flex relative">
+        {/* Mobile backdrop overlay */}
+        {!sidebarCollapsed && isMobile && (
+          <div 
+            className="fixed inset-0 bg-black/50 z-40"
+            onClick={() => setSidebarCollapsed(true)}
+          />
+        )}
+        
+        {/* Sidebar - overlay on mobile, pushes content on desktop */}
         <div className={`
-          h-[calc(100vh-5rem)] transition-all duration-300 border-r border-border/40 bg-background/95 backdrop-blur-sm shadow-lg overflow-hidden
-          ${sidebarCollapsed ? 'w-0' : 'w-64'}
+          transition-all duration-300 border-r border-border/40 bg-background/95 backdrop-blur-sm shadow-lg overflow-y-auto
+          ${sidebarCollapsed 
+            ? 'w-0' 
+            : 'w-64 md:w-64'
+          }
+          ${!sidebarCollapsed && isMobile
+            ? 'fixed inset-y-0 left-0 z-50 w-full max-w-xs'
+            : 'sticky top-0 h-screen'
+          }
         `}>
           {/* Sidebar Header with close button */}
           <div className="p-4 border-b border-border/40 flex items-center justify-between">
@@ -232,8 +258,8 @@ export function AppLayout({ children }: PropsWithChildren) {
         </div>
         
         {/* Main Content Area - adjusts width based on sidebar */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="flex-1 p-4 md:p-6">
+        <div className="flex-1">
+          <div className="p-4 md:p-6">
             <div className="max-w-7xl mx-auto">
               {children}
             </div>

@@ -555,13 +555,14 @@ function generateZoneFormatPDF(options: CalendarPDFOptions): Buffer {
 
     // Modern color palette for event type badges
     const eventTypeColors = {
+      'Approved': { bg: [34, 197, 94] as const, text: [255, 255, 255] as const }, // Green - Approved status
       'Pending Approval': { bg: [253, 224, 71] as const, text: [0, 0, 0] as const }, // Bright Yellow with black text
       'Zone Qualifier': { bg: [59, 130, 246] as const, text: [255, 255, 255] as const }, // Blue
       'Zone Event': { bg: [239, 68, 68] as const, text: [255, 255, 255] as const }, // Red
       'Zone Meeting': { bg: [16, 185, 129] as const, text: [255, 255, 255] as const }, // Green (moved from Zone Meeting)
       'State Event': { bg: [245, 158, 11] as const, text: [255, 255, 255] as const }, // Amber
       'Zone Certificate': { bg: [139, 92, 246] as const, text: [255, 255, 255] as const }, // Purple
-      'Public Holiday': { bg: [34, 197, 94] as const, text: [255, 255, 255] as const }, // Green (was Red)
+      'Public Holiday': { bg: [22, 163, 74] as const, text: [255, 255, 255] as const }, // Green-600 (darker than approved)
       'EV': { bg: [168, 85, 247] as const, text: [255, 255, 255] as const, fullName: 'Equestrian Victoria' }, // Purple for EV
     };
 
@@ -931,18 +932,49 @@ function generateZoneFormatPDF(options: CalendarPDFOptions): Buffer {
                 doc.text(clubDisplayText, currentX + 2, yPosition + 4);
                 break;
                 
-              case 2: // Event with badge
+              case 2: // Event with badges at the end
                 doc.rect(currentX, yPosition - 1, col.width, rowHeight);
                 const eventText = event.name || 'Unnamed Event';
                 
-                // Draw badge if event type is identified
-                let badgeX = currentX + 2;
+                // Draw event name in BOLD first (left side)
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(8);
+                doc.setTextColor(...colors.text);
+                doc.text(eventText, currentX + 2, yPosition + 4);
+                
+                // Calculate badge positions from the right side
+                const badgeHeight = 4;
+                const badgeSpacing = 2;
+                let badgeX = currentX + col.width - 2; // Start from right edge
+                
+                // Draw approved badge if event is approved (rightmost)
+                if (eventStatus === 'approved' && eventTypeBadge !== 'Pending Approval') {
+                  doc.setFont('helvetica', 'bold');
+                  doc.setFontSize(7);
+                  const approvedText = 'Approved';
+                  const approvedBadgeWidth = doc.getTextWidth(approvedText) + 4;
+                  
+                  badgeX -= approvedBadgeWidth; // Move left by badge width
+                  
+                  // Draw green approved badge
+                  doc.setFillColor(eventTypeColors['Approved'].bg[0], eventTypeColors['Approved'].bg[1], eventTypeColors['Approved'].bg[2]);
+                  doc.roundedRect(badgeX, yPosition + 0.5, approvedBadgeWidth, badgeHeight, 1, 1, 'F');
+                  
+                  // Draw badge text
+                  doc.setTextColor(eventTypeColors['Approved'].text[0], eventTypeColors['Approved'].text[1], eventTypeColors['Approved'].text[2]);
+                  doc.text(approvedText, badgeX + 2, yPosition + 3.5);
+                  
+                  badgeX -= badgeSpacing; // Add spacing before next badge
+                }
+                
+                // Draw event type badge if identified (to the left of approved)
                 if (eventTypeBadge) {
                   doc.setFont('helvetica', 'bold');
                   doc.setFontSize(7);
                   const badgeTextWidth = doc.getTextWidth(eventTypeBadge);
                   const badgeWidth = badgeTextWidth + 4;
-                  const badgeHeight = 4;
+                  
+                  badgeX -= badgeWidth; // Move left by badge width
                   
                   // Draw rounded badge
                   doc.setFillColor(badgeColor.bg[0], badgeColor.bg[1], badgeColor.bg[2]);
@@ -951,21 +983,8 @@ function generateZoneFormatPDF(options: CalendarPDFOptions): Buffer {
                   // Draw badge text
                   doc.setTextColor(badgeColor.text[0], badgeColor.text[1], badgeColor.text[2]);
                   doc.text(eventTypeBadge, badgeX + 2, yPosition + 3.5);
-                  
-                  badgeX += badgeWidth + 3;
                 }
                 
-                // Draw event name in BOLD
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(8);
-                doc.setTextColor(...colors.text);
-                const remainingWidth = col.width - (badgeX - currentX) - 2;
-                const maxEventChars = Math.floor(remainingWidth / 2.2);
-                let displayText = eventText;
-                if (displayText.length > maxEventChars) {
-                  displayText = displayText.substring(0, maxEventChars - 3) + '...';
-                }
-                doc.text(displayText, badgeX, yPosition + 4);
                 break;
             }
             

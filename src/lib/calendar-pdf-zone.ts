@@ -74,6 +74,7 @@ export function generateZoneFormatCalendarPDF(options: ZoneCalendarPDFOptions): 
       textLight: [71, 85, 105] as const,          // Slate-600
       border: [203, 213, 225] as const,           // Slate-300
       borderDark: [148, 163, 184] as const,       // Slate-400
+      approved: [34, 197, 94] as const,           // Green-500 for approved badge
       // Event type colors - softer, more professional
       stateCouncil: [241, 245, 249] as const,     // Slate-100
       smzMeeting: [187, 247, 208] as const,       // Green-200
@@ -200,24 +201,56 @@ This calendar may be updated throughout the year. For the latest information, vi
       { color: colors.stateClubEvent, text: 'STATE club event' },
       { color: colors.freshmansCamp, text: 'Freshmans, Clinic or Camp' },
       { color: colors.certificateAssessment, text: 'Certificate Assessment/or Training days' },
-      { color: colors.schoolHolidays, text: 'School Holidays' }
+      { color: colors.schoolHolidays, text: 'School Holidays' },
+      { color: [255, 255, 255], text: 'Events marked with "✓ Approved" have been confirmed by the Zone Representative', badge: true }
     ];
 
     legendItems.forEach(item => {
-      // Color box with border
-      doc.setFillColor(item.color[0], item.color[1], item.color[2]);
-      doc.rect(legendX, yPosition - 3.5, 18, 5, 'FD');
-      doc.setDrawColor(...colors.border);
-      doc.setLineWidth(0.3);
-      doc.rect(legendX, yPosition - 3.5, 18, 5);
-      
-      // Text with better spacing
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8.5);
-      doc.setTextColor(...colors.textLight);
-      const textLines = doc.splitTextToSize(item.text, legendWidth - 22);
-      doc.text(textLines, legendX + 20, yPosition);
-      yPosition += Math.max(6, textLines.length * 4);
+      // Special handling for badge legend item
+      if (item.badge) {
+        // Show green checkmark badge instead of color box
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7);
+        doc.setFillColor(colors.approved[0], colors.approved[1], colors.approved[2]);
+        doc.setTextColor(255, 255, 255);
+        
+        // Draw rounded rectangle badge
+        const badgeWidth = 18;
+        const badgeHeight = 4.5;
+        const radius = 1.5;
+        const badgeY = yPosition - 3.5;
+        
+        // Rounded rectangle background
+        doc.roundedRect(legendX, badgeY, badgeWidth, badgeHeight, radius, radius, 'F');
+        
+        // Checkmark and text
+        const checkmark = '✓ Approved';
+        const checkWidth = doc.getTextWidth(checkmark);
+        doc.text(checkmark, legendX + (badgeWidth - checkWidth) / 2, badgeY + 3.2);
+        
+        // Reset text color for description
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8.5);
+        doc.setTextColor(...colors.textLight);
+        const textLines = doc.splitTextToSize(item.text, legendWidth - 22);
+        doc.text(textLines, legendX + 20, yPosition);
+        yPosition += Math.max(6, textLines.length * 4);
+      } else {
+        // Color box with border
+        doc.setFillColor(item.color[0], item.color[1], item.color[2]);
+        doc.rect(legendX, yPosition - 3.5, 18, 5, 'FD');
+        doc.setDrawColor(...colors.border);
+        doc.setLineWidth(0.3);
+        doc.rect(legendX, yPosition - 3.5, 18, 5);
+        
+        // Text with better spacing
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8.5);
+        doc.setTextColor(...colors.textLight);
+        const textLines = doc.splitTextToSize(item.text, legendWidth - 22);
+        doc.text(textLines, legendX + 20, yPosition);
+        yPosition += Math.max(6, textLines.length * 4);
+      }
     });
 
     yPosition += 10;
@@ -346,9 +379,16 @@ This calendar may be updated throughout the year. For the latest information, vi
         // Calculate row height based on text content
         const clubText = event.club || '';
         const clubLines = doc.splitTextToSize(clubText, columnWidths.club - 5);
-        const eventLines = doc.splitTextToSize(event.name, columnWidths.event - 5);
+        
+        // Add "Approved" badge to event name if status is approved
+        let eventNameText = event.name;
+        const isApproved = event.status === 'approved';
+        
+        const eventLines = doc.splitTextToSize(eventNameText, columnWidths.event - 5);
         const maxLines = Math.max(clubLines.length, eventLines.length, 1);
-        const rowHeight = Math.max(9, maxLines * 4.5 + 3);
+        const baseRowHeight = Math.max(9, maxLines * 4.5 + 3);
+        // Add extra space if approved badge is present
+        const rowHeight = isApproved ? baseRowHeight + 5 : baseRowHeight;
         
         // Row background color
         doc.setFillColor(eventBgColor[0], eventBgColor[1], eventBgColor[2]);
@@ -398,10 +438,40 @@ This calendar may be updated throughout the year. For the latest information, vi
         
         // Event cell with proper text wrapping and vertical centering
         doc.rect(currentX, yPosition - 1.5, columnWidths.event, rowHeight);
-        const eventStartY = yPosition + (rowHeight - (eventLines.length * 4)) / 2 + 3;
+        
+        // Draw event name
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(...colors.text);
+        const eventStartY = yPosition + (rowHeight - (eventLines.length * 4) - (isApproved ? 5 : 0)) / 2 + 3;
         eventLines.forEach((line: string, i: number) => {
           doc.text(line, currentX + 2.5, eventStartY + (i * 4));
         });
+        
+        // Add "Approved" badge if event is approved
+        if (isApproved) {
+          const badgeY = eventStartY + (eventLines.length * 4) + 2;
+          const badgeWidth = 18;
+          const badgeHeight = 3.5;
+          const radius = 1;
+          
+          // Green badge background
+          doc.setFillColor(colors.approved[0], colors.approved[1], colors.approved[2]);
+          doc.roundedRect(currentX + 2.5, badgeY - 2.5, badgeWidth, badgeHeight, radius, radius, 'F');
+          
+          // White checkmark and "Approved" text
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(6.5);
+          doc.setTextColor(255, 255, 255);
+          const badgeText = '✓ Approved';
+          const badgeTextWidth = doc.getTextWidth(badgeText);
+          doc.text(badgeText, currentX + 2.5 + (badgeWidth - badgeTextWidth) / 2, badgeY);
+          
+          // Reset font
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(9);
+          doc.setTextColor(...colors.text);
+        }
         
         yPosition += rowHeight;
       });

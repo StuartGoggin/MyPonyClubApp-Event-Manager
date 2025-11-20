@@ -86,6 +86,7 @@ export function ZoneEventManagement({
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isUnapproveDialogOpen, setIsUnapproveDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const getClubName = (clubId: string | undefined, event?: Event) => {
@@ -151,6 +152,44 @@ export function ZoneEventManagement({
   const handleDeleteEvent = (event: Event) => {
     setSelectedEvent(event);
     setIsDeleteDialogOpen(true);
+  };
+
+  const handleUnapproveEvent = (event: Event) => {
+    setSelectedEvent(event);
+    setIsUnapproveDialogOpen(true);
+  };
+
+  const confirmUnapproveEvent = async () => {
+    if (!selectedEvent) return;
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch(`/api/events/${selectedEvent.id}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          status: 'proposed',
+          zoneManagerNotes: 'Event unapproved - returned to pending status',
+          processedBy: 'zone_rep',
+          processedAt: new Date().toISOString()
+        })
+      });
+
+      if (response.ok) {
+        onEventUpdate();
+        setIsUnapproveDialogOpen(false);
+        setSelectedEvent(null);
+      } else {
+        throw new Error('Failed to unapprove event');
+      }
+    } catch (error) {
+      console.error('Error unapproving event:', error);
+      // TODO: Show error message to user
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const confirmDeleteEvent = async () => {
@@ -264,6 +303,17 @@ export function ZoneEventManagement({
               {showActions && (
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
+                    {event.status === 'approved' && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-amber-600 border-amber-600 hover:bg-amber-50"
+                        onClick={() => handleUnapproveEvent(event)}
+                      >
+                        <XCircle className="h-4 w-4 mr-1" />
+                        Unapprove
+                      </Button>
+                    )}
                     <Button
                       size="sm"
                       variant="outline"
@@ -525,6 +575,48 @@ export function ZoneEventManagement({
               disabled={isSubmitting}
             >
               {isSubmitting ? 'Deleting...' : 'Delete Event'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Unapprove Confirmation Dialog */}
+      <Dialog open={isUnapproveDialogOpen} onOpenChange={setIsUnapproveDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <XCircle className="h-5 w-5 text-amber-600" />
+              Unapprove Event
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to unapprove this event? It will be moved back to pending status and will need to be re-approved before appearing on the calendar.
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedEvent && (
+            <div className="p-4 bg-muted rounded-lg">
+              <div className="font-medium">{selectedEvent.name}</div>
+              <div className="text-sm text-muted-foreground mt-1">
+                {getClubName(selectedEvent.clubId, selectedEvent)} • {formatDate(selectedEvent.date)}
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsUnapproveDialogOpen(false)}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="default"
+              className="bg-amber-600 hover:bg-amber-700"
+              onClick={confirmUnapproveEvent}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Unapproving...' : 'Unapprove Event'}
             </Button>
           </DialogFooter>
         </DialogContent>

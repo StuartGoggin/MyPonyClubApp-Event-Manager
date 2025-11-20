@@ -54,7 +54,7 @@ export async function autoSendQueuedEmail(emailId: string): Promise<{
 
     // Prepare email content
     const emailContent: any = {
-      from: 'MyPonyClub Event Manager <noreply@myponyclub.com>',
+      from: 'MyPonyClub Event Manager <noreply@myponyclub.events>',
       to: email.to,
       subject: email.subject,
       html: email.htmlContent || email.html,

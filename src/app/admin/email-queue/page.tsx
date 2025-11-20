@@ -30,6 +30,8 @@ function EmailQueueAdminContent() {
   const [filterType, setFilterType] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [editingEmail, setEditingEmail] = useState<QueuedEmail | null>(null);
+  const [suggestedRecipients, setSuggestedRecipients] = useState<{current: string[]; suggested: string[]} | null>(null);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [resendingEmail, setResendingEmail] = useState<QueuedEmail | null>(null);
   const [resendEmailData, setResendEmailData] = useState<{to: string[]; cc?: string[]; bcc?: string[]}>({ to: [] });
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -136,6 +138,13 @@ function EmailQueueAdminContent() {
     
     loadData();
   }, [fetchEmails, fetchStats, fetchConfig, fetchLogs]);
+
+  // Auto-reevaluate recipients when edit dialog opens
+  useEffect(() => {
+    if (editingEmail) {
+      reevaluateRecipients(editingEmail);
+    }
+  }, [editingEmail]);
 
   // Refetch emails when filters change
   useEffect(() => {
@@ -319,6 +328,7 @@ function EmailQueueAdminContent() {
         body: JSON.stringify({ 
           emailId: editingEmail.id,
           updates: {
+            to: Array.isArray(editingEmail.to) ? editingEmail.to : [editingEmail.to],
             subject: editingEmail.subject,
             textContent: editingEmail.textContent,
             htmlContent: editingEmail.htmlContent,
@@ -331,10 +341,45 @@ function EmailQueueAdminContent() {
       if (response.ok) {
         await fetchEmails();
         setEditingEmail(null);
+        setSuggestedRecipients(null);
       }
     } catch (error) {
       console.error('Error saving email changes:', error);
     }
+  };
+
+  const reevaluateRecipients = async (email: QueuedEmail) => {
+    setIsLoadingSuggestions(true);
+    try {
+      const response = await fetch('/api/email-queue/reevaluate-recipients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          emailType: email.type,
+          metadata: email.metadata
+        })
+      });
+      
+      const result = await response.json();
+      if (result.success && result.data) {
+        setSuggestedRecipients({
+          current: Array.isArray(email.to) ? email.to : [email.to],
+          suggested: result.data.suggestedRecipients || []
+        });
+      }
+    } catch (error) {
+      console.error('Error reevaluating recipients:', error);
+    } finally {
+      setIsLoadingSuggestions(false);
+    }
+  };
+
+  const applySuggestedRecipients = () => {
+    if (!editingEmail || !suggestedRecipients) return;
+    setEditingEmail({
+      ...editingEmail,
+      to: suggestedRecipients.suggested
+    });
   };
 
   const handleEditResend = (email: QueuedEmail) => {
@@ -521,24 +566,77 @@ function EmailQueueAdminContent() {
                 
                 {selectedEmails.length > 0 && (
                   <div className="flex gap-2">
-                    <AlertDialogTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                        Approve Selected ({selectedEmails.length})
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        <Send className="h-4 w-4 mr-2" />
-                        Send Selected ({selectedEmails.length})
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="destructive" size="sm">
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete Selected ({selectedEmails.length})
-                      </Button>
-                    </AlertDialogTrigger>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Approve Selected ({selectedEmails.length})
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Approve Selected Emails</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to approve {selectedEmails.length} email(s)? They will be marked as pending and ready to send.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleBulkAction('approve')}>
+                            Approve
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                    
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          <Send className="h-4 w-4 mr-2" />
+                          Send Selected ({selectedEmails.length})
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Send Selected Emails</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to send {selectedEmails.length} email(s) immediately?
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleBulkAction('send')}>
+                            Send Now
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                    
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm">
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete Selected ({selectedEmails.length})
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Selected Emails</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete {selectedEmails.length} email(s)? This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={() => handleBulkAction('delete')}
+                            className="bg-red-600 hover:bg-red-700"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 )}
               </div>
@@ -996,15 +1094,72 @@ function EmailQueueAdminContent() {
 
       {/* Email Edit Dialog */}
       {editingEmail && (
-        <Dialog open={!!editingEmail} onOpenChange={() => setEditingEmail(null)}>
-          <DialogContent className="max-w-4xl">
+        <Dialog open={!!editingEmail} onOpenChange={() => {
+          setEditingEmail(null);
+          setSuggestedRecipients(null);
+        }}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Edit Email</DialogTitle>
               <DialogDescription>
-                Make changes to the email content before sending
+                Make changes to the email content and recipients before sending
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
+              {/* Recipients Section */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="editRecipients">Recipients</Label>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => reevaluateRecipients(editingEmail)}
+                    disabled={isLoadingSuggestions}
+                  >
+                    {isLoadingSuggestions ? 'Loading...' : 'Reevaluate Recipients'}
+                  </Button>
+                </div>
+                <Input 
+                  id="editRecipients"
+                  value={Array.isArray(editingEmail.to) ? editingEmail.to.join(', ') : editingEmail.to}
+                  onChange={(e) => setEditingEmail({
+                    ...editingEmail, 
+                    to: e.target.value.split(',').map(email => email.trim())
+                  })}
+                  placeholder="email@example.com, email2@example.com"
+                />
+                
+                {/* Suggested Recipients */}
+                {suggestedRecipients && (
+                  <div className="mt-2 p-3 bg-muted rounded-md space-y-2">
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-1 flex-1">
+                        <div className="text-sm font-medium">Current Recipients:</div>
+                        <div className="text-sm text-muted-foreground">
+                          {suggestedRecipients.current.join(', ') || 'None'}
+                        </div>
+                        
+                        <div className="text-sm font-medium mt-2">Suggested Recipients:</div>
+                        <div className="text-sm text-muted-foreground">
+                          {suggestedRecipients.suggested.join(', ') || 'None'}
+                        </div>
+                      </div>
+                      
+                      {suggestedRecipients.suggested.length > 0 && 
+                       JSON.stringify(suggestedRecipients.current.sort()) !== JSON.stringify(suggestedRecipients.suggested.sort()) && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={applySuggestedRecipients}
+                        >
+                          Apply Suggested
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+              
               <div>
                 <Label htmlFor="editSubject">Subject</Label>
                 <Input 

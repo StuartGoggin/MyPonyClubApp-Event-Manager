@@ -156,7 +156,7 @@ router.post(
 
         // Send email using Resend
         const emailData: any = {
-          from: "MyPonyClub Event Manager <onboarding@resend.dev>",
+          from: "MyPonyClub Event Manager <noreply@myponyclub.events>",
           to: email.to,
           subject: email.subject,
         };

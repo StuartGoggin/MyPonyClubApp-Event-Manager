@@ -224,7 +224,7 @@ router.post("/", async (req, res) => {
     };
 
     const requesterEmail = {
-      from: "noreply@ponyclub.com.au",
+      from: "MyPonyClub Event Manager <noreply@myponyclub.events>",
       to: [formData.submittedByEmail],
       subject: `Event Request Submitted - ${referenceNumber}`,
       html: generateEventRequestEmailHTML(requesterEmailData),
@@ -290,7 +290,7 @@ router.post("/", async (req, res) => {
       };
 
       const zoneApproverEmail = {
-        from: "noreply@ponyclub.com.au",
+        from: "MyPonyClub Event Manager <noreply@myponyclub.events>",
         to: [approverEmail],
         subject: `Zone Approval Required - Event Request ${referenceNumber}`,
         html: generateEventRequestEmailHTML(approverEmailData),
@@ -367,7 +367,7 @@ router.post("/", async (req, res) => {
       };
 
       const superUserEmailMessage = {
-        from: "noreply@ponyclub.com.au",
+        from: "MyPonyClub Event Manager <noreply@myponyclub.events>",
         to: [superUserEmail],
         subject: `Super User Notification - Event Request ${referenceNumber}`,
         html: generateEventRequestEmailHTML(superUserEmailData),

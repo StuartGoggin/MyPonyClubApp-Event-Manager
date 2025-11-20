@@ -129,7 +129,7 @@ export const POST = withAdminAuth(async (request: NextRequest, user) => {
 
       // Send email using Resend
       const emailData: any = {
-        from: 'MyPonyClub Event Manager <noreply@myponyclub.com>',
+        from: 'MyPonyClub Event Manager <noreply@myponyclub.events>',
         to: email.to,
         subject: email.subject,
       };

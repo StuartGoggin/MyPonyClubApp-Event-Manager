@@ -253,6 +253,7 @@ export function generateEventRequestEmailHTML(data: EmailTemplateData): string {
 <body>
     <div class="email-container">
         <div class="header">
+            <img src="https://myponyclub.events/Logo.png" alt="MyPonyClub Events" style="max-width: 200px; height: auto; margin-bottom: 16px;" />
             <h1>🏇 Event Request Submission</h1>
             <div class="reference">Reference: ${data.referenceNumber}</div>
         </div>

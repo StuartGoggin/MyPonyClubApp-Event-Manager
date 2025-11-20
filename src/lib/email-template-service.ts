@@ -635,6 +635,7 @@ export class EmailTemplateService {
 <body>
     <div class="container">
         <div class="header">
+            <img src="https://myponyclub.events/Logo.png" alt="MyPonyClub Events" style="max-width: 200px; height: auto; margin-bottom: 16px;" />
             <h1>🏇 Event Request Confirmation</h1>
             <div class="reference">Reference: {{referenceNumber}}</div>
         </div>
@@ -788,6 +789,7 @@ For support, contact: {{supportEmail}}`
 <body>
     <div class="container">
         <div class="header">
+            <img src="https://myponyclub.events/Logo.png" alt="MyPonyClub Events" style="max-width: 200px; height: auto; margin-bottom: 16px;" />
             <h1>⚡ Zone Approval Required</h1>
             <div class="urgent">Reference: {{referenceNumber}}</div>
         </div>
@@ -943,6 +945,7 @@ Zone Coordinator Support: {{supportEmail}}`
 <body>
     <div class="container">
         <div class="header">
+            <img src="https://myponyclub.events/Logo.png" alt="MyPonyClub Events" style="max-width: 200px; height: auto; margin-bottom: 16px;" />
             <h1>🏇 Club Event Request</h1>
             <div class="club-badge">{{clubName}} | {{referenceNumber}}</div>
         </div>
@@ -1127,6 +1130,7 @@ Reference: {{referenceNumber}} | Support: {{supportEmail}}`
 <body>
     <div class="container">
         <div class="header">
+            <img src="https://myponyclub.events/Logo.png" alt="MyPonyClub Events" style="max-width: 200px; height: auto; margin-bottom: 16px;" />
             <h1>🔒 Super User Alert</h1>
             <div class="admin-badge">Administrative Access | {{referenceNumber}}</div>
         </div>

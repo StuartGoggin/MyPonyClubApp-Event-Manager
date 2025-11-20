@@ -11,6 +11,7 @@ import { EmailTemplateService } from '@/lib/email-template-service';
 import { EmailTemplateVariableData, EmailTemplateType } from '@/lib/types-email-templates';
 import { EmailAttachmentService, AttachmentFile } from '@/lib/email-attachment-service';
 import { QueuedEmail } from '@/lib/types';
+import { UserService } from '@/lib/user-service';
 
 // Only initialize Resend if API key is available
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
@@ -23,13 +24,36 @@ const zoneApprovers = {
   // 'wmz': ['wmzsecretary@example.com'],
 };
 
-// Super user emails (will receive JSON exports)
-const superUserEmails = process.env.SUPER_USER_EMAILS 
-  ? process.env.SUPER_USER_EMAILS.split(',').map(email => email.trim())
-  : [
-      'admin@ponyclub.com.au',
-      // Add more super user emails as needed
-    ];
+// Helper function to get super user emails from database
+async function getSuperUserEmails(): Promise<string[]> {
+  try {
+    const superUsers = await UserService.getUsers({ 
+      role: 'super_user',
+      isActive: true 
+    });
+    
+    const emails = superUsers
+      .map(user => user.email)
+      .filter((email): email is string => !!email && email.trim().length > 0);
+    
+    if (emails.length === 0) {
+      console.warn('No super users found in database, using fallback');
+      // Fallback to environment variable or default
+      return process.env.SUPER_USER_EMAILS 
+        ? process.env.SUPER_USER_EMAILS.split(',').map(email => email.trim())
+        : ['admin@ponyclub.com.au'];
+    }
+    
+    console.log(`Found ${emails.length} super user(s):`, emails);
+    return emails;
+  } catch (error) {
+    console.error('Error fetching super users:', error);
+    // Fallback to environment variable or default
+    return process.env.SUPER_USER_EMAILS 
+      ? process.env.SUPER_USER_EMAILS.split(',').map(email => email.trim())
+      : ['admin@ponyclub.com.au'];
+  }
+}
 
 interface EventRequestEmailData {
   formData: {
@@ -104,6 +128,9 @@ export async function POST(request: NextRequest) {
     if (approverEmails.length === 0) {
       console.warn('No zone approver emails configured for zone:', zone.name);
     }
+
+    // Get super user emails from database
+    const superUserEmails = await getSuperUserEmails();
 
     // Get PDF buffer from provided data or generate new one
     let pdfBuffer: Buffer;
@@ -263,7 +290,7 @@ export async function POST(request: NextRequest) {
     
     const requesterContent = await generateEmailFromTemplate('event-request-requester', templateVariables);
     const requesterEmail = {
-      from: 'noreply@ponyclub.com.au',
+      from: 'MyPonyClub Event Manager <noreply@myponyclub.events>',
       to: [formData.submittedByEmail],
       subject: requesterContent.subject,
       html: requesterContent.html,
@@ -332,7 +359,7 @@ export async function POST(request: NextRequest) {
 
       const zoneContent = await generateEmailFromTemplate('event-request-zone-manager', zoneVariables);
       const zoneApproverEmail = {
-        from: 'noreply@ponyclub.com.au',
+        from: 'MyPonyClub Event Manager <noreply@myponyclub.events>',
         to: [approverEmail],
         subject: zoneContent.subject,
         html: zoneContent.html,
@@ -404,7 +431,7 @@ export async function POST(request: NextRequest) {
 
       const superUserContent = await generateEmailFromTemplate('event-request-super-user', superUserVariables);
       const superUserEmailMessage = {
-        from: 'noreply@ponyclub.com.au',
+        from: 'MyPonyClub Event Manager <noreply@myponyclub.events>',
         to: [superUserEmail],
         subject: superUserContent.subject,
         html: superUserContent.html,

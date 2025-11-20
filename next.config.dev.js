@@ -1,11 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Firebase App Hosting will handle the build output configuration
-  // Do not set output mode - let Firebase adapter manage it
+  // Development-specific optimizations for faster dev server
   
-  // Enable image optimization for server deployment
+  // Enable turbopack for much faster compilation (Next.js 13+)
+  // Will be ignored in production build
+  
+  // Image optimization
   images: {
-    unoptimized: true, // Disable optimization for Firebase App Hosting compatibility
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',
@@ -28,15 +30,15 @@ const nextConfig = {
     },
   },
   
-  // Webpack configuration
+  // Webpack configuration with dev optimizations
   webpack: (config, { dev, isServer }) => {
     config.experiments = {
       ...config.experiments,
       asyncWebAssembly: true,
     };
     
-    // Development optimizations (won't affect production)
     if (dev) {
+      // Speed up dev builds
       config.optimization = {
         ...config.optimization,
         removeAvailableModules: false,
@@ -44,8 +46,7 @@ const nextConfig = {
         splitChunks: false,
       };
       
-      // Disable source maps in dev for much faster builds
-      // Set to 'eval-source-map' if you need debugging
+      // Disable source maps in dev for faster builds (can enable if debugging)
       config.devtool = false;
     }
     
@@ -57,11 +58,17 @@ const nextConfig = {
     ignoreBuildErrors: false,
   },
   
-  // Disable strict mode for faster dev server (re-enable for production builds)
-  reactStrictMode: process.env.NODE_ENV === 'production',
+  // Development-specific settings
+  swcMinify: true, // Use SWC for faster minification (but doesn't affect dev much)
   
-  // Use SWC for faster builds
-  swcMinify: true,
+  // Disable strict mode in dev to reduce double-renders
+  reactStrictMode: false,
+  
+  // Experimental features for faster dev
+  experimental: {
+    // Use faster incremental compilation
+    // turbo: {}, // Uncomment if you want to try Turbopack (experimental)
+  },
 };
 
 module.exports = nextConfig;

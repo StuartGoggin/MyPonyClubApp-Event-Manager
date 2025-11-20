@@ -12,14 +12,7 @@ import { Label } from '@/components/ui/label';
 import { NavigationItem, filterNavigationByRole, UserRole, getUserRoles } from '@/lib/access-control';
 
 export function AppLayout({ children }: PropsWithChildren) {
-  let pathname: string | null = null;
-  try {
-    pathname = usePathname();
-  } catch (e) {
-    // usePathname not available during SSR
-    pathname = null;
-  }
-  
+  const [pathname, setPathname] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
   // Start collapsed by default
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
@@ -27,22 +20,18 @@ export function AppLayout({ children }: PropsWithChildren) {
   const [isMobile, setIsMobile] = useState(false);
   const { user, isAuthenticated } = useAuth();
 
-  // Hydration-safe client detection and initial sidebar state
+  // Get pathname safely on client side only
+  const currentPathname = usePathname();
+
+  // Hydration-safe client detection and pathname setup
   useEffect(() => {
     setIsClient(true);
+    setPathname(currentPathname);
     // Set initial sidebar state after client mounts
-    if (pathname === '/') {
+    if (currentPathname === '/') {
       setSidebarCollapsed(false);
     }
-  }, [pathname]);
-
-  // Update sidebar state when pathname changes
-  useEffect(() => {
-    // Expand sidebar on root URL, collapse on other pages (but allow user toggle to persist)
-    if (pathname === '/') {
-      setSidebarCollapsed(false);
-    }
-  }, [pathname]);
+  }, [currentPathname]);
 
   // Detect mobile screen size only after hydration
   useEffect(() => {
@@ -63,7 +52,8 @@ export function AppLayout({ children }: PropsWithChildren) {
   // Close mobile menu when route changes
   useEffect(() => {
     setMobileMenuOpen(false);
-  }, [pathname]);
+    setSidebarCollapsed(true);
+  }, [currentPathname]);
   
   // Navigation items with role-based access control
   // Navigation items grouped by zones
@@ -191,70 +181,72 @@ export function AppLayout({ children }: PropsWithChildren) {
         
         {/* Sidebar - overlay on mobile, pushes content on desktop */}
         <div className={`
-          transition-all duration-300 border-r border-border/40 bg-background/95 backdrop-blur-sm shadow-lg overflow-y-auto
+          transition-all duration-300 border-r border-border/40 bg-background/95 backdrop-blur-sm shadow-lg
           ${sidebarCollapsed 
-            ? 'w-0' 
-            : 'w-64 md:w-64'
+            ? 'w-0 overflow-hidden' 
+            : 'w-64 overflow-y-auto'
           }
           ${!sidebarCollapsed && isMobile
             ? 'fixed inset-y-0 left-0 z-50 w-full max-w-xs'
             : 'sticky top-0 h-screen'
           }
         `}>
-          {/* Sidebar Header with close button */}
-          <div className="p-4 border-b border-border/40 flex items-center justify-between">
-            <h2 className="text-lg font-semibold tracking-tight text-muted-foreground">
-              Navigation
-            </h2>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setSidebarCollapsed(true)}
-              className="h-8 w-8 hover:bg-primary/10"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-          
-          {/* Sidebar Content */}
-          <div className="flex flex-col p-4 space-y-2">
-            {/* Navigation Menu - Grouped */}
-            <div className="space-y-4">
-              {visibleNavigationGroups.map((group, groupIndex) => (
-                <div key={group.label}>
-                  {/* Group Label */}
-                  <div className="px-3 mb-2">
-                    <p className="text-xs font-semibold text-muted-foreground/60 uppercase tracking-wider">
-                      {group.label}
-                    </p>
-                  </div>
-                  
-                  {/* Group Items */}
-                  <div className="space-y-1">
-                    {group.items.map((item) => (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-primary/10 hover:text-primary"
-                        title={item.title}
-                        onClick={() => setSidebarCollapsed(true)}
-                      >
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.label}</span>
-                      </Link>
-                    ))}
-                  </div>
-                  
-                  {/* Separator between groups (except for last group) */}
-                  {groupIndex < visibleNavigationGroups.length - 1 && (
-                    <div className="my-3 border-t border-border/40" />
-                  )}
+          {!sidebarCollapsed && (
+            <>
+              {/* Sidebar Header with close button */}
+              <div className="p-4 border-b border-border/40 flex items-center justify-between">
+                <h2 className="text-lg font-semibold tracking-tight text-muted-foreground">
+                  Navigation
+                </h2>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setSidebarCollapsed(true)}
+                  className="h-8 w-8 hover:bg-primary/10"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              {/* Sidebar Content */}
+              <div className="flex flex-col p-4 space-y-2">
+                {/* Navigation Menu - Grouped */}
+                <div className="space-y-4">
+                  {visibleNavigationGroups.map((group, groupIndex) => (
+                    <div key={group.label}>
+                      {/* Group Label */}
+                      <div className="px-3 mb-2">
+                        <p className="text-xs font-semibold text-muted-foreground/60 uppercase tracking-wider">
+                          {group.label}
+                        </p>
+                      </div>
+                      
+                      {/* Group Items */}
+                      <div className="space-y-1">
+                        {group.items.map((item) => (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-primary/10 hover:text-primary"
+                            title={item.title}
+                            onClick={() => setSidebarCollapsed(true)}
+                          >
+                            <item.icon className="h-4 w-4" />
+                            <span>{item.label}</span>
+                          </Link>
+                        ))}
+                      </div>
+                      
+                      {/* Separator between groups (except for last group) */}
+                      {groupIndex < visibleNavigationGroups.length - 1 && (
+                        <div className="my-3 border-t border-border/40" />
+                      )}
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-            
-            {/* Separator removed - Event Sources moved to calendar filter */}
-          </div>
+              </div>
+            </>
+          )}
         </div>
         
         {/* Main Content Area - adjusts width based on sidebar */}

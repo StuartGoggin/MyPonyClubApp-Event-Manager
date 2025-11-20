@@ -15,7 +15,9 @@ const cache = {
   events: null as CacheEntry<Event[]> | null,
 };
 
-const CACHE_TTL = 12 * 60 * 60 * 1000; // 12 hours
+// Cache TTLs - events have shorter cache due to frequent updates
+const CACHE_TTL = 12 * 60 * 60 * 1000; // 12 hours for clubs, zones, eventTypes
+const EVENTS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes for events (they change frequently)
 
 function getCached<T>(key: keyof typeof cache, customTTL?: number): T | null {
   const entry = cache[key] as CacheEntry<T> | null;
@@ -218,8 +220,8 @@ export async function getAllEventTypes(): Promise<EventType[]> {
 
 export async function getAllEvents(): Promise<Event[]> {
   try {
-    // Check cache first
-    const cached = getCached<Event[]>('events');
+    // Check cache first - events use shorter TTL
+    const cached = getCached<Event[]>('events', EVENTS_CACHE_TTL);
     if (cached) {
       return cached;
     }
@@ -277,7 +279,7 @@ export async function getAllEvents(): Promise<Event[]> {
     
     const queryTime = Date.now() - startTime;
     if (process.env.NODE_ENV !== 'production') {
-      console.log(`✅ Retrieved ${events.length} events in ${queryTime}ms - CACHED for 12 hours`);
+      console.log(`✅ Retrieved ${events.length} events in ${queryTime}ms - CACHED for 5 minutes`);
     }
     
     // Cache the events (including public holidays which are now stored in Firestore)

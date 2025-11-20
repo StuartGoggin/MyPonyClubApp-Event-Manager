@@ -4,6 +4,10 @@ import { Timestamp } from 'firebase-admin/firestore';
 import { Event } from '@/lib/types';
 import { getAllEvents, invalidateEventsCache } from '@/lib/server-data';
 
+// Disable Next.js caching for this route - events must always be fresh
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET(request: NextRequest) {
   try {
     if (!adminDb || !isDatabaseConnected()) {

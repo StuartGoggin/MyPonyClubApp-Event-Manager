@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { UserService } from '@/lib/user-service';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 60; // Cache for 60 seconds
+
+// In-memory cache for user names (refreshes every 60 seconds)
+let namesCache: { data: any[]; timestamp: number } | null = null;
+const CACHE_TTL = 60000; // 60 seconds
 
 // GET: Retrieve user names for autocomplete
 export async function GET(request: NextRequest) {
@@ -9,8 +14,20 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search') || '';
     
-    // Get all active users
-    const users = await UserService.getUsers({ isActive: true });
+    // Check cache first
+    const now = Date.now();
+    let users;
+    
+    if (!namesCache || (now - namesCache.timestamp) > CACHE_TTL) {
+      // Refresh cache
+      users = await UserService.getUsers({ isActive: true });
+      namesCache = {
+        data: users,
+        timestamp: now
+      };
+    } else {
+      users = namesCache.data;
+    }
     
     // Create names list with associated user data
     const namesWithData = new Map<string, { clubId?: string; zoneId?: string; user: any }>();

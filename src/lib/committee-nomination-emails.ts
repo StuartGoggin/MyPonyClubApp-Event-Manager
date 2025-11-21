@@ -5,15 +5,159 @@ import { CommitteeNomination } from '@/types/committee-nomination';
  * Email notification helpers for committee nomination workflow
  */
 
+interface EmailAttachment {
+  id: string;
+  filename: string;
+  contentType: string;
+  size: number;
+  content: string; // Base64 encoded
+  createdAt: Date;
+}
+
 /**
- * Send notification to zone rep when committee nomination is submitted
+ * Create email attachment object from PDF buffer
  */
-export async function sendCommitteeNominationSubmittedEmail(
-  nomination: CommitteeNomination
+function createPDFAttachment(filename: string, pdfBuffer: Buffer): EmailAttachment {
+  return {
+    id: `att-${Date.now()}-${Math.random().toString(36).substring(2)}`,
+    filename,
+    contentType: 'application/pdf',
+    size: pdfBuffer.length,
+    content: pdfBuffer.toString('base64'),
+    createdAt: new Date(),
+  };
+}
+
+/**
+ * Send confirmation email to submitter with PDF attachment
+ */
+export async function sendCommitteeNominationConfirmationEmail(
+  nomination: CommitteeNomination,
+  pdfBuffer: Buffer,
+  referenceNumber: string
+): Promise<string> {
+  const submitterData = nomination.submittedBy;
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #10b981; color: white; padding: 20px; text-align: center; }
+        .content { padding: 20px; background-color: #f9fafb; }
+        .success-badge { display: inline-block; background-color: #d1fae5; color: #065f46; padding: 8px 16px; border-radius: 20px; font-weight: bold; margin-bottom: 20px; }
+        .section { margin-bottom: 20px; }
+        .label { font-weight: bold; color: #1f2937; }
+        .value { color: #4b5563; margin-left: 10px; }
+        .info-box { background-color: #ecfdf5; border-left: 4px solid: #10b981; padding: 15px; margin: 20px 0; line-height: 1.8; }
+        .footer { margin-top: 20px; padding: 20px; text-align: center; font-size: 12px; color: #6b7280; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>✓ Committee Nomination Submitted Successfully</h1>
+        </div>
+        <div class="content">
+          <div class="success-badge">SUBMITTED</div>
+          
+          <p>Dear ${submitterData.name},</p>
+          
+          <p>Your committee nomination for <strong>${nomination.clubName}</strong> has been successfully submitted.</p>
+
+          <div class="section">
+            <div><span class="label">Reference Number:</span><span class="value">${referenceNumber}</span></div>
+            <div><span class="label">Submission Date:</span><span class="value">${new Date(nomination.submittedAt).toLocaleString('en-AU')}</span></div>
+            <div><span class="label">AGM Date:</span><span class="value">${new Date(nomination.agmDate).toLocaleDateString('en-AU')}</span></div>
+          </div>
+
+          <div class="info-box">
+            <strong>What happens next:</strong><br>
+            • Your zone manager will review the District Commissioner nomination<br>
+            • You will be notified once the review is complete<br>
+            • The complete nomination form is attached to this email for your records
+          </div>
+
+          <div class="section">
+            <h3>Nominated Committee</h3>
+            <div><span class="label">District Commissioner:</span><span class="value">${nomination.districtCommissioner.name}</span></div>
+            ${nomination.president ? `<div><span class="label">President:</span><span class="value">${nomination.president.name}</span></div>` : ''}
+            ${nomination.vicePresident ? `<div><span class="label">Vice President:</span><span class="value">${nomination.vicePresident.name}</span></div>` : ''}
+            ${nomination.secretary ? `<div><span class="label">Secretary:</span><span class="value">${nomination.secretary.name}</span></div>` : ''}
+            ${nomination.treasurer ? `<div><span class="label">Treasurer:</span><span class="value">${nomination.treasurer.name}</span></div>` : ''}
+          </div>
+
+          <p>If you have any questions, please contact your zone manager or email <a href="mailto:${process.env.SUPPORT_EMAIL || 'support@ponyclub.com.au'}">${process.env.SUPPORT_EMAIL || 'support@ponyclub.com.au'}</a>.</p>
+        </div>
+        <div class="footer">
+          <p>This is an automated confirmation from the Pony Club Event Manager.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const textContent = `
+Committee Nomination Submitted Successfully
+
+Dear ${submitterData.name},
+
+Your committee nomination for ${nomination.clubName} has been successfully submitted.
+
+Reference Number: ${referenceNumber}
+Submission Date: ${new Date(nomination.submittedAt).toLocaleString('en-AU')}
+AGM Date: ${new Date(nomination.agmDate).toLocaleDateString('en-AU')}
+
+WHAT HAPPENS NEXT:
+• Your zone manager will review the District Commissioner nomination
+• You will be notified once the review is complete
+• The complete nomination form is attached to this email for your records
+
+NOMINATED COMMITTEE:
+- District Commissioner: ${nomination.districtCommissioner.name}
+${nomination.president ? `- President: ${nomination.president.name}` : ''}
+${nomination.vicePresident ? `- Vice President: ${nomination.vicePresident.name}` : ''}
+${nomination.secretary ? `- Secretary: ${nomination.secretary.name}` : ''}
+${nomination.treasurer ? `- Treasurer: ${nomination.treasurer.name}` : ''}
+
+If you have any questions, please contact your zone manager or email ${process.env.SUPPORT_EMAIL || 'support@ponyclub.com.au'}.
+  `.trim();
+
+  const pdfFilename = `committee-nomination-${nomination.clubName.replace(/[^a-zA-Z0-9]/g, '_')}-${new Date().toISOString().split('T')[0]}.pdf`;
+
+  const emailId = await addEmailToQueue({
+    to: [submitterData.email],
+    subject: `Committee Nomination Confirmation - ${nomination.clubName}`,
+    htmlContent,
+    textContent,
+    attachments: [createPDFAttachment(pdfFilename, pdfBuffer)],
+    status: 'pending',
+    type: 'notification',
+    metadata: {
+      nominationId: nomination.id!,
+      clubId: nomination.clubId,
+      clubName: nomination.clubName,
+      type: 'committee_nomination_confirmation',
+      referenceNumber,
+    },
+  });
+
+  return emailId;
+}
+
+/**
+ * Send notification to zone manager when committee nomination is submitted
+ */
+export async function sendCommitteeNominationZoneManagerEmail(
+  nomination: CommitteeNomination,
+  pdfBuffer: Buffer,
+  referenceNumber: string
 ): Promise<string> {
   // Skip sending email if no zone representative is assigned
   if (!nomination.zoneRepresentative || !nomination.zoneRepresentative.email) {
-    console.log('No zone representative assigned, skipping email notification');
+    console.log('No zone representative assigned, skipping zone manager email notification');
     return 'skipped';
   }
 
@@ -30,13 +174,14 @@ export async function sendCommitteeNominationSubmittedEmail(
         .label { font-weight: bold; color: #1f2937; }
         .value { color: #4b5563; margin-left: 10px; }
         .button { display: inline-block; padding: 12px 24px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 6px; margin-top: 20px; }
+        .action-box { background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; }
         .footer { margin-top: 20px; padding: 20px; text-align: center; font-size: 12px; color: #6b7280; }
       </style>
     </head>
     <body>
       <div class="container">
         <div class="header">
-          <h1>New Committee Nomination Submitted</h1>
+          <h1>New Committee Nomination - Review Required</h1>
         </div>
         <div class="content">
           <p>Dear ${nomination.zoneRepresentative.name},</p>
@@ -44,8 +189,11 @@ export async function sendCommitteeNominationSubmittedEmail(
           <p>A new committee nomination has been submitted for your review:</p>
 
           <div class="section">
+            <div><span class="label">Reference Number:</span><span class="value">${referenceNumber}</span></div>
             <div><span class="label">Club:</span><span class="value">${nomination.clubName}</span></div>
-            <div><span class="label">AGM Date:</span><span class="value">${new Date(nomination.agmDate).toLocaleDateString()}</span></div>
+            <div><span class="label">Zone:</span><span class="value">${nomination.zoneName}</span></div>
+            <div><span class="label">AGM Date:</span><span class="value">${new Date(nomination.agmDate).toLocaleDateString('en-AU')}</span></div>
+            <div><span class="label">Submitted:</span><span class="value">${new Date(nomination.submittedAt).toLocaleString('en-AU')}</span></div>
           </div>
 
           <div class="section">
@@ -58,16 +206,18 @@ export async function sendCommitteeNominationSubmittedEmail(
 
           <div class="section">
             <h3>Other Committee Members</h3>
-            ${nomination.secretary ? `<div><span class="label">Secretary:</span><span class="value">${nomination.secretary.name}</span></div>` : ''}
-            ${nomination.treasurer ? `<div><span class="label">Treasurer:</span><span class="value">${nomination.treasurer.name}</span></div>` : ''}
             ${nomination.president ? `<div><span class="label">President:</span><span class="value">${nomination.president.name}</span></div>` : ''}
             ${nomination.vicePresident ? `<div><span class="label">Vice President:</span><span class="value">${nomination.vicePresident.name}</span></div>` : ''}
-            ${nomination.additionalCommittee.map((member: any) => 
+            ${nomination.secretary ? `<div><span class="label">Secretary:</span><span class="value">${nomination.secretary.name}</span></div>` : ''}
+            ${nomination.treasurer ? `<div><span class="label">Treasurer:</span><span class="value">${nomination.treasurer.name}</span></div>` : ''}
+            ${(nomination.additionalCommittee || []).map((member: any) => 
               `<div><span class="label">${member.position}:</span><span class="value">${member.name}</span></div>`
             ).join('')}
           </div>
 
-          <p><strong>Action Required:</strong> Please review the committee nomination and approve or reject the District Commissioner.</p>
+          <div class="action-box">
+            <strong>Action Required:</strong> Please review the committee nomination and approve or reject the District Commissioner nomination. The complete nomination form is attached for your reference.
+          </div>
 
           <a href="${process.env.NEXT_PUBLIC_APP_URL}/zone-manager" class="button">Review Nomination</a>
         </div>
@@ -80,49 +230,198 @@ export async function sendCommitteeNominationSubmittedEmail(
   `;
 
   const textContent = `
-New Committee Nomination Submitted
+New Committee Nomination - Review Required
 
 Dear ${nomination.zoneRepresentative.name},
 
 A new committee nomination has been submitted for your review:
 
+Reference Number: ${referenceNumber}
 Club: ${nomination.clubName}
-AGM Date: ${new Date(nomination.agmDate).toLocaleDateString()}
+Zone: ${nomination.zoneName}
+AGM Date: ${new Date(nomination.agmDate).toLocaleDateString('en-AU')}
+Submitted: ${new Date(nomination.submittedAt).toLocaleString('en-AU')}
 
-Nominated District Commissioner:
+NOMINATED DISTRICT COMMISSIONER:
 - Name: ${nomination.districtCommissioner.name}
 - Email: ${nomination.districtCommissioner.email}
 - Mobile: ${nomination.districtCommissioner.mobile}
 - Pony Club ID: ${nomination.districtCommissioner.ponyClubId}
 
-Other Committee Members:
-${nomination.secretary ? `- Secretary: ${nomination.secretary.name}` : ''}
-${nomination.treasurer ? `- Treasurer: ${nomination.treasurer.name}` : ''}
+OTHER COMMITTEE MEMBERS:
 ${nomination.president ? `- President: ${nomination.president.name}` : ''}
 ${nomination.vicePresident ? `- Vice President: ${nomination.vicePresident.name}` : ''}
-${nomination.additionalCommittee.map((member: any) => `- ${member.position}: ${member.name}`).join('\n')}
+${nomination.secretary ? `- Secretary: ${nomination.secretary.name}` : ''}
+${nomination.treasurer ? `- Treasurer: ${nomination.treasurer.name}` : ''}
+${(nomination.additionalCommittee || []).map((member: any) => `- ${member.position}: ${member.name}`).join('\n')}
 
-Action Required: Please review the committee nomination and approve or reject the District Commissioner.
+ACTION REQUIRED: Please review the committee nomination and approve or reject the District Commissioner nomination. The complete nomination form is attached for your reference.
 
 Review at: ${process.env.NEXT_PUBLIC_APP_URL}/zone-manager
   `.trim();
 
+  const pdfFilename = `committee-nomination-${nomination.clubName.replace(/[^a-zA-Z0-9]/g, '_')}-${new Date().toISOString().split('T')[0]}.pdf`;
+
   const emailId = await addEmailToQueue({
     to: [nomination.zoneRepresentative.email],
-    subject: `Committee Nomination - ${nomination.clubName}`,
+    subject: `Committee Nomination Review Required - ${nomination.clubName}`,
     htmlContent,
     textContent,
+    attachments: [createPDFAttachment(pdfFilename, pdfBuffer)],
     status: 'pending',
     type: 'notification',
     metadata: {
       nominationId: nomination.id!,
       clubId: nomination.clubId,
       clubName: nomination.clubName,
-      type: 'committee_nomination_submitted',
+      type: 'committee_nomination_zone_review',
+      referenceNumber,
     },
   });
 
   return emailId;
+}
+
+/**
+ * Send notification to super users with PDF attachment
+ */
+export async function sendCommitteeNominationSuperUserEmail(
+  nomination: CommitteeNomination,
+  pdfBuffer: Buffer,
+  referenceNumber: string,
+  superUserEmails: string[]
+): Promise<string[]> {
+  if (superUserEmails.length === 0) {
+    console.log('No super user emails provided, skipping super user notifications');
+    return [];
+  }
+
+  const emailIds: string[] = [];
+
+  for (const superUserEmail of superUserEmails) {
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background-color: #7c3aed; color: white; padding: 20px; text-align: center; }
+          .content { padding: 20px; background-color: #f9fafb; }
+          .admin-badge { display: inline-block; background-color: #ede9fe; color: #5b21b6; padding: 8px 16px; border-radius: 20px; font-weight: bold; margin-bottom: 20px; }
+          .section { margin-bottom: 20px; }
+          .label { font-weight: bold; color: #1f2937; }
+          .value { color: #4b5563; margin-left: 10px; }
+          .footer { margin-top: 20px; padding: 20px; text-align: center; font-size: 12px; color: #6b7280; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Committee Nomination - Admin Copy</h1>
+          </div>
+          <div class="content">
+            <div class="admin-badge">SUPER USER NOTIFICATION</div>
+            
+            <p>A new committee nomination has been submitted:</p>
+
+            <div class="section">
+              <div><span class="label">Reference Number:</span><span class="value">${referenceNumber}</span></div>
+              <div><span class="label">Club:</span><span class="value">${nomination.clubName}</span></div>
+              <div><span class="label">Zone:</span><span class="value">${nomination.zoneName}</span></div>
+              <div><span class="label">AGM Date:</span><span class="value">${new Date(nomination.agmDate).toLocaleDateString('en-AU')}</span></div>
+              <div><span class="label">Submitted:</span><span class="value">${new Date(nomination.submittedAt).toLocaleString('en-AU')}</span></div>
+            </div>
+
+            <div class="section">
+              <h3>Submitted By</h3>
+              <div><span class="label">Name:</span><span class="value">${nomination.submittedBy.name}</span></div>
+              <div><span class="label">Email:</span><span class="value">${nomination.submittedBy.email}</span></div>
+              <div><span class="label">Phone:</span><span class="value">${nomination.submittedBy.phone}</span></div>
+            </div>
+
+            <div class="section">
+              <h3>District Commissioner</h3>
+              <div><span class="label">Name:</span><span class="value">${nomination.districtCommissioner.name}</span></div>
+              <div><span class="label">Email:</span><span class="value">${nomination.districtCommissioner.email}</span></div>
+              <div><span class="label">Pony Club ID:</span><span class="value">${nomination.districtCommissioner.ponyClubId}</span></div>
+            </div>
+
+            <div class="section">
+              <h3>Committee Summary</h3>
+              ${nomination.president ? `<div><span class="label">President:</span><span class="value">${nomination.president.name}</span></div>` : '<div style="color: #999;">President: Not nominated</div>'}
+              ${nomination.vicePresident ? `<div><span class="label">Vice President:</span><span class="value">${nomination.vicePresident.name}</span></div>` : '<div style="color: #999;">Vice President: Not nominated</div>'}
+              ${nomination.secretary ? `<div><span class="label">Secretary:</span><span class="value">${nomination.secretary.name}</span></div>` : '<div style="color: #999;">Secretary: Not nominated</div>'}
+              ${nomination.treasurer ? `<div><span class="label">Treasurer:</span><span class="value">${nomination.treasurer.name}</span></div>` : '<div style="color: #999;">Treasurer: Not nominated</div>'}
+              ${(nomination.additionalCommittee && nomination.additionalCommittee.length > 0) ? `<div><span class="label">Additional Members:</span><span class="value">${nomination.additionalCommittee.length}</span></div>` : ''}
+            </div>
+
+            <p>The complete nomination form is attached to this email for your records.</p>
+          </div>
+          <div class="footer">
+            <p>This is an automated notification from the Pony Club Event Manager.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const textContent = `
+Committee Nomination - Admin Copy
+
+SUPER USER NOTIFICATION
+
+A new committee nomination has been submitted:
+
+Reference Number: ${referenceNumber}
+Club: ${nomination.clubName}
+Zone: ${nomination.zoneName}
+AGM Date: ${new Date(nomination.agmDate).toLocaleDateString('en-AU')}
+Submitted: ${new Date(nomination.submittedAt).toLocaleString('en-AU')}
+
+SUBMITTED BY:
+- Name: ${nomination.submittedBy.name}
+- Email: ${nomination.submittedBy.email}
+- Phone: ${nomination.submittedBy.phone}
+
+DISTRICT COMMISSIONER:
+- Name: ${nomination.districtCommissioner.name}
+- Email: ${nomination.districtCommissioner.email}
+- Pony Club ID: ${nomination.districtCommissioner.ponyClubId}
+
+COMMITTEE SUMMARY:
+${nomination.president ? `- President: ${nomination.president.name}` : '- President: Not nominated'}
+${nomination.vicePresident ? `- Vice President: ${nomination.vicePresident.name}` : '- Vice President: Not nominated'}
+${nomination.secretary ? `- Secretary: ${nomination.secretary.name}` : '- Secretary: Not nominated'}
+${nomination.treasurer ? `- Treasurer: ${nomination.treasurer.name}` : '- Treasurer: Not nominated'}
+${(nomination.additionalCommittee && nomination.additionalCommittee.length > 0) ? `- Additional Members: ${nomination.additionalCommittee.length}` : ''}
+
+The complete nomination form is attached to this email for your records.
+    `.trim();
+
+    const pdfFilename = `committee-nomination-${nomination.clubName.replace(/[^a-zA-Z0-9]/g, '_')}-${new Date().toISOString().split('T')[0]}.pdf`;
+
+    const emailId = await addEmailToQueue({
+      to: [superUserEmail],
+      subject: `Committee Nomination Submitted - ${nomination.clubName} (Admin Copy)`,
+      htmlContent,
+      textContent,
+      attachments: [createPDFAttachment(pdfFilename, pdfBuffer)],
+      status: 'pending',
+      type: 'notification',
+      metadata: {
+        nominationId: nomination.id!,
+        clubId: nomination.clubId,
+        clubName: nomination.clubName,
+        type: 'committee_nomination_super_user',
+        referenceNumber,
+      },
+    });
+
+    emailIds.push(emailId);
+  }
+
+  return emailIds;
 }
 
 /**

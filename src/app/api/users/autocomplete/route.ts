@@ -3,6 +3,11 @@ import { adminDb } from '@/lib/firebase-admin';
 import { UserAutocompleteResult } from '@/types/committee-nomination';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 60; // Cache for 60 seconds
+
+// In-memory cache for user data (refreshes every 60 seconds)
+let usersCache: { data: any[]; timestamp: number } | null = null;
+const CACHE_TTL = 60000; // 60 seconds
 
 /**
  * GET /api/users/autocomplete
@@ -32,22 +37,34 @@ export async function GET(request: NextRequest) {
 
     const queryLower = query.toLowerCase();
 
-    // Query users collection
-    const usersSnapshot = await adminDb
-      .collection('users')
-      .get();
-
-    // Filter and map results
-    const results: UserAutocompleteResult[] = usersSnapshot.docs
-      .map((doc: any) => {
-        const data = doc.data();
-        const fullName = `${data.firstName || ''} ${data.lastName || ''}`.trim();
-        return {
+    // Check cache first
+    const now = Date.now();
+    if (!usersCache || (now - usersCache.timestamp) > CACHE_TTL) {
+      // Refresh cache
+      const usersSnapshot = await adminDb
+        .collection('users')
+        .where('isActive', '==', true) // Only get active users
+        .get();
+      
+      usersCache = {
+        data: usersSnapshot.docs.map((doc: any) => ({
           id: doc.id,
+          ...doc.data()
+        })),
+        timestamp: now
+      };
+    }
+
+    // Filter and map results from cache
+    const results: UserAutocompleteResult[] = usersCache.data
+      .map((user: any) => {
+        const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+        return {
+          id: user.id,
           name: fullName,
-          ponyClubId: data.ponyClubId || '',
-          email: data.email || '',
-          mobile: data.mobileNumber || '',
+          ponyClubId: user.ponyClubId || '',
+          email: user.email || '',
+          mobile: user.mobileNumber || '',
         };
       })
       .filter((user: UserAutocompleteResult) => {

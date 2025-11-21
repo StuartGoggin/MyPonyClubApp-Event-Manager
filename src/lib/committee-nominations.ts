@@ -34,8 +34,6 @@ export async function createCommitteeNomination(
     secretary: formData.secretary,
     treasurer: formData.treasurer,
     
-    additionalCommittee: formData.additionalCommittee,
-    
     zoneRepresentative: buildZoneRepresentative(formData),
     
     additionalNotes: formData.additionalNotes,
@@ -89,12 +87,6 @@ function buildZoneRepresentative(formData: CommitteeNominationFormData): {
     case 'treasurer':
       member = formData.treasurer;
       break;
-    default:
-      // Check additional committee
-      const additionalMember = formData.additionalCommittee.find(m => m.isZoneRep);
-      if (additionalMember) {
-        member = additionalMember;
-      }
   }
   
   if (member && member.name) {

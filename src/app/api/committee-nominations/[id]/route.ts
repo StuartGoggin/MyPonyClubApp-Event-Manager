@@ -79,8 +79,6 @@ export async function PUT(
       secretary: formData.secretary,
       treasurer: formData.treasurer,
       
-      additionalCommittee: formData.additionalCommittee,
-      
       zoneRepresentative: zoneRepresentative || existingNomination.zoneRepresentative,
       
       additionalNotes: formData.additionalNotes,

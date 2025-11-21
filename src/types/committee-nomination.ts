@@ -50,8 +50,6 @@ export interface CommitteeNomination {
   secretary?: CommitteeMember;
   treasurer?: CommitteeMember;
   
-  additionalCommittee: AdditionalCommitteeMember[];
-  
   zoneRepresentative?: ZoneRepresentative;
   
   additionalNotes?: string;
@@ -73,8 +71,6 @@ export interface CommitteeNominationFormData {
   vicePresident?: CommitteeMember;
   secretary?: CommitteeMember;
   treasurer?: CommitteeMember;
-  
-  additionalCommittee: AdditionalCommitteeMember[];
   
   zoneRepOption: 'committee' | 'other';
   zoneRepCommitteePosition?: string;

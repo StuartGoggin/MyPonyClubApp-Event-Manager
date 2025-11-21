@@ -8,8 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { MemberAutocompleteField } from './member-autocomplete-field';
-import { CommitteeNominationFormData, UserAutocompleteResult, AdditionalCommitteeMember } from '@/types/committee-nomination';
-import { AlertCircle, Plus, Trash2, Upload } from 'lucide-react';
+import { CommitteeNominationFormData, UserAutocompleteResult } from '@/types/committee-nomination';
+import { AlertCircle } from 'lucide-react';
 
 interface CommitteeNominationFormProps {
   clubId: string;
@@ -45,7 +45,6 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
     vicePresident: initialData?.vicePresident || undefined,
     secretary: initialData?.secretary || undefined,
     treasurer: initialData?.treasurer || undefined,
-    additionalCommittee: initialData?.additionalCommittee || [],
     zoneRepOption: 'other',
     zoneRepOther: initialData?.zoneRepOther || undefined,
     submitterName: initialData?.submitterName || '',
@@ -55,12 +54,19 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
   });
 
   const [zoneReps, setZoneReps] = useState<{ id: string; name: string; zone: string }[]>([]);
+  const [clubs, setClubs] = useState<{ id: string; name: string; zoneId?: string; zoneName?: string }[]>([]);
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [uploadingMinutes, setUploadingMinutes] = useState(false);
+  const [isSubmitterComplete, setIsSubmitterComplete] = useState(false);
+  const [hasValidationErrors, setHasValidationErrors] = useState(false);
+  
+  // Submitter state
+  const [selectedUserData, setSelectedUserData] = useState<any>(null);
+  const [selectedClubId, setSelectedClubId] = useState(clubId || '');
+  const [selectedClubName, setSelectedClubName] = useState(clubName || '');
 
-  // Load zone representatives
+  // Load zone representatives and clubs
   useEffect(() => {
     const loadZoneReps = async () => {
       try {
@@ -75,6 +81,116 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
     };
     loadZoneReps();
   }, []);
+
+  useEffect(() => {
+    const loadClubs = async () => {
+      try {
+        const response = await fetch('/api/clubs');
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Clubs API response:', data);
+          // Handle both { clubs: [...] } and direct array responses
+          const clubsList = Array.isArray(data) ? data : (data.clubs || []);
+          console.log('Setting clubs:', clubsList.length, 'clubs');
+          setClubs(clubsList);
+        }
+      } catch (error) {
+        console.error('Error loading clubs:', error);
+      }
+    };
+    loadClubs();
+  }, []);
+
+  // Auto-select club when user data is loaded and clubs are available
+  useEffect(() => {
+    if (selectedUserData?.clubId && clubs.length > 0) {
+      const userClub = clubs.find(c => c.id === selectedUserData.clubId);
+      console.log('Auto-selecting club:', { 
+        userClubId: selectedUserData.clubId, 
+        foundClub: userClub?.name,
+        currentSelection: selectedClubId 
+      });
+      if (userClub && selectedClubId !== userClub.id) {
+        console.log('Setting club to:', userClub.name);
+        setSelectedClubId(userClub.id);
+        setSelectedClubName(userClub.name);
+        setFormData(prev => ({
+          ...prev,
+          clubId: userClub.id,
+          clubName: userClub.name,
+          zoneId: userClub.zoneId || prev.zoneId,
+          zoneName: userClub.zoneName || prev.zoneName,
+        }));
+      }
+    }
+  }, [selectedUserData, clubs]);
+
+  // Check if submitter section is complete
+  useEffect(() => {
+    const isComplete = 
+      formData.submitterName.trim() !== '' &&
+      formData.submitterEmail.trim() !== '' &&
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.submitterEmail) &&
+      formData.submitterPhone.trim() !== '' &&
+      selectedClubId !== '';
+    setIsSubmitterComplete(isComplete);
+  }, [formData.submitterName, formData.submitterEmail, formData.submitterPhone, selectedClubId]);
+
+  // Fetch user names for autocomplete
+  // Handle name selection for submitter - with auto-fill capability
+  const handleSubmitterNameChange = (user: UserAutocompleteResult | null) => {
+    if (!user) {
+      setFormData(prev => ({ ...prev, submitterName: '' }));
+      setSelectedUserData(null);
+      return;
+    }
+
+    // Set the name
+    setFormData(prev => ({ ...prev, submitterName: user.name }));
+    
+    // Clear name error
+    if (errors.submitterName) {
+      setErrors(prev => ({ ...prev, submitterName: '' }));
+    }
+  };
+
+  // Handle full user data when found (for auto-fill)
+  const handleUserDataFound = (fullData: any) => {
+    if (fullData?.user) {
+      setSelectedUserData(fullData.user);
+      
+      // Auto-populate all submitter details
+      setFormData(prev => ({
+        ...prev,
+        submitterEmail: fullData.user?.email || prev.submitterEmail,
+        submitterPhone: fullData.user?.mobileNumber || prev.submitterPhone,
+      }));
+      
+      // Auto-select club if user has a clubId
+      if (fullData.user?.clubId) {
+        const userClub = clubs.find(c => c.id === fullData.user.clubId);
+        if (userClub) {
+          setSelectedClubId(userClub.id);
+          setSelectedClubName(userClub.name);
+          setFormData(prev => ({
+            ...prev,
+            clubId: userClub.id,
+            clubName: userClub.name,
+            zoneId: userClub.zoneId || prev.zoneId,
+            zoneName: userClub.zoneName || prev.zoneName,
+          }));
+        }
+      }
+      
+      // Clear any errors
+      setErrors(prev => ({
+        ...prev,
+        submitterName: '',
+        submitterEmail: '',
+        submitterPhone: '',
+      }));
+    }
+  };
 
   const handleDCChange = (user: UserAutocompleteResult | null) => {
     setFormData(prev => ({
@@ -178,105 +294,28 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
     }
   };
 
-  const handleAdditionalMemberChange = (index: number, user: UserAutocompleteResult | null) => {
-    setFormData(prev => {
-      const updatedMembers = [...prev.additionalCommittee];
-      if (user) {
-        updatedMembers[index] = {
-          name: user.name,
-          ponyClubId: user.ponyClubId,
-          email: user.email || '',
-          mobile: user.mobile || '',
-          isZoneRep: false,
-          position: updatedMembers[index]?.position || '',
-        };
-      } else {
-        updatedMembers[index] = {
-          name: '',
-          ponyClubId: '',
-          email: '',
-          mobile: '',
-          isZoneRep: false,
-          position: updatedMembers[index]?.position || '',
-        };
-      }
-      return { ...prev, additionalCommittee: updatedMembers };
-    });
-  };
 
-  const handleAdditionalMemberPositionChange = (index: number, position: string) => {
-    setFormData(prev => {
-      const updatedMembers = [...prev.additionalCommittee];
-      updatedMembers[index] = {
-        ...updatedMembers[index],
-        position,
-      };
-      return { ...prev, additionalCommittee: updatedMembers };
-    });
-  };
-
-  const addAdditionalMember = () => {
-    setFormData(prev => ({
-      ...prev,
-      additionalCommittee: [
-        ...prev.additionalCommittee,
-        { name: '', ponyClubId: '', email: '', mobile: '', isZoneRep: false, position: '' }
-      ]
-    }));
-  };
-
-  const removeAdditionalMember = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      additionalCommittee: prev.additionalCommittee.filter((_: AdditionalCommitteeMember, i: number) => i !== index)
-    }));
-  };
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Validate file type (PDF only)
-    if (file.type !== 'application/pdf') {
-      setErrors(prev => ({ ...prev, agmMinutes: 'Only PDF files are allowed' }));
-      return;
-    }
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      setErrors(prev => ({ ...prev, agmMinutes: 'File size must be less than 5MB' }));
-      return;
-    }
-
-    setUploadingMinutes(true);
-    setErrors(prev => ({ ...prev, agmMinutes: '' }));
-
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('clubId', clubId);
-
-      const response = await fetch('/api/upload/agm-minutes', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to upload file');
-      }
-
-      const data = await response.json();
-      // setFormData(prev => ({ ...prev, agmMinutesUrl: data.url }));
-    } catch (error) {
-      console.error('Error uploading file:', error);
-      setErrors(prev => ({ ...prev, agmMinutes: 'Failed to upload file. Please try again.' }));
-    } finally {
-      setUploadingMinutes(false);
-    }
-  };
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
+
+    // Submitter information validation (required)
+    if (!formData.submitterName || formData.submitterName.trim() === '') {
+      newErrors.submitterName = 'Your name is required';
+    }
+    if (!formData.submitterEmail || formData.submitterEmail.trim() === '') {
+      newErrors.submitterEmail = 'Email address is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.submitterEmail)) {
+      newErrors.submitterEmail = 'Please enter a valid email address';
+    }
+    if (!formData.submitterPhone || formData.submitterPhone.trim() === '') {
+      newErrors.submitterPhone = 'Phone number is required';
+    }
+
+    // Club selection validation
+    if (!selectedClubId || selectedClubId === '') {
+      newErrors.club = 'Please select a club';
+    }
 
     // Optional fields - only validate email/mobile if position is filled
     if (formData.districtCommissioner.name && !formData.districtCommissioner.email) {
@@ -330,15 +369,7 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
     //   newErrors.agmMinutes = 'AGM minutes upload is required';
     // }
 
-    // Validate additional committee members
-    formData.additionalCommittee.forEach((member: AdditionalCommitteeMember, index: number) => {
-      if (member.name && !member.position) {
-        newErrors[`additionalMember${index}Position`] = 'Position is required';
-      }
-      if (member.position && !member.name) {
-        newErrors[`additionalMember${index}Name`] = 'Name is required';
-      }
-    });
+
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -347,14 +378,28 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('Form submission started');
+    console.log('Form data:', formData);
+    
     if (!validateForm()) {
+      setHasValidationErrors(true);
+      console.log('Validation failed:', errors);
+      // Scroll to first error
+      setTimeout(() => {
+        const firstError = document.querySelector('.border-red-500');
+        if (firstError) {
+          firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
       return;
     }
 
+    setHasValidationErrors(false);
     setIsSubmitting(true);
     setSubmitError(null);
 
     try {
+      console.log('Submitting to API...');
       let response;
       
       if (existingNominationId) {
@@ -377,10 +422,16 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
         });
       }
 
+      console.log('API response status:', response.status);
+
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('API error:', errorData);
         throw new Error(errorData.error || `Failed to ${existingNominationId ? 'update' : 'submit'} nomination`);
       }
+
+      const responseData = await response.json();
+      console.log('Success response:', responseData);
 
       // Success
       if (onSubmitSuccess) {
@@ -394,22 +445,332 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
     }
   };
 
+  // Fill form with test data
+  const fillTestData = () => {
+    const testDate = new Date();
+    testDate.setDate(testDate.getDate() + 7); // AGM in 7 days
+    
+    setFormData({
+      ...formData,
+      submitterName: 'Sarah Johnson',
+      submitterEmail: 'sarah.johnson@example.com',
+      submitterPhone: '0412 345 678',
+      agmDate: testDate.toISOString().split('T')[0],
+      effectiveDate: new Date(testDate.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 7 days after AGM
+      districtCommissioner: {
+        name: 'John Smith',
+        ponyClubId: 'PC12345',
+        email: 'john.smith@example.com',
+        mobile: '0423 456 789',
+        isZoneRep: false,
+      },
+      president: {
+        name: 'Emma Wilson',
+        ponyClubId: 'PC23456',
+        email: 'emma.wilson@example.com',
+        mobile: '0434 567 890',
+        isZoneRep: false,
+      },
+      vicePresident: {
+        name: 'Michael Brown',
+        ponyClubId: 'PC34567',
+        email: 'michael.brown@example.com',
+        mobile: '0445 678 901',
+        isZoneRep: false,
+      },
+      secretary: {
+        name: 'Lisa Anderson',
+        ponyClubId: 'PC45678',
+        email: 'lisa.anderson@example.com',
+        mobile: '0456 789 012',
+        isZoneRep: false,
+      },
+      treasurer: {
+        name: 'David Taylor',
+        ponyClubId: 'PC56789',
+        email: 'david.taylor@example.com',
+        mobile: '0467 890 123',
+        isZoneRep: false,
+      },
+      zoneRepOther: {
+        name: 'Rebecca Martinez',
+        ponyClubId: 'PC67890',
+        email: 'rebecca.martinez@example.com',
+        mobile: '0478 901 234',
+        isZoneRep: true,
+      },
+      additionalNotes: 'This is a test submission with realistic dummy data for testing purposes.',
+    });
+    
+    // Set submitter as complete
+    setIsSubmitterComplete(true);
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>{existingNominationId ? 'Edit' : 'Submit'} Committee Nomination for {clubName}</CardTitle>
+      {/* Test Data Button - Only show in development */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="fixed bottom-4 left-4 z-50">
+          <Button
+            type="button"
+            onClick={fillTestData}
+            className="bg-purple-600 hover:bg-purple-700 text-white shadow-lg"
+            size="sm"
+          >
+            🧪 Fill Test Data
+          </Button>
+        </div>
+      )}
+      
+      {/* Process Flow Chart */}
+      <div className="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200 rounded-lg p-6 mb-6">
+        <h3 className="text-lg font-bold text-gray-800 mb-4 text-center">Committee Nomination Process</h3>
+        <div className="flex items-center justify-between max-w-5xl mx-auto">
+          {/* Step 1 */}
+          <div className="flex flex-col items-center flex-1">
+            <div className="w-16 h-16 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold text-xl mb-2 shadow-lg">
+              1
+            </div>
+            <p className="text-sm font-semibold text-gray-700 text-center">Enter Your Info</p>
+            <p className="text-xs text-gray-500 text-center mt-1">Name, email, phone</p>
+          </div>
+          
+          {/* Arrow */}
+          <div className="flex items-center px-2">
+            <svg className="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+          
+          {/* Step 2 */}
+          <div className="flex flex-col items-center flex-1">
+            <div className={`w-16 h-16 rounded-full ${isSubmitterComplete ? 'bg-blue-500' : 'bg-gray-300'} text-white flex items-center justify-center font-bold text-xl mb-2 shadow-lg`}>
+              2
+            </div>
+            <p className="text-sm font-semibold text-gray-700 text-center">AGM & Committee</p>
+            <p className="text-xs text-gray-500 text-center mt-1">5 core positions</p>
+          </div>
+          
+          {/* Arrow */}
+          <div className="flex items-center px-2">
+            <svg className="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+          
+          {/* Step 3 */}
+          <div className="flex flex-col items-center flex-1">
+            <div className="w-16 h-16 rounded-full bg-gray-300 text-white flex items-center justify-center font-bold text-xl mb-2 shadow-lg">
+              3
+            </div>
+            <p className="text-sm font-semibold text-gray-700 text-center">Submit</p>
+            <p className="text-xs text-gray-500 text-center mt-1">Review & send</p>
+          </div>
+          
+          {/* Arrow */}
+          <div className="flex items-center px-2">
+            <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+          
+          {/* Step 4 */}
+          <div className="flex flex-col items-center flex-1">
+            <div className="w-16 h-16 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg">
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <p className="text-sm font-semibold text-gray-700 text-center">Email with PDF</p>
+            <p className="text-xs text-gray-500 text-center mt-1">Confirmation sent</p>
+          </div>
+        </div>
+        
+        {/* What happens after submission */}
+        <div className="mt-6 pt-6 border-t border-blue-200">
+          <p className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+            <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            After Submission:
+          </p>
+          <ul className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-gray-600">
+            <li className="flex items-start gap-2">
+              <span className="text-green-500 font-bold">✓</span>
+              <span><strong>Instant Confirmation:</strong> You'll receive an email with a filled PDF form attached</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-blue-500 font-bold">✓</span>
+              <span><strong>PDF Includes:</strong> All committee details formatted in the official PCA template</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-purple-500 font-bold">✓</span>
+              <span><strong>Automatic Routing:</strong> Copy sent to your club and zone administrators for approval</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+      
+      {/* Submitter Information Card - Always Visible */}
+      <Card className="border-2 border-blue-500">
+        <CardHeader className="bg-blue-50">
+          <CardTitle className="text-blue-900 flex items-center gap-2">
+            <span className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-bold">1</span>
+            Your Information
+          </CardTitle>
           <CardDescription>
-            {existingNominationId 
-              ? 'Update your club\'s committee nominations. Changes will reset the approval status to pending.'
-              : 'Submit your club\'s committee nominations following the Annual General Meeting. All fields marked with * are required.'
-            }
+            Start by entering your details. Your club will be auto-filled from your profile, but you can change it if needed.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {/* AGM Details */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">AGM Details</h3>
+        <CardContent className="space-y-6 pt-6">
+          {/* Name with Autocomplete */}
+          <div className="space-y-2">
+            <MemberAutocompleteField
+              label="Your Name"
+              value={formData.submitterName}
+              onChange={handleSubmitterNameChange}
+              onUserDataFound={handleUserDataFound}
+              useNamesEndpoint={true}
+              error={errors.submitterName}
+              required={true}
+              placeholder="Type your name..."
+            />
+          </div>
+
+          {/* Auto-filled user info display */}
+          {selectedUserData && (
+            <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="text-sm font-medium text-green-700">
+                  Profile Found: {selectedUserData.firstName} {selectedUserData.lastName}
+                </span>
+              </div>
+              <p className="text-xs text-green-600 mt-1">
+                Contact details and club auto-filled from your profile (you can still change them below)
+              </p>
+            </div>
+          )}
+
+          {/* Email and Phone */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="submitterEmail">
+                Email Address <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="submitterEmail"
+                type="email"
+                value={formData.submitterEmail}
+                onChange={(e) => {
+                  setFormData(prev => ({ ...prev, submitterEmail: e.target.value }));
+                  setErrors(prev => ({ ...prev, submitterEmail: '' }));
+                }}
+                placeholder="your.email@example.com"
+                className={errors.submitterEmail ? 'border-red-500' : ''}
+                required
+              />
+              {errors.submitterEmail && <p className="text-sm text-red-500 mt-1">{errors.submitterEmail}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="submitterPhone">
+                Phone Number <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="submitterPhone"
+                type="tel"
+                value={formData.submitterPhone}
+                onChange={(e) => {
+                  setFormData(prev => ({ ...prev, submitterPhone: e.target.value }));
+                  setErrors(prev => ({ ...prev, submitterPhone: '' }));
+                }}
+                placeholder="0400 000 000"
+                className={errors.submitterPhone ? 'border-red-500' : ''}
+                required
+              />
+              {errors.submitterPhone && <p className="text-sm text-red-500 mt-1">{errors.submitterPhone}</p>}
+            </div>
+          </div>
+
+          {/* Club Selection - Overridable */}
+          <div className="space-y-2">
+            <Label htmlFor="clubSelect">
+              Club <span className="text-red-500">*</span>
+            </Label>
+            <select
+              id="clubSelect"
+              aria-label="Select your club"
+              value={selectedClubId}
+              onChange={(e) => {
+                const club = clubs.find(c => c.id === e.target.value);
+                if (club) {
+                  setSelectedClubId(club.id);
+                  setSelectedClubName(club.name);
+                  setFormData(prev => ({
+                    ...prev,
+                    clubId: club.id,
+                    clubName: club.name,
+                    zoneId: club.zoneId || prev.zoneId,
+                    zoneName: club.zoneName || prev.zoneName,
+                  }));
+                }
+              }}
+              className="block h-10 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              required
+            >
+              <option value="">Select a club...</option>
+              {clubs.map((club) => (
+                <option key={club.id} value={club.id}>
+                  {club.name}
+                </option>
+              ))}
+            </select>
+            {selectedUserData?.clubId && (
+              <p className="text-xs text-blue-600 mt-1">
+                ✓ Auto-filled from your profile. You can change if needed.
+              </p>
+            )}
+          </div>
+
+          {/* Continue Button */}
+          {!isSubmitterComplete && (
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-sm text-amber-800">
+                Please complete all required fields above to continue to the committee nomination form.
+              </p>
+            </div>
+          )}
+          
+          {isSubmitterComplete && (
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+              <p className="text-sm text-green-800 font-medium">
+                ✓ Submitter information complete! Scroll down to fill in committee details.
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Main Committee Nomination Form - Only shown when submitter is complete */}
+      {isSubmitterComplete && (
+        <Card className="border-2 border-blue-400">
+          <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50">
+            <CardTitle className="text-blue-900 flex items-center gap-2">
+              <span className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-bold">2</span>
+              AGM Details & Committee Positions
+            </CardTitle>
+            <CardDescription>
+              {existingNominationId 
+                ? 'Update your club\'s committee nominations. Changes will reset the approval status to pending.'
+                : `Fill in the AGM date and core committee positions for ${selectedClubName}. Search for members by name to auto-fill their contact details.`
+              }
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* AGM Details */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">AGM Details</h3>
             
             <div className="space-y-2">
               <Label htmlFor="agmDate" className="block">
@@ -436,35 +797,6 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
               {formData.agmDate && (
                 <p className="text-sm text-gray-500 mt-1">Committee Year: {new Date(formData.agmDate).getFullYear()}</p>
               )}
-            </div>
-
-            <div>
-              <Label htmlFor="agmMinutes">
-                AGM Minutes (PDF)
-              </Label>
-              <div className="mt-1">
-                <label htmlFor="agmMinutes" className="flex items-center justify-center w-full px-4 py-6 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-gray-400 transition-colors">
-                  {uploadingMinutes ? (
-                    <span className="text-sm text-gray-500">Uploading...</span>
-                  ) : (
-                    <div className="text-center">
-                      <Upload className="mx-auto h-8 w-8 text-gray-400" />
-                      <span className="mt-2 block text-sm text-gray-600">
-                        Click to upload AGM minutes (PDF, max 5MB)
-                      </span>
-                    </div>
-                  )}
-                  <input
-                    id="agmMinutes"
-                    type="file"
-                    accept=".pdf"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                    disabled={uploadingMinutes}
-                  />
-                </label>
-              </div>
-              {errors.agmMinutes && <p className="text-sm text-red-500 mt-1">{errors.agmMinutes}</p>}
             </div>
           </div>
 
@@ -711,62 +1043,7 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
             </div>
           </div>
 
-          {/* Additional Committee Members */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">Additional Committee Members</h3>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={addAdditionalMember}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Member
-              </Button>
-            </div>
 
-            {formData.additionalCommittee.map((member: AdditionalCommitteeMember, index: number) => (
-              <Card key={index} className="p-4">
-                <div className="space-y-4">
-                  <div className="flex items-start justify-between">
-                    <h4 className="font-medium">Member {index + 1}</h4>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeAdditionalMember(index)}
-                    >
-                      <Trash2 className="h-4 w-4 text-red-500" />
-                    </Button>
-                  </div>
-
-                  <div>
-                    <Label htmlFor={`position-${index}`}>Position</Label>
-                    <Input
-                      id={`position-${index}`}
-                      type="text"
-                      value={member.position}
-                      onChange={(e) => handleAdditionalMemberPositionChange(index, e.target.value)}
-                      placeholder="e.g., Chief Instructor, Grounds Manager"
-                      className={errors[`additionalMember${index}Position`] ? 'border-red-500' : ''}
-                    />
-                    {errors[`additionalMember${index}Position`] && (
-                      <p className="text-sm text-red-500 mt-1">{errors[`additionalMember${index}Position`]}</p>
-                    )}
-                  </div>
-
-                  <MemberAutocompleteField
-                    label="Name"
-                    value={member.name}
-                    onChange={(user) => handleAdditionalMemberChange(index, user)}
-                    error={errors[`additionalMember${index}Name`]}
-                    placeholder="Search for member..."
-                  />
-                </div>
-              </Card>
-            ))}
-          </div>
 
           {/* Zone Representative Selection */}
           <div className="space-y-4">
@@ -839,16 +1116,95 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
           )}
 
           {/* Submit Button */}
-          <div className="flex justify-end space-x-4">
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting 
-                ? (existingNominationId ? 'Updating...' : 'Submitting...') 
-                : (existingNominationId ? 'Update Committee Nomination' : 'Submit Committee Nomination')
-              }
-            </Button>
+          <div className={`bg-gradient-to-r rounded-lg p-6 border-2 transition-all duration-300 ${
+            hasValidationErrors 
+              ? 'from-red-50 to-orange-50 border-red-500 shadow-lg shadow-red-200' 
+              : 'from-green-50 to-blue-50 border-green-200'
+          }`}>
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0">
+                <span className={`w-12 h-12 rounded-full text-white flex items-center justify-center text-lg font-bold shadow-lg ${
+                  hasValidationErrors ? 'bg-red-500' : 'bg-green-500'
+                }`}>
+                  {hasValidationErrors ? (
+                    <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                  ) : (
+                    '4'
+                  )}
+                </span>
+              </div>
+              <div className="flex-1">
+                {hasValidationErrors ? (
+                  <>
+                    <h3 className="text-lg font-semibold text-red-800 mb-2 flex items-center gap-2">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Please Fix Errors Before Submitting
+                    </h3>
+                    <div className="bg-red-100 border border-red-300 rounded-lg p-4 mb-4">
+                      <p className="text-sm text-red-800 font-medium mb-2">
+                        The form has {Object.keys(errors).length} validation error{Object.keys(errors).length !== 1 ? 's' : ''}:
+                      </p>
+                      <ul className="text-sm text-red-700 list-disc list-inside space-y-1">
+                        {Object.entries(errors).slice(0, 5).map(([key, error]) => (
+                          <li key={key}>{error}</li>
+                        ))}
+                        {Object.keys(errors).length > 5 && (
+                          <li className="text-red-600 font-medium">...and {Object.keys(errors).length - 5} more</li>
+                        )}
+                      </ul>
+                      <p className="text-xs text-red-600 mt-3 font-medium">
+                        → Scroll up to see fields highlighted in red
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">Ready to Submit?</h3>
+                    <p className="text-sm text-gray-600 mb-4">
+                      After submitting, you'll receive an instant confirmation email with a filled PDF form attached. 
+                      The PDF will contain all the committee details you've entered, formatted in the official PCA template.
+                    </p>
+                  </>
+                )}
+                <Button 
+                  type="submit" 
+                  disabled={isSubmitting}
+                  className={`font-semibold px-8 py-6 text-lg shadow-lg transition-all ${
+                    hasValidationErrors
+                      ? 'bg-red-600 hover:bg-red-700 cursor-not-allowed opacity-75'
+                      : 'bg-green-600 hover:bg-green-700'
+                  } text-white`}
+                >
+                  {isSubmitting 
+                    ? (
+                      <span className="flex items-center gap-2">
+                        <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        {existingNominationId ? 'Updating...' : 'Submitting...'}
+                      </span>
+                    )
+                    : (
+                      <span className="flex items-center gap-2">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        {existingNominationId ? 'Update Committee Nomination' : 'Submit Committee Nomination'}
+                      </span>
+                    )
+                  }
+                </Button>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
+      )}
     </form>
   );
 }

@@ -6,12 +6,10 @@ import { addEmailToQueue, getEmailQueueConfig } from '@/lib/email-queue-admin';
 import { requiresApproval, getInitialEmailStatus, shouldAutoSend } from '@/lib/email-approval-utils';
 import { autoSendQueuedEmail } from '@/lib/auto-send-email';
 import { exportEventRequestAsJSON, createJSONAttachment } from '@/lib/event-request-json-export';
-import { generateEventRequestEmailHTML, generateEventRequestEmailText } from '@/lib/event-request-email-template';
-import { EmailTemplateService } from '@/lib/email-template-service';
 import { EmailTemplateVariableData, EmailTemplateType } from '@/lib/types-email-templates';
-import { EmailAttachmentService, AttachmentFile } from '@/lib/email-attachment-service';
 import { QueuedEmail } from '@/lib/types';
 import { UserService } from '@/lib/user-service';
+import { generateEmailFromTemplate } from '@/lib/email-template-generator';
 
 // Only initialize Resend if API key is available
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
@@ -202,78 +200,6 @@ export async function POST(request: NextRequest) {
       content,
       createdAt: new Date(),
     });
-
-    // Helper function to generate email content using templates
-    const generateEmailFromTemplate = async (templateType: EmailTemplateType, variables: EmailTemplateVariableData) => {
-      try {
-        // Try to get custom template first
-        const template = await EmailTemplateService.getDefaultTemplate(templateType);
-        if (template) {
-          const rendered = await EmailTemplateService.renderTemplate({
-            templateId: template.id,
-            variables,
-            recipientType: templateType.split('-').pop() as any
-          });
-          
-          if (rendered) {
-            // Generate attachments based on template settings
-            const attachmentFiles = await EmailAttachmentService.generateAttachments(
-              rendered.attachments,
-              variables
-            );
-
-            // Convert attachment files to Resend format
-            const resendAttachments = attachmentFiles.map(file => ({
-              filename: file.filename,
-              content: file.content instanceof Buffer ? file.content : Buffer.from(String(file.content), 'utf-8')
-            }));
-
-            return {
-              subject: rendered.subject,
-              html: rendered.htmlBody,
-              text: rendered.textBody,
-              attachments: resendAttachments
-            };
-          }
-        }
-        
-        // Fallback to original template system
-        console.warn(`Using fallback template for ${templateType}`);
-        return {
-          subject: templateType.includes('requester') 
-            ? `Event Request Submitted - ${referenceNumber}`
-            : templateType.includes('zone-manager')
-            ? `Zone Approval Required - Event Request ${referenceNumber}`
-            : templateType.includes('super-user')
-            ? `Super User Notification - Event Request ${referenceNumber}`
-            : `Event Request Notification - ${referenceNumber}`,
-          html: generateEventRequestEmailHTML({
-            ...variables,
-            isForSuperUser: templateType.includes('super-user')
-          }),
-          text: generateEventRequestEmailText({
-            ...variables,
-            isForSuperUser: templateType.includes('super-user')
-          }),
-          attachments: {
-            includePdf: true,
-            includeJsonExport: templateType.includes('super-user')
-          }
-        };
-      } catch (error) {
-        console.error(`Error generating template for ${templateType}:`, error);
-        // Fallback to original system
-        return {
-          subject: `Event Request Notification - ${referenceNumber}`,
-          html: generateEventRequestEmailHTML(variables as any),
-          text: generateEventRequestEmailText(variables as any),
-          attachments: {
-            includePdf: true,
-            includeJsonExport: templateType.includes('super-user')
-          }
-        };
-      }
-    };
 
     // Prepare template variables
     const templateVariables: EmailTemplateVariableData = {

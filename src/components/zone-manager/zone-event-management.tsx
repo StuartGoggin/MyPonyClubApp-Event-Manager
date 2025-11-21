@@ -22,9 +22,22 @@ import {
   Plus,
   CheckCircle,
   XCircle,
-  Clock
+  Clock,
+  MoreVertical,
+  Mail,
+  Send,
+  FileText
 } from 'lucide-react';
 import { Event, Club, EventType } from '@/lib/types';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 // Utility function to format dates with validation
 const formatDate = (date: Date | string | any) => {
@@ -157,6 +170,64 @@ export function ZoneEventManagement({
   const handleUnapproveEvent = (event: Event) => {
     setSelectedEvent(event);
     setIsUnapproveDialogOpen(true);
+  };
+
+  const handleResendEventRequestEmail = async (event: Event) => {
+    setIsSubmitting(true);
+    try {
+      // TODO: Implement email regeneration API call
+      const response = await fetch('/api/resend-event-request-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          eventId: event.id,
+          emailType: 'event_request'
+        })
+      });
+
+      if (response.ok) {
+        alert('Event Request email has been resent successfully!');
+      } else {
+        const error = await response.json();
+        alert(`Failed to resend email: ${error.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error resending email:', error);
+      alert('Failed to resend email. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleResendApprovalEmail = async (event: Event) => {
+    setIsSubmitting(true);
+    try {
+      // TODO: Implement approval email regeneration
+      const response = await fetch('/api/resend-event-request-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          eventId: event.id,
+          emailType: 'event_approval'
+        })
+      });
+
+      if (response.ok) {
+        alert('Approval email has been resent successfully!');
+      } else {
+        const error = await response.json();
+        alert(`Failed to resend email: ${error.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error resending email:', error);
+      alert('Failed to resend email. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const confirmUnapproveEvent = async () => {
@@ -302,36 +373,59 @@ export function ZoneEventManagement({
               </TableCell>
               {showActions && (
                 <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
-                    {event.status === 'approved' && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-amber-600 border-amber-600 hover:bg-amber-50"
-                        onClick={() => handleUnapproveEvent(event)}
-                      >
-                        <XCircle className="h-4 w-4 mr-1" />
-                        Unapprove
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        <MoreVertical className="h-4 w-4" />
                       </Button>
-                    )}
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleEditEvent(event)}
-                    >
-                      <Edit3 className="h-4 w-4 mr-1" />
-                      Edit
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-red-600 border-red-600 hover:bg-red-50"
-                      onClick={() => handleDeleteEvent(event)}
-                    >
-                      <Trash2 className="h-4 w-4 mr-1" />
-                      Delete
-                    </Button>
-                  </div>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56">
+                      <DropdownMenuLabel>Event Actions</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      
+                      <DropdownMenuGroup>
+                        <DropdownMenuItem onClick={() => handleEditEvent(event)}>
+                          <Edit3 className="h-4 w-4 mr-2" />
+                          Edit Event
+                        </DropdownMenuItem>
+                        {event.status === 'approved' && (
+                          <DropdownMenuItem 
+                            onClick={() => handleUnapproveEvent(event)}
+                            className="text-amber-600"
+                          >
+                            <XCircle className="h-4 w-4 mr-2" />
+                            Unapprove Event
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuGroup>
+                      
+                      <DropdownMenuSeparator />
+                      <DropdownMenuLabel>Email Notifications</DropdownMenuLabel>
+                      
+                      <DropdownMenuGroup>
+                        <DropdownMenuItem onClick={() => handleResendEventRequestEmail(event)}>
+                          <Mail className="h-4 w-4 mr-2" />
+                          Resend Event Request Email
+                        </DropdownMenuItem>
+                        {event.status === 'approved' && (
+                          <DropdownMenuItem onClick={() => handleResendApprovalEmail(event)}>
+                            <Send className="h-4 w-4 mr-2" />
+                            Resend Approval Email
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuGroup>
+                      
+                      <DropdownMenuSeparator />
+                      
+                      <DropdownMenuItem 
+                        onClick={() => handleDeleteEvent(event)}
+                        className="text-red-600"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete Event
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </TableCell>
               )}
             </TableRow>
@@ -617,6 +711,148 @@ export function ZoneEventManagement({
               disabled={isSubmitting}
             >
               {isSubmitting ? 'Unapproving...' : 'Unapprove Event'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Event Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Edit3 className="h-5 w-5" />
+              Edit Event
+            </DialogTitle>
+            <DialogDescription>
+              Update event details and submitter information.
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedEvent && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-name">Event Name</Label>
+                  <Input
+                    id="edit-name"
+                    defaultValue={selectedEvent.name}
+                    onChange={(e) => setSelectedEvent({ ...selectedEvent, name: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-location">Location</Label>
+                  <Input
+                    id="edit-location"
+                    defaultValue={selectedEvent.location}
+                    onChange={(e) => setSelectedEvent({ ...selectedEvent, location: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <h4 className="font-medium mb-3">Submitter Information</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-submittedBy">Submitted By</Label>
+                    <Input
+                      id="edit-submittedBy"
+                      defaultValue={selectedEvent.submittedBy || ''}
+                      onChange={(e) => setSelectedEvent({ ...selectedEvent, submittedBy: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-submittedByEmail">Email</Label>
+                    <Input
+                      id="edit-submittedByEmail"
+                      type="email"
+                      placeholder="email@example.com"
+                      defaultValue={selectedEvent.submittedByEmail || ''}
+                      onChange={(e) => setSelectedEvent({ ...selectedEvent, submittedByEmail: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-submittedByPhone">Phone</Label>
+                    <Input
+                      id="edit-submittedByPhone"
+                      type="tel"
+                      placeholder="0400 000 000"
+                      defaultValue={selectedEvent.submittedByPhone || ''}
+                      onChange={(e) => setSelectedEvent({ ...selectedEvent, submittedByPhone: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <h4 className="font-medium mb-3">Coordinator Information</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-coordinatorName">Coordinator Name</Label>
+                    <Input
+                      id="edit-coordinatorName"
+                      defaultValue={selectedEvent.coordinatorName || ''}
+                      onChange={(e) => setSelectedEvent({ ...selectedEvent, coordinatorName: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-coordinatorContact">Coordinator Contact</Label>
+                    <Input
+                      id="edit-coordinatorContact"
+                      defaultValue={selectedEvent.coordinatorContact || ''}
+                      onChange={(e) => setSelectedEvent({ ...selectedEvent, coordinatorContact: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-notes">Notes</Label>
+                <Input
+                  id="edit-notes"
+                  defaultValue={selectedEvent.notes || ''}
+                  onChange={(e) => setSelectedEvent({ ...selectedEvent, notes: e.target.value })}
+                />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsEditDialogOpen(false)}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={async () => {
+                if (!selectedEvent) return;
+                setIsSubmitting(true);
+                try {
+                  const response = await fetch(`/api/events/${selectedEvent.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(selectedEvent),
+                  });
+
+                  if (response.ok) {
+                    alert('Event updated successfully');
+                    setIsEditDialogOpen(false);
+                    onEventUpdate();
+                  } else {
+                    alert('Failed to update event');
+                  }
+                } catch (error) {
+                  console.error('Error updating event:', error);
+                  alert('Error updating event');
+                } finally {
+                  setIsSubmitting(false);
+                }
+              }}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Saving...' : 'Save Changes'}
             </Button>
           </DialogFooter>
         </DialogContent>

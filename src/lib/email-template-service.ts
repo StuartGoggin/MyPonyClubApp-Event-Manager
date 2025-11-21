@@ -150,6 +150,106 @@ export class EmailTemplateService {
   }
 
   /**
+   * Render a default template directly without database lookup
+   * This uses the hardcoded default templates defined in createDefaultTemplate
+   */
+  static async renderDefaultTemplate(
+    type: EmailTemplateType,
+    variables: EmailTemplateVariableData
+  ): Promise<EmailTemplateRenderResult> {
+    // Get the template configuration (without saving to database)
+    const templateContent = this.getDefaultTemplateContent(type);
+    
+    // Render the template with variables
+    return this.renderTemplateContent(templateContent, variables);
+  }
+
+  /**
+   * Get default template content for a specific type (without database)
+   */
+  private static getDefaultTemplateContent(type: EmailTemplateType): { subject: string; htmlBody: string; textBody: string } {
+    const templateConfigs = this.getDefaultTemplateConfigs();
+    const config = templateConfigs[type];
+    
+    if (!config) {
+      throw new Error(`No template configuration found for type: ${type}`);
+    }
+    
+    return config.content;
+  }
+
+  /**
+   * Render template content with variables (Handlebars compilation)
+   */
+  private static renderTemplateContent(
+    content: { subject: string; htmlBody: string; textBody: string },
+    variables: EmailTemplateVariableData
+  ): EmailTemplateRenderResult {
+    // Simple variable replacement for now
+    // In a real implementation, you would use Handlebars here
+    let subject = content.subject;
+    let htmlBody = content.htmlBody;
+    let textBody = content.textBody;
+    
+    // Replace all variables
+    Object.entries(variables).forEach(([key, value]) => {
+      const regex = new RegExp(`{{${key}}}`, 'g');
+      const stringValue = String(value || '');
+      
+      subject = subject.replace(regex, stringValue);
+      htmlBody = htmlBody.replace(regex, stringValue);
+      textBody = textBody.replace(regex, stringValue);
+    });
+    
+    // Handle {{#each events}} blocks
+    if (variables.events && Array.isArray(variables.events)) {
+      const eventsHtml = variables.events.map(event => {
+        let eventTemplate = `
+                <div class="event-item">
+                    <div class="event-header">
+                        <div class="event-title">${event.name}</div>
+                        <div class="priority-badge">Priority ${event.priority}</div>
+                    </div>
+                    <div class="event-details">
+                        <div class="detail-item">
+                            <div class="detail-label">Date</div>
+                            <div class="detail-value">${event.date}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Location</div>
+                            <div class="detail-value">${event.location}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Event Type</div>
+                            <div class="detail-value">${event.eventTypeName}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Coordinator</div>
+                            <div class="detail-value">${event.coordinatorName} (${event.coordinatorContact})</div>
+                        </div>
+                    </div>
+                </div>`;
+        return eventTemplate;
+      }).join('');
+      
+      htmlBody = htmlBody.replace(/{{#each events}}[\s\S]*?{{\/each}}/g, eventsHtml);
+      
+      // Text version
+      const eventsText = variables.events.map(event => 
+        `Priority ${event.priority}: ${event.name} (${event.eventTypeName})\nDate: ${event.date}\nLocation: ${event.location}\nCoordinator: ${event.coordinatorName} (${event.coordinatorContact})\n${event.notes ? 'Notes: ' + event.notes : ''}`
+      ).join('\n\n');
+      textBody = textBody.replace(/{{#each events}}[\s\S]*?{{\/each}}/g, eventsText);
+    }
+    
+    return {
+      subject,
+      htmlBody,
+      textBody,
+      attachments: []
+    };
+  }
+
+  /**
    * Create a new email template
    */
   static async createTemplate(

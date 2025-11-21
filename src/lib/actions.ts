@@ -168,6 +168,8 @@ export async function createMultiEventRequestAction(data: any): Promise<FormStat
                 notes: eventNotes,
                 submittedBy,
                 submittedByContact,
+                submittedByEmail,
+                submittedByPhone,
             });
         }
 

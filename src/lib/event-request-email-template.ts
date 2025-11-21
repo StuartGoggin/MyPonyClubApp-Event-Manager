@@ -353,15 +353,29 @@ export function generateEventRequestEmailHTML(data: EmailTemplateData): string {
         </div>
 
         <div class="footer">
-            <p><strong>Next Steps:</strong></p>
-            <p>
-                ${data.isForSuperUser 
-                    ? 'As a super user, please review this submission and coordinate with the zone approver for processing.' 
-                    : 'Your zone coordinator will review this request and contact you regarding approval status and any additional requirements.'
-                }
-            </p>
-            <p style="margin-top: 16px; font-size: 12px; color: #9ca3af;">
-                This is an automated notification from the Pony Club Event Management System.<br>
+            ${data.isForSuperUser 
+                ? `<div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 0 8px 8px 0; margin-bottom: 20px;">
+                    <h3 style="margin: 0 0 12px 0; color: #92400e;">⚡ Super User Actions Required</h3>
+                    <p style="margin: 0;">As a super user, please review this submission and coordinate with the zone approver for processing.</p>
+                   </div>` 
+                : `<div style="background: #ecfdf5; border-left: 4px solid #10b981; padding: 20px; border-radius: 0 8px 8px 0; margin-bottom: 20px;">
+                    <h3 style="margin: 0 0 16px 0; color: #059669;">✅ Next Steps</h3>
+                    <ul style="margin: 0 0 16px 0; padding-left: 20px; line-height: 1.8;">
+                        <li style="margin-bottom: 8px;">Your event will appear on the zone calendar as <strong>Pending</strong></li>
+                        <li style="margin-bottom: 8px;">The zone will review your requested event date and will approve it either during a zone meeting or at an event review meeting</li>
+                        <li style="margin-bottom: 8px;">Once approved, you will receive an official email confirmation</li>
+                    </ul>
+                    <div style="padding-top: 12px; border-top: 1px solid #d1fae5;">
+                        <p style="margin: 0 0 8px 0; color: #065f46;"><strong>📧 Need Help?</strong></p>
+                        <p style="margin: 0; font-size: 14px; line-height: 1.6;">
+                            <strong>Event Approval:</strong> <a href="mailto:smzsecretary@gmail.com" style="color: #059669;">smzsecretary@gmail.com</a><br>
+                            <strong>System Support:</strong> <a href="mailto:zonetreas.smz@gmail.com" style="color: #059669;">zonetreas.smz@gmail.com</a>
+                        </p>
+                    </div>
+                   </div>`
+            }
+            <p style="margin-top: 16px; font-size: 12px; color: #9ca3af; text-align: center;">
+                This is an automated notification from the MyPonyClub Event Management System<br>
                 Generated on ${formatDate(new Date().toISOString())}
             </p>
         </div>
@@ -428,8 +442,13 @@ ${data.isForSuperUser ? '- JSON Export (administrative data)' : ''}
 NEXT STEPS
 ==========
 ${data.isForSuperUser 
-  ? 'As a super user, please review this submission and coordinate with the zone approver for processing.' 
-  : 'Your zone coordinator will review this request and contact you regarding approval status and any additional requirements.'
+    ? 'As a super user, please review this submission and coordinate with the zone approver for processing.' 
+    : `- Your event will appear on the zone calendar as Pending
+- The zone will review your requested event date and will approve it either during a zone meeting or at event review meeting  
+- Once approved you will receive an official email confirmation
+
+Contact smzsecretary@gmail.com for information about the approval of your event
+Contact zonetreas.smz@gmail.com for help with myponyclub.events`
 }
 
 ---

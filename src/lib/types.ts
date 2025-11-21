@@ -373,6 +373,8 @@ export interface Event {
   notes?: string;
   submittedBy?: string;
   submittedByContact?: string;
+  submittedByEmail?: string;
+  submittedByPhone?: string;
 
   // Priority and historical traditional event fields
   priority?: EventPriority;

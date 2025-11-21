@@ -14,21 +14,28 @@ export async function POST(request: NextRequest) {
     
     // Sample template data with placeholder variables
     const sampleData = {
-      referenceNumber: '{{referenceNumber}}',
+      requesterName: '{{requesterName}}',
+      requesterEmail: '{{requesterEmail}}',
+      requesterPhone: '{{requesterPhone}}',
       clubName: '{{clubName}}',
       zoneName: '{{zoneName}}',
-      eventName: '{{eventName}}',
-      eventDate: '{{eventDate}}',
-      eventType: '{{eventType}}',
-      location: '{{location}}',
-      coordinatorName: '{{coordinatorName}}',
-      coordinatorContact: '{{coordinatorContact}}',
-      priority: 1,
-      isQualifier: false,
-      notes: '{{notes}}',
-      description: '{{description}}',
-      organizationName: 'MyPonyClub Events',
-      supportEmail: 'support@myponyclub.events',
+      submissionDate: '{{submissionDate}}',
+      referenceNumber: '{{referenceNumber}}',
+      events: [
+        {
+          priority: 1,
+          name: '{{eventName}}',
+          eventTypeName: '{{eventType}}',
+          date: '{{eventDate}}',
+          location: '{{location}}',
+          isQualifier: false,
+          isHistoricallyTraditional: false,
+          coordinatorName: '{{coordinatorName}}',
+          coordinatorContact: '{{coordinatorContact}}',
+          notes: '{{notes}}'
+        }
+      ],
+      generalNotes: '{{generalNotes}}',
       isForSuperUser: false
     };
     

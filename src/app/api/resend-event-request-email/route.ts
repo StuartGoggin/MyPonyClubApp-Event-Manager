@@ -175,8 +175,8 @@ export async function POST(request: NextRequest) {
           .get();
         
         recipients = zoneManagers.docs
-          .map(doc => doc.data().email)
-          .filter((email): email is string => typeof email === 'string' && email.includes('@'));
+          .map((doc: any) => doc.data().email)
+          .filter((email: any): email is string => typeof email === 'string' && email.includes('@'));
         subject = emailContent.subject;
         break;
 
@@ -226,7 +226,7 @@ export async function POST(request: NextRequest) {
           'application/pdf'
         )
       ) || [],
-      status: 'approved' as const, // Auto-approve resent emails
+      status: 'pending' as const, // Queue as pending (will be auto-processed)
       type: 'event_request' as const,
       metadata: {
         eventId: eventId,

@@ -168,14 +168,9 @@ export class EmailTemplateService {
    * Get default template content for a specific type (without database)
    */
   private static getDefaultTemplateContent(type: EmailTemplateType): { subject: string; htmlBody: string; textBody: string } {
-    const templateConfigs = this.getDefaultTemplateConfigs();
-    const config = templateConfigs[type];
-    
-    if (!config) {
-      throw new Error(`No template configuration found for type: ${type}`);
-    }
-    
-    return config.content;
+    // This method is deprecated - use email-template-generator.ts instead
+    // which imports from event-request-email-template.ts
+    throw new Error('Use email-template-generator.ts for default templates');
   }
 
   /**
@@ -244,8 +239,7 @@ export class EmailTemplateService {
     return {
       subject,
       htmlBody,
-      textBody,
-      attachments: []
+      textBody
     };
   }
 

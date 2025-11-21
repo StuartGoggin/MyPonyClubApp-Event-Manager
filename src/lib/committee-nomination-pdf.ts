@@ -110,7 +110,7 @@ export async function generateCommitteeNominationPDF(options: CommitteeNominatio
   
   // Submitter information (bottom of form)
   setTextField('your name', submitterData.name || '');
-  setTextField('your position', submitterData.position || 'Secretary');
+  setTextField('your position', 'Secretary');
   
   // District Commissioner - don't fill header fields, only data fields
   if (formData.districtCommissioner) {

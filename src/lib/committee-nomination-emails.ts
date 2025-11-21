@@ -210,7 +210,7 @@ export async function sendCommitteeNominationZoneManagerEmail(
             ${nomination.vicePresident ? `<div><span class="label">Vice President:</span><span class="value">${nomination.vicePresident.name}</span></div>` : ''}
             ${nomination.secretary ? `<div><span class="label">Secretary:</span><span class="value">${nomination.secretary.name}</span></div>` : ''}
             ${nomination.treasurer ? `<div><span class="label">Treasurer:</span><span class="value">${nomination.treasurer.name}</span></div>` : ''}
-            ${(nomination.additionalCommittee || []).map((member: any) => 
+            ${((nomination as any).additionalCommittee || []).map((member: any) => 
               `<div><span class="label">${member.position}:</span><span class="value">${member.name}</span></div>`
             ).join('')}
           </div>
@@ -253,7 +253,7 @@ ${nomination.president ? `- President: ${nomination.president.name}` : ''}
 ${nomination.vicePresident ? `- Vice President: ${nomination.vicePresident.name}` : ''}
 ${nomination.secretary ? `- Secretary: ${nomination.secretary.name}` : ''}
 ${nomination.treasurer ? `- Treasurer: ${nomination.treasurer.name}` : ''}
-${(nomination.additionalCommittee || []).map((member: any) => `- ${member.position}: ${member.name}`).join('\n')}
+${((nomination as any).additionalCommittee || []).map((member: any) => `- ${member.position}: ${member.name}`).join('\n')}
 
 ACTION REQUIRED: Please review the committee nomination and approve or reject the District Commissioner nomination. The complete nomination form is attached for your reference.
 
@@ -353,7 +353,7 @@ export async function sendCommitteeNominationSuperUserEmail(
               ${nomination.vicePresident ? `<div><span class="label">Vice President:</span><span class="value">${nomination.vicePresident.name}</span></div>` : '<div style="color: #999;">Vice President: Not nominated</div>'}
               ${nomination.secretary ? `<div><span class="label">Secretary:</span><span class="value">${nomination.secretary.name}</span></div>` : '<div style="color: #999;">Secretary: Not nominated</div>'}
               ${nomination.treasurer ? `<div><span class="label">Treasurer:</span><span class="value">${nomination.treasurer.name}</span></div>` : '<div style="color: #999;">Treasurer: Not nominated</div>'}
-              ${(nomination.additionalCommittee && nomination.additionalCommittee.length > 0) ? `<div><span class="label">Additional Members:</span><span class="value">${nomination.additionalCommittee.length}</span></div>` : ''}
+              ${((nomination as any).additionalCommittee && (nomination as any).additionalCommittee.length > 0) ? `<div><span class="label">Additional Members:</span><span class="value">${(nomination as any).additionalCommittee.length}</span></div>` : ''}
             </div>
 
             <p>The complete nomination form is attached to this email for your records.</p>
@@ -394,7 +394,7 @@ ${nomination.president ? `- President: ${nomination.president.name}` : '- Presid
 ${nomination.vicePresident ? `- Vice President: ${nomination.vicePresident.name}` : '- Vice President: Not nominated'}
 ${nomination.secretary ? `- Secretary: ${nomination.secretary.name}` : '- Secretary: Not nominated'}
 ${nomination.treasurer ? `- Treasurer: ${nomination.treasurer.name}` : '- Treasurer: Not nominated'}
-${(nomination.additionalCommittee && nomination.additionalCommittee.length > 0) ? `- Additional Members: ${nomination.additionalCommittee.length}` : ''}
+${((nomination as any).additionalCommittee && (nomination as any).additionalCommittee.length > 0) ? `- Additional Members: ${(nomination as any).additionalCommittee.length}` : ''}
 
 The complete nomination form is attached to this email for your records.
     `.trim();

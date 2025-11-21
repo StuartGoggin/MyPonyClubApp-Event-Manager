@@ -325,11 +325,11 @@ export function CommitteeNominationStatus({ clubId, onNominateCommittee, onEditN
           )}
 
           {/* Additional Members Count */}
-          {nomination.additionalCommittee && nomination.additionalCommittee.length > 0 && (
+          {(nomination as any).additionalCommittee && (nomination as any).additionalCommittee.length > 0 && (
             <div className="space-y-1">
               <p className="text-sm font-semibold text-foreground">Additional Members</p>
               <p className="text-sm text-muted-foreground">
-                {nomination.additionalCommittee.length} member{nomination.additionalCommittee.length > 1 ? 's' : ''}
+                {(nomination as any).additionalCommittee.length} member{(nomination as any).additionalCommittee.length > 1 ? 's' : ''}
               </p>
             </div>
           )}

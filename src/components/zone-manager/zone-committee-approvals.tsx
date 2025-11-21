@@ -238,11 +238,11 @@ export function ZoneCommitteeApprovals({ zoneId, onUpdate }: ZoneCommitteeApprov
               </div>
 
               {/* Additional Committee Members */}
-              {nomination.additionalCommittee && nomination.additionalCommittee.length > 0 && (
+              {(nomination as any).additionalCommittee && (nomination as any).additionalCommittee.length > 0 && (
                 <div>
                   <p className="font-semibold text-sm mb-2">Additional Committee Members</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {nomination.additionalCommittee.map((member, index) => (
+                    {(nomination as any).additionalCommittee.map((member: any, index: number) => (
                       <div key={index} className="bg-slate-50 rounded p-2 border text-sm">
                         <span className="font-medium">{member.position}:</span> {member.name}
                       </div>

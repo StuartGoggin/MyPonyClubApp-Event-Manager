@@ -596,7 +596,7 @@ export function MultiEventRequestForm({
         const result = await createMultiEventRequestAction(data);
         
         if (result.success) {
-          // Generate and download PDF
+          // Generate PDF for email (but don't download it)
           let pdfBuffer: ArrayBuffer | null = null;
           try {
             // Transform data to match EventRequestFormData interface
@@ -610,7 +610,7 @@ export function MultiEventRequestForm({
               }))
             };
             
-            // Call API endpoint to generate PDF
+            // Call API endpoint to generate PDF for email
             const pdfResponse = await fetch('/api/generate-event-request-pdf', {
               method: 'POST',
               headers: {
@@ -629,23 +629,12 @@ export function MultiEventRequestForm({
             }
 
             pdfBuffer = await pdfResponse.arrayBuffer();
-            
-            // Download PDF
-            const pdfBlob = new Blob([pdfBuffer], { type: 'application/pdf' });
-            const url = URL.createObjectURL(pdfBlob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `event-request-${data.submittedByEmail.replace(/[^a-zA-Z0-9]/g, '_')}-${new Date().toISOString().split('T')[0]}.pdf`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
           } catch (pdfError) {
             console.error('PDF generation failed:', pdfError);
             // Don't fail the entire submission if PDF generation fails
             toast({
               title: 'PDF Generation Warning',
-              description: 'Your request was submitted successfully, but the PDF could not be generated.',
+              description: 'Your request was submitted successfully, but the PDF could not be generated for email.',
               variant: 'default',
             });
           }

@@ -690,16 +690,13 @@ export class EmailTemplateService {
             <div class="next-steps">
                 <h3 style="margin: 0 0 12px 0; color: #059669;">✅ Next Steps</h3>
                 <ul style="margin: 0; padding-left: 20px;">
-                    <li>Your request will be reviewed by the {{zoneName}} coordination team</li>
-                    <li>You will receive email notifications about approval status</li>
-                    <li>Approved events will appear in the public calendar</li>
-                    <li>Contact {{supportEmail}} if you have any questions</li>
+                    <li>Your event will appear on the zone calendar as Pending</li>
+                    <li>The zone will review your requested event date and will approve it either during a zone meeting or at event review meeting</li>
+                    <li>Once approved you will receive an official email confirmation</li>
+                    <li>Contact smzsecretary@gmail.com for information about the approval of your event</li>
+                    <li>Contact zonetreas.smz@gmail.com for help with myponyclub.events</li>
                 </ul>
             </div>
-
-            <p style="margin-top: 30px;">
-                <strong>Important:</strong> Please retain this reference number ({{referenceNumber}}) for your records and any future correspondence about this request.
-            </p>
         </div>
 
         <div class="footer">
@@ -733,12 +730,11 @@ Coordinator: {{coordinatorName}} ({{coordinatorContact}})
 {{/each}}
 
 NEXT STEPS
-- Your request will be reviewed by the {{zoneName}} coordination team
-- You will receive email notifications about approval status
-- Approved events will appear in the public calendar
-- Contact {{supportEmail}} if you have any questions
-
-Important: Please retain reference number {{referenceNumber}} for your records.
+- Your event will appear on the zone calendar as Pending
+- The zone will review your requested event date and will approve it either during a zone meeting or at event review meeting
+- Once approved you will receive an official email confirmation
+- Contact smzsecretary@gmail.com for information about the approval of your event
+- Contact zonetreas.smz@gmail.com for help with myponyclub.events
 
 {{organizationName}} Event Management System
 For support, contact: {{supportEmail}}`

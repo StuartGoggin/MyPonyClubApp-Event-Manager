@@ -383,13 +383,19 @@ export function generateEventRequestEmailHTML(data: EmailTemplateData): string {
 
         <div class="footer">
             <p><strong>Next Steps:</strong></p>
-            <p>
-                ${
+            ${
   data.isForSuperUser ?
-    "As a super user, please review this submission and coordinate with the zone approver for processing." :
-    "Your zone coordinator will review this request and contact you regarding approval status and any additional requirements."
+    `<ul>
+                <li>As a super user, please review this submission and coordinate with the zone approver for processing</li>
+            </ul>` :
+    `<ul>
+                <li>Your event will appear on the zone calendar as Pending</li>
+                <li>The zone will review your requested event date and will approve it either during a zone meeting or at event review meeting</li>
+                <li>Once approved you will receive an official email confirmation</li>
+                <li>Contact smzsecretary@gmail.com for information about the approval of your event</li>
+                <li>Contact zonetreas.smz@gmail.com for help with myponyclub.events</li>
+            </ul>`
 }
-            </p>
             <p style="margin-top: 16px; font-size: 12px; color: #9ca3af;">
                 This is an automated notification from the Pony Club Event Management System.<br>
                 Generated on ${formatDate(new Date().toISOString())}
@@ -474,7 +480,11 @@ NEXT STEPS
 ${
   data.isForSuperUser ?
     "As a super user, please review this submission and coordinate with the zone approver for processing." :
-    "Your zone coordinator will review this request and contact you regarding approval status and any additional requirements."
+    `- Your event will appear on the zone calendar as Pending
+- The zone will review your requested event date and will approve it either during a zone meeting or at event review meeting
+- Once approved you will receive an official email confirmation
+- Contact smzsecretary@gmail.com for information about the approval of your event
+- Contact zonetreas.smz@gmail.com for help with myponyclub.events`
 }
 
 ---

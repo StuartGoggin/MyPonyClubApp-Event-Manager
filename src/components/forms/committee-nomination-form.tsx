@@ -39,7 +39,9 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
       ponyClubId: '',
       email: '',
       mobile: '',
+      address: '',
       isZoneRep: false,
+      isNewDC: true, // Default to "New"
     },
     president: initialData?.president || undefined,
     vicePresident: initialData?.vicePresident || undefined,
@@ -200,13 +202,17 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
         ponyClubId: user.ponyClubId,
         email: user.email || '',
         mobile: user.mobile || '',
+        address: prev.districtCommissioner.address, // Preserve address
         isZoneRep: false,
+        isNewDC: prev.districtCommissioner.isNewDC, // Preserve existing selection
       } : {
         name: '',
         ponyClubId: '',
         email: '',
         mobile: '',
+        address: '',
         isZoneRep: false,
+        isNewDC: prev.districtCommissioner.isNewDC, // Preserve existing selection
       }
     }));
     if (errors.districtCommissioner) {
@@ -222,6 +228,7 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
         ponyClubId: user.ponyClubId,
         email: user.email || '',
         mobile: user.mobile || '',
+        address: prev.president?.address || '',
         isZoneRep: false,
       } : undefined
     }));
@@ -238,6 +245,7 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
         ponyClubId: user.ponyClubId,
         email: user.email || '',
         mobile: user.mobile || '',
+        address: prev.vicePresident?.address || '',
         isZoneRep: false,
       } : undefined
     }));
@@ -254,6 +262,7 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
         ponyClubId: user.ponyClubId,
         email: user.email || '',
         mobile: user.mobile || '',
+        address: prev.secretary?.address || '',
         isZoneRep: false,
       } : undefined
     }));
@@ -270,6 +279,7 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
         ponyClubId: user.ponyClubId,
         email: user.email || '',
         mobile: user.mobile || '',
+        address: prev.treasurer?.address || '',
         isZoneRep: false,
       } : undefined
     }));
@@ -286,6 +296,7 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
         ponyClubId: user.ponyClubId,
         email: user.email || '',
         mobile: user.mobile || '',
+        address: prev.zoneRepOther?.address || '',
         isZoneRep: true,
       } : undefined
     }));
@@ -462,13 +473,16 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
         ponyClubId: 'PC12345',
         email: 'john.smith@example.com',
         mobile: '0423 456 789',
+        address: '123 Main Street, Melbourne VIC 3000',
         isZoneRep: false,
+        isNewDC: true,
       },
       president: {
         name: 'Emma Wilson',
         ponyClubId: 'PC23456',
         email: 'emma.wilson@example.com',
         mobile: '0434 567 890',
+        address: '456 Oak Avenue, Geelong VIC 3220',
         isZoneRep: false,
       },
       vicePresident: {
@@ -476,6 +490,7 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
         ponyClubId: 'PC34567',
         email: 'michael.brown@example.com',
         mobile: '0445 678 901',
+        address: '789 Elm Road, Ballarat VIC 3350',
         isZoneRep: false,
       },
       secretary: {
@@ -483,6 +498,7 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
         ponyClubId: 'PC45678',
         email: 'lisa.anderson@example.com',
         mobile: '0456 789 012',
+        address: '321 Pine Street, Bendigo VIC 3550',
         isZoneRep: false,
       },
       treasurer: {
@@ -490,6 +506,7 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
         ponyClubId: 'PC56789',
         email: 'david.taylor@example.com',
         mobile: '0467 890 123',
+        address: '654 Maple Drive, Warrnambool VIC 3280',
         isZoneRep: false,
       },
       zoneRepOther: {
@@ -497,6 +514,7 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
         ponyClubId: 'PC67890',
         email: 'rebecca.martinez@example.com',
         mobile: '0478 901 234',
+        address: '159 River Road, Echuca VIC 3564',
         isZoneRep: true,
       },
       additionalNotes: 'This is a test submission with realistic dummy data for testing purposes.',
@@ -848,6 +866,60 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
                   />
                 </div>
               </div>
+              
+              <div className="pl-4 border-l-2 border-blue-200">
+                <Label htmlFor="dcAddress" className="text-xs">Address</Label>
+                <Input
+                  id="dcAddress"
+                  type="text"
+                  value={formData.districtCommissioner.address}
+                  onChange={(e) => {
+                    setFormData(prev => ({
+                      ...prev,
+                      districtCommissioner: { ...prev.districtCommissioner, address: e.target.value }
+                    }));
+                  }}
+                  placeholder="Street address, City, State, Postcode"
+                  className="h-9 text-sm"
+                />
+              </div>
+              
+              {/* New or Existing DC Radio Buttons */}
+              <div className="pl-4 border-l-2 border-blue-200">
+                <Label className="text-xs mb-2 block">District Commissioner Status</Label>
+                <div className="flex gap-6">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="dcStatus"
+                      checked={formData.districtCommissioner.isNewDC === true}
+                      onChange={() => {
+                        setFormData(prev => ({
+                          ...prev,
+                          districtCommissioner: { ...prev.districtCommissioner, isNewDC: true }
+                        }));
+                      }}
+                      className="w-4 h-4"
+                    />
+                    <span className="text-sm">New</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="dcStatus"
+                      checked={formData.districtCommissioner.isNewDC === false}
+                      onChange={() => {
+                        setFormData(prev => ({
+                          ...prev,
+                          districtCommissioner: { ...prev.districtCommissioner, isNewDC: false }
+                        }));
+                      }}
+                      className="w-4 h-4"
+                    />
+                    <span className="text-sm">Existing</span>
+                  </label>
+                </div>
+              </div>
             </div>
 
             {/* President */}
@@ -870,7 +942,7 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
                     onChange={(e) => {
                       setFormData(prev => ({
                         ...prev,
-                        president: prev.president ? { ...prev.president, email: e.target.value } : { name: '', ponyClubId: '', email: e.target.value, mobile: '', isZoneRep: false }
+                        president: prev.president ? { ...prev.president, email: e.target.value } : { name: '', ponyClubId: '', email: e.target.value, mobile: '', address: '', isZoneRep: false }
                       }));
                     }}
                     placeholder="email@example.com"
@@ -886,13 +958,30 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
                     onChange={(e) => {
                       setFormData(prev => ({
                         ...prev,
-                        president: prev.president ? { ...prev.president, mobile: e.target.value } : { name: '', ponyClubId: '', email: '', mobile: e.target.value, isZoneRep: false }
+                        president: prev.president ? { ...prev.president, mobile: e.target.value } : { name: '', ponyClubId: '', email: '', mobile: e.target.value, address: '', isZoneRep: false }
                       }));
                     }}
                     placeholder="0400 000 000"
                     className="h-9 text-sm"
                   />
                 </div>
+              </div>
+              
+              <div className="pl-4 border-l-2 border-blue-200">
+                <Label htmlFor="presidentAddress" className="text-xs">Address</Label>
+                <Input
+                  id="presidentAddress"
+                  type="text"
+                  value={formData.president?.address || ''}
+                  onChange={(e) => {
+                    setFormData(prev => ({
+                      ...prev,
+                      president: prev.president ? { ...prev.president, address: e.target.value } : { name: '', ponyClubId: '', email: '', mobile: '', address: e.target.value, isZoneRep: false }
+                    }));
+                  }}
+                  placeholder="Street address, City, State, Postcode"
+                  className="h-9 text-sm"
+                />
               </div>
             </div>
 
@@ -916,7 +1005,7 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
                     onChange={(e) => {
                       setFormData(prev => ({
                         ...prev,
-                        vicePresident: prev.vicePresident ? { ...prev.vicePresident, email: e.target.value } : { name: '', ponyClubId: '', email: e.target.value, mobile: '', isZoneRep: false }
+                        vicePresident: prev.vicePresident ? { ...prev.vicePresident, email: e.target.value } : { name: '', ponyClubId: '', email: e.target.value, mobile: '', address: '', isZoneRep: false }
                       }));
                     }}
                     placeholder="email@example.com"
@@ -932,13 +1021,30 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
                     onChange={(e) => {
                       setFormData(prev => ({
                         ...prev,
-                        vicePresident: prev.vicePresident ? { ...prev.vicePresident, mobile: e.target.value } : { name: '', ponyClubId: '', email: '', mobile: e.target.value, isZoneRep: false }
+                        vicePresident: prev.vicePresident ? { ...prev.vicePresident, mobile: e.target.value } : { name: '', ponyClubId: '', email: '', mobile: e.target.value, address: '', isZoneRep: false }
                       }));
                     }}
                     placeholder="0400 000 000"
                     className="h-9 text-sm"
                   />
                 </div>
+              </div>
+              
+              <div className="pl-4 border-l-2 border-blue-200">
+                <Label htmlFor="vicePresidentAddress" className="text-xs">Address</Label>
+                <Input
+                  id="vicePresidentAddress"
+                  type="text"
+                  value={formData.vicePresident?.address || ''}
+                  onChange={(e) => {
+                    setFormData(prev => ({
+                      ...prev,
+                      vicePresident: prev.vicePresident ? { ...prev.vicePresident, address: e.target.value } : { name: '', ponyClubId: '', email: '', mobile: '', address: e.target.value, isZoneRep: false }
+                    }));
+                  }}
+                  placeholder="Street address, City, State, Postcode"
+                  className="h-9 text-sm"
+                />
               </div>
             </div>
 
@@ -962,7 +1068,7 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
                     onChange={(e) => {
                       setFormData(prev => ({
                         ...prev,
-                        secretary: prev.secretary ? { ...prev.secretary, email: e.target.value } : { name: '', ponyClubId: '', email: e.target.value, mobile: '', isZoneRep: false }
+                        secretary: prev.secretary ? { ...prev.secretary, email: e.target.value } : { name: '', ponyClubId: '', email: e.target.value, mobile: '', address: '', isZoneRep: false }
                       }));
                     }}
                     placeholder="email@example.com"
@@ -978,13 +1084,30 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
                     onChange={(e) => {
                       setFormData(prev => ({
                         ...prev,
-                        secretary: prev.secretary ? { ...prev.secretary, mobile: e.target.value } : { name: '', ponyClubId: '', email: '', mobile: e.target.value, isZoneRep: false }
+                        secretary: prev.secretary ? { ...prev.secretary, mobile: e.target.value } : { name: '', ponyClubId: '', email: '', mobile: e.target.value, address: '', isZoneRep: false }
                       }));
                     }}
                     placeholder="0400 000 000"
                     className="h-9 text-sm"
                   />
                 </div>
+              </div>
+              
+              <div className="pl-4 border-l-2 border-blue-200">
+                <Label htmlFor="secretaryAddress" className="text-xs">Address</Label>
+                <Input
+                  id="secretaryAddress"
+                  type="text"
+                  value={formData.secretary?.address || ''}
+                  onChange={(e) => {
+                    setFormData(prev => ({
+                      ...prev,
+                      secretary: prev.secretary ? { ...prev.secretary, address: e.target.value } : { name: '', ponyClubId: '', email: '', mobile: '', address: e.target.value, isZoneRep: false }
+                    }));
+                  }}
+                  placeholder="Street address, City, State, Postcode"
+                  className="h-9 text-sm"
+                />
               </div>
             </div>
 
@@ -1008,7 +1131,7 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
                     onChange={(e) => {
                       setFormData(prev => ({
                         ...prev,
-                        treasurer: prev.treasurer ? { ...prev.treasurer, email: e.target.value } : { name: '', ponyClubId: '', email: e.target.value, mobile: '', isZoneRep: false }
+                        treasurer: prev.treasurer ? { ...prev.treasurer, email: e.target.value } : { name: '', ponyClubId: '', email: e.target.value, mobile: '', address: '', isZoneRep: false }
                       }));
                       // Clear error when user types
                       if (errors.treasurer) {
@@ -1028,7 +1151,7 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
                     onChange={(e) => {
                       setFormData(prev => ({
                         ...prev,
-                        treasurer: prev.treasurer ? { ...prev.treasurer, mobile: e.target.value } : { name: '', ponyClubId: '', email: '', mobile: e.target.value, isZoneRep: false }
+                        treasurer: prev.treasurer ? { ...prev.treasurer, mobile: e.target.value } : { name: '', ponyClubId: '', email: '', mobile: e.target.value, address: '', isZoneRep: false }
                       }));
                       // Clear error when user types
                       if (errors.treasurer) {
@@ -1039,6 +1162,23 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
                     className="h-9 text-sm"
                   />
                 </div>
+              </div>
+              
+              <div className="pl-4 border-l-2 border-blue-200">
+                <Label htmlFor="treasurerAddress" className="text-xs">Address</Label>
+                <Input
+                  id="treasurerAddress"
+                  type="text"
+                  value={formData.treasurer?.address || ''}
+                  onChange={(e) => {
+                    setFormData(prev => ({
+                      ...prev,
+                      treasurer: prev.treasurer ? { ...prev.treasurer, address: e.target.value } : { name: '', ponyClubId: '', email: '', mobile: '', address: e.target.value, isZoneRep: false }
+                    }));
+                  }}
+                  placeholder="Street address, City, State, Postcode"
+                  className="h-9 text-sm"
+                />
               </div>
             </div>
           </div>
@@ -1071,7 +1211,7 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
                       zoneRepOther: prev.zoneRepOther ? {
                         ...prev.zoneRepOther,
                         email: e.target.value
-                      } : { name: '', ponyClubId: '', email: e.target.value, mobile: '', isZoneRep: true }
+                      } : { name: '', ponyClubId: '', email: e.target.value, mobile: '', address: '', isZoneRep: true }
                     }));
                   }}
                   placeholder="zone.rep@example.com"
@@ -1094,7 +1234,7 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
                       zoneRepOther: prev.zoneRepOther ? {
                         ...prev.zoneRepOther,
                         mobile: e.target.value
-                      } : { name: '', ponyClubId: '', email: '', mobile: e.target.value, isZoneRep: true }
+                      } : { name: '', ponyClubId: '', email: '', mobile: e.target.value, address: '', isZoneRep: true }
                     }));
                   }}
                   placeholder="0400 000 000"

@@ -54,6 +54,11 @@ export interface Club {
   website?: string;
   websiteUrl?: string; // Alternative field name for compatibility
   
+  // Club-specific details (for committee nomination PDF and other forms)
+  clubColours?: string; // e.g., "Red and White"
+  cavIncorporationNumber?: string; // Consumer Affairs Victoria incorporation number
+  rallyDay?: string; // e.g., "Saturday" or "Sunday"
+  
   // Social media - simplified structure
   socialMediaUrl?: string; // Primary social media URL like Facebook
   socialMedia?: { // Legacy structured social media - keep for backward compatibility

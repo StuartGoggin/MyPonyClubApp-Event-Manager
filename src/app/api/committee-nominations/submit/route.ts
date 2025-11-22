@@ -9,6 +9,8 @@ import {
 import { generateCommitteeNominationPDF } from '@/lib/committee-nomination-pdf';
 import { UserService } from '@/lib/user-service';
 import { autoSendQueuedEmail } from '@/lib/auto-send-email';
+import { adminDb } from '@/lib/firebase-admin';
+import { Club } from '@/lib/types';
 
 // Helper function to get super user emails from database
 async function getSuperUserEmails(): Promise<string[]> {
@@ -105,10 +107,30 @@ export async function POST(request: NextRequest) {
     // Generate reference number
     const referenceNumber = `CN-${Date.now()}`;
 
+    // Fetch club data to populate Main Club Contact Details in PDF
+    let clubData: Club | undefined;
+    try {
+      const clubDoc = await adminDb.collection('clubs').doc(formData.clubId).get();
+      if (clubDoc.exists) {
+        clubData = { id: clubDoc.id, ...clubDoc.data() } as Club;
+        console.log('Fetched club data for PDF:', {
+          postalAddress: clubData.postalAddress,
+          physicalAddress: clubData.physicalAddress,
+          clubColours: clubData.clubColours,
+          cavIncorporationNumber: clubData.cavIncorporationNumber,
+          rallyDay: clubData.rallyDay
+        });
+      }
+    } catch (clubError) {
+      console.error('Error fetching club data for PDF:', clubError);
+      // Continue without club data - PDF will just have empty fields
+    }
+
     // Generate PDF
     console.log('Generating PDF for nomination...');
     const pdfBuffer = await generateCommitteeNominationPDF({
       formData: nomination,
+      clubData, // Pass club data to populate Main Club Contact Details
       title: 'Committee Nomination Submission',
       submissionDate: new Date(nomination.submittedAt),
       referenceNumber,

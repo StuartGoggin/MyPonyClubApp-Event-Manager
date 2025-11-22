@@ -44,6 +44,9 @@ function ClubSettingsContent() {
     physicalAddress: '',
     postalAddress: '',
     socialMediaUrl: '',
+    clubColours: '',
+    cavIncorporationNumber: '',
+    rallyDay: '',
     image: ''
   });
   const [logoPreview, setLogoPreview] = useState<string>('');
@@ -87,6 +90,9 @@ function ClubSettingsContent() {
         physicalAddress: clubData.physicalAddress || '',
         postalAddress: clubData.postalAddress || '',
         socialMediaUrl: clubData.socialMediaUrl || clubData.socialMedia?.facebook || '',
+        clubColours: clubData.clubColours || '',
+        cavIncorporationNumber: clubData.cavIncorporationNumber || '',
+        rallyDay: clubData.rallyDay || '',
         image: logoData
       });
     } catch (error) {
@@ -207,6 +213,9 @@ function ClubSettingsContent() {
           physicalAddress: formData.physicalAddress,
           postalAddress: formData.postalAddress,
           socialMediaUrl: formData.socialMediaUrl,
+          clubColours: formData.clubColours,
+          cavIncorporationNumber: formData.cavIncorporationNumber,
+          rallyDay: formData.rallyDay,
           image: formData.image
         }),
       });
@@ -498,6 +507,52 @@ function ClubSettingsContent() {
                 placeholder="Enter postal/mailing address"
                 rows={3}
               />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Club Details */}
+        <Card className="bg-white dark:bg-slate-900 shadow-lg border-slate-200 dark:border-slate-700">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Building className="h-5 w-5" />
+              Club Details
+            </CardTitle>
+            <CardDescription>
+              Additional club information for official forms and documents
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="clubColours">Club Colours</Label>
+              <Input
+                id="clubColours"
+                value={formData.clubColours}
+                onChange={(e) => handleInputChange('clubColours', e.target.value)}
+                placeholder="e.g., Red and White"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="cavIncorporationNumber">CAV Incorporation Number</Label>
+                <Input
+                  id="cavIncorporationNumber"
+                  value={formData.cavIncorporationNumber}
+                  onChange={(e) => handleInputChange('cavIncorporationNumber', e.target.value)}
+                  placeholder="e.g., A0012345Z"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="rallyDay">Club Rally Day</Label>
+                <Input
+                  id="rallyDay"
+                  value={formData.rallyDay}
+                  onChange={(e) => handleInputChange('rallyDay', e.target.value)}
+                  placeholder="e.g., Saturday or Sunday"
+                />
+              </div>
             </div>
           </CardContent>
         </Card>

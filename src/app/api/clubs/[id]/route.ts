@@ -74,6 +74,9 @@ export async function PATCH(
     if (body.physicalAddress !== undefined) updateData.physicalAddress = body.physicalAddress;
     if (body.postalAddress !== undefined) updateData.postalAddress = body.postalAddress;
     if (body.socialMediaUrl !== undefined) updateData.socialMediaUrl = body.socialMediaUrl;
+    if (body.clubColours !== undefined) updateData.clubColours = body.clubColours;
+    if (body.cavIncorporationNumber !== undefined) updateData.cavIncorporationNumber = body.cavIncorporationNumber;
+    if (body.rallyDay !== undefined) updateData.rallyDay = body.rallyDay;
     
     // Update both image and logoUrl fields for compatibility
     if (body.image !== undefined) {

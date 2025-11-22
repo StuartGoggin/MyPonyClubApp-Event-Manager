@@ -1,10 +1,12 @@
 import { PDFDocument } from 'pdf-lib';
 import { CommitteeNomination, CommitteeNominationFormData } from '@/types/committee-nomination';
+import { Club } from '@/lib/types';
 import * as fs from 'fs';
 import * as path from 'path';
 
 export interface CommitteeNominationPDFOptions {
   formData: CommitteeNominationFormData | CommitteeNomination;
+  clubData?: Club; // Optional club data for Main Club Contact Details
   title?: string;
   submissionDate?: Date;
   referenceNumber?: string;
@@ -21,7 +23,7 @@ function formatDate(date: Date | string): string {
 }
 
 export async function generateCommitteeNominationPDF(options: CommitteeNominationPDFOptions): Promise<Buffer> {
-  const { formData, submissionDate = new Date() } = options;
+  const { formData, clubData, submissionDate = new Date() } = options;
 
   // Load the template PDF
   let templateBytes: ArrayBuffer;
@@ -66,12 +68,35 @@ export async function generateCommitteeNominationPDF(options: CommitteeNominatio
   // Get all field names (for debugging)
   const fields = form.getFields();
   console.log('PDF Form Fields:', fields.map(f => ({ name: f.getName(), type: f.constructor.name })));
+  console.log('Club data received for PDF:', clubData ? {
+    hasClubData: true,
+    postalAddress: clubData.postalAddress,
+    physicalAddress: clubData.physicalAddress,
+    email: clubData.email,
+    clubColours: clubData.clubColours,
+    cavIncorporationNumber: clubData.cavIncorporationNumber,
+    rallyDay: clubData.rallyDay
+  } : { hasClubData: false });
 
   // Helper function to safely set text field
   const setTextField = (fieldName: string, value: string) => {
     try {
       const field = form.getTextField(fieldName);
       field.setText(value || '');
+    } catch (error) {
+      // Silently fail - field doesn't exist
+    }
+  };
+
+  // Helper function to safely check a checkbox
+  const setCheckbox = (fieldName: string, checked: boolean) => {
+    try {
+      const field = form.getCheckBox(fieldName);
+      if (checked) {
+        field.check();
+      } else {
+        field.uncheck();
+      }
     } catch (error) {
       // Silently fail - field doesn't exist
     }
@@ -108,46 +133,95 @@ export async function generateCommitteeNominationPDF(options: CommitteeNominatio
   setTextField('Committee Year', formData.year?.toString() || '');
   setTextField('fin year', formData.year?.toString() || '');
   
+  // Main Club Contact Details (from club settings if available)
+  if (clubData) {
+    console.log('Attempting to populate Main Club Contact Details fields...');
+    
+    // Club Postal Address
+    setTextField('Club Postal Address', clubData.postalAddress || '');
+    setTextField('club_postal_address', clubData.postalAddress || '');
+    setTextField('postal_address', clubData.postalAddress || '');
+    
+    // Site/Grounds Address (using physical address)
+    setTextField('Site/Grounds Address', clubData.physicalAddress || '');
+    setTextField('site_grounds_address', clubData.physicalAddress || '');
+    setTextField('grounds_address', clubData.physicalAddress || '');
+    setTextField('physical_address', clubData.physicalAddress || '');
+    
+    // Club Email
+    setTextField('Club Email', clubData.email || '');
+    setTextField('club_email', clubData.email || '');
+    setTextField('email', clubData.email || '');
+    
+    // Club Colours
+    setTextField('Club Colours', clubData.clubColours || '');
+    setTextField('club_colours', clubData.clubColours || '');
+    setTextField('colours', clubData.clubColours || '');
+    
+    // CAV Incorporation Number
+    setTextField('CAV Incorporation number', clubData.cavIncorporationNumber || '');
+    setTextField('cav_incorporation_number', clubData.cavIncorporationNumber || '');
+    setTextField('incorporation_number', clubData.cavIncorporationNumber || '');
+    
+    // Club Rally Day
+    setTextField('Club Rally Day', clubData.rallyDay || '');
+    setTextField('club_rally_day', clubData.rallyDay || '');
+    setTextField('rally_day', clubData.rallyDay || '');
+    
+    console.log('Finished attempting to populate club contact details');
+  } else {
+    console.log('No club data available - Main Club Contact Details will be empty');
+  }
+  
   // Submitter information (bottom of form)
   setTextField('your name', submitterData.name || '');
   setTextField('your position', 'Secretary');
   
-  // District Commissioner - don't fill header fields, only data fields
+  // District Commissioner - uses Name1, Email1, no, but Address2 (addresses are offset by 1)
   if (formData.districtCommissioner) {
-    // 'Commissioner' is the header - don't fill it
-    // Use unnumbered Email field for DC's email (but this conflicts with club email)
-    // setTextField('Email', formData.districtCommissioner.email || '');
+    setTextField('Commissioner', formData.districtCommissioner.name || '');
+    setTextField('Name1', formData.districtCommissioner.name || '');
+    setTextField('Address2', formData.districtCommissioner.address || '');
+    setTextField('Email1', formData.districtCommissioner.email || '');
     setTextField('no', formData.districtCommissioner.mobile || '');
+    
+    // Set New or Existing checkbox
+    setCheckbox('new', formData.districtCommissioner.isNewDC === true);
+    setCheckbox('existing DC?', formData.districtCommissioner.isNewDC === false);
   }
   
-  // President - don't fill header field
+  // President - uses Name2, Email2, no1, but Address3
   if (formData.president) {
-    // 'President' is the header - don't fill it
-    setTextField('Name1', formData.president.name || '');
-    setTextField('Email1', formData.president.email || '');
+    setTextField('President', formData.president.name || '');
+    setTextField('Name2', formData.president.name || '');
+    setTextField('Address3', formData.president.address || '');
+    setTextField('Email2', formData.president.email || '');
     setTextField('no1', formData.president.mobile || '');
   }
   
-  // Vice President - don't fill header field
+  // Vice President - uses Name3, Email3, no2, but Address4
   if (formData.vicePresident) {
-    // 'President1' is the header - don't fill it
-    setTextField('Name2', formData.vicePresident.name || '');
-    setTextField('Email2', formData.vicePresident.email || '');
+    setTextField('President1', formData.vicePresident.name || '');
+    setTextField('Name3', formData.vicePresident.name || '');
+    setTextField('Address4', formData.vicePresident.address || '');
+    setTextField('Email3', formData.vicePresident.email || '');
     setTextField('no2', formData.vicePresident.mobile || '');
   }
   
-  // Secretary - don't fill header field
+  // Secretary - uses Name4, Email4, no3, but Address5
   if (formData.secretary) {
-    // 'Secretary' is the header - don't fill it
-    setTextField('Name3', formData.secretary.name || '');
-    setTextField('Email3', formData.secretary.email || '');
+    setTextField('Secretary', formData.secretary.name || '');
+    setTextField('Name4', formData.secretary.name || '');
+    setTextField('Address5', formData.secretary.address || '');
+    setTextField('Email4', formData.secretary.email || '');
     setTextField('no3', formData.secretary.mobile || '');
   }
   
-  // Treasurer - don't fill header field
+  // Treasurer - uses Name5, Email5, no4, and Address6
   if (formData.treasurer) {
-    // 'Treasurer' is the header - don't fill it
+    setTextField('Treasurer', formData.treasurer.name || '');
     setTextField('Name5', formData.treasurer.name || '');
+    setTextField('Address6', formData.treasurer.address || '');
     setTextField('Email5', formData.treasurer.email || '');
     setTextField('no4', formData.treasurer.mobile || '');
   }

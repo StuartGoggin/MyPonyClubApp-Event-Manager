@@ -5,10 +5,12 @@ export interface CommitteeMember {
   ponyClubId: string;
   mobile: string;
   email: string;
+  address: string;
   isZoneRep: boolean;
 }
 
 export interface DistrictCommissioner extends CommitteeMember {
+  isNewDC: boolean; // true = New, false = Existing
   approvalStatus: 'pending' | 'approved' | 'rejected';
   approvedBy?: string;
   approvedAt?: string;
@@ -66,7 +68,7 @@ export interface CommitteeNominationFormData {
   agmDate: string;
   effectiveDate: string;
   
-  districtCommissioner: Omit<DistrictCommissioner, 'approvalStatus' | 'approvedBy' | 'approvedAt' | 'rejectionReason'>;
+  districtCommissioner: Omit<DistrictCommissioner, 'approvalStatus' | 'approvedBy' | 'approvedAt' | 'rejectionReason'> & { isNewDC: boolean };
   president?: CommitteeMember;
   vicePresident?: CommitteeMember;
   secretary?: CommitteeMember;

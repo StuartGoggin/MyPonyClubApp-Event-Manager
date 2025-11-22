@@ -1,4 +1,4 @@
-import { PDFDocument } from 'pdf-lib';
+import { PDFDocument, PDFFont, StandardFonts, rgb } from 'pdf-lib';
 import { CommitteeNomination, CommitteeNominationFormData } from '@/types/committee-nomination';
 import { Club } from '@/lib/types';
 import * as fs from 'fs';
@@ -62,8 +62,14 @@ export async function generateCommitteeNominationPDF(options: CommitteeNominatio
   // Load the PDF with pdf-lib
   const pdfDoc = await PDFDocument.load(templateBytes);
   
+  // Embed bold font
+  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  
   // Get the form
   const form = pdfDoc.getForm();
+  
+  // Enable appearance streams so we can set custom fonts
+  form.updateFieldAppearances(boldFont);
   
   // Get all field names (for debugging)
   const fields = form.getFields();
@@ -78,11 +84,20 @@ export async function generateCommitteeNominationPDF(options: CommitteeNominatio
     rallyDay: clubData.rallyDay
   } : { hasClubData: false });
 
-  // Helper function to safely set text field
-  const setTextField = (fieldName: string, value: string) => {
+  // Helper function to safely set text field with font size
+  const setTextField = (fieldName: string, value: string, fontSize: number = 10) => {
     try {
       const field = form.getTextField(fieldName);
       field.setText(value || '');
+      
+      // Set font size using default appearance
+      const widgets = field.acroField.getWidgets();
+      widgets.forEach(widget => {
+        const context = widget.dict.context;
+        widget.setDefaultAppearance(`/Helv-Bold ${fontSize} Tf 0 g`);
+      });
+      
+      field.updateAppearances(boldFont);
     } catch (error) {
       // Silently fail - field doesn't exist
     }
@@ -113,60 +128,47 @@ export async function generateCommitteeNominationPDF(options: CommitteeNominatio
 
   // Try multiple field name variations for each field
   // Club information
-  setTextField('Club Name', formData.clubName);
-  setTextField('ClubName', formData.clubName);
-  setTextField('club_name', formData.clubName);
-  setTextField('club', formData.clubName);
-  setTextField('your pony club', formData.clubName);
+  setTextField('Club Name', formData.clubName, 10);
+  setTextField('ClubName', formData.clubName, 10);
+  setTextField('club_name', formData.clubName, 10);
+  setTextField('club', formData.clubName, 10);
+  setTextField('your pony club', formData.clubName, 10);
   
-  setTextField('Zone', formData.zoneName || '');
-  setTextField('zone', formData.zoneName || '');
+  setTextField('Zone', formData.zoneName || '', 10);
+  setTextField('zone', formData.zoneName || '', 10);
   
-  setTextField('AGM Date', formatDate(formData.agmDate));
-  setTextField('agm_date', formatDate(formData.agmDate));
-  setTextField('AGMDate', formatDate(formData.agmDate));
-  setTextField('Date of AGM', formatDate(formData.agmDate));
-  setTextField('date AGM held', formatDate(formData.agmDate));
+  setTextField('AGM Date', formatDate(formData.agmDate), 10);
+  setTextField('agm_date', formatDate(formData.agmDate), 10);
+  setTextField('AGMDate', formatDate(formData.agmDate), 10);
+  setTextField('Date of AGM', formatDate(formData.agmDate), 10);
+  setTextField('date AGM held', formatDate(formData.agmDate), 10);
   
-  setTextField('Year', formData.year?.toString() || '');
-  setTextField('year', formData.year?.toString() || '');
-  setTextField('Committee Year', formData.year?.toString() || '');
-  setTextField('fin year', formData.year?.toString() || '');
+  setTextField('Year', formData.year?.toString() || '', 10);
+  setTextField('year', formData.year?.toString() || '', 10);
+  setTextField('Committee Year', formData.year?.toString() || '', 10);
+  setTextField('fin year', formData.year?.toString() || '', 10);
   
   // Main Club Contact Details (from club settings if available)
   if (clubData) {
     console.log('Attempting to populate Main Club Contact Details fields...');
     
-    // Club Postal Address
-    setTextField('Club Postal Address', clubData.postalAddress || '');
-    setTextField('club_postal_address', clubData.postalAddress || '');
-    setTextField('postal_address', clubData.postalAddress || '');
+    // Club Postal Address - use 'Address' field
+    setTextField('Address', clubData.postalAddress || '', 10);
     
-    // Site/Grounds Address (using physical address)
-    setTextField('Site/Grounds Address', clubData.physicalAddress || '');
-    setTextField('site_grounds_address', clubData.physicalAddress || '');
-    setTextField('grounds_address', clubData.physicalAddress || '');
-    setTextField('physical_address', clubData.physicalAddress || '');
+    // Site/Grounds Address - use 'Address1' field
+    setTextField('Address1', clubData.physicalAddress || '', 10);
     
-    // Club Email
-    setTextField('Club Email', clubData.email || '');
-    setTextField('club_email', clubData.email || '');
-    setTextField('email', clubData.email || '');
+    // Club Email - use 'Email' field (not Email1, that's for committee members)
+    setTextField('Email', clubData.email || '', 10);
     
-    // Club Colours
-    setTextField('Club Colours', clubData.clubColours || '');
-    setTextField('club_colours', clubData.clubColours || '');
-    setTextField('colours', clubData.clubColours || '');
+    // Club Colours - exact match from PDF
+    setTextField('club colours', clubData.clubColours || '', 10);
     
-    // CAV Incorporation Number
-    setTextField('CAV Incorporation number', clubData.cavIncorporationNumber || '');
-    setTextField('cav_incorporation_number', clubData.cavIncorporationNumber || '');
-    setTextField('incorporation_number', clubData.cavIncorporationNumber || '');
+    // CAV Incorporation Number - exact match from PDF
+    setTextField('incorp number', clubData.cavIncorporationNumber || '', 10);
     
-    // Club Rally Day
-    setTextField('Club Rally Day', clubData.rallyDay || '');
-    setTextField('club_rally_day', clubData.rallyDay || '');
-    setTextField('rally_day', clubData.rallyDay || '');
+    // Club Rally Day - exact match from PDF
+    setTextField('club rally day', clubData.rallyDay || '', 10);
     
     console.log('Finished attempting to populate club contact details');
   } else {
@@ -174,16 +176,16 @@ export async function generateCommitteeNominationPDF(options: CommitteeNominatio
   }
   
   // Submitter information (bottom of form)
-  setTextField('your name', submitterData.name || '');
-  setTextField('your position', 'Secretary');
+  setTextField('your name', submitterData.name || '', 10);
+  setTextField('your position', 'Secretary', 10);
   
   // District Commissioner - uses Name1, Email1, no, but Address2 (addresses are offset by 1)
   if (formData.districtCommissioner) {
-    setTextField('Commissioner', formData.districtCommissioner.name || '');
-    setTextField('Name1', formData.districtCommissioner.name || '');
-    setTextField('Address2', formData.districtCommissioner.address || '');
-    setTextField('Email1', formData.districtCommissioner.email || '');
-    setTextField('no', formData.districtCommissioner.mobile || '');
+    // Don't fill 'Commissioner' - it's just a header label
+    setTextField('Name1', formData.districtCommissioner.name || '', 10);
+    setTextField('Address2', formData.districtCommissioner.address || '', 10);
+    setTextField('Email1', formData.districtCommissioner.email || '', 10);
+    setTextField('no', formData.districtCommissioner.mobile || '', 10);
     
     // Set New or Existing checkbox
     setCheckbox('new', formData.districtCommissioner.isNewDC === true);
@@ -192,38 +194,38 @@ export async function generateCommitteeNominationPDF(options: CommitteeNominatio
   
   // President - uses Name2, Email2, no1, but Address3
   if (formData.president) {
-    setTextField('President', formData.president.name || '');
-    setTextField('Name2', formData.president.name || '');
-    setTextField('Address3', formData.president.address || '');
-    setTextField('Email2', formData.president.email || '');
-    setTextField('no1', formData.president.mobile || '');
+    // Don't fill 'President' - it's just a header label
+    setTextField('Name2', formData.president.name || '', 10);
+    setTextField('Address3', formData.president.address || '', 10);
+    setTextField('Email2', formData.president.email || '', 10);
+    setTextField('no1', formData.president.mobile || '', 10);
   }
   
   // Vice President - uses Name3, Email3, no2, but Address4
   if (formData.vicePresident) {
-    setTextField('President1', formData.vicePresident.name || '');
-    setTextField('Name3', formData.vicePresident.name || '');
-    setTextField('Address4', formData.vicePresident.address || '');
-    setTextField('Email3', formData.vicePresident.email || '');
-    setTextField('no2', formData.vicePresident.mobile || '');
+    // Don't fill 'President1' - it's just a header label
+    setTextField('Name3', formData.vicePresident.name || '', 10);
+    setTextField('Address4', formData.vicePresident.address || '', 10);
+    setTextField('Email3', formData.vicePresident.email || '', 10);
+    setTextField('no2', formData.vicePresident.mobile || '', 10);
   }
   
   // Secretary - uses Name4, Email4, no3, but Address5
   if (formData.secretary) {
-    setTextField('Secretary', formData.secretary.name || '');
-    setTextField('Name4', formData.secretary.name || '');
-    setTextField('Address5', formData.secretary.address || '');
-    setTextField('Email4', formData.secretary.email || '');
-    setTextField('no3', formData.secretary.mobile || '');
+    // Don't fill 'Secretary' - it's just a header label
+    setTextField('Name4', formData.secretary.name || '', 10);
+    setTextField('Address5', formData.secretary.address || '', 10);
+    setTextField('Email4', formData.secretary.email || '', 10);
+    setTextField('no3', formData.secretary.mobile || '', 10);
   }
   
   // Treasurer - uses Name5, Email5, no4, and Address6
   if (formData.treasurer) {
-    setTextField('Treasurer', formData.treasurer.name || '');
-    setTextField('Name5', formData.treasurer.name || '');
-    setTextField('Address6', formData.treasurer.address || '');
-    setTextField('Email5', formData.treasurer.email || '');
-    setTextField('no4', formData.treasurer.mobile || '');
+    // Don't fill 'Treasurer' - it's just a header label
+    setTextField('Name5', formData.treasurer.name || '', 10);
+    setTextField('Address6', formData.treasurer.address || '', 10);
+    setTextField('Email5', formData.treasurer.email || '', 10);
+    setTextField('no4', formData.treasurer.mobile || '', 10);
   }
   
   // Zone Representative
@@ -232,23 +234,23 @@ export async function generateCommitteeNominationPDF(options: CommitteeNominatio
     : ('zoneRepOther' in formData ? formData.zoneRepOther : null);
     
   if (zoneRep && zoneRep.name) {
-    setTextField('Zone Rep Name', zoneRep.name || '');
-    setTextField('zonerep_name', zoneRep.name || '');
-    setTextField('ZoneRep Name', zoneRep.name || '');
-    setTextField('Zone Representative', zoneRep.name || '');
+    setTextField('Zone Rep Name', zoneRep.name || '', 10);
+    setTextField('zonerep_name', zoneRep.name || '', 10);
+    setTextField('ZoneRep Name', zoneRep.name || '', 10);
+    setTextField('Zone Representative', zoneRep.name || '', 10);
     
-    setTextField('Zone Rep PC ID', zoneRep.ponyClubId || '');
-    setTextField('zonerep_pcid', zoneRep.ponyClubId || '');
-    setTextField('Zone Rep PCA Number', zoneRep.ponyClubId || '');
+    setTextField('Zone Rep PC ID', zoneRep.ponyClubId || '', 10);
+    setTextField('zonerep_pcid', zoneRep.ponyClubId || '', 10);
+    setTextField('Zone Rep PCA Number', zoneRep.ponyClubId || '', 10);
     
-    setTextField('Zone Rep Email', zoneRep.email || '');
-    setTextField('zonerep_email', zoneRep.email || '');
+    setTextField('Zone Rep Email', zoneRep.email || '', 10);
+    setTextField('zonerep_email', zoneRep.email || '', 10);
     
-    setTextField('Zone Rep Mobile', zoneRep.mobile || '');
-    setTextField('zonerep_mobile', zoneRep.mobile || '');
-    setTextField('Zone Rep Best Contact no:', zoneRep.mobile || '');
-    setTextField('zonerep_best_contact_no', zoneRep.mobile || '');
-    setTextField('ZoneRepBestContactNo', zoneRep.mobile || '');
+    setTextField('Zone Rep Mobile', zoneRep.mobile || '', 10);
+    setTextField('zonerep_mobile', zoneRep.mobile || '', 10);
+    setTextField('Zone Rep Best Contact no:', zoneRep.mobile || '', 10);
+    setTextField('zonerep_best_contact_no', zoneRep.mobile || '', 10);
+    setTextField('ZoneRepBestContactNo', zoneRep.mobile || '', 10);
   }
 
   // Flatten the form so fields become static text

@@ -46,6 +46,16 @@ export interface CommitteeNomination {
     phone: string;
   };
   
+  // Club contact details (for PDF)
+  clubContactDetails?: {
+    postalAddress: string;
+    physicalAddress: string;
+    email: string;
+    clubColours: string;
+    cavIncorporationNumber: string;
+    rallyDay: string;
+  };
+  
   districtCommissioner: DistrictCommissioner;
   president?: CommitteeMember;
   vicePresident?: CommitteeMember;
@@ -67,6 +77,16 @@ export interface CommitteeNominationFormData {
   year: number; // AGM year - derived from agmDate
   agmDate: string;
   effectiveDate: string;
+  
+  // Club contact details (for PDF)
+  clubContactDetails?: {
+    postalAddress: string;
+    physicalAddress: string;
+    email: string;
+    clubColours: string;
+    cavIncorporationNumber: string;
+    rallyDay: string;
+  };
   
   districtCommissioner: Omit<DistrictCommissioner, 'approvalStatus' | 'approvedBy' | 'approvedAt' | 'rejectionReason'> & { isNewDC: boolean };
   president?: CommitteeMember;

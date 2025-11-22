@@ -1,12 +1,10 @@
 import { PDFDocument, PDFFont, StandardFonts, rgb } from 'pdf-lib';
 import { CommitteeNomination, CommitteeNominationFormData } from '@/types/committee-nomination';
-import { Club } from '@/lib/types';
 import * as fs from 'fs';
 import * as path from 'path';
 
 export interface CommitteeNominationPDFOptions {
   formData: CommitteeNominationFormData | CommitteeNomination;
-  clubData?: Club; // Optional club data for Main Club Contact Details
   title?: string;
   submissionDate?: Date;
   referenceNumber?: string;
@@ -23,7 +21,7 @@ function formatDate(date: Date | string): string {
 }
 
 export async function generateCommitteeNominationPDF(options: CommitteeNominationPDFOptions): Promise<Buffer> {
-  const { formData, clubData, submissionDate = new Date() } = options;
+  const { formData, submissionDate = new Date() } = options;
 
   // Load the template PDF
   let templateBytes: ArrayBuffer;
@@ -74,15 +72,15 @@ export async function generateCommitteeNominationPDF(options: CommitteeNominatio
   // Get all field names (for debugging)
   const fields = form.getFields();
   console.log('PDF Form Fields:', fields.map(f => ({ name: f.getName(), type: f.constructor.name })));
-  console.log('Club data received for PDF:', clubData ? {
-    hasClubData: true,
-    postalAddress: clubData.postalAddress,
-    physicalAddress: clubData.physicalAddress,
-    email: clubData.email,
-    clubColours: clubData.clubColours,
-    cavIncorporationNumber: clubData.cavIncorporationNumber,
-    rallyDay: clubData.rallyDay
-  } : { hasClubData: false });
+  console.log('Club contact details in form data:', formData.clubContactDetails ? {
+    hasClubContactDetails: true,
+    postalAddress: formData.clubContactDetails.postalAddress,
+    physicalAddress: formData.clubContactDetails.physicalAddress,
+    email: formData.clubContactDetails.email,
+    clubColours: formData.clubContactDetails.clubColours,
+    cavIncorporationNumber: formData.clubContactDetails.cavIncorporationNumber,
+    rallyDay: formData.clubContactDetails.rallyDay
+  } : { hasClubContactDetails: false });
 
   // Helper function to safely set text field with font size
   const setTextField = (fieldName: string, value: string, fontSize: number = 10) => {
@@ -148,31 +146,31 @@ export async function generateCommitteeNominationPDF(options: CommitteeNominatio
   setTextField('Committee Year', formData.year?.toString() || '', 10);
   setTextField('fin year', formData.year?.toString() || '', 10);
   
-  // Main Club Contact Details (from club settings if available)
-  if (clubData) {
-    console.log('Attempting to populate Main Club Contact Details fields...');
+  // Main Club Contact Details (from formData.clubContactDetails if available)
+  if (formData.clubContactDetails) {
+    console.log('Attempting to populate Main Club Contact Details fields from form data...');
     
     // Club Postal Address - use 'Address' field
-    setTextField('Address', clubData.postalAddress || '', 10);
+    setTextField('Address', formData.clubContactDetails.postalAddress || '', 10);
     
     // Site/Grounds Address - use 'Address1' field
-    setTextField('Address1', clubData.physicalAddress || '', 10);
+    setTextField('Address1', formData.clubContactDetails.physicalAddress || '', 10);
     
     // Club Email - use 'Email' field (not Email1, that's for committee members)
-    setTextField('Email', clubData.email || '', 10);
+    setTextField('Email', formData.clubContactDetails.email || '', 10);
     
     // Club Colours - exact match from PDF
-    setTextField('club colours', clubData.clubColours || '', 10);
+    setTextField('club colours', formData.clubContactDetails.clubColours || '', 10);
     
     // CAV Incorporation Number - exact match from PDF
-    setTextField('incorp number', clubData.cavIncorporationNumber || '', 10);
+    setTextField('incorp number', formData.clubContactDetails.cavIncorporationNumber || '', 10);
     
     // Club Rally Day - exact match from PDF
-    setTextField('club rally day', clubData.rallyDay || '', 10);
+    setTextField('club rally day', formData.clubContactDetails.rallyDay || '', 10);
     
-    console.log('Finished attempting to populate club contact details');
+    console.log('Finished attempting to populate club contact details from form data');
   } else {
-    console.log('No club data available - Main Club Contact Details will be empty');
+    console.log('No club contact details in form data - Main Club Contact Details will be empty');
   }
   
   // Submitter information (bottom of form)

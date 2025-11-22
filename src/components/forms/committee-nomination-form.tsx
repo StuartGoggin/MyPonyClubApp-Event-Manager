@@ -34,6 +34,14 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
     year: initialData?.year || new Date().getFullYear(),
     agmDate: initialData?.agmDate || '',
     effectiveDate: initialData?.effectiveDate || '',
+    clubContactDetails: initialData?.clubContactDetails || {
+      postalAddress: '',
+      physicalAddress: '',
+      email: '',
+      clubColours: '',
+      cavIncorporationNumber: '',
+      rallyDay: '',
+    },
     districtCommissioner: initialData?.districtCommissioner || {
       name: '',
       ponyClubId: '',
@@ -126,6 +134,34 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
       }
     }
   }, [selectedUserData, clubs]);
+
+  // Load club contact details when club is selected
+  useEffect(() => {
+    const loadClubContactDetails = async () => {
+      if (!selectedClubId) return;
+      
+      try {
+        const response = await fetch(`/api/clubs/${selectedClubId}`);
+        if (response.ok) {
+          const club = await response.json();
+          setFormData(prev => ({
+            ...prev,
+            clubContactDetails: {
+              postalAddress: club.postalAddress || '',
+              physicalAddress: club.physicalAddress || '',
+              email: club.email || '',
+              clubColours: club.clubColours || '',
+              cavIncorporationNumber: club.cavIncorporationNumber || '',
+              rallyDay: club.rallyDay || '',
+            }
+          }));
+        }
+      } catch (error) {
+        console.error('Error loading club contact details:', error);
+      }
+    };
+    loadClubContactDetails();
+  }, [selectedClubId]);
 
   // Check if submitter section is complete
   useEffect(() => {
@@ -769,6 +805,132 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
           )}
         </CardContent>
       </Card>
+
+      {/* Club Contact Details - Only shown when club is selected */}
+      {selectedClubId && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Club Contact Details</CardTitle>
+            <CardDescription>
+              Review and update club contact information. This data defaults from your club settings but can be edited for this nomination.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Postal Address */}
+              <div className="space-y-2">
+                <Label htmlFor="clubPostalAddress">Club Postal Address</Label>
+                <Textarea
+                  id="clubPostalAddress"
+                  value={formData.clubContactDetails?.postalAddress || ''}
+                  onChange={(e) => setFormData(prev => ({
+                    ...prev,
+                    clubContactDetails: {
+                      ...prev.clubContactDetails!,
+                      postalAddress: e.target.value,
+                    }
+                  }))}
+                  placeholder="Enter club postal address"
+                  rows={3}
+                  className="resize-none"
+                />
+              </div>
+
+              {/* Physical Address */}
+              <div className="space-y-2">
+                <Label htmlFor="clubPhysicalAddress">Club Physical Address</Label>
+                <Textarea
+                  id="clubPhysicalAddress"
+                  value={formData.clubContactDetails?.physicalAddress || ''}
+                  onChange={(e) => setFormData(prev => ({
+                    ...prev,
+                    clubContactDetails: {
+                      ...prev.clubContactDetails!,
+                      physicalAddress: e.target.value,
+                    }
+                  }))}
+                  placeholder="Enter club physical address"
+                  rows={3}
+                  className="resize-none"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Email */}
+              <div className="space-y-2">
+                <Label htmlFor="clubEmail">Club Email</Label>
+                <Input
+                  id="clubEmail"
+                  type="email"
+                  value={formData.clubContactDetails?.email || ''}
+                  onChange={(e) => setFormData(prev => ({
+                    ...prev,
+                    clubContactDetails: {
+                      ...prev.clubContactDetails!,
+                      email: e.target.value,
+                    }
+                  }))}
+                  placeholder="club@example.com"
+                />
+              </div>
+
+              {/* Club Colours */}
+              <div className="space-y-2">
+                <Label htmlFor="clubColours">Club Colours</Label>
+                <Input
+                  id="clubColours"
+                  value={formData.clubContactDetails?.clubColours || ''}
+                  onChange={(e) => setFormData(prev => ({
+                    ...prev,
+                    clubContactDetails: {
+                      ...prev.clubContactDetails!,
+                      clubColours: e.target.value,
+                    }
+                  }))}
+                  placeholder="e.g., Royal Blue and White"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* CAV Incorporation Number */}
+              <div className="space-y-2">
+                <Label htmlFor="cavIncorporationNumber">CAV Incorporation Number</Label>
+                <Input
+                  id="cavIncorporationNumber"
+                  value={formData.clubContactDetails?.cavIncorporationNumber || ''}
+                  onChange={(e) => setFormData(prev => ({
+                    ...prev,
+                    clubContactDetails: {
+                      ...prev.clubContactDetails!,
+                      cavIncorporationNumber: e.target.value,
+                    }
+                  }))}
+                  placeholder="e.g., A1234567X"
+                />
+              </div>
+
+              {/* Rally Day */}
+              <div className="space-y-2">
+                <Label htmlFor="rallyDay">Rally Day</Label>
+                <Input
+                  id="rallyDay"
+                  value={formData.clubContactDetails?.rallyDay || ''}
+                  onChange={(e) => setFormData(prev => ({
+                    ...prev,
+                    clubContactDetails: {
+                      ...prev.clubContactDetails!,
+                      rallyDay: e.target.value,
+                    }
+                  }))}
+                  placeholder="e.g., Saturday"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Main Committee Nomination Form - Only shown when submitter is complete */}
       {isSubmitterComplete && (

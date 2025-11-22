@@ -24,6 +24,8 @@ export async function createCommitteeNomination(
       phone: formData.submitterPhone,
     },
     
+    clubContactDetails: formData.clubContactDetails,
+    
     districtCommissioner: {
       ...formData.districtCommissioner,
       approvalStatus: 'pending',

@@ -642,26 +642,49 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
         
         {/* What happens after submission */}
         <div className="mt-6 pt-6 border-t border-blue-200">
-          <p className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+          <p className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
             <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             After Submission:
           </p>
-          <ul className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-gray-600">
-            <li className="flex items-start gap-2">
-              <span className="text-green-500 font-bold">✓</span>
-              <span><strong>Instant Confirmation:</strong> You'll receive an email with a filled PDF form attached</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-blue-500 font-bold">✓</span>
-              <span><strong>PDF Includes:</strong> All committee details formatted in the official PCA template</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-purple-500 font-bold">✓</span>
-              <span><strong>Automatic Routing:</strong> Copy sent to your club and zone administrators for approval</span>
-            </li>
-          </ul>
+          <div className="space-y-3">
+            <div className="flex items-start gap-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center text-sm font-bold">
+                1
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-800">Email Confirmation</p>
+                <p className="text-xs text-gray-600 mt-1">
+                  You will receive an email confirmation containing the official <strong>SMZ Club Contacts Update Form</strong> as required by zone bylaws.
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-bold">
+                2
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-800">Zone Approval</p>
+                <p className="text-xs text-gray-600 mt-1">
+                  The SMZ Club Contacts Update Form will be sent to your zone for approval and ratification. This will take place at the zone meeting following your submission.
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-3 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-purple-500 text-white flex items-center justify-center text-sm font-bold">
+                3
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-800">District Commissioner Approval</p>
+                <p className="text-xs text-gray-600 mt-1">
+                  Your chosen District Commissioner must be approved and minuted at a zone meeting for that role to be officially recognised.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       

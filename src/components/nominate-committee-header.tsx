@@ -32,37 +32,6 @@ export function NominateCommitteeHeader() {
             </p>
           </div>
         </div>
-
-        {/* Info Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
-            <div className="flex items-center gap-3 text-white">
-              <Building className="h-5 w-5 text-blue-200" />
-              <div>
-                <p className="text-xs text-blue-200">Step 1</p>
-                <p className="font-semibold">Select Your Club</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
-            <div className="flex items-center gap-3 text-white">
-              <Calendar className="h-5 w-5 text-purple-200" />
-              <div>
-                <p className="text-xs text-purple-200">Step 2</p>
-                <p className="font-semibold">Enter AGM Details</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
-            <div className="flex items-center gap-3 text-white">
-              <Users2 className="h-5 w-5 text-indigo-200" />
-              <div>
-                <p className="text-xs text-indigo-200">Step 3</p>
-                <p className="font-semibold">Nominate Committee</p>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </Card>
   );

@@ -26,7 +26,17 @@ export async function POST(
 ) {
   try {
     const { id } = params;
-    const body = await request.json();
+    
+    // Parse body if present, otherwise use empty object
+    let body = {};
+    try {
+      const text = await request.text();
+      if (text) {
+        body = JSON.parse(text);
+      }
+    } catch (e) {
+      // No body or invalid JSON, use empty object
+    }
 
     // Check if booking exists
     const booking = await getBooking(id);
@@ -53,19 +63,29 @@ export async function POST(
 
     // TODO: Add authorization check for zone manager role
 
-    const approvedBy = body.approvedBy || 'system';
+    const approvedBy = (body as any).approvedBy || 'system';
 
     // Update booking status to approved
+    console.log('Updating booking:', id, 'with:', {
+      status: 'approved',
+      approvedBy,
+      approvedAt: new Date(),
+    });
+    
     await updateBooking(id, {
       status: 'approved',
       approvedBy,
       approvedAt: new Date(),
     });
 
+    console.log('Booking updated successfully, fetching updated booking...');
+    
     // TODO: Send approval notification email
     // TODO: Update adjacent bookings' handover details if needed
 
     const updated = await getBooking(id);
+    
+    console.log('Updated booking fetched:', updated?.bookingReference);
 
     return NextResponse.json({
       success: true,
@@ -74,6 +94,7 @@ export async function POST(
     });
   } catch (error) {
     console.error('Error approving booking:', error);
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack');
     return NextResponse.json(
       {
         success: false,

@@ -168,7 +168,7 @@ export function SingleEventForm({
         name={`events.${eventIndex}.eventLink`}
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Event Link (URL)</FormLabel>
+            <FormLabel>Event Link (URL) <span className="text-muted-foreground font-normal">(Optional)</span></FormLabel>
             <FormControl>
               <Input placeholder="https://example.com/event" type="url" {...field} />
             </FormControl>

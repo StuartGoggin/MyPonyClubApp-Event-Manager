@@ -25,7 +25,17 @@ export async function POST(
 ) {
   try {
     const { id } = params;
-    const body = await request.json();
+    
+    // Parse body safely
+    let body: any = {};
+    try {
+      const text = await request.text();
+      if (text) {
+        body = JSON.parse(text);
+      }
+    } catch (e) {
+      // Invalid JSON
+    }
 
     // Check if booking exists
     const booking = await getBooking(id);

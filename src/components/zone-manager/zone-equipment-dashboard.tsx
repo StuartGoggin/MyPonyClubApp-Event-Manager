@@ -46,6 +46,7 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
     name: '',
     category: '',
     description: '',
+    icon: '',
     hirePrice: 0,
     depositRequired: 0,
     bondAmount: 0,
@@ -121,6 +122,7 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
       name: '',
       category: '',
       description: '',
+      icon: '',
       hirePrice: 0,
       depositRequired: 0,
       bondAmount: 0,
@@ -136,6 +138,7 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
       name: item.name,
       category: item.category,
       description: item.description || '',
+      icon: item.icon || '',
       hirePrice: item.basePricePerDay, // Use basePricePerDay as hirePrice for backward compatibility
       depositRequired: item.depositRequired,
       bondAmount: item.bondAmount || 0,
@@ -382,13 +385,23 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
                     </TableCell>
                   </TableRow>
                 ) : (
-                  bookings.map((booking) => (
+                  bookings.map((booking) => {
+                    const pickupDate = booking.pickupDate ? new Date(booking.pickupDate) : null;
+                    const returnDate = booking.returnDate ? new Date(booking.returnDate) : null;
+                    const isValidPickup = pickupDate && !isNaN(pickupDate.getTime());
+                    const isValidReturn = returnDate && !isNaN(returnDate.getTime());
+                    
+                    return (
                     <TableRow key={booking.id}>
                       <TableCell className="font-medium">{booking.equipmentName}</TableCell>
                       <TableCell>{booking.clubName}</TableCell>
-                      <TableCell>{booking.eventName}</TableCell>
+                      <TableCell className="text-muted-foreground">{booking.eventName || '-'}</TableCell>
                       <TableCell className="text-sm">
-                        {format(new Date(booking.pickupDate), 'MMM d')} - {format(new Date(booking.returnDate), 'MMM d, yyyy')}
+                        {isValidPickup && isValidReturn ? (
+                          `${format(pickupDate, 'MMM d')} - ${format(returnDate, 'MMM d, yyyy')}`
+                        ) : (
+                          'Invalid date'
+                        )}
                       </TableCell>
                       <TableCell>
                         <Badge variant={getStatusBadgeVariant(booking.status)}>
@@ -426,7 +439,8 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
                         </Button>
                       </TableCell>
                     </TableRow>
-                  ))
+                  );
+                  })
                 )}
               </TableBody>
             </Table>
@@ -488,6 +502,18 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
                 value={equipmentForm.description}
                 onChange={(e) => setEquipmentForm({ ...equipmentForm, description: e.target.value })}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="icon">Icon (Emoji)</Label>
+              <Input
+                id="icon"
+                value={equipmentForm.icon}
+                onChange={(e) => setEquipmentForm({ ...equipmentForm, icon: e.target.value })}
+                placeholder="e.g., 🏇 🎪 🚚 🎤 ⛺"
+                maxLength={4}
+              />
+              <p className="text-sm text-muted-foreground">Choose an emoji to represent this equipment on the calendar</p>
             </div>
 
             <div className="space-y-2">
@@ -614,11 +640,19 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-muted-foreground">Pickup Date</Label>
-                  <p>{format(new Date(selectedBooking.pickupDate), 'PPP')}</p>
+                  <p>
+                    {selectedBooking.pickupDate && !isNaN(new Date(selectedBooking.pickupDate).getTime())
+                      ? format(new Date(selectedBooking.pickupDate), 'PPP')
+                      : 'Invalid date'}
+                  </p>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Return Date</Label>
-                  <p>{format(new Date(selectedBooking.returnDate), 'PPP')}</p>
+                  <p>
+                    {selectedBooking.returnDate && !isNaN(new Date(selectedBooking.returnDate).getTime())
+                      ? format(new Date(selectedBooking.returnDate), 'PPP')
+                      : 'Invalid date'}
+                  </p>
                 </div>
               </div>
 

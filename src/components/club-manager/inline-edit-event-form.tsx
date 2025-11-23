@@ -249,7 +249,7 @@ export function InlineEditEventForm({
 
           {/* Event Link */}
           <div>
-            <Label htmlFor="eventLink" className="text-sm font-medium">Event Link (URL)</Label>
+            <Label htmlFor="eventLink" className="text-sm font-medium">Event Link (URL) <span className="text-muted-foreground font-normal">(Optional)</span></Label>
             <Input
               id="eventLink"
               type="url"

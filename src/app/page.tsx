@@ -5,6 +5,8 @@ import Image from 'next/image';
 import { EventCalendar } from '@/components/dashboard/event-calendar';
 import { Event, Club, EventType, Zone } from '@/lib/types';
 import { useAuth } from '@/contexts/auth-context';
+import { useAtom } from 'jotai';
+import { eventSourceAtom } from '@/lib/state';
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -15,6 +17,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [databaseWarning, setDatabaseWarning] = useState<string | null>(null);
+  const [eventSources] = useAtom(eventSourceAtom);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -23,12 +26,20 @@ export default function DashboardPage() {
         setError(null);
 
         // Fetch all data from APIs
-        const [zonesResponse, clubsResponse, eventsResponse, eventTypesResponse] = await Promise.all([
+        const requests = [
           fetch('/api/zones', { cache: 'no-store' }),
           fetch('/api/clubs', { cache: 'no-store' }),
           fetch('/api/events', { cache: 'no-store' }),
           fetch('/api/event-types', { cache: 'no-store' })
-        ]);
+        ];
+
+        // Conditionally fetch equipment bookings if that source is enabled
+        if (eventSources.includes('equipment_booking')) {
+          requests.push(fetch('/api/calendar/equipment-bookings', { cache: 'no-store' }));
+        }
+
+        const responses = await Promise.all(requests);
+        const [zonesResponse, clubsResponse, eventsResponse, eventTypesResponse, equipmentResponse] = responses;
 
         // Handle responses with error checking
         const zonesData = zonesResponse.ok ? await zonesResponse.json() : { zones: [] };
@@ -61,13 +72,25 @@ export default function DashboardPage() {
 
         // Extract arrays from API responses, ensuring they are always arrays
         const extractedEvents = Array.isArray(eventsData.events) ? eventsData.events : Array.isArray(eventsData) ? eventsData : [];
+        
+        // Fetch and merge equipment bookings if enabled
+        let equipmentEvents: Event[] = [];
+        if (equipmentResponse) {
+          const equipmentData = equipmentResponse.ok ? await equipmentResponse.json() : { data: [] };
+          equipmentEvents = Array.isArray(equipmentData.data) ? equipmentData.data : [];
+          console.log('📦 Equipment bookings loaded:', equipmentEvents.length);
+        }
+        
+        // Merge regular events with equipment booking events
+        const allEvents = [...extractedEvents, ...equipmentEvents];
+        
         setZones(Array.isArray(zonesData.zones) ? zonesData.zones : Array.isArray(zonesData) ? zonesData : []);
         setClubs(Array.isArray(clubsData.clubs) ? clubsData.clubs : Array.isArray(clubsData) ? clubsData : []);
-        setEvents(extractedEvents);
+        setEvents(allEvents);
         setEventTypes(Array.isArray(eventTypesData.eventTypes) ? eventTypesData.eventTypes : Array.isArray(eventTypesData) ? eventTypesData : []);
         
-        console.log('📅 Calendar - Total events loaded:', extractedEvents.length);
-        console.log('🎯 Calendar - State events (no zoneId/clubId):', extractedEvents.filter((e: Event) => !e.zoneId && !e.clubId));
+        console.log('📅 Calendar - Total events loaded:', allEvents.length);
+        console.log('🎯 Calendar - State events (no zoneId/clubId):', allEvents.filter((e: Event) => !e.zoneId && !e.clubId));
 
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
@@ -78,7 +101,7 @@ export default function DashboardPage() {
     };
 
     fetchData();
-  }, []);
+  }, [eventSources]); // Re-fetch when event sources change
 
   if (loading) {
     return (

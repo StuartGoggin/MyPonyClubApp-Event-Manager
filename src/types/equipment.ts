@@ -73,6 +73,7 @@ export interface EquipmentItem {
   
   // Images
   images: string[]; // URLs to equipment photos
+  icon?: string; // Emoji or icon representing the equipment (e.g., 🏇, 🎪, 🚚)
   
   // Maintenance
   maintenanceSchedule?: MaintenanceSchedule;
@@ -458,6 +459,7 @@ export interface CreateEquipmentRequest {
   name: string;
   category: EquipmentCategory;
   description: string;
+  icon?: string;
   quantity: number;
   basePricePerDay: number;
   basePricePerWeek: number;

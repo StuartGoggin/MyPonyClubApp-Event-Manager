@@ -481,6 +481,19 @@ export async function createBooking(
       throw new Error('Equipment not found');
     }
 
+    // Get club details
+    const clubDoc = await db.collection('clubs').doc(request.clubId).get();
+    const clubData = clubDoc.exists ? clubDoc.data() : null;
+    const clubName = clubData?.name || 'Unknown Club';
+
+    // Get event details if linked
+    let eventName: string | undefined;
+    if (request.linkedEventId) {
+      const eventDoc = await db.collection('evEvents').doc(request.linkedEventId).get();
+      const eventData = eventDoc.exists ? eventDoc.data() : null;
+      eventName = eventData?.title || undefined;
+    }
+
     // Calculate duration
     const durationDays = differenceInDays(request.returnDate, request.pickupDate);
 
@@ -508,9 +521,9 @@ export async function createBooking(
       zoneId: equipment.zoneId,
       zoneName: equipment.zoneName || '',
       clubId: request.clubId,
-      clubName: '', // Will be populated from club data
+      clubName: clubName,
       linkedEventId: request.linkedEventId,
-      eventName: undefined,
+      eventName: eventName,
       requestedDate: new Date(),
       pickupDate: request.pickupDate,
       returnDate: request.returnDate,
@@ -523,7 +536,7 @@ export async function createBooking(
         latitude: request.useLocation.coordinates.latitude,
         longitude: request.useLocation.coordinates.longitude,
         address: request.useLocation.address,
-        eventName: request.eventName,
+        eventName: eventName,
       },
       status: 'pending',
       requestedBy,
@@ -560,7 +573,20 @@ export async function getBooking(bookingId: string): Promise<EquipmentBooking | 
       return null;
     }
 
-    return { id: doc.id, ...doc.data() } as EquipmentBooking;
+    const data = doc.data();
+    return {
+      id: doc.id,
+      ...data,
+      // Convert Firestore Timestamps to Date objects
+      requestedDate: data?.requestedDate?.toDate?.() || data?.requestedDate,
+      pickupDate: data?.pickupDate?.toDate?.() || data?.pickupDate,
+      returnDate: data?.returnDate?.toDate?.() || data?.returnDate,
+      actualPickupDate: data?.actualPickupDate?.toDate?.() || data?.actualPickupDate,
+      actualReturnDate: data?.actualReturnDate?.toDate?.() || data?.actualReturnDate,
+      approvedAt: data?.approvedAt?.toDate?.() || data?.approvedAt,
+      createdAt: data?.createdAt?.toDate?.() || data?.createdAt,
+      updatedAt: data?.updatedAt?.toDate?.() || data?.updatedAt,
+    } as EquipmentBooking;
   } catch (error) {
     console.error('Error getting booking:', error);
     throw error;
@@ -596,10 +622,22 @@ export async function listBookings(filters?: {
     }
 
     const snapshot = await query.orderBy('pickupDate', 'desc').get();
-    return snapshot.docs.map((doc: any) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as EquipmentBooking[];
+    return snapshot.docs.map((doc: any) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        // Convert Firestore Timestamps to ISO strings for serialization
+        requestedDate: data.requestedDate?.toDate?.() || data.requestedDate,
+        pickupDate: data.pickupDate?.toDate?.() || data.pickupDate,
+        returnDate: data.returnDate?.toDate?.() || data.returnDate,
+        actualPickupDate: data.actualPickupDate?.toDate?.() || data.actualPickupDate,
+        actualReturnDate: data.actualReturnDate?.toDate?.() || data.actualReturnDate,
+        approvedAt: data.approvedAt?.toDate?.() || data.approvedAt,
+        createdAt: data.createdAt?.toDate?.() || data.createdAt,
+        updatedAt: data.updatedAt?.toDate?.() || data.updatedAt,
+      };
+    }) as EquipmentBooking[];
   } catch (error) {
     console.error('Error listing bookings:', error);
     throw error;

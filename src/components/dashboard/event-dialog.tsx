@@ -27,7 +27,9 @@ import {
   Building2,
   XCircle,
   Navigation,
-  ExternalLink
+  ExternalLink,
+  Package,
+  Truck
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import React from 'react';
@@ -65,19 +67,21 @@ export function EventDialog({
   if (!event) return null;
   
   // Only require club for club-level events
-  // State, Zone, Equestrian Victoria, and EV Scraper events don't need a club
+  // State, Zone, Equestrian Victoria, EV Scraper, and Equipment Booking events don't need a club
   const requiresClub = event.source !== 'public_holiday' && 
                        event.source !== 'state' && 
                        event.source !== 'zone' && 
                        event.source !== 'equestrian_victoria' &&
-                       event.source !== 'ev_scraper';
+                       event.source !== 'ev_scraper' &&
+                       event.source !== 'equipment_booking';
   
   if (requiresClub && !club) return null;
   
-  // For EV events and public holidays, eventType may not exist - that's okay
+  // For EV events, public holidays, and equipment bookings, eventType may not exist - that's okay
   const requiresEventType = event.status !== 'ev_event' && 
                             event.status !== 'public_holiday' &&
-                            event.source !== 'public_holiday';
+                            event.source !== 'public_holiday' &&
+                            event.source !== 'equipment_booking';
   
   if (requiresEventType && !eventType) return null;
 
@@ -231,20 +235,101 @@ export function EventDialog({
         </DialogHeader>
         
         <div className="space-y-4 py-4">
-          {/* Main Event Info Card */}
-          <div className="bg-muted/20 p-4 rounded-lg space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Tag className="h-4 w-4" />
-                <span>{eventType?.name || (event.status === 'ev_event' ? 'EV Event' : 'Event')}</span>
-                {event.isQualifier && (
-                  <Badge variant="secondary" className="ml-2">
-                    <Award className="h-3 w-3 mr-1" />
-                    Qualifier
-                  </Badge>
-                )}
+          {/* Equipment Booking Info - Show for equipment bookings */}
+          {event.source === 'equipment_booking' && event.metadata && (
+            <div className="bg-orange-50 border border-orange-200 p-4 rounded-lg space-y-3">
+              <div className="flex items-center gap-2 font-semibold text-orange-900">
+                <Package className="h-5 w-5" />
+                Equipment Hire Details
               </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <div className="text-sm text-orange-700 font-medium mb-1">Equipment</div>
+                  <div className="flex items-center gap-2">
+                    {(event.metadata as any).equipmentIcon && (
+                      <span className="text-xl">{(event.metadata as any).equipmentIcon}</span>
+                    )}
+                    <span className="font-semibold text-orange-900">
+                      {(event.metadata as any).equipmentName || 'Unknown'}
+                    </span>
+                  </div>
+                </div>
+                
+                <div>
+                  <div className="text-sm text-orange-700 font-medium mb-1">Booking Reference</div>
+                  <div className="font-mono text-sm text-orange-900">
+                    {(event.metadata as any).bookingReference || 'N/A'}
+                  </div>
+                </div>
+                
+                <div>
+                  <div className="text-sm text-orange-700 font-medium mb-1">Hire Period</div>
+                  <div className="text-sm text-orange-900">
+                    {(event.metadata as any).pickupDate && (event.metadata as any).returnDate ? (
+                      <>
+                        {format(new Date((event.metadata as any).pickupDate), 'PP')} - {format(new Date((event.metadata as any).returnDate), 'PP')}
+                      </>
+                    ) : 'N/A'}
+                  </div>
+                </div>
+                
+                <div>
+                  <div className="text-sm text-orange-700 font-medium mb-1">Status</div>
+                  <Badge variant="secondary" className="bg-orange-100 text-orange-800 border-orange-200">
+                    <Truck className="h-3 w-3 mr-1" />
+                    {(event.metadata as any).bookingStatus || 'Active'}
+                  </Badge>
+                </div>
+              </div>
+              
+              {(event.metadata as any).custodianName && (
+                <div className="pt-2 border-t border-orange-200">
+                  <div className="text-sm text-orange-700 font-medium mb-1">Custodian</div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-sm text-orange-900">
+                      <User className="h-3 w-3" />
+                      {(event.metadata as any).custodianName}
+                    </div>
+                    {(event.metadata as any).custodianEmail && (
+                      <div className="flex items-center gap-2 text-sm text-orange-700">
+                        <Mail className="h-3 w-3" />
+                        <a href={`mailto:${(event.metadata as any).custodianEmail}`} className="hover:underline">
+                          {(event.metadata as any).custodianEmail}
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+              
+              {event.location && (
+                <div className="pt-2 border-t border-orange-200">
+                  <div className="text-sm text-orange-700 font-medium mb-1">Location</div>
+                  <div className="flex items-center gap-2 text-sm text-orange-900">
+                    <MapPin className="h-3 w-3" />
+                    {event.location}
+                  </div>
+                </div>
+              )}
             </div>
+          )}
+
+          {/* Main Event Info Card - Only show for non-equipment events */}
+          {event.source !== 'equipment_booking' && (
+            <div className="bg-muted/20 p-4 rounded-lg space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Tag className="h-4 w-4" />
+                  <span>{eventType?.name || (event.status === 'ev_event' ? 'EV Event' : 'Event')}</span>
+                  {event.isQualifier && (
+                    <Badge variant="secondary" className="ml-2">
+                      <Award className="h-3 w-3 mr-1" />
+                      Qualifier
+                    </Badge>
+                  )}
+                </div>
+              </div>
             
             {event.location && (
               <div className="flex items-center gap-2 text-sm">
@@ -268,16 +353,18 @@ export function EventDialog({
               </div>
             )}
           </div>
+          )}
 
-          {/* Organization & Contact Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Organization Card */}
-            {(club || zone) && (
-              <div className="bg-muted/20 p-4 rounded-lg">
-                <div className="flex items-center gap-2 font-medium text-foreground mb-3">
-                  <Building2 className="h-4 w-4" />
-                  Organization
-                </div>
+          {/* Organization & Contact Cards - Only show for non-equipment events */}
+          {event.source !== 'equipment_booking' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Organization Card */}
+              {(club || zone) && (
+                <div className="bg-muted/20 p-4 rounded-lg">
+                  <div className="flex items-center gap-2 font-medium text-foreground mb-3">
+                    <Building2 className="h-4 w-4" />
+                    Organization
+                  </div>
                 <div className="space-y-2">
                   {club && (
                     <div>
@@ -350,6 +437,7 @@ export function EventDialog({
               </div>
             )}
           </div>
+          )}
 
           {/* Notes */}
           {event.notes && (
@@ -362,7 +450,7 @@ export function EventDialog({
           )}
           
           {/* Nearby Events Warning */}
-          {nearbyEvents.length > 0 && (
+          {nearbyEvents.length > 0 && event.source !== 'equipment_booking' && (
             <div className="border-t pt-4">
               <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">

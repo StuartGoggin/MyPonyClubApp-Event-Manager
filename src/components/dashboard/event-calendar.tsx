@@ -21,7 +21,7 @@ import {
   addDays,
   getDaysInMonth,
 } from 'date-fns';
-import { ChevronLeft, ChevronRight, ChevronDown, CheckCircle, Clock, Pin, Route, FerrisWheel, AlertCircle, Database } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, CheckCircle, Clock, Pin, Route, FerrisWheel, AlertCircle, Database, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -442,6 +442,22 @@ export function EventCalendar({
                         Holidays
                       </Label>
                     </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="pdf-source-equipment" 
+                        checked={pdfEventSources.includes('equipment_booking')}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setPdfEventSources([...pdfEventSources, 'equipment_booking']);
+                          } else {
+                            setPdfEventSources(pdfEventSources.filter(s => s !== 'equipment_booking'));
+                          }
+                        }}
+                      />
+                      <Label htmlFor="pdf-source-equipment" className="text-sm font-medium cursor-pointer">
+                        Equipment
+                      </Label>
+                    </div>
                   </div>
                 </div>
 
@@ -826,6 +842,22 @@ export function EventCalendar({
                         <FerrisWheel className="h-3.5 w-3.5" /> Holidays
                       </Label>
                     </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="source-equipment" 
+                        checked={eventSources.includes('equipment_booking')}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setEventSources([...eventSources, 'equipment_booking']);
+                          } else {
+                            setEventSources(eventSources.filter(s => s !== 'equipment_booking'));
+                          }
+                        }}
+                      />
+                      <Label htmlFor="source-equipment" className="text-sm font-medium cursor-pointer flex items-center gap-1.5">
+                        <Database className="h-3.5 w-3.5" /> Equipment
+                      </Label>
+                    </div>
                   </div>
                 </div>
             )}
@@ -1052,6 +1084,8 @@ const CalendarGrid = ({
                               key={event.id || i}
                               className={cn(
                                 "rounded-lg sm:rounded-xl shadow-sm border p-1 sm:p-2 text-left transition hover:ring-2 hover:ring-primary inline-block max-w-full",
+                                // Equipment bookings get teal/cyan background
+                                event.source === 'equipment_booking' ? "bg-gradient-to-br from-yellow-50 to-orange-50 hover:from-yellow-100 hover:to-orange-100 border-orange-300" :
                                 // Zone events get distinctive brighter background
                                 event.zoneId && !event.clubId ? "bg-gradient-to-br from-blue-100 to-indigo-100 hover:from-blue-200 hover:to-indigo-200 border-blue-300" :
                                 // EV events get purple background
@@ -1063,6 +1097,7 @@ const CalendarGrid = ({
                                 (event.status === 'public_holiday' || event.source === 'public_holiday') ? 'event-holiday' :
                                 event.status === 'rejected' ? 'event-rejected' :
                                 event.status === 'ev_event' ? 'event-default' :
+                                event.source === 'equipment_booking' ? 'event-equipment' :
                                 'event-default',
                                 isYearView ? "text-xs" : "text-sm"
                               )}
@@ -1072,7 +1107,8 @@ const CalendarGrid = ({
                                 {/* Left side content */}
                                 <div className="flex-1 min-w-0 flex items-start gap-1 sm:gap-1.5">
                                   <div className="flex-shrink-0 pt-0.5">
-                                    {event.status === 'approved' ? <CheckCircle className={cn("h-2.5 w-2.5 sm:h-3 sm:w-3 text-primary flex-shrink-0", { "h-2 w-2": isYearView })}/> :
+                                    {event.source === 'equipment_booking' ? <Package className={cn("h-2.5 w-2.5 sm:h-3 sm:w-3 text-orange-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
+                                     event.status === 'approved' ? <CheckCircle className={cn("h-2.5 w-2.5 sm:h-3 sm:w-3 text-primary flex-shrink-0", { "h-2 w-2": isYearView })}/> :
                                      event.status === 'proposed' ? <AlertCircle className={cn("h-2.5 w-2.5 sm:h-3 sm:w-3 text-amber-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
                                      (event.status === 'public_holiday' || event.source === 'public_holiday') ? <FerrisWheel className={cn("h-2.5 w-2.5 sm:h-3 sm:w-3 text-white flex-shrink-0", { "h-2 w-2": isYearView })}/> :
                                      event.status === 'rejected' ? <Clock className={cn("h-2.5 w-2.5 sm:h-3 sm:w-3 text-red-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
@@ -1082,6 +1118,7 @@ const CalendarGrid = ({
                                   <div className="flex-1 min-w-0 space-y-0.5">
                                     <div className={cn("font-medium leading-tight truncate", 
                                       isYearView ? "text-[10px]" : "text-[9px] sm:text-xs",
+                                      event.source === 'equipment_booking' ? 'text-orange-800 font-semibold' :
                                       event.status === 'approved' ? 'text-primary' : 
                                       event.status === 'proposed' ? 'text-amber-800' :
                                       (event.status === 'public_holiday' || event.source === 'public_holiday') ? 'text-white font-bold' :
@@ -1099,14 +1136,21 @@ const CalendarGrid = ({
                                       </div>
                                     )}
                                     <div className="flex">
-                                      {event.status === 'proposed' && (
+                                      {event.source === 'equipment_booking' && (event.metadata as any)?.equipmentName && (
+                                        <span className={cn("inline-flex items-center rounded-full font-medium bg-orange-100 text-orange-800 border border-orange-200",
+                                          isYearView ? "px-1 py-0.5 text-[7px]" : "px-1 sm:px-1.5 py-0.5 text-[7px] sm:text-[8px]"
+                                        )}>
+                                          {(event.metadata as any).equipmentName}
+                                        </span>
+                                      )}
+                                      {event.source !== 'equipment_booking' && event.status === 'proposed' && (
                                         <span className={cn("inline-flex items-center rounded-full font-medium bg-amber-100 text-amber-700 border border-amber-200",
                                           isYearView ? "px-1 py-0.5 text-[7px]" : "px-1 sm:px-1.5 py-0.5 text-[7px] sm:text-[8px]"
                                         )}>
                                           Pending
                                         </span>
                                       )}
-                                      {event.status === 'approved' && (
+                                      {event.source !== 'equipment_booking' && event.status === 'approved' && (
                                         <span className={cn("inline-flex items-center rounded-full font-medium bg-green-100 text-green-700 border border-green-200",
                                           isYearView ? "px-1 py-0.5 text-[7px]" : "px-1 sm:px-1.5 py-0.5 text-[7px] sm:text-[8px]"
                                         )}>

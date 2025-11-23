@@ -306,7 +306,7 @@ export function ZoneEventSubmission({
             {/* Event Link */}
             <div className="space-y-2">
               <Label htmlFor="eventLink" className="text-sm font-semibold">
-                Event Link (URL)
+                Event Link (URL) <span className="text-muted-foreground font-normal">(Optional)</span>
               </Label>
               <Input
                 id="eventLink"

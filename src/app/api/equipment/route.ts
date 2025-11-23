@@ -78,6 +78,7 @@ export async function POST(request: NextRequest) {
       name: body.name,
       category: body.category,
       description: body.description || '',
+      icon: body.icon || '',
       quantity: body.quantity,
       basePricePerDay: body.hirePrice || body.basePricePerDay || 0, // Store hirePrice as basePricePerDay
       basePricePerWeek: 0, // Not used - pricing is per hire

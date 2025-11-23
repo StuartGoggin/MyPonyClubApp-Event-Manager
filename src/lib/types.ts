@@ -203,7 +203,7 @@ export interface EventType {
 }
 
 export type EventStatus = 'proposed' | 'approved' | 'rejected' | 'public_holiday' | 'ev_event';
-export type EventSource = 'pca' | 'zone' | 'state' | 'equestrian_victoria' | 'public_holiday' | 'ev_scraper';
+export type EventSource = 'pca' | 'zone' | 'state' | 'equestrian_victoria' | 'public_holiday' | 'ev_scraper' | 'equipment_booking';
 export type EventScheduleStatus = 'missing' | 'pending' | 'approved' | 'rejected';
 
 export interface AIReviewIssue {

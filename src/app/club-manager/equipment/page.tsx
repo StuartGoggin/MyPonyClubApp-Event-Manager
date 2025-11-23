@@ -13,6 +13,7 @@ export default function EquipmentPage() {
     zoneName: string;
     clubId: string;
     clubName: string;
+    clubLocation: string;
     userEmail: string;
     userName: string;
     userPhone: string;
@@ -45,11 +46,28 @@ export default function EquipmentPage() {
           return fetch(`/api/zones/${zoneId}`)
             .then(res => res.json())
             .then(zoneData => {
+              // Build club location string from address object or use physicalAddress
+              let clubLocation = '';
+              if (clubData.address && typeof clubData.address === 'object') {
+                const addr = clubData.address;
+                const parts = [
+                  addr.address1,
+                  addr.address2,
+                  addr.town,
+                  addr.postcode,
+                  addr.county
+                ].filter(Boolean);
+                clubLocation = parts.join(', ');
+              } else if (clubData.physicalAddress) {
+                clubLocation = clubData.physicalAddress;
+              }
+              
               setCatalogData({
                 zoneId,
                 zoneName: zoneData.name || 'Unknown Zone',
                 clubId,
                 clubName: clubData.name || 'Unknown Club',
+                clubLocation,
                 userEmail: user.email || '',
                 userName: `${user.firstName} ${user.lastName}`,
                 userPhone: (user as any).phone || '',

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,6 +22,7 @@ interface EquipmentCatalogProps {
   zoneName: string;
   clubId: string;
   clubName: string;
+  clubLocation: string;
   userEmail: string;
   userName: string;
   userPhone: string;
@@ -32,6 +33,7 @@ export function EquipmentCatalog({
   zoneName,
   clubId,
   clubName,
+  clubLocation,
   userEmail,
   userName,
   userPhone,
@@ -45,18 +47,40 @@ export function EquipmentCatalog({
   const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
   
   // Booking form state
+  const [custodianName, setCustodianName] = useState(userName || '');
+  const [custodianEmail, setCustodianEmail] = useState(userEmail || '');
+  const [custodianPhone, setCustodianPhone] = useState(userPhone || '');
+  const [selectedClubName, setSelectedClubName] = useState(clubName || '');
   const [pickupDate, setPickupDate] = useState<Date>();
   const [returnDate, setReturnDate] = useState<Date>();
   const [eventName, setEventName] = useState('');
-  const [eventLocation, setEventLocation] = useState('');
+  const [eventLocation, setEventLocation] = useState(clubLocation || '');
   const [useLocation, setUseLocation] = useState('');
   const [specialRequirements, setSpecialRequirements] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Name autocomplete state
+  const [nameSearchTerm, setNameSearchTerm] = useState('');
+  const [showNameSuggestions, setShowNameSuggestions] = useState(false);
+  const [availableNames, setAvailableNames] = useState<any[]>([]);
+  const [isLoadingNames, setIsLoadingNames] = useState(false);
+  const nameAutocompleteRef = useRef<HTMLDivElement>(null);
 
   // Fetch equipment
   useEffect(() => {
     fetchEquipment();
   }, [zoneId]);
+
+  // Close name suggestions when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (nameAutocompleteRef.current && !nameAutocompleteRef.current.contains(event.target as Node)) {
+        setShowNameSuggestions(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const fetchEquipment = async () => {
     try {
@@ -83,6 +107,105 @@ export function EquipmentCatalog({
     }
   };
 
+  // Fetch user names for autocomplete
+  const fetchUserNames = async (searchTerm: string) => {
+    if (searchTerm.length < 2) {
+      setAvailableNames([]);
+      return;
+    }
+
+    setIsLoadingNames(true);
+    try {
+      const response = await fetch(`/api/users/names?search=${encodeURIComponent(searchTerm)}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setAvailableNames(data.results || []);
+      }
+    } catch (error) {
+      console.error('Error fetching user names:', error);
+      setAvailableNames([]);
+    } finally {
+      setIsLoadingNames(false);
+    }
+  };
+
+  // Handle name input changes
+  const handleNameInputChange = (value: string) => {
+    setNameSearchTerm(value);
+    setCustodianName(value);
+    setShowNameSuggestions(value.length >= 2);
+    
+    // Debounce the API call
+    if (value.length >= 2) {
+      const timeoutId = setTimeout(() => {
+        fetchUserNames(value);
+      }, 300);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  };
+
+  // Handle name selection from suggestions
+  const handleNameSelection = async (selectedResult: any) => {
+    setNameSearchTerm(selectedResult.name);
+    setCustodianName(selectedResult.name);
+    setShowNameSuggestions(false);
+    
+    // Auto-populate contact details if available
+    if (selectedResult.user) {
+      if (selectedResult.user.email) {
+        setCustodianEmail(selectedResult.user.email);
+      }
+      if (selectedResult.user.mobileNumber) {
+        setCustodianPhone(selectedResult.user.mobileNumber);
+      }
+      
+      // Auto-populate club if user has a club association
+      if (selectedResult.user.clubId || selectedResult.clubId) {
+        const userClubId = selectedResult.user.clubId || selectedResult.clubId;
+        try {
+          const clubResponse = await fetch(`/api/clubs/${userClubId}`);
+          const clubData = await clubResponse.json();
+          if (clubData && clubData.name) {
+            setSelectedClubName(clubData.name);
+            
+            // Update event location with user's club location
+            if (clubData.address && typeof clubData.address === 'object') {
+              const addr = clubData.address;
+              const parts = [
+                addr.address1,
+                addr.address2,
+                addr.town,
+                addr.postcode,
+                addr.county
+              ].filter(Boolean);
+              const newClubLocation = parts.join(', ');
+              if (newClubLocation) {
+                setEventLocation(newClubLocation);
+              }
+            } else if (clubData.physicalAddress) {
+              setEventLocation(clubData.physicalAddress);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching club data:', error);
+        }
+      }
+    }
+  };
+
+  // Handle name input keyboard events
+  const handleNameKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      setShowNameSuggestions(false);
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setShowNameSuggestions(true);
+    }
+  };
+
   // Filter equipment
   const filteredEquipment = equipment.filter((item) => {
     const matchesSearch = 
@@ -99,10 +222,10 @@ export function EquipmentCatalog({
 
   // Handle booking submission
   const handleBookingSubmit = async () => {
-    if (!selectedEquipment || !pickupDate || !returnDate || !eventName) {
+    if (!selectedEquipment || !custodianName || !custodianEmail || !custodianPhone || !pickupDate || !returnDate || !eventName) {
       toast({
         title: 'Missing Information',
-        description: 'Please fill in all required fields.',
+        description: 'Please fill in all required fields including your contact details.',
         variant: 'destructive',
       });
       return;
@@ -128,17 +251,21 @@ export function EquipmentCatalog({
         clubId,
         clubName,
         custodian: {
-          name: userName,
-          email: userEmail,
-          phone: userPhone,
+          name: custodianName,
+          email: custodianEmail,
+          phone: custodianPhone,
         },
         pickupDate: pickupDate.toISOString(),
         returnDate: returnDate.toISOString(),
         eventName,
         eventLocation,
-        useLocation: useLocation || eventLocation,
+        useLocation: {
+          address: useLocation || eventLocation || 'Not specified',
+          coordinates: { lat: 0, lng: 0 }, // TODO: Add geocoding for proper coordinates
+        },
         specialRequirements,
-        requestedBy: userName,
+        requestedBy: custodianName,
+        requestedByEmail: custodianEmail,
       };
 
       const response = await fetch('/api/equipment-bookings', {
@@ -176,10 +303,14 @@ export function EquipmentCatalog({
   };
 
   const resetBookingForm = () => {
+    setCustodianName(userName || '');
+    setCustodianEmail(userEmail || '');
+    setCustodianPhone(userPhone || '');
+    setSelectedClubName(clubName || '');
     setPickupDate(undefined);
     setReturnDate(undefined);
     setEventName('');
-    setEventLocation('');
+    setEventLocation(clubLocation || '');
     setUseLocation('');
     setSpecialRequirements('');
     setSelectedEquipment(null);
@@ -346,25 +477,139 @@ export function EquipmentCatalog({
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            {/* Event Details */}
-            <div className="space-y-2">
-              <Label htmlFor="eventName">Event Name *</Label>
-              <Input
-                id="eventName"
-                placeholder="e.g., Annual Show Jumping Competition"
-                value={eventName}
-                onChange={(e) => setEventName(e.target.value)}
-              />
+            {/* Your Details Section */}
+            <div className="space-y-3">
+              <div>
+                <h3 className="text-lg font-semibold">Your Details</h3>
+                <p className="text-sm text-muted-foreground">
+                  Start by entering your name - we'll auto-fill your club and contact details
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="custodianName">Your Name *</Label>
+                <div className="relative" ref={nameAutocompleteRef}>
+                  <Input
+                    id="custodianName"
+                    placeholder="Start typing your name..."
+                    value={nameSearchTerm || custodianName}
+                    onChange={(e) => handleNameInputChange(e.target.value)}
+                    onKeyDown={handleNameKeyDown}
+                    onFocus={() => {
+                      if (nameSearchTerm.length >= 2) {
+                        setShowNameSuggestions(true);
+                      }
+                    }}
+                    required
+                  />
+                  
+                  {/* Name Autocomplete Suggestions */}
+                  {showNameSuggestions && availableNames.length > 0 && (
+                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-[150px] overflow-y-auto">
+                      {availableNames.map((result, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          className="w-full text-left px-3 py-2 hover:bg-blue-50 border-b border-gray-100 last:border-b-0 focus:bg-blue-50 focus:outline-none transition-colors"
+                          onClick={() => handleNameSelection(result)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium text-gray-900">{result.name}</span>
+                            {result.user?.clubId && (
+                              <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
+                                Auto-fill details
+                              </span>
+                            )}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Loading indicator */}
+                  {isLoadingNames && showNameSuggestions && (
+                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg">
+                      <div className="p-3 text-sm text-gray-500 text-center">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mx-auto mb-2"></div>
+                        Searching directory...
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* No results message */}
+                  {showNameSuggestions && !isLoadingNames && nameSearchTerm.length >= 2 && availableNames.length === 0 && (
+                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg">
+                      <div className="p-3 text-sm text-gray-500 text-center">
+                        No matching names in directory
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="clubName">Club *</Label>
+                <Input
+                  id="clubName"
+                  placeholder="Club name"
+                  value={selectedClubName}
+                  onChange={(e) => setSelectedClubName(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  💡 Tip: Your club is auto-filled when you select your name from the directory
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="custodianEmail">Your Email Address *</Label>
+                  <Input
+                    id="custodianEmail"
+                    type="email"
+                    placeholder="your.email@example.com"
+                    value={custodianEmail}
+                    onChange={(e) => setCustodianEmail(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="custodianPhone">Your Phone Number *</Label>
+                  <Input
+                    id="custodianPhone"
+                    type="tel"
+                    placeholder="0400 123 456"
+                    value={custodianPhone}
+                    onChange={(e) => setCustodianPhone(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="eventLocation">Event Location</Label>
-              <Input
-                id="eventLocation"
-                placeholder="Event venue address"
-                value={eventLocation}
-                onChange={(e) => setEventLocation(e.target.value)}
-              />
+            {/* Event Details */}
+            <div className="space-y-3 pt-4 border-t">
+              <h3 className="text-lg font-semibold">Event Details</h3>
+              
+              <div className="space-y-2">
+                <Label htmlFor="eventName">Event Name *</Label>
+                <Input
+                  id="eventName"
+                  placeholder="e.g., Annual Show Jumping Competition"
+                  value={eventName}
+                  onChange={(e) => setEventName(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="eventLocation">Event Location</Label>
+                <Input
+                  id="eventLocation"
+                  placeholder="Event venue address"
+                  value={eventLocation}
+                  onChange={(e) => setEventLocation(e.target.value)}
+                />
+              </div>
             </div>
 
             {/* Dates */}
@@ -482,18 +727,6 @@ export function EquipmentCatalog({
                 </CardContent>
               </Card>
             )}
-
-            {/* Contact Info Display */}
-            <Card className="bg-blue-50 border-blue-200">
-              <CardContent className="pt-4">
-                <p className="text-sm font-medium mb-2">Booking Contact:</p>
-                <div className="text-sm space-y-1">
-                  <p>{userName}</p>
-                  <p className="text-muted-foreground">{userEmail}</p>
-                  {userPhone && <p className="text-muted-foreground">{userPhone}</p>}
-                </div>
-              </CardContent>
-            </Card>
           </div>
 
           <DialogFooter>

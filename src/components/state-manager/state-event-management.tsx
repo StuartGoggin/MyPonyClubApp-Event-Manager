@@ -701,7 +701,7 @@ export function StateEventManagement({
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="add-eventLink">Event Link (URL)</Label>
+              <Label htmlFor="add-eventLink">Event Link (URL) <span className="text-muted-foreground font-normal">(Optional)</span></Label>
               <Input
                 id="add-eventLink"
                 type="url"
@@ -830,7 +830,7 @@ export function StateEventManagement({
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="edit-eventLink">Event Link (URL)</Label>
+              <Label htmlFor="edit-eventLink">Event Link (URL) <span className="text-muted-foreground font-normal">(Optional)</span></Label>
               <Input
                 id="edit-eventLink"
                 type="url"

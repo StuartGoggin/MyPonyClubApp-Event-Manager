@@ -65,8 +65,8 @@ export function AppHeader({ onMenuToggle, showMenuToggle = false }: AppHeaderPro
               {/* App name with gradient text */}
               <div className="flex flex-col min-w-0 flex-1">
                 <h1 className="text-base sm:text-lg md:text-xl xl:text-2xl font-bold tracking-tight bg-gradient-to-r from-primary via-purple-600 to-accent bg-clip-text text-transparent group-hover:from-accent group-hover:via-primary group-hover:to-purple-600 transition-all duration-500 truncate">
-                  <span className="hidden sm:inline">MyPonyClub - Events</span>
-                  <span className="sm:hidden">Events</span>
+                  <span className="hidden sm:inline">MyPonyClub</span>
+                  <span className="sm:hidden">MyPonyClub</span>
                 </h1>
               </div>
             </Link>

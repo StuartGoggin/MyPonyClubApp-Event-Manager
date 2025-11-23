@@ -59,7 +59,7 @@ export function AppLayout({ children }: PropsWithChildren) {
   // Navigation items grouped by zones
   const navigationGroups: { label: string; items: NavigationItem[] }[] = [
     {
-      label: 'Calendar',
+      label: 'Events',
       items: [
         {
           href: '/',

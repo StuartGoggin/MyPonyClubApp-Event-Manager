@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import { AppHeader } from '@/components/layout/app-header';
 import { useAuth } from '@/contexts/auth-context';
 import Link from 'next/link';
-import { Calendar, PlusCircle, FerrisWheel, Shield, Settings, MapPin, Building, ChevronLeft, ChevronRight, Menu, X, Trophy, Users2 } from 'lucide-react';
+import { Calendar, PlusCircle, FerrisWheel, Shield, Settings, MapPin, Building, ChevronLeft, ChevronRight, Menu, X, Trophy, Users2, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { NavigationItem, filterNavigationByRole, UserRole, getUserRoles } from '@/lib/access-control';
@@ -86,6 +86,14 @@ export function AppLayout({ children }: PropsWithChildren) {
           icon: Users2,
           label: 'Club Committee Update',
           // Public access - no authentication required
+        },
+        {
+          href: '/club-manager/equipment',
+          title: 'Equipment Catalog',
+          icon: Package,
+          label: 'Zone Equipment',
+          requireAuth: true,
+          // All authenticated users can browse and book equipment
         },
       ]
     },

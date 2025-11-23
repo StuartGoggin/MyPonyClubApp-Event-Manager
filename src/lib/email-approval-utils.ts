@@ -20,6 +20,13 @@ export function requiresApproval(
     case 'event_request':
       return config.requireApprovalForEventRequests ?? config.requireApproval ?? true;
     
+    case 'equipment_booking':
+    case 'equipment_handover':
+    case 'equipment_location_change':
+    case 'equipment_periodic_update':
+    case 'equipment_notification':
+      return config.requireApprovalForEquipmentNotifications ?? config.requireApproval ?? true;
+    
     case 'notification':
       return config.requireApprovalForNotifications ?? config.requireApproval ?? false;
     

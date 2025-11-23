@@ -13,6 +13,7 @@ export const GET = withAdminAuth(async (request: NextRequest) => {
         retryDelayMinutes: 30,
         maxQueueSize: 100,
         requireApprovalForEventRequests: true,
+        requireApprovalForEquipmentNotifications: true,
         requireApprovalForNotifications: false,
         requireApprovalForReminders: true,
         requireApprovalForGeneral: true,

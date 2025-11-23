@@ -522,6 +522,7 @@ export interface EmailQueueConfig {
   // Approval settings
   requireApproval?: boolean; // General approval requirement
   requireApprovalForEventRequests?: boolean;
+  requireApprovalForEquipmentNotifications?: boolean;
   requireApprovalForNotifications?: boolean;
   requireApprovalForReminders?: boolean;
   requireApprovalForGeneral?: boolean;

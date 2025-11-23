@@ -249,17 +249,28 @@ function ZoneManagerContent() {
                 </SelectContent>
               </Select>
               
-              {/* Settings Button */}
-              <Button
-                onClick={() => router.push(`/zone-manager/settings?zoneId=${selectedZoneId}`)}
-                variant="secondary"
-                size="sm"
-                className="mt-2 w-full bg-white/90 hover:bg-white text-blue-600 shadow-lg"
-                disabled={!selectedZoneId}
-              >
-                <Settings className="mr-2 h-4 w-4" />
-                Zone Settings
-              </Button>
+              {/* Quick Access Buttons */}
+              <div className="mt-2 flex gap-2">
+                <Button
+                  onClick={() => router.push(`/zone-manager/settings?zoneId=${selectedZoneId}`)}
+                  variant="secondary"
+                  size="sm"
+                  className="flex-1 bg-white/90 hover:bg-white text-blue-600 shadow-lg"
+                  disabled={!selectedZoneId}
+                >
+                  <Settings className="mr-2 h-4 w-4" />
+                  Settings
+                </Button>
+                <Button
+                  onClick={() => router.push(`/zone-manager/equipment?zoneId=${selectedZoneId}`)}
+                  variant="secondary"
+                  size="sm"
+                  className="flex-1 bg-white/90 hover:bg-white text-blue-600 shadow-lg"
+                  disabled={!selectedZoneId}
+                >
+                  Equipment
+                </Button>
+              </div>
             </div>
           </div>
         </div>

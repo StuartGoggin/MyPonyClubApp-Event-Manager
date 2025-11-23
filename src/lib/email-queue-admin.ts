@@ -311,6 +311,7 @@ export async function getEmailQueueConfig(): Promise<EmailQueueConfig> {
       },
       // Set proper defaults for specific approval requirements
       requireApprovalForEventRequests: true,
+      requireApprovalForEquipmentNotifications: true,
       requireApprovalForNotifications: false,
       requireApprovalForGeneral: true,
       requireApprovalForReminders: true

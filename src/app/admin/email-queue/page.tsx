@@ -963,6 +963,14 @@ function EmailQueueAdminContent() {
                     </div>
                     <div className="flex items-center space-x-2">
                       <Checkbox 
+                        id="approveEquipmentNotifications"
+                        checked={config?.requireApprovalForEquipmentNotifications || false}
+                        onCheckedChange={(checked) => config && setConfig({...config, requireApprovalForEquipmentNotifications: !!checked})}
+                      />
+                      <Label htmlFor="approveEquipmentNotifications">Equipment Notifications</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
                         id="approveNotifications"
                         checked={config?.requireApprovalForNotifications || false}
                         onCheckedChange={(checked) => config && setConfig({...config, requireApprovalForNotifications: !!checked})}

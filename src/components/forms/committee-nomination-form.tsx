@@ -656,7 +656,7 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
               <div>
                 <p className="text-sm font-semibold text-gray-800">Email Confirmation</p>
                 <p className="text-xs text-gray-600 mt-1">
-                  You will receive an email confirmation containing the official <strong>SMZ Club Contacts Update Form</strong> as required by zone bylaws.
+                  You will receive an email confirmation containing the official <strong>SMZ Club Contacts Update Form</strong> as required by zone bylaws. You do not need to do anything with this form, it&apos;s just for your records. A copy of this form has been automatically sent to the zone.
                 </p>
               </div>
             </div>

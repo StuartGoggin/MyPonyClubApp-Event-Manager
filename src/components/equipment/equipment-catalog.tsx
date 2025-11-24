@@ -419,7 +419,10 @@ export function EquipmentCatalog({
                   {item.basePricePerDay && (
                     <div className="flex items-center gap-2">
                       <DollarSign className="h-4 w-4 text-muted-foreground" />
-                      <span>${item.basePricePerDay}/day</span>
+                      <span>
+                        {item.basePricePerDay}
+                        {item.pricingType === 'flat_fee' ? '/event' : '/day'}
+                      </span>
                     </div>
                   )}
                   
@@ -708,7 +711,10 @@ export function EquipmentCatalog({
                     {selectedEquipment.basePricePerDay && (
                       <div className="flex justify-between">
                         <span>Base Rate:</span>
-                        <span className="font-medium">${selectedEquipment.basePricePerDay}/day</span>
+                        <span className="font-medium">
+                          ${selectedEquipment.basePricePerDay}
+                          {selectedEquipment.pricingType === 'flat_fee' ? '/event' : '/day'}
+                        </span>
                       </div>
                     )}
                     {selectedEquipment.depositRequired > 0 && (

@@ -1,20 +1,3 @@
-Failed to compile
-
-Next.js (14.2.5) is outdated (learn more)
-./src/lib/equipment-email-templates.ts:479:37
-Module not found: Can't resolve './email-queue-admin.js'
-  477 | ): Promise<string> {
-  478 |   // Import email queue service
-> 479 |   const { addEmailToQueue } = await import('./email-queue-admin.js');
-      |                                     ^
-  480 |   
-  481 |   const htmlContent = generateBookingConfirmationHTML(booking);
-  482 |   const textContent = generateBookingConfirmationText(booking);
-
-https://nextjs.org/docs/messages/module-not-found
-
-Import trace for requested module:
-./src/app/api/equipment-bookings/route.ts
 /**
  * Individual Equipment Pricing Rule API
  * GET /api/equipment-pricing-rules/[id] - Get specific pricing rule

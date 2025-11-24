@@ -87,6 +87,7 @@ export async function POST(request: NextRequest) {
       requiresTrailer: body.requiresTrailer || false,
       storageLocation: body.storageLocation || 'Zone Storage',
       images: body.images || [],
+      pricingType: body.pricingType || 'per_day',
     };
 
     const equipment = await createEquipment(equipmentData, createdBy);

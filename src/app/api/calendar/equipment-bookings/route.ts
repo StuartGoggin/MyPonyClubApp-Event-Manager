@@ -4,9 +4,12 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { listBookings } from '@/lib/equipment-service';
+import { listBookings, getEquipment } from '@/lib/equipment-service';
 import { type Event } from '@/lib/types';
 import { eachDayOfInterval } from 'date-fns';
+
+// Mark route as dynamic
+export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/calendar/equipment-bookings
@@ -38,14 +41,13 @@ export async function GET(request: NextRequest) {
     );
 
     // Fetch all equipment upfront to avoid N+1 queries
-    const equipmentService = await import('@/lib/equipment-service');
     const uniqueEquipmentIds = [...new Set(activeBookings.map(b => b.equipmentId))];
     const equipmentMap = new Map();
     
     // Fetch equipment in parallel
     await Promise.all(
       uniqueEquipmentIds.map(async (id) => {
-        const equipment = await equipmentService.getEquipment(id);
+        const equipment = await getEquipment(id);
         if (equipment) {
           equipmentMap.set(id, equipment);
         }
@@ -70,6 +72,7 @@ export async function GET(request: NextRequest) {
       for (const day of days) {
         calendarEvents.push({
           id: `${booking.id}-${day.toISOString().split('T')[0]}`,
+          name: `${equipmentIcon} ${booking.equipmentName}`,
           title: `${equipmentIcon} ${booking.equipmentName}`,
           description: `Equipment: ${booking.equipmentName}\nClub: ${booking.clubName}${booking.eventName ? `\nEvent: ${booking.eventName}` : ''}\nCustodian: ${booking.custodian.name}`,
           date: day,
@@ -78,7 +81,7 @@ export async function GET(request: NextRequest) {
           source: 'equipment_booking',
           clubId: booking.clubId,
           zoneId: booking.zoneId,
-          eventTypeId: undefined,
+          eventTypeId: '', // Equipment bookings don't have event types
           // Add metadata for identifying the booking
           metadata: {
             bookingId: booking.id,

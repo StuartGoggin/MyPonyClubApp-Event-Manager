@@ -52,6 +52,7 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
     bondAmount: 0,
     quantity: 1,
     status: 'available' as const,
+    pricingType: 'per_day' as 'per_day' | 'flat_fee',
   });
 
   // Fetch data
@@ -128,6 +129,7 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
       bondAmount: 0,
       quantity: 1,
       status: 'available' as const,
+      pricingType: 'per_day' as 'per_day' | 'flat_fee',
     });
     setEquipmentDialogOpen(true);
   };
@@ -143,7 +145,8 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
       depositRequired: item.depositRequired,
       bondAmount: item.bondAmount || 0,
       quantity: item.quantity || 1,
-      status: item.status || item.availability,
+      status: (item.status || item.availability || 'available') as 'available',
+      pricingType: (item.pricingType || 'per_day') as 'per_day' | 'flat_fee',
     });
     setEquipmentDialogOpen(true);
   };
@@ -329,7 +332,10 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
                           {item.status}
                         </Badge>
                       </TableCell>
-                      <TableCell>${item.basePricePerDay}</TableCell>
+                      <TableCell>
+                        ${item.basePricePerDay}
+                        {item.pricingType === 'flat_fee' ? '/event' : '/day'}
+                      </TableCell>
                       <TableCell>{item.quantity || 1}</TableCell>
                       <TableCell className="text-right space-x-2">
                         <Button
@@ -526,7 +532,27 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
                 value={equipmentForm.hirePrice}
                 onChange={(e) => setEquipmentForm({ ...equipmentForm, hirePrice: parseFloat(e.target.value) || 0 })}
               />
-              <p className="text-sm text-muted-foreground">Fixed price per hire (regardless of duration)</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="pricingType">Pricing Type</Label>
+              <Select
+                value={equipmentForm.pricingType}
+                onValueChange={(value: 'per_day' | 'flat_fee') => setEquipmentForm({ ...equipmentForm, pricingType: value })}
+              >
+                <SelectTrigger id="pricingType">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="per_day">Per Day</SelectItem>
+                  <SelectItem value="flat_fee">Per Event (Flat Fee)</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground">
+                {equipmentForm.pricingType === 'flat_fee' 
+                  ? 'Flat fee charged per event regardless of duration' 
+                  : 'Price charged per day of use'}
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">

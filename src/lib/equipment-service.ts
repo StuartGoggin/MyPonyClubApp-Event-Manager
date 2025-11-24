@@ -58,6 +58,7 @@ export async function createEquipment(
       ...equipment,
       condition: 'excellent',
       availability: 'available',
+      status: 'available',
       images: equipment.images || [],
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -291,12 +292,12 @@ async function findBookingEndingBefore(
 
     const bookings = snapshot.docs
       .map((doc: any) => ({ id: doc.id, ...doc.data() }) as EquipmentBooking)
-      .filter((b) => {
+      .filter((b: EquipmentBooking) => {
         const returnDate = new Date(b.returnDate);
         const hoursDiff = Math.abs(differenceInDays(returnDate, date));
         return isBefore(returnDate, date) && hoursDiff <= 1;
       })
-      .sort((a, b) => new Date(b.returnDate).getTime() - new Date(a.returnDate).getTime());
+      .sort((a: EquipmentBooking, b: EquipmentBooking) => new Date(b.returnDate).getTime() - new Date(a.returnDate).getTime());
 
     return bookings[0] || null;
   } catch (error) {
@@ -324,12 +325,12 @@ async function findBookingStartingAfter(
 
     const bookings = snapshot.docs
       .map((doc: any) => ({ id: doc.id, ...doc.data() }) as EquipmentBooking)
-      .filter((b) => {
+      .filter((b: EquipmentBooking) => {
         const pickupDate = new Date(b.pickupDate);
         const hoursDiff = Math.abs(differenceInDays(pickupDate, date));
         return isAfter(pickupDate, date) && hoursDiff <= 1;
       })
-      .sort((a, b) => new Date(a.pickupDate).getTime() - new Date(b.pickupDate).getTime());
+      .sort((a: EquipmentBooking, b: EquipmentBooking) => new Date(a.pickupDate).getTime() - new Date(b.pickupDate).getTime());
 
     return bookings[0] || null;
   } catch (error) {
@@ -681,7 +682,7 @@ export async function getBookingChain(
 
     const bookings = snapshot.docs
       .map((doc: any) => ({ id: doc.id, ...doc.data() }) as EquipmentBooking)
-      .filter((b) => {
+      .filter((b: EquipmentBooking) => {
         const bStart = new Date(b.pickupDate);
         const bEnd = new Date(b.returnDate);
         return (
@@ -689,9 +690,9 @@ export async function getBookingChain(
           isWithinInterval(bEnd, { start: startDate, end: endDate })
         );
       })
-      .sort((a, b) => new Date(a.pickupDate).getTime() - new Date(b.pickupDate).getTime());
+      .sort((a: EquipmentBooking, b: EquipmentBooking) => new Date(a.pickupDate).getTime() - new Date(b.pickupDate).getTime());
 
-    return bookings.map((booking, index) => ({
+    return bookings.map((booking: EquipmentBooking, index: number) => ({
       ...booking,
       position: index + 1,
       isFirst: index === 0,

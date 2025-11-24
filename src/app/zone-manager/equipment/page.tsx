@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { ZoneEquipmentDashboard } from '@/components/zone-manager/zone-equipment-dashboard';
 import { useAuth } from '@/contexts/auth-context';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -12,7 +12,7 @@ interface Zone {
   name: string;
 }
 
-export default function ZoneEquipmentPage() {
+function ZoneEquipmentPageContent() {
   const { user, isAuthenticated, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -176,5 +176,13 @@ export default function ZoneEquipmentPage() {
     <div className="container mx-auto p-6">
       <ZoneEquipmentDashboard zoneId={zoneData.zoneId} zoneName={zoneData.zoneName} />
     </div>
+  );
+}
+
+export default function ZoneEquipmentPage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto p-6"><div className="text-center">Loading...</div></div>}>
+      <ZoneEquipmentPageContent />
+    </Suspense>
   );
 }

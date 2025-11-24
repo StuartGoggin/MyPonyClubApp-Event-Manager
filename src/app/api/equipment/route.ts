@@ -9,6 +9,7 @@ import {
   listEquipment,
   createEquipment,
 } from '@/lib/equipment-service';
+import { requireZoneManager, getZoneIdFromRequest } from '@/lib/api-auth';
 import type { CreateEquipmentRequest } from '@/types/equipment';
 
 /**
@@ -55,8 +56,16 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
-    // TODO: Add authentication check for zone manager role
-    const createdBy = body.createdBy || 'system';
+    // Require zone manager authentication
+    const zoneId = getZoneIdFromRequest(request, body);
+    const authResult = await requireZoneManager(request, zoneId);
+    
+    if ('error' in authResult) {
+      return authResult.error;
+    }
+    
+    const { user } = authResult;
+    const createdBy = user.id;
 
     // Validate required fields
     const requiredFields = ['zoneId', 'name', 'category', 'quantity', 'depositRequired'];

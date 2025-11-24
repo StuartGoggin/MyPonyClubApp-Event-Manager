@@ -143,7 +143,7 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
       depositRequired: item.depositRequired,
       bondAmount: item.bondAmount || 0,
       quantity: item.quantity || 1,
-      status: item.status || item.availability,
+      status: (item.status || (item.availability === 'available' ? 'available' : 'unavailable')) as 'available',
     });
     setEquipmentDialogOpen(true);
   };

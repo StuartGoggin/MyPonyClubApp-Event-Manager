@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createPricingRule } from '@/lib/equipment-service';
 import { adminDb } from '@/lib/firebase-admin';
+import { requireZoneManager, getZoneIdFromRequest } from '@/lib/api-auth';
 import type { PricingRule } from '@/types/equipment';
 
 const PRICING_RULES_COLLECTION = 'equipment-pricing-rules';
@@ -74,6 +75,14 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+
+    // Require zone manager authentication for the rule's zone
+    const zoneId = getZoneIdFromRequest(request, body);
+    const authResult = await requireZoneManager(request, zoneId);
+    
+    if ('error' in authResult) {
+      return authResult.error;
+    }
 
     // TODO: Add authentication check for zone manager role
     const createdBy = body.createdBy || 'system';

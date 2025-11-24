@@ -7,7 +7,7 @@
 
 import { EquipmentBooking } from '@/types/equipment';
 import { format } from 'date-fns';
-import { addEmailToQueue } from './email-queue-admin';
+import { addEmailToQueue } from '@/lib/email-queue-admin';
 
 // =======================================================================
 // EMAIL TEMPLATE GENERATION FUNCTIONS

@@ -11,6 +11,7 @@ import {
   updateEquipment,
   deleteEquipment,
 } from '@/lib/equipment-service';
+import { requireZoneManager } from '@/lib/api-auth';
 
 interface RouteParams {
   params: {
@@ -69,9 +70,7 @@ export async function PUT(
     const { id } = params;
     const body = await request.json();
 
-    // TODO: Add authentication check for zone manager role
-
-    // Check if equipment exists
+    // Check if equipment exists and get its zoneId
     const existing = await getEquipment(id);
     if (!existing) {
       return NextResponse.json(
@@ -81,6 +80,13 @@ export async function PUT(
         },
         { status: 404 }
       );
+    }
+
+    // Require zone manager authentication for the equipment's zone
+    const authResult = await requireZoneManager(request, existing.zoneId);
+    
+    if ('error' in authResult) {
+      return authResult.error;
     }
 
     // Update equipment
@@ -118,9 +124,7 @@ export async function DELETE(
   try {
     const { id } = params;
 
-    // TODO: Add authentication check for zone manager role
-
-    // Check if equipment exists
+    // Check if equipment exists and get its zoneId
     const existing = await getEquipment(id);
     if (!existing) {
       return NextResponse.json(
@@ -130,6 +134,13 @@ export async function DELETE(
         },
         { status: 404 }
       );
+    }
+
+    // Require zone manager authentication for the equipment's zone
+    const authResult = await requireZoneManager(request, existing.zoneId);
+    
+    if ('error' in authResult) {
+      return authResult.error;
     }
 
     await deleteEquipment(id);

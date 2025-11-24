@@ -9,6 +9,7 @@ import {
   getBooking,
   updateBooking,
 } from '@/lib/equipment-service';
+import { requireZoneManager } from '@/lib/api-auth';
 
 interface RouteParams {
   params: {
@@ -61,9 +62,15 @@ export async function POST(
       );
     }
 
-    // TODO: Add authorization check for zone manager role
-
-    const approvedBy = (body as any).approvedBy || 'system';
+    // Require zone manager authentication for the booking's zone
+    const authResult = await requireZoneManager(request, booking.zoneId);
+    
+    if ('error' in authResult) {
+      return authResult.error;
+    }
+    
+    const { user } = authResult;
+    const approvedBy = user.id;
 
     // Update booking status to approved
     console.log('Updating booking:', id, 'with:', {

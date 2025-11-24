@@ -383,6 +383,9 @@ export interface Event {
 
   // Priority and historical traditional event fields
   priority?: EventPriority;
+  
+  // Metadata for additional event information
+  metadata?: Record<string, any>;
   isHistoricallyTraditional?: boolean;
 
   // Event schedule reference

@@ -1,20 +1,3 @@
-Failed to compile
-
-Next.js (14.2.5) is outdated (learn more)
-./src/lib/equipment-email-templates.ts:479:37
-Module not found: Can't resolve './email-queue-admin.js'
-  477 | ): Promise<string> {
-  478 |   // Import email queue service
-> 479 |   const { addEmailToQueue } = await import('./email-queue-admin.js');
-      |                                     ^
-  480 |   
-  481 |   const htmlContent = generateBookingConfirmationHTML(booking);
-  482 |   const textContent = generateBookingConfirmationText(booking);
-
-https://nextjs.org/docs/messages/module-not-found
-
-Import trace for requested module:
-./src/app/api/equipment-bookings/route.ts
 /**
  * Individual Equipment Pricing Rule API
  * GET /api/equipment-pricing-rules/[id] - Get specific pricing rule
@@ -25,6 +8,7 @@ Import trace for requested module:
 import { NextRequest, NextResponse } from 'next/server';
 import { updatePricingRule, deletePricingRule } from '@/lib/equipment-service';
 import { adminDb } from '@/lib/firebase-admin';
+import { requireZoneManager } from '@/lib/api-auth';
 import type { PricingRule } from '@/types/equipment';
 
 const PRICING_RULES_COLLECTION = 'equipment-pricing-rules';
@@ -89,9 +73,7 @@ export async function PUT(
     const { id } = params;
     const body = await request.json();
 
-    // TODO: Add authentication check for zone manager role
-
-    // Check if rule exists
+    // Get existing rule to check zone
     const doc = await adminDb
       .collection(PRICING_RULES_COLLECTION)
       .doc(id)
@@ -105,6 +87,15 @@ export async function PUT(
         },
         { status: 404 }
       );
+    }
+
+    const existingRule = { id: doc.id, ...doc.data() } as PricingRule;
+
+    // Require zone manager authentication for the rule's zone
+    const authResult = await requireZoneManager(request, existingRule.zoneId);
+    
+    if ('error' in authResult) {
+      return authResult.error;
     }
 
     const updates: Partial<PricingRule> = {};
@@ -149,9 +140,7 @@ export async function DELETE(
   try {
     const { id } = params;
 
-    // TODO: Add authentication check for zone manager role
-
-    // Check if rule exists
+    // Get existing rule to check zone
     const doc = await adminDb
       .collection(PRICING_RULES_COLLECTION)
       .doc(id)
@@ -165,6 +154,15 @@ export async function DELETE(
         },
         { status: 404 }
       );
+    }
+
+    const existingRule = { id: doc.id, ...doc.data() } as PricingRule;
+
+    // Require zone manager authentication for the rule's zone
+    const authResult = await requireZoneManager(request, existingRule.zoneId);
+    
+    if ('error' in authResult) {
+      return authResult.error;
     }
 
     await deletePricingRule(id);

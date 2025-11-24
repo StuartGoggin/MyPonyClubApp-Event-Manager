@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -76,22 +76,7 @@ export function EquipmentCatalog({
   }, [userName, userEmail, userPhone, clubName, clubLocation]);
 
   // Fetch equipment
-  useEffect(() => {
-    fetchEquipment();
-  }, [zoneId]);
-
-  // Close name suggestions when clicking outside
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (nameAutocompleteRef.current && !nameAutocompleteRef.current.contains(event.target as Node)) {
-        setShowNameSuggestions(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const fetchEquipment = async () => {
+  const fetchEquipment = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -114,7 +99,22 @@ export function EquipmentCatalog({
     } finally {
       setLoading(false);
     }
-  };
+  }, [zoneId, toast]);
+
+  useEffect(() => {
+    fetchEquipment();
+  }, [fetchEquipment]);
+
+  // Close name suggestions when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (nameAutocompleteRef.current && !nameAutocompleteRef.current.contains(event.target as Node)) {
+        setShowNameSuggestions(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Fetch user names for autocomplete
   const fetchUserNames = async (searchTerm: string) => {

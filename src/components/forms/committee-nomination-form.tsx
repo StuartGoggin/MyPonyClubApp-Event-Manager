@@ -161,6 +161,7 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
       }
     };
     loadClubContactDetails();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedClubId]);
 
   // Check if submitter section is complete

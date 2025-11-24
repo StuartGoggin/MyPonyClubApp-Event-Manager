@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -80,14 +80,8 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
     pricingType: 'per_day' as 'per_day' | 'flat_fee',
   });
 
-  // Fetch data
-  useEffect(() => {
-    if (activeTab === 'inventory') fetchEquipment();
-    if (activeTab === 'bookings' || activeTab === 'manage-bookings' || activeTab === 'handover') fetchBookings();
-    if (activeTab === 'pricing') fetchPricingRules();
-  }, [activeTab, zoneId]);
-
-  const fetchEquipment = async () => {
+  // Fetch functions
+  const fetchEquipment = useCallback(async () => {
     try {
       setLoadingEquipment(true);
       const response = await fetch(`/api/equipment?zoneId=${zoneId}`);
@@ -103,9 +97,9 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
     } finally {
       setLoadingEquipment(false);
     }
-  };
+  }, [zoneId, toast]);
 
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     try {
       setLoadingBookings(true);
       const response = await fetch(`/api/equipment-bookings?zoneId=${zoneId}`);
@@ -121,9 +115,9 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
     } finally {
       setLoadingBookings(false);
     }
-  };
+  }, [zoneId, toast]);
 
-  const fetchPricingRules = async () => {
+  const fetchPricingRules = useCallback(async () => {
     try {
       setLoadingPricing(true);
       const response = await fetch(`/api/equipment-pricing-rules?zoneId=${zoneId}`);
@@ -139,7 +133,14 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
     } finally {
       setLoadingPricing(false);
     }
-  };
+  }, [zoneId, toast]);
+
+  // Fetch data
+  useEffect(() => {
+    if (activeTab === 'inventory') fetchEquipment();
+    if (activeTab === 'bookings' || activeTab === 'manage-bookings' || activeTab === 'handover') fetchBookings();
+    if (activeTab === 'pricing') fetchPricingRules();
+  }, [activeTab, fetchEquipment, fetchBookings, fetchPricingRules]);
 
   // Equipment CRUD
   const handleAddEquipment = () => {

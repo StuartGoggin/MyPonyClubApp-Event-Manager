@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -61,14 +61,8 @@ export function ClubEquipmentDashboard({
     next?: EquipmentBooking;
   } | null>(null);
 
-  // Fetch bookings when switching to booking tabs
-  useEffect(() => {
-    if (activeTab === 'my-bookings' || activeTab === 'handover') {
-      fetchBookings();
-    }
-  }, [activeTab, clubId]);
-
-  const fetchBookings = async () => {
+  // Fetch bookings function
+  const fetchBookings = useCallback(async () => {
     try {
       setLoadingBookings(true);
       const response = await fetch(`/api/equipment-bookings?clubId=${clubId}`);
@@ -84,7 +78,14 @@ export function ClubEquipmentDashboard({
     } finally {
       setLoadingBookings(false);
     }
-  };
+  }, [clubId, toast]);
+
+  // Fetch bookings when switching to booking tabs
+  useEffect(() => {
+    if (activeTab === 'my-bookings' || activeTab === 'handover') {
+      fetchBookings();
+    }
+  }, [activeTab, fetchBookings]);
 
   const handleSaveBooking = async () => {
     if (!selectedBooking) return;

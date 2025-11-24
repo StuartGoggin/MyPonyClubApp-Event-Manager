@@ -36,6 +36,13 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
   const [loadingBookings, setLoadingBookings] = useState(true);
   const [selectedBooking, setSelectedBooking] = useState<EquipmentBooking | null>(null);
   const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
+  const [editingBooking, setEditingBooking] = useState(false);
+  const [bookingForm, setBookingForm] = useState({
+    pickupDate: '',
+    returnDate: '',
+    specialRequirements: '',
+    status: 'pending' as const,
+  });
   
   // Pricing rules state
   const [pricingRules, setPricingRules] = useState<PricingRule[]>([]);
@@ -261,6 +268,40 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
     }
   };
 
+  const handleSaveBooking = async () => {
+    if (!selectedBooking) return;
+
+    try {
+      const response = await fetch(`/api/equipment-bookings/${selectedBooking.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pickupDate: bookingForm.pickupDate,
+          returnDate: bookingForm.returnDate,
+          specialRequirements: bookingForm.specialRequirements,
+          status: bookingForm.status,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to update booking');
+
+      toast({
+        title: 'Success',
+        description: 'Booking updated successfully',
+      });
+
+      setBookingDialogOpen(false);
+      setEditingBooking(false);
+      fetchBookings();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to update booking',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
       case 'confirmed': return 'default';
@@ -438,6 +479,30 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
                           size="sm"
                           onClick={() => {
                             setSelectedBooking(booking);
+                            setEditingBooking(true);
+                            const pickupDate = booking.pickupDate ? new Date(booking.pickupDate) : null;
+                            const returnDate = booking.returnDate ? new Date(booking.returnDate) : null;
+                            setBookingForm({
+                              pickupDate: pickupDate && !isNaN(pickupDate.getTime()) 
+                                ? pickupDate.toISOString().split('T')[0] 
+                                : '',
+                              returnDate: returnDate && !isNaN(returnDate.getTime()) 
+                                ? returnDate.toISOString().split('T')[0] 
+                                : '',
+                              specialRequirements: booking.specialRequirements || '',
+                              status: booking.status,
+                            });
+                            setBookingDialogOpen(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedBooking(booking);
+                            setEditingBooking(false);
                             setBookingDialogOpen(true);
                           }}
                         >

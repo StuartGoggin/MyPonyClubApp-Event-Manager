@@ -66,6 +66,15 @@ export function EquipmentCatalog({
   const [isLoadingNames, setIsLoadingNames] = useState(false);
   const nameAutocompleteRef = useRef<HTMLDivElement>(null);
 
+  // Sync user props with state when they change
+  useEffect(() => {
+    setCustodianName(userName || '');
+    setCustodianEmail(userEmail || '');
+    setCustodianPhone(userPhone || '');
+    setSelectedClubName(clubName || '');
+    setEventLocation(clubLocation || '');
+  }, [userName, userEmail, userPhone, clubName, clubLocation]);
+
   // Fetch equipment
   useEffect(() => {
     fetchEquipment();

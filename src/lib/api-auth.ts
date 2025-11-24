@@ -6,7 +6,12 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { jwtVerify } from 'jose';
 import { adminDb } from './firebase-admin';
+
+const JWT_SECRET = new TextEncoder().encode(
+  process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production'
+);
 
 export interface AuthUser {
   id: string;
@@ -30,6 +35,7 @@ async function getUserFromToken(request: NextRequest): Promise<AuthUser | null> 
     // Check for Authorization header
     const authHeader = request.headers.get('authorization');
     if (!authHeader?.startsWith('Bearer ')) {
+      console.log('No auth header or invalid format');
       return null;
     }
 
@@ -49,17 +55,22 @@ async function getUserFromToken(request: NextRequest): Promise<AuthUser | null> 
       };
     }
 
-    // Verify token and get user from database
-    // Note: In production, use JWT verification with Firebase Auth or similar
-    const userDoc = await adminDb.collection('users').doc(token).get();
+    // Verify JWT token
+    const { payload } = await jwtVerify(token, JWT_SECRET);
+    
+    // Get user from database using userId from token
+    const userId = payload.userId as string;
+    const userDoc = await adminDb.collection('users').doc(userId).get();
     
     if (!userDoc.exists) {
+      console.log('User not found in database:', userId);
       return null;
     }
 
     const userData = userDoc.data();
     
     if (!userData?.isActive) {
+      console.log('User account is not active:', userId);
       return null;
     }
 
@@ -104,7 +115,7 @@ function isZoneManager(user: AuthUser, zoneId?: string): boolean {
     return true; // Super users have access to all zones
   }
   
-  if (!hasRole(user, ['zone_manager'])) {
+  if (!hasRole(user, ['zone_manager', 'zone_rep'])) {
     return false;
   }
   

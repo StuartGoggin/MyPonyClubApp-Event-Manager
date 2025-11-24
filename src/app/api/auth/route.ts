@@ -54,13 +54,11 @@ export async function POST(request: NextRequest) {
       .setExpirationTime('24h')
       .sign(JWT_SECRET);
     
-    // Remove sensitive fields from user object
-    const { mobileNumber, ...userResponse } = user;
-    
+    // Return user object (mobileNumber is included as user's own data)
     return NextResponse.json({
       success: true,
       message: 'Authentication successful',
-      user: userResponse,
+      user: user,
       token
     });
     
@@ -114,12 +112,10 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    // Remove sensitive fields
-    const { mobileNumber, ...userResponse } = user;
-    
+    // Return user object (mobileNumber is included as user's own data)
     return NextResponse.json({
       success: true,
-      user: userResponse,
+      user: user,
       tokenPayload: payload
     });
     

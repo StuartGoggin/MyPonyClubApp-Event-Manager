@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { EquipmentCatalog } from '@/components/equipment/equipment-catalog';
+import { ClubEquipmentDashboard } from '@/components/equipment/club-equipment-dashboard';
 import { useAuth } from '@/contexts/auth-context';
 import { useRouter } from 'next/navigation';
 
@@ -70,7 +70,7 @@ export default function EquipmentPage() {
                 clubLocation,
                 userEmail: user.email || '',
                 userName: `${user.firstName} ${user.lastName}`,
-                userPhone: (user as any).phone || '',
+                userPhone: (user as any).mobileNumber || '',
               });
             });
         })
@@ -116,7 +116,7 @@ export default function EquipmentPage() {
 
   return (
     <div className="container mx-auto p-6">
-      <EquipmentCatalog {...catalogData} />
+      <ClubEquipmentDashboard {...catalogData} />
     </div>
   );
 }

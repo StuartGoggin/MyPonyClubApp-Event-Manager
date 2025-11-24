@@ -14,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Package, Plus, Edit, Trash2, Check, X, Calendar, DollarSign, AlertCircle, MapPin } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import type { EquipmentItem, EquipmentBooking, PricingRule } from '@/types/equipment';
+import type { EquipmentItem, EquipmentBooking, PricingRule, BookingStatus } from '@/types/equipment';
 
 interface ZoneEquipmentDashboardProps {
   zoneId: string;
@@ -36,6 +36,13 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
   const [loadingBookings, setLoadingBookings] = useState(true);
   const [selectedBooking, setSelectedBooking] = useState<EquipmentBooking | null>(null);
   const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
+  const [editingBooking, setEditingBooking] = useState(false);
+  const [bookingForm, setBookingForm] = useState({
+    pickupDate: '',
+    returnDate: '',
+    specialRequirements: '',
+    status: 'pending' as BookingStatus,
+  });
   
   // Pricing rules state
   const [pricingRules, setPricingRules] = useState<PricingRule[]>([]);
@@ -52,6 +59,7 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
     bondAmount: 0,
     quantity: 1,
     status: 'available' as const,
+    pricingType: 'per_day' as 'per_day' | 'flat_fee',
   });
 
   // Fetch data
@@ -128,6 +136,7 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
       bondAmount: 0,
       quantity: 1,
       status: 'available' as const,
+      pricingType: 'per_day' as 'per_day' | 'flat_fee',
     });
     setEquipmentDialogOpen(true);
   };
@@ -143,7 +152,8 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
       depositRequired: item.depositRequired,
       bondAmount: item.bondAmount || 0,
       quantity: item.quantity || 1,
-      status: (item.status || (item.availability === 'available' ? 'available' : 'unavailable')) as 'available',
+      status: (item.status || item.availability || 'available') as 'available',
+      pricingType: (item.pricingType || 'per_day') as 'per_day' | 'flat_fee',
     });
     setEquipmentDialogOpen(true);
   };
@@ -258,6 +268,40 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
     }
   };
 
+  const handleSaveBooking = async () => {
+    if (!selectedBooking) return;
+
+    try {
+      const response = await fetch(`/api/equipment-bookings/${selectedBooking.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pickupDate: bookingForm.pickupDate,
+          returnDate: bookingForm.returnDate,
+          specialRequirements: bookingForm.specialRequirements,
+          status: bookingForm.status,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to update booking');
+
+      toast({
+        title: 'Success',
+        description: 'Booking updated successfully',
+      });
+
+      setBookingDialogOpen(false);
+      setEditingBooking(false);
+      fetchBookings();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to update booking',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
       case 'confirmed': return 'default';
@@ -329,7 +373,10 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
                           {item.status}
                         </Badge>
                       </TableCell>
-                      <TableCell>${item.basePricePerDay}</TableCell>
+                      <TableCell>
+                        ${item.basePricePerDay}
+                        {item.pricingType === 'flat_fee' ? '/event' : '/day'}
+                      </TableCell>
                       <TableCell>{item.quantity || 1}</TableCell>
                       <TableCell className="text-right space-x-2">
                         <Button
@@ -432,6 +479,30 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
                           size="sm"
                           onClick={() => {
                             setSelectedBooking(booking);
+                            setEditingBooking(true);
+                            const pickupDate = booking.pickupDate ? new Date(booking.pickupDate) : null;
+                            const returnDate = booking.returnDate ? new Date(booking.returnDate) : null;
+                            setBookingForm({
+                              pickupDate: pickupDate && !isNaN(pickupDate.getTime()) 
+                                ? pickupDate.toISOString().split('T')[0] 
+                                : '',
+                              returnDate: returnDate && !isNaN(returnDate.getTime()) 
+                                ? returnDate.toISOString().split('T')[0] 
+                                : '',
+                              specialRequirements: booking.specialRequirements || '',
+                              status: booking.status,
+                            });
+                            setBookingDialogOpen(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedBooking(booking);
+                            setEditingBooking(false);
                             setBookingDialogOpen(true);
                           }}
                         >
@@ -526,7 +597,27 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
                 value={equipmentForm.hirePrice}
                 onChange={(e) => setEquipmentForm({ ...equipmentForm, hirePrice: parseFloat(e.target.value) || 0 })}
               />
-              <p className="text-sm text-muted-foreground">Fixed price per hire (regardless of duration)</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="pricingType">Pricing Type</Label>
+              <Select
+                value={equipmentForm.pricingType}
+                onValueChange={(value: 'per_day' | 'flat_fee') => setEquipmentForm({ ...equipmentForm, pricingType: value })}
+              >
+                <SelectTrigger id="pricingType">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="per_day">Per Day</SelectItem>
+                  <SelectItem value="flat_fee">Per Event (Flat Fee)</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground">
+                {equipmentForm.pricingType === 'flat_fee' 
+                  ? 'Flat fee charged per event regardless of duration' 
+                  : 'Price charged per day of use'}
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -602,99 +693,177 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
       <Dialog open={bookingDialogOpen} onOpenChange={setBookingDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Booking Details</DialogTitle>
+            <DialogTitle>{editingBooking ? 'Edit Booking' : 'Booking Details'}</DialogTitle>
           </DialogHeader>
 
           {selectedBooking && (
             <div className="space-y-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-muted-foreground">Equipment</Label>
-                  <p className="font-medium">{selectedBooking.equipmentName}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">Status</Label>
-                  <Badge variant={getStatusBadgeVariant(selectedBooking.status)}>
-                    {selectedBooking.status}
-                  </Badge>
-                </div>
-              </div>
+              {!editingBooking ? (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-muted-foreground">Equipment</Label>
+                      <p className="font-medium">{selectedBooking.equipmentName}</p>
+                    </div>
+                    <div>
+                      <Label className="text-muted-foreground">Status</Label>
+                      <Badge variant={getStatusBadgeVariant(selectedBooking.status)}>
+                        {selectedBooking.status}
+                      </Badge>
+                    </div>
+                  </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-muted-foreground">Club</Label>
-                  <p>{selectedBooking.clubName}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">Custodian</Label>
-                  <p>{selectedBooking.custodian.name}</p>
-                  <p className="text-sm text-muted-foreground">{selectedBooking.custodian.email}</p>
-                </div>
-              </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-muted-foreground">Club</Label>
+                      <p>{selectedBooking.clubName}</p>
+                    </div>
+                    <div>
+                      <Label className="text-muted-foreground">Custodian</Label>
+                      <p>{selectedBooking.custodian.name}</p>
+                      <p className="text-sm text-muted-foreground">{selectedBooking.custodian.email}</p>
+                    </div>
+                  </div>
 
-              <div>
-                <Label className="text-muted-foreground">Event</Label>
-                <p className="font-medium">{selectedBooking.eventName || 'Not linked to event'}</p>
-              </div>
+                  <div>
+                    <Label className="text-muted-foreground">Event</Label>
+                    <p className="font-medium">{selectedBooking.eventName || 'Not linked to event'}</p>
+                  </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-muted-foreground">Pickup Date</Label>
-                  <p>
-                    {selectedBooking.pickupDate && !isNaN(new Date(selectedBooking.pickupDate).getTime())
-                      ? format(new Date(selectedBooking.pickupDate), 'PPP')
-                      : 'Invalid date'}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">Return Date</Label>
-                  <p>
-                    {selectedBooking.returnDate && !isNaN(new Date(selectedBooking.returnDate).getTime())
-                      ? format(new Date(selectedBooking.returnDate), 'PPP')
-                      : 'Invalid date'}
-                  </p>
-                </div>
-              </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-muted-foreground">Pickup Date</Label>
+                      <p>
+                        {selectedBooking.pickupDate && !isNaN(new Date(selectedBooking.pickupDate).getTime())
+                          ? format(new Date(selectedBooking.pickupDate), 'PPP')
+                          : 'Invalid date'}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-muted-foreground">Return Date</Label>
+                      <p>
+                        {selectedBooking.returnDate && !isNaN(new Date(selectedBooking.returnDate).getTime())
+                          ? format(new Date(selectedBooking.returnDate), 'PPP')
+                          : 'Invalid date'}
+                      </p>
+                    </div>
+                  </div>
 
-              {selectedBooking.specialRequirements && (
-                <div>
-                  <Label className="text-muted-foreground">Special Requirements</Label>
-                  <p className="text-sm">{selectedBooking.specialRequirements}</p>
-                </div>
-              )}
+                  {selectedBooking.specialRequirements && (
+                    <div>
+                      <Label className="text-muted-foreground">Special Requirements</Label>
+                      <p className="text-sm">{selectedBooking.specialRequirements}</p>
+                    </div>
+                  )}
 
-              {selectedBooking.handover && (
-                <Card className="bg-blue-50 border-blue-200">
-                  <CardHeader>
-                    <CardTitle className="text-sm">Handover Information</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2 text-sm">
-                    {selectedBooking.handover.pickup.pickupMethod === 'collect_from_previous' && (
-                      <div>
-                        <p className="font-medium">Pickup from Previous Booking:</p>
-                        <p className="text-muted-foreground">
-                          {selectedBooking.handover.pickup.previousCustodian?.eventName || 'Previous event'}
-                        </p>
-                      </div>
-                    )}
-                    {selectedBooking.handover.return.returnMethod === 'handover_to_next' && (
-                      <div>
-                        <p className="font-medium">Handover to Next Booking:</p>
-                        <p className="text-muted-foreground">
-                          {selectedBooking.handover.return.nextCustodian?.eventName}
-                        </p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                  {selectedBooking.handover && (
+                    <Card className="bg-blue-50 border-blue-200">
+                      <CardHeader>
+                        <CardTitle className="text-sm">Handover Information</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-2 text-sm">
+                        {selectedBooking.handover.pickup.pickupMethod === 'collect_from_previous' && (
+                          <div>
+                            <p className="font-medium">Pickup from Previous Booking:</p>
+                            <p className="text-muted-foreground">
+                              {selectedBooking.handover.pickup.previousCustodian?.eventName || 'Previous event'}
+                            </p>
+                          </div>
+                        )}
+                        {selectedBooking.handover.return.returnMethod === 'handover_to_next' && (
+                          <div>
+                            <p className="font-medium">Handover to Next Booking:</p>
+                            <p className="text-muted-foreground">
+                              {selectedBooking.handover.return.nextCustodian?.eventName}
+                            </p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-muted-foreground">Equipment</Label>
+                      <p className="font-medium">{selectedBooking.equipmentName}</p>
+                    </div>
+                    <div>
+                      <Label className="text-muted-foreground">Club</Label>
+                      <p>{selectedBooking.clubName}</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-pickup-date">Pickup Date</Label>
+                    <Input
+                      id="edit-pickup-date"
+                      type="date"
+                      value={bookingForm.pickupDate}
+                      onChange={(e) => setBookingForm({ ...bookingForm, pickupDate: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-return-date">Return Date</Label>
+                    <Input
+                      id="edit-return-date"
+                      type="date"
+                      value={bookingForm.returnDate}
+                      onChange={(e) => setBookingForm({ ...bookingForm, returnDate: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-special-requirements">Special Requirements</Label>
+                    <Textarea
+                      id="edit-special-requirements"
+                      value={bookingForm.specialRequirements}
+                      onChange={(e) => setBookingForm({ ...bookingForm, specialRequirements: e.target.value })}
+                      placeholder="Any special requirements or notes..."
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-status">Status</Label>
+                    <Select
+                      value={bookingForm.status}
+                      onValueChange={(value: BookingStatus) => setBookingForm({ ...bookingForm, status: value })}
+                    >
+                      <SelectTrigger id="edit-status">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="approved">Approved</SelectItem>
+                        <SelectItem value="confirmed">Confirmed</SelectItem>
+                        <SelectItem value="picked_up">Picked Up</SelectItem>
+                        <SelectItem value="in_use">In Use</SelectItem>
+                        <SelectItem value="returned">Returned</SelectItem>
+                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                        <SelectItem value="overdue">Overdue</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
               )}
             </div>
           )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setBookingDialogOpen(false)}>
-              Close
+            <Button variant="outline" onClick={() => {
+              setBookingDialogOpen(false);
+              setEditingBooking(false);
+            }}>
+              {editingBooking ? 'Cancel' : 'Close'}
             </Button>
+            {editingBooking && (
+              <Button onClick={handleSaveBooking}>
+                Save Changes
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

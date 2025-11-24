@@ -8,7 +8,7 @@ import { listBookings, getEquipment } from '@/lib/equipment-service';
 import { type Event } from '@/lib/types';
 import { eachDayOfInterval } from 'date-fns';
 
-// Force dynamic rendering for this API route
+// Mark route as dynamic
 export const dynamic = 'force-dynamic';
 
 /**
@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
           source: 'equipment_booking',
           clubId: booking.clubId,
           zoneId: booking.zoneId,
-          eventTypeId: 'equipment-booking',
+          eventTypeId: '', // Equipment bookings don't have event types
           // Add metadata for identifying the booking
           metadata: {
             bookingId: booking.id,

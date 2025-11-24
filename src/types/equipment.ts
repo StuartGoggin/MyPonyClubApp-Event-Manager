@@ -32,6 +32,8 @@ export type EquipmentAvailability =
   | 'maintenance' 
   | 'retired';
 
+export type PricingType = 'per_day' | 'flat_fee';
+
 export interface GeoLocation {
   latitude: number;
   longitude: number;
@@ -81,6 +83,7 @@ export interface EquipmentItem {
   nextInspectionDue?: Date;
   
   // Pricing
+  pricingType?: PricingType; // 'per_day' or 'flat_fee'
   basePricePerDay: number;
   basePricePerWeek: number;
   depositRequired: number;
@@ -468,6 +471,7 @@ export interface CreateEquipmentRequest {
   requiresTrailer: boolean;
   storageLocation: string;
   images?: string[];
+  pricingType?: PricingType;
 }
 
 export interface CreateBookingRequest {

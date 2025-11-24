@@ -736,7 +736,7 @@ export function ZoneEventManagement({
                   <Label htmlFor="edit-name">Event Name</Label>
                   <Input
                     id="edit-name"
-                    defaultValue={selectedEvent.name}
+                    value={selectedEvent.name}
                     onChange={(e) => setSelectedEvent({ ...selectedEvent, name: e.target.value })}
                   />
                 </div>
@@ -744,7 +744,7 @@ export function ZoneEventManagement({
                   <Label htmlFor="edit-location">Location</Label>
                   <Input
                     id="edit-location"
-                    defaultValue={selectedEvent.location}
+                    value={selectedEvent.location}
                     onChange={(e) => setSelectedEvent({ ...selectedEvent, location: e.target.value })}
                   />
                 </div>
@@ -757,7 +757,7 @@ export function ZoneEventManagement({
                     <Label htmlFor="edit-submittedBy">Submitted By</Label>
                     <Input
                       id="edit-submittedBy"
-                      defaultValue={selectedEvent.submittedBy || ''}
+                      value={selectedEvent.submittedBy || ''}
                       onChange={(e) => setSelectedEvent({ ...selectedEvent, submittedBy: e.target.value })}
                     />
                   </div>
@@ -767,7 +767,7 @@ export function ZoneEventManagement({
                       id="edit-submittedByEmail"
                       type="email"
                       placeholder="email@example.com"
-                      defaultValue={selectedEvent.submittedByEmail || ''}
+                      value={selectedEvent.submittedByEmail || ''}
                       onChange={(e) => setSelectedEvent({ ...selectedEvent, submittedByEmail: e.target.value })}
                     />
                   </div>
@@ -777,7 +777,7 @@ export function ZoneEventManagement({
                       id="edit-submittedByPhone"
                       type="tel"
                       placeholder="0400 000 000"
-                      defaultValue={selectedEvent.submittedByPhone || ''}
+                      value={selectedEvent.submittedByPhone || ''}
                       onChange={(e) => setSelectedEvent({ ...selectedEvent, submittedByPhone: e.target.value })}
                     />
                   </div>
@@ -791,7 +791,7 @@ export function ZoneEventManagement({
                     <Label htmlFor="edit-coordinatorName">Coordinator Name</Label>
                     <Input
                       id="edit-coordinatorName"
-                      defaultValue={selectedEvent.coordinatorName || ''}
+                      value={selectedEvent.coordinatorName || ''}
                       onChange={(e) => setSelectedEvent({ ...selectedEvent, coordinatorName: e.target.value })}
                     />
                   </div>
@@ -799,7 +799,7 @@ export function ZoneEventManagement({
                     <Label htmlFor="edit-coordinatorContact">Coordinator Contact</Label>
                     <Input
                       id="edit-coordinatorContact"
-                      defaultValue={selectedEvent.coordinatorContact || ''}
+                      value={selectedEvent.coordinatorContact || ''}
                       onChange={(e) => setSelectedEvent({ ...selectedEvent, coordinatorContact: e.target.value })}
                     />
                   </div>
@@ -810,7 +810,7 @@ export function ZoneEventManagement({
                 <Label htmlFor="edit-notes">Notes</Label>
                 <Input
                   id="edit-notes"
-                  defaultValue={selectedEvent.notes || ''}
+                  value={selectedEvent.notes || ''}
                   onChange={(e) => setSelectedEvent({ ...selectedEvent, notes: e.target.value })}
                 />
               </div>

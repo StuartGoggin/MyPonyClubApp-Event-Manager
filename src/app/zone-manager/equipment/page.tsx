@@ -1,11 +1,14 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { ZoneEquipmentDashboard } from '@/components/zone-manager/zone-equipment-dashboard';
 import { useAuth } from '@/contexts/auth-context';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+// Opt out of static generation since this page uses search params
+export const dynamic = 'force-dynamic';
 
 interface Zone {
   id: string;
@@ -181,7 +184,11 @@ function ZoneEquipmentPageContent() {
 
 export default function ZoneEquipmentPage() {
   return (
-    <Suspense fallback={<div className="container mx-auto p-6"><div className="text-center">Loading...</div></div>}>
+    <Suspense fallback={
+      <div className="container mx-auto p-6">
+        <div className="text-center">Loading...</div>
+      </div>
+    }>
       <ZoneEquipmentPageContent />
     </Suspense>
   );

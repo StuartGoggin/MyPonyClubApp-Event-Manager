@@ -390,6 +390,9 @@ export interface Event {
 
   // Event schedule reference
   schedule?: EventSchedule;
+
+  // Optional metadata for equipment bookings and other extensions
+  metadata?: Record<string, any>;
 }
 
 // Priority-based event request types

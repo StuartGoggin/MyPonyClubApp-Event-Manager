@@ -30,13 +30,9 @@ export default function DashboardPage() {
           fetch('/api/zones', { cache: 'no-store' }),
           fetch('/api/clubs', { cache: 'no-store' }),
           fetch('/api/events', { cache: 'no-store' }),
-          fetch('/api/event-types', { cache: 'no-store' })
+          fetch('/api/event-types', { cache: 'no-store' }),
+          fetch('/api/calendar/equipment-bookings', { cache: 'no-store' })
         ];
-
-        // Conditionally fetch equipment bookings if that source is enabled
-        if (eventSources.includes('equipment_booking')) {
-          requests.push(fetch('/api/calendar/equipment-bookings', { cache: 'no-store' }));
-        }
 
         const responses = await Promise.all(requests);
         const [zonesResponse, clubsResponse, eventsResponse, eventTypesResponse, equipmentResponse] = responses;
@@ -75,7 +71,7 @@ export default function DashboardPage() {
         
         // Fetch and merge equipment bookings if enabled
         let equipmentEvents: Event[] = [];
-        if (equipmentResponse) {
+        if (eventSources.includes('equipment_booking')) {
           const equipmentData = equipmentResponse.ok ? await equipmentResponse.json() : { data: [] };
           equipmentEvents = Array.isArray(equipmentData.data) ? equipmentData.data : [];
           console.log('📦 Equipment bookings loaded:', equipmentEvents.length);

@@ -32,12 +32,12 @@ export async function GET(request: NextRequest) {
       filters.clubId = clubId;
     }
 
-    // Fetch all approved/confirmed equipment bookings
+    // Fetch all equipment bookings
     const bookings = await listBookings(filters);
     
-    // Filter to only show bookings that are approved or later in the workflow
+    // Filter to show all bookings except cancelled/rejected
     const activeBookings = bookings.filter(b => 
-      ['approved', 'confirmed', 'picked_up', 'in_use', 'returned'].includes(b.status)
+      !['cancelled', 'rejected'].includes(b.status)
     );
 
     // Fetch all equipment upfront to avoid N+1 queries
@@ -70,14 +70,19 @@ export async function GET(request: NextRequest) {
       const days = eachDayOfInterval({ start: pickupDate, end: returnDate });
       
       for (const day of days) {
+        // Map booking status to calendar event status
+        // 'pending' bookings show as 'proposed' on calendar
+        // 'approved', 'confirmed', etc. show as 'approved'
+        const eventStatus = booking.status === 'pending' ? 'proposed' : 'approved';
+        
         calendarEvents.push({
           id: `${booking.id}-${day.toISOString().split('T')[0]}`,
           name: `${equipmentIcon} ${booking.equipmentName}`,
           title: `${equipmentIcon} ${booking.equipmentName}`,
-          description: `Equipment: ${booking.equipmentName}\nClub: ${booking.clubName}${booking.eventName ? `\nEvent: ${booking.eventName}` : ''}\nCustodian: ${booking.custodian.name}`,
+          description: `Equipment: ${booking.equipmentName}\nClub: ${booking.clubName}${booking.eventName ? `\nEvent: ${booking.eventName}` : ''}\nCustodian: ${booking.custodian.name}\nStatus: ${booking.status}`,
           date: day,
           location: booking.useLocation.address,
-          status: 'approved',
+          status: eventStatus,
           source: 'equipment_booking',
           clubId: booking.clubId,
           zoneId: booking.zoneId,

@@ -384,15 +384,12 @@ export interface Event {
   // Priority and historical traditional event fields
   priority?: EventPriority;
   
-  // Metadata for additional event information
+  // Metadata for additional event information (equipment bookings, etc.)
   metadata?: Record<string, any>;
   isHistoricallyTraditional?: boolean;
 
   // Event schedule reference
   schedule?: EventSchedule;
-
-  // Optional metadata for equipment bookings and other extensions
-  metadata?: Record<string, any>;
 }
 
 // Priority-based event request types

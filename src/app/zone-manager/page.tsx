@@ -7,21 +7,24 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MapPin, CheckCircle, Clock, Users, Building, Plus, FileText, CalendarPlus, Settings } from 'lucide-react';
+import { MapPin, CheckCircle, Clock, Users, Building, Plus, FileText, CalendarPlus, Settings, Package, Calendar } from 'lucide-react';
 import { Zone, Club, Event, EventType } from '@/lib/types';
 import { ZoneEventApproval } from '@/components/zone-manager/zone-event-approval';
 import { ZoneScheduleApproval } from '@/components/zone-manager/zone-schedule-approval';
 import { ZoneEventManagement } from '@/components/zone-manager/zone-event-management';
 import { ZoneEventSubmission } from '@/components/zone-manager/zone-event-submission';
 import { ZoneCommitteeApprovals } from '@/components/zone-manager/zone-committee-approvals';
+import { ZoneEquipmentDashboard } from '@/components/zone-manager/zone-equipment-dashboard';
 import { RouteGuard } from '@/components/auth/route-guard';
 import { useAuth } from '@/contexts/auth-context';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { hasRole, getUserRoles } from '@/lib/access-control';
+import { Suspense } from 'react';
 
 function ZoneManagerContent() {
   const { user } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [zones, setZones] = useState<Zone[]>([]);
   const [clubs, setClubs] = useState<Club[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
@@ -31,6 +34,7 @@ function ZoneManagerContent() {
   const [error, setError] = useState<string | null>(null);
   const [showAddZoneEventForm, setShowAddZoneEventForm] = useState(false);
   const [pendingCommittees, setPendingCommittees] = useState(0);
+  const [mainTab, setMainTab] = useState<string>('events');
 
   // Future: This will be replaced with user's authorized zones from authentication
   const [authorizedZones, setAuthorizedZones] = useState<string[]>([]);
@@ -123,6 +127,14 @@ function ZoneManagerContent() {
       fetchPendingCommitteesCount();
     }
   }, [user?.id, fetchPendingCommitteesCount]);
+
+  // Check for tab parameter in URL
+  useEffect(() => {
+    const tab = searchParams?.get('tab');
+    if (tab && ['events', 'equipment', 'settings'].includes(tab)) {
+      setMainTab(tab);
+    }
+  }, [searchParams]);
 
   // Filter data for selected zone with defensive programming
   const selectedZone = zones.find(zone => zone.id === selectedZoneId);
@@ -248,240 +260,302 @@ function ZoneManagerContent() {
                   }
                 </SelectContent>
               </Select>
-              
-              {/* Quick Access Buttons */}
-              <div className="mt-2 flex gap-2">
-                <Button
-                  onClick={() => router.push(`/zone-manager/settings?zoneId=${selectedZoneId}`)}
-                  variant="secondary"
-                  size="sm"
-                  className="flex-1 bg-white/90 hover:bg-white text-blue-600 shadow-lg"
-                  disabled={!selectedZoneId}
-                >
-                  <Settings className="mr-2 h-4 w-4" />
-                  Settings
-                </Button>
-                <Button
-                  onClick={() => router.push(`/zone-manager/equipment?zoneId=${selectedZoneId}`)}
-                  variant="secondary"
-                  size="sm"
-                  className="flex-1 bg-white/90 hover:bg-white text-blue-600 shadow-lg"
-                  disabled={!selectedZoneId}
-                >
-                  Equipment
-                </Button>
-              </div>
             </div>
           </div>
         </div>
 
-        {/* Modern Statistics Cards */}
+        {/* Main Tabs - Events, Equipment, Settings */}
         {selectedZone && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <Card className="bg-white dark:bg-slate-900 border-l-4 border-l-amber-500 shadow-lg hover:shadow-xl transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Pending Events</p>
-                    <p className="text-3xl font-bold text-slate-900 dark:text-white mt-1">
-                      {pendingEvents}
-                    </p>
-                  </div>
-                  <div className="p-3 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
-                    <Clock className="h-6 w-6 text-amber-600 dark:text-amber-400" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-white dark:bg-slate-900 border-l-4 border-l-green-500 shadow-lg hover:shadow-xl transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Approved</p>
-                    <p className="text-3xl font-bold text-slate-900 dark:text-white mt-1">
-                      {approvedEvents}
-                    </p>
-                  </div>
-                  <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                    <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-white dark:bg-slate-900 border-l-4 border-l-blue-500 shadow-lg hover:shadow-xl transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Pending Schedules</p>
-                    <p className="text-3xl font-bold text-slate-900 dark:text-white mt-1">
-                      {pendingSchedules}
-                    </p>
-                  </div>
-                  <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                    <FileText className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-white dark:bg-slate-900 border-l-4 border-l-purple-500 shadow-lg hover:shadow-xl transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Active Clubs</p>
-                    <p className="text-3xl font-bold text-slate-900 dark:text-white mt-1">
-                      {activeClubs}/{totalClubs}
-                    </p>
-                  </div>
-                  <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                    <Building className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-      {/* Main Content */}
-      <div className="flex-1 max-w-7xl space-y-6 w-full">
-        {selectedZone && (
-          <>
-          {/* Main Dashboard Tabs */}
-          <Tabs defaultValue="approvals" className="space-y-4">
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 mb-4">
-              <TabsList className="flex-1 grid grid-cols-4">
-                <TabsTrigger value="approvals" className="text-xs sm:text-sm flex items-center">
-                  <Clock className="h-4 w-4 mr-2 flex-shrink-0" />
-                  <span>Event Dates</span>
-                  {pendingEvents > 0 && (
-                    <Badge variant="destructive" className="ml-2 text-xs">
-                      {pendingEvents}
-                    </Badge>
-                  )}
-                </TabsTrigger>
-                <TabsTrigger value="schedules" className="text-xs sm:text-sm flex items-center">
-                  <FileText className="h-4 w-4 mr-2 flex-shrink-0" />
-                  <span>Schedules</span>
-                  {pendingSchedules > 0 && (
-                    <Badge variant="destructive" className="ml-2 text-xs">
-                      {pendingSchedules}
-                    </Badge>
-                  )}
-                </TabsTrigger>
-                <TabsTrigger value="committees" className="text-xs sm:text-sm flex items-center">
-                  <Users className="h-4 w-4 mr-2 flex-shrink-0" />
-                  <span>Committees</span>
-                  {pendingCommittees > 0 && (
-                    <Badge variant="destructive" className="ml-2 text-xs">
-                      {pendingCommittees}
-                    </Badge>
-                  )}
-                </TabsTrigger>
-                <TabsTrigger value="manage" className="text-xs sm:text-sm flex items-center">
-                  <CheckCircle className="h-4 w-4 mr-2 flex-shrink-0" />
-                  <span>Manage</span>
-                </TabsTrigger>
-              </TabsList>
-
-              {/* Add Zone Event Button */}
-              <Button 
-                onClick={() => setShowAddZoneEventForm(!showAddZoneEventForm)}
-                size="lg"
-                className="distinctive-button-primary bg-gradient-to-r from-emerald-500 via-emerald-600 to-green-600 hover:from-emerald-600 hover:via-emerald-700 hover:to-green-700 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 px-4 sm:px-6 py-3 font-bold text-sm sm:text-base rounded-2xl border-2 border-emerald-400/50 hover:border-emerald-300 backdrop-blur-sm whitespace-nowrap w-full sm:w-auto"
+          <Tabs value={mainTab} onValueChange={setMainTab} className="space-y-6">
+            <TabsList className="grid w-full grid-cols-3 h-14 bg-slate-100 dark:bg-slate-800 shadow-lg rounded-xl p-1">
+              <TabsTrigger 
+                value="events" 
+                className="text-sm sm:text-base font-semibold rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-foreground data-[state=active]:shadow-sm"
               >
-                {showAddZoneEventForm ? (
-                  <>
-                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 mr-2 drop-shadow-lg" />
-                    View Events
-                  </>
-                ) : (
-                  <>
-                    <CalendarPlus className="h-4 w-4 sm:h-5 sm:w-5 mr-2 drop-shadow-lg" />
-                    Add Zone Event
-                  </>
+                <Calendar className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                <span className="hidden sm:inline">Events</span>
+                {(pendingEvents + pendingSchedules + pendingCommittees > 0) && (
+                  <Badge variant="destructive" className="ml-2 text-xs">
+                    {pendingEvents + pendingSchedules + pendingCommittees}
+                  </Badge>
                 )}
-              </Button>
-            </div>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="equipment" 
+                className="text-sm sm:text-base font-semibold rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+              >
+                <Package className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                <span className="hidden sm:inline">Equipment</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="settings" 
+                className="text-sm sm:text-base font-semibold rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+              >
+                <Settings className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                <span className="hidden sm:inline">Settings</span>
+              </TabsTrigger>
+            </TabsList>
 
-            <TabsContent value="approvals" className="space-y-4">
-              <ZoneEventApproval
-                zoneId={selectedZoneId}
-                zoneName={selectedZone.name}
-                events={zoneEvents}
-                clubs={zoneClubs}
-                eventTypes={eventTypes}
-                onEventUpdate={fetchData}
+            {/* Events Tab */}
+            <TabsContent value="events" className="space-y-6 mt-6">
+              {/* Statistics Cards - Only show on Events tab */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card className="bg-white dark:bg-slate-900 border-l-4 border-l-amber-500 shadow-lg hover:shadow-xl transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Pending Events</p>
+                        <p className="text-3xl font-bold text-slate-900 dark:text-white mt-1">
+                          {pendingEvents}
+                        </p>
+                      </div>
+                      <div className="p-3 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
+                        <Clock className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-white dark:bg-slate-900 border-l-4 border-l-green-500 shadow-lg hover:shadow-xl transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Approved</p>
+                        <p className="text-3xl font-bold text-slate-900 dark:text-white mt-1">
+                          {approvedEvents}
+                        </p>
+                      </div>
+                      <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                        <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-white dark:bg-slate-900 border-l-4 border-l-blue-500 shadow-lg hover:shadow-xl transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Pending Schedules</p>
+                        <p className="text-3xl font-bold text-slate-900 dark:text-white mt-1">
+                          {pendingSchedules}
+                        </p>
+                      </div>
+                      <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                        <FileText className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-white dark:bg-slate-900 border-l-4 border-l-purple-500 shadow-lg hover:shadow-xl transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Active Clubs</p>
+                        <p className="text-3xl font-bold text-slate-900 dark:text-white mt-1">
+                          {activeClubs}/{totalClubs}
+                        </p>
+                      </div>
+                      <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                        <Building className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="space-y-6">
+                {/* Event Sub-tabs */}
+                <Tabs defaultValue="approvals" className="space-y-4">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
+                    <TabsList className="flex-1 grid grid-cols-4 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm">
+                      <TabsTrigger value="approvals" className="text-xs sm:text-sm">
+                        <Clock className="h-4 w-4 mr-1 sm:mr-2 flex-shrink-0" />
+                        <span className="hidden sm:inline">Event Dates</span>
+                        <span className="sm:hidden">Dates</span>
+                        {pendingEvents > 0 && (
+                          <Badge variant="destructive" className="ml-1 sm:ml-2 text-xs">
+                            {pendingEvents}
+                          </Badge>
+                        )}
+                      </TabsTrigger>
+                      <TabsTrigger value="schedules" className="text-xs sm:text-sm">
+                        <FileText className="h-4 w-4 mr-1 sm:mr-2 flex-shrink-0" />
+                        <span className="hidden sm:inline">Schedules</span>
+                        <span className="sm:hidden">Sched</span>
+                        {pendingSchedules > 0 && (
+                          <Badge variant="destructive" className="ml-1 sm:ml-2 text-xs">
+                            {pendingSchedules}
+                          </Badge>
+                        )}
+                      </TabsTrigger>
+                      <TabsTrigger value="committees" className="text-xs sm:text-sm">
+                        <Users className="h-4 w-4 mr-1 sm:mr-2 flex-shrink-0" />
+                        <span className="hidden sm:inline">Committees</span>
+                        <span className="sm:hidden">Comm</span>
+                        {pendingCommittees > 0 && (
+                          <Badge variant="destructive" className="ml-1 sm:ml-2 text-xs">
+                            {pendingCommittees}
+                          </Badge>
+                        )}
+                      </TabsTrigger>
+                      <TabsTrigger value="manage" className="text-xs sm:text-sm">
+                        <CheckCircle className="h-4 w-4 mr-1 sm:mr-2 flex-shrink-0" />
+                        <span className="hidden sm:inline">Manage</span>
+                        <span className="sm:hidden">Mgmt</span>
+                      </TabsTrigger>
+                    </TabsList>
+
+                    {/* Add Zone Event Button */}
+                    <Button 
+                      onClick={() => setShowAddZoneEventForm(!showAddZoneEventForm)}
+                      size="lg"
+                      className="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 px-4 sm:px-6 py-3 font-bold text-sm sm:text-base rounded-xl whitespace-nowrap w-full sm:w-auto"
+                    >
+                      {showAddZoneEventForm ? (
+                        <>
+                          <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                          View Events
+                        </>
+                      ) : (
+                        <>
+                          <CalendarPlus className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                          Add Zone Event
+                        </>
+                      )}
+                    </Button>
+                  </div>
+
+                  <TabsContent value="approvals" className="space-y-4">
+                    <ZoneEventApproval
+                      zoneId={selectedZoneId}
+                      zoneName={selectedZone.name}
+                      events={zoneEvents}
+                      clubs={zoneClubs}
+                      eventTypes={eventTypes}
+                      onEventUpdate={fetchData}
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="schedules" className="space-y-4">
+                    <ZoneScheduleApproval
+                      zoneId={selectedZoneId}
+                      zoneName={selectedZone.name}
+                      events={zoneEvents}
+                      clubs={zoneClubs}
+                      eventTypes={eventTypes}
+                      onEventUpdate={fetchData}
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="committees" className="space-y-4">
+                    <ZoneCommitteeApprovals
+                      zoneId={selectedZoneId}
+                      onUpdate={fetchPendingCommitteesCount}
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="manage" className="space-y-4">
+                    <ZoneEventManagement
+                      zoneId={selectedZoneId}
+                      zoneName={selectedZone.name}
+                      events={zoneEvents}
+                      clubs={zoneClubs}
+                      eventTypes={eventTypes}
+                      onEventUpdate={fetchData}
+                    />
+                  </TabsContent>
+                </Tabs>
+
+                {/* Add Zone Event Form */}
+                {showAddZoneEventForm && (
+                  <Card className="border-2 border-primary/20 shadow-xl">
+                    <CardHeader>
+                      <CardTitle className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                        Create Zone-Level Event
+                      </CardTitle>
+                      <CardDescription>
+                        Add a new zone-level event. Zone-level events are automatically approved and visible to all clubs in the selected zone.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <ZoneEventSubmission
+                        zones={zones}
+                        eventTypes={eventTypes}
+                        defaultZoneId={selectedZoneId}
+                        onEventSubmitted={() => {
+                          fetchData();
+                          setShowAddZoneEventForm(false);
+                        }}
+                      />
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </TabsContent>
+
+            {/* Equipment Tab */}
+            <TabsContent value="equipment" className="space-y-6 mt-6">
+              <ZoneEquipmentDashboard 
+                zoneId={selectedZoneId} 
+                zoneName={selectedZone.name} 
               />
             </TabsContent>
 
-            <TabsContent value="schedules" className="space-y-4">
-              <ZoneScheduleApproval
-                zoneId={selectedZoneId}
-                zoneName={selectedZone.name}
-                events={zoneEvents}
-                clubs={zoneClubs}
-                eventTypes={eventTypes}
-                onEventUpdate={fetchData}
-              />
-            </TabsContent>
-
-            <TabsContent value="committees" className="space-y-4">
-              <ZoneCommitteeApprovals
-                zoneId={selectedZoneId}
-                onUpdate={fetchPendingCommitteesCount}
-              />
-            </TabsContent>
-
-            <TabsContent value="manage" className="space-y-4">
-              <ZoneEventManagement
-                zoneId={selectedZoneId}
-                zoneName={selectedZone.name}
-                events={zoneEvents}
-                clubs={zoneClubs}
-                eventTypes={eventTypes}
-                onEventUpdate={fetchData}
-              />
+            {/* Settings Tab */}
+            <TabsContent value="settings" className="space-y-6 mt-6">
+              <Card className="border-2 border-primary/20 shadow-xl">
+                <CardHeader>
+                  <CardTitle className="text-2xl font-bold flex items-center gap-2">
+                    <Settings className="h-6 w-6" />
+                    Zone Settings
+                  </CardTitle>
+                  <CardDescription>
+                    Manage zone configuration and preferences
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="rounded-lg border bg-card p-6 text-center">
+                      <p className="text-muted-foreground mb-4">
+                        Advanced zone settings and configuration options
+                      </p>
+                      <Button
+                        onClick={() => router.push(`/zone-manager/settings?zoneId=${selectedZoneId}`)}
+                        size="lg"
+                        className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white shadow-lg"
+                      >
+                        <Settings className="mr-2 h-5 w-5" />
+                        Go to Settings Page
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
           </Tabs>
-
-          {/* Add Zone Event Form - Shown when button is clicked */}
-          {showAddZoneEventForm && (
-            <Card className="enhanced-card glass-effect border-2 border-border/40 shadow-xl mt-4">
-              <CardHeader>
-                <CardTitle className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                  Create Zone-Level Event
-                </CardTitle>
-                <CardDescription>
-                  Add a new zone-level event. Zone-level events are automatically approved and visible to all clubs in the selected zone.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ZoneEventSubmission
-                  zones={zones}
-                  eventTypes={eventTypes}
-                  defaultZoneId={selectedZoneId}
-                  onEventSubmitted={() => {
-                    fetchData();
-                    setShowAddZoneEventForm(false);
-                  }}
-                />
-              </CardContent>
-            </Card>
-          )}
-        </>
-      )}
-      </div>
+        )}
       </div>
     </div>
   );
 }
 
-export default function ZoneManagerDashboard() {
+function ZoneManagerPage() {
   return (
     <RouteGuard requireAuth={true} requiredRoles={['super_user', 'zone_rep']}>
-      <ZoneManagerContent />
+      <Suspense fallback={
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <Clock className="h-8 w-8 animate-spin mx-auto mb-4" />
+            <p>Loading Zone Manager Dashboard...</p>
+          </div>
+        </div>
+      }>
+        <ZoneManagerContent />
+      </Suspense>
     </RouteGuard>
   );
 }
+
+export default ZoneManagerPage;

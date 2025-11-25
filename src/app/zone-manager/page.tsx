@@ -1,14 +1,18 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MapPin, CheckCircle, Clock, Users, Building, Plus, FileText, CalendarPlus, Settings, Package, Calendar } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { MapPin, CheckCircle, Clock, Users, Building, Plus, FileText, CalendarPlus, Settings, Package, Calendar, Save, Upload, Loader2, Image as ImageIcon, X, User, Mail, Phone } from 'lucide-react';
 import { Zone, Club, Event, EventType } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
 import { ZoneEventApproval } from '@/components/zone-manager/zone-event-approval';
 import { ZoneScheduleApproval } from '@/components/zone-manager/zone-schedule-approval';
 import { ZoneEventManagement } from '@/components/zone-manager/zone-event-management';
@@ -25,6 +29,8 @@ function ZoneManagerContent() {
   const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [zones, setZones] = useState<Zone[]>([]);
   const [clubs, setClubs] = useState<Club[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
@@ -35,6 +41,19 @@ function ZoneManagerContent() {
   const [showAddZoneEventForm, setShowAddZoneEventForm] = useState(false);
   const [pendingCommittees, setPendingCommittees] = useState(0);
   const [mainTab, setMainTab] = useState<string>('events');
+
+  // Settings form state
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    streetAddress: '',
+    secretaryName: '',
+    secretaryEmail: '',
+    secretaryMobile: '',
+    imageUrl: ''
+  });
+  const [logoPreview, setLogoPreview] = useState<string>('');
 
   // Future: This will be replaced with user's authorized zones from authentication
   const [authorizedZones, setAuthorizedZones] = useState<string[]>([]);
@@ -127,6 +146,130 @@ function ZoneManagerContent() {
       fetchPendingCommitteesCount();
     }
   }, [user?.id, fetchPendingCommitteesCount]);
+
+  // Populate settings form when zone changes
+  useEffect(() => {
+    const selectedZone = zones.find(zone => zone.id === selectedZoneId);
+    if (selectedZone) {
+      const logoData = selectedZone.imageUrl && selectedZone.imageUrl.startsWith('data:image') ? selectedZone.imageUrl : '';
+      
+      setFormData({
+        name: selectedZone.name || '',
+        streetAddress: selectedZone.streetAddress || '',
+        secretaryName: selectedZone.secretary?.name || '',
+        secretaryEmail: selectedZone.secretary?.email || '',
+        secretaryMobile: selectedZone.secretary?.mobile || '',
+        imageUrl: logoData
+      });
+
+      if (logoData) {
+        setLogoPreview(logoData);
+      } else {
+        setLogoPreview('');
+      }
+    }
+  }, [selectedZoneId, zones]);
+
+  // Settings form handlers
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: 'Invalid File',
+        description: 'Please upload an image file',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    if (file.size > 500 * 1024) {
+      toast({
+        title: 'File Too Large',
+        description: 'Please upload an image smaller than 500KB',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setLogoPreview(base64String);
+        setFormData(prev => ({ ...prev, imageUrl: base64String }));
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('Error uploading logo:', error);
+      toast({
+        title: 'Upload Failed',
+        description: 'Failed to upload logo',
+        variant: 'destructive'
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemoveLogo = () => {
+    setLogoPreview('');
+    setFormData(prev => ({ ...prev, imageUrl: '' }));
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleSaveSettings = async () => {
+    if (!selectedZoneId) return;
+
+    setSaving(true);
+    try {
+      const response = await fetch(`/api/zones/${selectedZoneId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          streetAddress: formData.streetAddress,
+          imageUrl: formData.imageUrl,
+          secretary: {
+            name: formData.secretaryName,
+            email: formData.secretaryEmail,
+            mobile: formData.secretaryMobile
+          }
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update zone');
+      }
+
+      toast({
+        title: 'Success',
+        description: 'Zone information updated successfully',
+      });
+
+      // Refresh zone data
+      await fetchData();
+    } catch (error) {
+      console.error('Error saving zone data:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to save zone information',
+        variant: 'destructive'
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   // Check for tab parameter in URL
   useEffect(() => {
@@ -264,108 +407,145 @@ function ZoneManagerContent() {
           </div>
         </div>
 
-        {/* Main Tabs - Events, Equipment, Settings */}
+        {/* Main Layout - Sidebar Navigation */}
         {selectedZone && (
-          <Tabs value={mainTab} onValueChange={setMainTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3 h-14 bg-slate-100 dark:bg-slate-800 shadow-lg rounded-xl p-1">
-              <TabsTrigger 
-                value="events" 
-                className="text-sm sm:text-base font-semibold rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-foreground data-[state=active]:shadow-sm"
-              >
-                <Calendar className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                <span className="hidden sm:inline">Events</span>
-                {(pendingEvents + pendingSchedules + pendingCommittees > 0) && (
-                  <Badge variant="destructive" className="ml-2 text-xs">
-                    {pendingEvents + pendingSchedules + pendingCommittees}
-                  </Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger 
-                value="equipment" 
-                className="text-sm sm:text-base font-semibold rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-foreground data-[state=active]:shadow-sm"
-              >
-                <Package className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                <span className="hidden sm:inline">Equipment</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="settings" 
-                className="text-sm sm:text-base font-semibold rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-foreground data-[state=active]:shadow-sm"
-              >
-                <Settings className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                <span className="hidden sm:inline">Settings</span>
-              </TabsTrigger>
-            </TabsList>
+          <div className="flex flex-col lg:flex-row gap-6">
+            {/* Vertical Sidebar Navigation */}
+            <div className="lg:w-64 flex-shrink-0">
+              <Card className="sticky top-6 shadow-lg">
+                <CardContent className="p-2">
+                  <nav className="space-y-1">
+                    {/* Events Section */}
+                    <button
+                      onClick={() => setMainTab('events')}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                        mainTab === 'events'
+                          ? 'bg-primary text-primary-foreground shadow-md'
+                          : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      <Calendar className="h-5 w-5 flex-shrink-0" />
+                      <div className="flex-1 text-left">
+                        <div className="font-semibold">Events</div>
+                        <div className="text-xs opacity-80">Manage zone events</div>
+                      </div>
+                      {(pendingEvents + pendingSchedules + pendingCommittees > 0) && (
+                        <Badge variant="destructive" className="text-xs">
+                          {pendingEvents + pendingSchedules + pendingCommittees}
+                        </Badge>
+                      )}
+                    </button>
 
-            {/* Events Tab */}
-            <TabsContent value="events" className="space-y-6 mt-6">
-              {/* Statistics Cards - Only show on Events tab */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card className="bg-white dark:bg-slate-900 border-l-4 border-l-amber-500 shadow-lg hover:shadow-xl transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Pending Events</p>
-                        <p className="text-3xl font-bold text-slate-900 dark:text-white mt-1">
-                          {pendingEvents}
-                        </p>
+                    {/* Equipment Section */}
+                    <button
+                      onClick={() => setMainTab('equipment')}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                        mainTab === 'equipment'
+                          ? 'bg-primary text-primary-foreground shadow-md'
+                          : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      <Package className="h-5 w-5 flex-shrink-0" />
+                      <div className="flex-1 text-left">
+                        <div className="font-semibold">Equipment</div>
+                        <div className="text-xs opacity-80">Inventory & bookings</div>
                       </div>
-                      <div className="p-3 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
-                        <Clock className="h-6 w-6 text-amber-600 dark:text-amber-400" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </button>
 
-                <Card className="bg-white dark:bg-slate-900 border-l-4 border-l-green-500 shadow-lg hover:shadow-xl transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Approved</p>
-                        <p className="text-3xl font-bold text-slate-900 dark:text-white mt-1">
-                          {approvedEvents}
-                        </p>
+                    {/* Settings Section */}
+                    <button
+                      onClick={() => setMainTab('settings')}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                        mainTab === 'settings'
+                          ? 'bg-primary text-primary-foreground shadow-md'
+                          : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      <Settings className="h-5 w-5 flex-shrink-0" />
+                      <div className="flex-1 text-left">
+                        <div className="font-semibold">Settings</div>
+                        <div className="text-xs opacity-80">Zone configuration</div>
                       </div>
-                      <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                        <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </button>
+                  </nav>
+                </CardContent>
+              </Card>
+            </div>
 
-                <Card className="bg-white dark:bg-slate-900 border-l-4 border-l-blue-500 shadow-lg hover:shadow-xl transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Pending Schedules</p>
-                        <p className="text-3xl font-bold text-slate-900 dark:text-white mt-1">
-                          {pendingSchedules}
-                        </p>
-                      </div>
-                      <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                        <FileText className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+            {/* Main Content Area */}
+            <div className="flex-1 min-w-0">
+              {/* Events Section */}
+              {mainTab === 'events' && (
+                <div className="space-y-6">
+                  {/* Statistics Cards */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <Card className="bg-white dark:bg-slate-900 border-l-4 border-l-amber-500 shadow-lg hover:shadow-xl transition-shadow">
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Pending Events</p>
+                            <p className="text-3xl font-bold text-slate-900 dark:text-white mt-1">
+                              {pendingEvents}
+                            </p>
+                          </div>
+                          <div className="p-3 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
+                            <Clock className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
 
-                <Card className="bg-white dark:bg-slate-900 border-l-4 border-l-purple-500 shadow-lg hover:shadow-xl transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Active Clubs</p>
-                        <p className="text-3xl font-bold text-slate-900 dark:text-white mt-1">
-                          {activeClubs}/{totalClubs}
-                        </p>
-                      </div>
-                      <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                        <Building className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+                    <Card className="bg-white dark:bg-slate-900 border-l-4 border-l-green-500 shadow-lg hover:shadow-xl transition-shadow">
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Approved</p>
+                            <p className="text-3xl font-bold text-slate-900 dark:text-white mt-1">
+                              {approvedEvents}
+                            </p>
+                          </div>
+                          <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                            <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
 
-              <div className="space-y-6">
+                    <Card className="bg-white dark:bg-slate-900 border-l-4 border-l-blue-500 shadow-lg hover:shadow-xl transition-shadow">
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Pending Schedules</p>
+                            <p className="text-3xl font-bold text-slate-900 dark:text-white mt-1">
+                              {pendingSchedules}
+                            </p>
+                          </div>
+                          <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                            <FileText className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="bg-white dark:bg-slate-900 border-l-4 border-l-purple-500 shadow-lg hover:shadow-xl transition-shadow">
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Active Clubs</p>
+                            <p className="text-3xl font-bold text-slate-900 dark:text-white mt-1">
+                              {activeClubs}/{totalClubs}
+                            </p>
+                          </div>
+                          <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                            <Building className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Event Management Section */}
+                  <div className="space-y-6">
                 {/* Event Sub-tabs */}
                 <Tabs defaultValue="approvals" className="space-y-4">
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
@@ -492,49 +672,214 @@ function ZoneManagerContent() {
                     </CardContent>
                   </Card>
                 )}
-              </div>
-            </TabsContent>
-
-            {/* Equipment Tab */}
-            <TabsContent value="equipment" className="space-y-6 mt-6">
-              <ZoneEquipmentDashboard 
-                zoneId={selectedZoneId} 
-                zoneName={selectedZone.name} 
-              />
-            </TabsContent>
-
-            {/* Settings Tab */}
-            <TabsContent value="settings" className="space-y-6 mt-6">
-              <Card className="border-2 border-primary/20 shadow-xl">
-                <CardHeader>
-                  <CardTitle className="text-2xl font-bold flex items-center gap-2">
-                    <Settings className="h-6 w-6" />
-                    Zone Settings
-                  </CardTitle>
-                  <CardDescription>
-                    Manage zone configuration and preferences
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="rounded-lg border bg-card p-6 text-center">
-                      <p className="text-muted-foreground mb-4">
-                        Advanced zone settings and configuration options
-                      </p>
-                      <Button
-                        onClick={() => router.push(`/zone-manager/settings?zoneId=${selectedZoneId}`)}
-                        size="lg"
-                        className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white shadow-lg"
-                      >
-                        <Settings className="mr-2 h-5 w-5" />
-                        Go to Settings Page
-                      </Button>
-                    </div>
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+                </div>
+              )}
+
+              {/* Equipment Section */}
+              {mainTab === 'equipment' && (
+                <div className="space-y-6">
+                  <ZoneEquipmentDashboard 
+                    zoneId={selectedZoneId} 
+                    zoneName={selectedZone.name} 
+                  />
+                </div>
+              )}
+
+              {/* Settings Section */}
+              {mainTab === 'settings' && (
+                <div className="space-y-6">
+                  {/* Zone Logo */}
+                  <Card className="bg-white dark:bg-slate-900 shadow-lg border-slate-200 dark:border-slate-700">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <ImageIcon className="h-5 w-5" />
+                        Zone Logo
+                      </CardTitle>
+                      <CardDescription>
+                        Upload your zone logo. Recommended size: 500x500px. Max size: 500KB.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex flex-col sm:flex-row items-start gap-6">
+                        {/* Logo Preview */}
+                        <div className="relative">
+                          <div className="w-32 h-32 rounded-lg border-2 border-dashed border-muted-foreground/25 overflow-hidden bg-muted/20 flex items-center justify-center">
+                            {logoPreview ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={logoPreview}
+                                alt="Zone Logo"
+                                className="object-contain w-full h-full"
+                              />
+                            ) : (
+                              <ImageIcon className="h-12 w-12 text-muted-foreground/50" />
+                            )}
+                          </div>
+                          {logoPreview && (
+                            <Button
+                              size="icon"
+                              variant="destructive"
+                              className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                              onClick={handleRemoveLogo}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+
+                        {/* Upload Controls */}
+                        <div className="flex-1 space-y-2">
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleLogoUpload}
+                            className="hidden"
+                            aria-label="Upload zone logo"
+                          />
+                          <Button
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={uploading}
+                            variant="outline"
+                            className="w-full sm:w-auto"
+                          >
+                            {uploading ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Uploading...
+                              </>
+                            ) : (
+                              <>
+                                <Upload className="h-4 w-4 mr-2" />
+                                {logoPreview ? 'Change Logo' : 'Upload Logo'}
+                              </>
+                            )}
+                          </Button>
+                          <p className="text-xs text-muted-foreground">
+                            Supported formats: JPG, PNG, GIF, SVG
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Basic Information */}
+                  <Card className="bg-white dark:bg-slate-900 shadow-lg border-slate-200 dark:border-slate-700">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <MapPin className="h-5 w-5" />
+                        Basic Information
+                      </CardTitle>
+                      <CardDescription>
+                        Update your zone's basic details
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="name">Zone Name</Label>
+                        <Input
+                          id="name"
+                          value={formData.name}
+                          onChange={(e) => handleInputChange('name', e.target.value)}
+                          placeholder="Enter zone name"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="streetAddress">
+                          <MapPin className="h-4 w-4 inline mr-2" />
+                          Street Address
+                        </Label>
+                        <Textarea
+                          id="streetAddress"
+                          value={formData.streetAddress}
+                          onChange={(e) => handleInputChange('streetAddress', e.target.value)}
+                          placeholder="Enter street address"
+                          rows={3}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Secretary Information */}
+                  <Card className="bg-white dark:bg-slate-900 shadow-lg border-slate-200 dark:border-slate-700">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <User className="h-5 w-5" />
+                        Secretary Information
+                      </CardTitle>
+                      <CardDescription>
+                        Zone secretary contact details
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="secretaryName">Secretary Name</Label>
+                        <Input
+                          id="secretaryName"
+                          value={formData.secretaryName}
+                          onChange={(e) => handleInputChange('secretaryName', e.target.value)}
+                          placeholder="Enter secretary name"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="secretaryEmail">
+                            <Mail className="h-4 w-4 inline mr-2" />
+                            Email Address
+                          </Label>
+                          <Input
+                            id="secretaryEmail"
+                            type="email"
+                            value={formData.secretaryEmail}
+                            onChange={(e) => handleInputChange('secretaryEmail', e.target.value)}
+                            placeholder="secretary@example.com"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="secretaryMobile">
+                            <Phone className="h-4 w-4 inline mr-2" />
+                            Mobile Number
+                          </Label>
+                          <Input
+                            id="secretaryMobile"
+                            type="tel"
+                            value={formData.secretaryMobile}
+                            onChange={(e) => handleInputChange('secretaryMobile', e.target.value)}
+                            placeholder="0400 000 000"
+                          />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Actions */}
+                  <div className="flex justify-end gap-4">
+                    <Button
+                      onClick={handleSaveSettings}
+                      disabled={saving}
+                      className="min-w-[120px] bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg"
+                    >
+                      {saving ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4 mr-2" />
+                          Save Changes
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         )}
       </div>
     </div>

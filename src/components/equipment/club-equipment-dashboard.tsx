@@ -100,7 +100,12 @@ export function ClubEquipmentDashboard({
     }
   }, [clubId, toast]);
 
-  // Fetch bookings when switching to booking tabs
+  // Fetch bookings on initial mount to populate indicators
+  useEffect(() => {
+    fetchBookings();
+  }, [fetchBookings]);
+
+  // Fetch bookings when switching to booking tabs (refresh)
   useEffect(() => {
     if (activeTab === 'my-bookings' || activeTab === 'handover') {
       fetchBookings();

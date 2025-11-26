@@ -759,7 +759,7 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
           <TabsTrigger value="manage-bookings" title="Update and manage booking statuses">
             <span className="flex items-center gap-2">
               Manage Bookings
-              {pendingApprovalsCount > 0 && (
+              {!loadingBookings && pendingApprovalsCount > 0 && (
                 <Badge variant="destructive" className="ml-1 h-5 min-w-5 px-1.5 text-xs">
                   {pendingApprovalsCount}
                 </Badge>
@@ -769,7 +769,7 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
           <TabsTrigger value="handover" title="Coordinate equipment pickup and drop-off between clubs">
             <span className="flex items-center gap-2">
               Pickup & Drop-off
-              {handoverActionsCount > 0 && (
+              {!loadingBookings && handoverActionsCount > 0 && (
                 <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs">
                   {handoverActionsCount}
                 </Badge>

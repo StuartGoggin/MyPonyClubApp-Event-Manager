@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   getBooking,
   updateBooking,
+  deleteBooking,
 } from '@/lib/equipment-service';
 
 interface RouteParams {
@@ -108,7 +109,8 @@ export async function PUT(
 
 /**
  * DELETE /api/equipment-bookings/[id]
- * Cancel booking
+ * Delete booking permanently
+ * Query parameter: ?permanent=true for permanent deletion, otherwise just cancels
  */
 export async function DELETE(
   request: NextRequest,
@@ -116,6 +118,8 @@ export async function DELETE(
 ) {
   try {
     const { id } = params;
+    const { searchParams } = new URL(request.url);
+    const permanent = searchParams.get('permanent') === 'true';
 
     // Check if booking exists
     const existing = await getBooking(id);
@@ -130,21 +134,31 @@ export async function DELETE(
     }
 
     // TODO: Add authorization check
-    // TODO: Implement booking cancellation workflow with email notifications
+    // TODO: Implement booking deletion workflow with email notifications
 
-    // Cancel booking (set status to cancelled)
-    await updateBooking(id, { status: 'cancelled' });
-
-    return NextResponse.json({
-      success: true,
-      message: 'Booking cancelled successfully',
-    });
+    if (permanent) {
+      // Permanently delete the booking
+      await deleteBooking(id);
+      
+      return NextResponse.json({
+        success: true,
+        message: 'Booking deleted permanently',
+      });
+    } else {
+      // Just cancel the booking (set status to cancelled)
+      await updateBooking(id, { status: 'cancelled' });
+      
+      return NextResponse.json({
+        success: true,
+        message: 'Booking cancelled successfully',
+      });
+    }
   } catch (error) {
-    console.error('Error cancelling booking:', error);
+    console.error('Error deleting booking:', error);
     return NextResponse.json(
       {
         success: false,
-        error: 'Failed to cancel booking',
+        error: 'Failed to delete booking',
         details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }

@@ -294,6 +294,7 @@ export interface EquipmentBooking {
   approvedBy?: string;
   approvedAt?: Date;
   rejectionReason?: string;
+  autoApproved?: boolean; // True if approved automatically without manual intervention
   
   // Condition tracking
   conditionAtPickup?: EquipmentConditionReport;

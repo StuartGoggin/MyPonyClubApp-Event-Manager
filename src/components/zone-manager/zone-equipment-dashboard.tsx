@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,10 +9,12 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Package, Plus, Edit, Trash2, Check, X, Calendar, DollarSign, AlertCircle, MapPin, ArrowRight, Truck, User, Printer, Mail } from 'lucide-react';
+import { Package, Plus, Edit, Trash2, Check, X, Calendar, DollarSign, AlertCircle, MapPin, ArrowRight, Truck, User, Printer, Mail, MoreHorizontal, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth-context';
@@ -20,11 +23,31 @@ import type { EquipmentItem, EquipmentBooking, PricingRule, BookingStatus } from
 interface ZoneEquipmentDashboardProps {
   zoneId: string;
   zoneName: string;
+  onActionCountsChange?: (counts: { pending: number; handover: number }) => void;
 }
 
-export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashboardProps) {
+export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange }: ZoneEquipmentDashboardProps) {
   const { toast } = useToast();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('inventory');
+  
+  // Handle token expiry
+  const handleTokenExpiry = useCallback((error?: any) => {
+    toast({
+      title: 'Session Expired',
+      description: 'Your session has expired. Please log in again.',
+      variant: 'destructive',
+    });
+    
+    // Clear auth data
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user_data');
+    
+    // Redirect to login after short delay
+    setTimeout(() => {
+      router.push('/login');
+    }, 2000);
+  }, [toast, router]);
   
   // Get auth token
   const getAuthHeaders = () => {
@@ -57,6 +80,34 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
   // Pricing rules state
   const [pricingRules, setPricingRules] = useState<PricingRule[]>([]);
   const [loadingPricing, setLoadingPricing] = useState(true);
+  
+  // Auto-approval state
+  const [autoApprovalEnabled, setAutoApprovalEnabled] = useState(false);
+  const [autoApprovedBookings, setAutoApprovedBookings] = useState<EquipmentBooking[]>([]);
+  const [loadingAutoApproval, setLoadingAutoApproval] = useState(false);
+  
+  // Auto-email state
+  const [autoEmailEnabled, setAutoEmailEnabled] = useState(false);
+  const [loadingAutoEmail, setLoadingAutoEmail] = useState(false);
+  
+  // Tab count indicators - recalculated whenever bookings change
+  const pendingApprovalsCount = bookings.filter(b => b.status === 'pending').length;
+  const handoverActionsCount = bookings.filter(b => 
+    b.status === 'approved' || 
+    b.status === 'confirmed' || 
+    b.status === 'picked_up' || 
+    b.status === 'in_use'
+  ).length;
+  
+  // Notify parent of count changes
+  useEffect(() => {
+    if (onActionCountsChange) {
+      onActionCountsChange({
+        pending: pendingApprovalsCount,
+        handover: handoverActionsCount
+      });
+    }
+  }, [pendingApprovalsCount, handoverActionsCount, onActionCountsChange]);
   
   // Handover coordination state
   const [selectedHandoverBooking, setSelectedHandoverBooking] = useState<EquipmentBooking | null>(null);
@@ -135,12 +186,99 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
     }
   }, [zoneId, toast]);
 
+  // Fetch auto-approval settings and history
+  const fetchAutoApprovalSettings = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/equipment-automations?zoneId=${zoneId}`, {
+        headers: getAuthHeaders()
+      });
+      if (!response.ok) throw new Error('Failed to fetch automation settings');
+      const data = await response.json();
+      setAutoApprovalEnabled(data.autoApproval?.enabled || false);
+      setAutoEmailEnabled(data.autoEmail?.enabled || false);
+      setAutoApprovedBookings(data.autoApprovedBookings || []);
+    } catch (error) {
+      console.error('Error fetching automation settings:', error);
+    }
+  }, [zoneId]);
+
+  // Toggle auto-approval
+  const toggleAutoApproval = async () => {
+    try {
+      setLoadingAutoApproval(true);
+      const newState = !autoApprovalEnabled;
+      
+      const response = await fetch(`/api/equipment-automations`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          zoneId,
+          type: 'autoApproval',
+          enabled: newState
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to update auto-approval settings');
+
+      setAutoApprovalEnabled(newState);
+      
+      toast({
+        title: 'Success',
+        description: `Auto-approval ${newState ? 'enabled' : 'disabled'} successfully`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to update auto-approval settings',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingAutoApproval(false);
+    }
+  };
+
+  // Toggle auto-email
+  const toggleAutoEmail = async () => {
+    try {
+      setLoadingAutoEmail(true);
+      const newState = !autoEmailEnabled;
+      
+      const response = await fetch(`/api/equipment-automations`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          zoneId,
+          type: 'autoEmail',
+          enabled: newState
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to update auto-email settings');
+
+      setAutoEmailEnabled(newState);
+      
+      toast({
+        title: 'Success',
+        description: `Auto-email ${newState ? 'enabled' : 'disabled'} successfully`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to update auto-email settings',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingAutoEmail(false);
+    }
+  };
+
   // Fetch data
   useEffect(() => {
     if (activeTab === 'inventory') fetchEquipment();
     if (activeTab === 'bookings' || activeTab === 'manage-bookings' || activeTab === 'handover') fetchBookings();
     if (activeTab === 'pricing') fetchPricingRules();
-  }, [activeTab, fetchEquipment, fetchBookings, fetchPricingRules]);
+    if (activeTab === 'automations') fetchAutoApprovalSettings();
+  }, [activeTab, fetchEquipment, fetchBookings, fetchPricingRules, fetchAutoApprovalSettings]);
 
   // Equipment CRUD
   const handleAddEquipment = () => {
@@ -246,6 +384,14 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
         headers: getAuthHeaders()
       });
 
+      if (response.status === 401) {
+        const data = await response.json();
+        if (data.code === 'TOKEN_EXPIRED' || data.error?.includes('expired')) {
+          handleTokenExpiry();
+          return;
+        }
+      }
+
       if (!response.ok) throw new Error('Failed to approve booking');
 
       toast({
@@ -273,6 +419,14 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
         headers: getAuthHeaders(),
         body: JSON.stringify({ rejectionReason: reason }),
       });
+
+      if (response.status === 401) {
+        const data = await response.json();
+        if (data.code === 'TOKEN_EXPIRED' || data.error?.includes('expired')) {
+          handleTokenExpiry();
+          return;
+        }
+      }
 
       if (!response.ok) throw new Error('Failed to reject booking');
 
@@ -347,6 +501,32 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
       toast({
         title: 'Error',
         description: 'Failed to cancel booking',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDeleteBooking = async (bookingId: string) => {
+    if (!confirm('Are you sure you want to delete this booking? This action cannot be undone.')) return;
+
+    try {
+      const response = await fetch(`/api/equipment-bookings/${bookingId}?permanent=true`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+
+      if (!response.ok) throw new Error('Failed to delete booking');
+
+      toast({
+        title: 'Success',
+        description: 'Booking deleted successfully',
+      });
+
+      fetchBookings();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete booking',
         variant: 'destructive',
       });
     }
@@ -535,23 +715,72 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
-      case 'confirmed': return 'default';
-      case 'pending': return 'secondary';
-      case 'rejected': return 'destructive';
-      case 'completed': return 'outline';
+      case 'approved': return 'default'; // Green/Blue for approved
+      case 'confirmed': return 'default'; // Green/Blue for confirmed
+      case 'pending': return 'secondary'; // Yellow/Orange for pending
+      case 'rejected': return 'destructive'; // Red for rejected
+      case 'cancelled': return 'destructive'; // Red for cancelled
+      case 'completed': return 'outline'; // Gray for completed
+      case 'picked_up': return 'default'; // Green for picked up
+      case 'in_use': return 'default'; // Green for in use
+      case 'returned': return 'outline'; // Gray for returned
+      case 'overdue': return 'destructive'; // Red for overdue
       default: return 'secondary';
+    }
+  };
+
+  const getStatusBadgeColor = (status: string) => {
+    switch (status) {
+      case 'approved': return 'bg-green-100 text-green-800 border-green-300 dark:bg-green-900 dark:text-green-200';
+      case 'confirmed': return 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900 dark:text-blue-200';
+      case 'pending': return 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900 dark:text-amber-200';
+      case 'rejected': return 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900 dark:text-red-200';
+      case 'cancelled': return 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900 dark:text-red-200';
+      case 'completed': return 'bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-800 dark:text-gray-300';
+      case 'picked_up': return 'bg-purple-100 text-purple-800 border-purple-300 dark:bg-purple-900 dark:text-purple-200';
+      case 'in_use': return 'bg-indigo-100 text-indigo-800 border-indigo-300 dark:bg-indigo-900 dark:text-indigo-200';
+      case 'returned': return 'bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-800 dark:text-gray-300';
+      case 'overdue': return 'bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-900 dark:text-orange-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-300';
     }
   };
 
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="inventory" title="Manage equipment inventory">Inventory</TabsTrigger>
-          <TabsTrigger value="bookings" title="View all equipment bookings">Bookings</TabsTrigger>
-          <TabsTrigger value="manage-bookings" title="Update and manage booking statuses">Manage Bookings</TabsTrigger>
-          <TabsTrigger value="handover" title="Coordinate equipment pickup and drop-off between clubs">Pickup & Drop-off</TabsTrigger>
-          <TabsTrigger value="pricing" title="Configure pricing rules for equipment">Pricing</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-6">
+          <TabsTrigger value="inventory" title="Manage equipment inventory">
+            Inventory
+          </TabsTrigger>
+          <TabsTrigger value="bookings" title="View all equipment bookings">
+            Bookings
+          </TabsTrigger>
+          <TabsTrigger value="manage-bookings" title="Update and manage booking statuses">
+            <span className="flex items-center gap-2">
+              Manage Bookings
+              {pendingApprovalsCount > 0 && (
+                <Badge variant="destructive" className="ml-1 h-5 min-w-5 px-1.5 text-xs">
+                  {pendingApprovalsCount}
+                </Badge>
+              )}
+            </span>
+          </TabsTrigger>
+          <TabsTrigger value="handover" title="Coordinate equipment pickup and drop-off between clubs">
+            <span className="flex items-center gap-2">
+              Pickup & Drop-off
+              {handoverActionsCount > 0 && (
+                <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs">
+                  {handoverActionsCount}
+                </Badge>
+              )}
+            </span>
+          </TabsTrigger>
+          <TabsTrigger value="automations" title="Configure automatic booking approvals and notifications">
+            Automations
+          </TabsTrigger>
+          <TabsTrigger value="pricing" title="Configure pricing rules for equipment">
+            Pricing
+          </TabsTrigger>
         </TabsList>
 
         {/* Inventory Tab */}
@@ -677,63 +906,82 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
                         )}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={getStatusBadgeVariant(booking.status)}>
+                        <Badge variant={getStatusBadgeVariant(booking.status)} className={getStatusBadgeColor(booking.status)}>
                           {booking.status}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right space-x-2">
-                        {booking.status === 'pending' && (
-                          <>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleApproveBooking(booking.id)}
-                            >
-                              <Check className="h-4 w-4 text-green-600" />
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Open menu</span>
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleRejectBooking(booking.id)}
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setSelectedBooking(booking);
+                                setEditingBooking(false);
+                                setBookingDialogOpen(true);
+                              }}
                             >
-                              <X className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedBooking(booking);
-                            setEditingBooking(true);
-                            const pickupDate = booking.pickupDate ? new Date(booking.pickupDate) : null;
-                            const returnDate = booking.returnDate ? new Date(booking.returnDate) : null;
-                            setBookingForm({
-                              pickupDate: pickupDate && !isNaN(pickupDate.getTime()) 
-                                ? pickupDate.toISOString().split('T')[0] 
-                                : '',
-                              returnDate: returnDate && !isNaN(returnDate.getTime()) 
-                                ? returnDate.toISOString().split('T')[0] 
-                                : '',
-                              specialRequirements: booking.specialRequirements || '',
-                              status: booking.status,
-                            });
-                            setBookingDialogOpen(true);
-                          }}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedBooking(booking);
-                            setEditingBooking(false);
-                            setBookingDialogOpen(true);
-                          }}
-                        >
-                          View
-                        </Button>
+                              <Eye className="h-4 w-4 mr-2" />
+                              View Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setSelectedBooking(booking);
+                                setEditingBooking(true);
+                                const pickupDate = booking.pickupDate ? new Date(booking.pickupDate) : null;
+                                const returnDate = booking.returnDate ? new Date(booking.returnDate) : null;
+                                setBookingForm({
+                                  pickupDate: pickupDate && !isNaN(pickupDate.getTime()) 
+                                    ? pickupDate.toISOString().split('T')[0] 
+                                    : '',
+                                  returnDate: returnDate && !isNaN(returnDate.getTime()) 
+                                    ? returnDate.toISOString().split('T')[0] 
+                                    : '',
+                                  specialRequirements: booking.specialRequirements || '',
+                                  status: booking.status,
+                                });
+                                setBookingDialogOpen(true);
+                              }}
+                            >
+                              <Edit className="h-4 w-4 mr-2" />
+                              Edit Booking
+                            </DropdownMenuItem>
+                            {booking.status === 'pending' && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => handleApproveBooking(booking.id)}
+                                  className="text-green-600"
+                                >
+                                  <Check className="h-4 w-4 mr-2" />
+                                  Approve
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => handleRejectBooking(booking.id)}
+                                  className="text-orange-600"
+                                >
+                                  <X className="h-4 w-4 mr-2" />
+                                  Reject
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => handleDeleteBooking(booking.id)}
+                              className="text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete Booking
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   );
@@ -797,42 +1045,89 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
                             )}
                           </TableCell>
                           <TableCell>
-                            <Badge variant={getStatusBadgeVariant(booking.status)}>
+                            <Badge variant={getStatusBadgeVariant(booking.status)} className={getStatusBadgeColor(booking.status)}>
                               {booking.status}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-right space-x-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedBooking(booking);
-                                setEditingBooking(true);
-                                const pickupDate = booking.pickupDate ? new Date(booking.pickupDate) : null;
-                                const returnDate = booking.returnDate ? new Date(booking.returnDate) : null;
-                                setBookingForm({
-                                  pickupDate: pickupDate && !isNaN(pickupDate.getTime()) 
-                                    ? pickupDate.toISOString().split('T')[0] 
-                                    : '',
-                                  returnDate: returnDate && !isNaN(returnDate.getTime()) 
-                                    ? returnDate.toISOString().split('T')[0] 
-                                    : '',
-                                  specialRequirements: booking.specialRequirements || '',
-                                  status: booking.status,
-                                });
-                                setBookingDialogOpen(true);
-                              }}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleCancelBooking(booking.id)}
-                              className="text-destructive"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                  <span className="sr-only">Open menu</span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setSelectedBooking(booking);
+                                    setEditingBooking(false);
+                                    setBookingDialogOpen(true);
+                                  }}
+                                >
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setSelectedBooking(booking);
+                                    setEditingBooking(true);
+                                    const pickupDate = booking.pickupDate ? new Date(booking.pickupDate) : null;
+                                    const returnDate = booking.returnDate ? new Date(booking.returnDate) : null;
+                                    setBookingForm({
+                                      pickupDate: pickupDate && !isNaN(pickupDate.getTime()) 
+                                        ? pickupDate.toISOString().split('T')[0] 
+                                        : '',
+                                      returnDate: returnDate && !isNaN(returnDate.getTime()) 
+                                        ? returnDate.toISOString().split('T')[0] 
+                                        : '',
+                                      specialRequirements: booking.specialRequirements || '',
+                                      status: booking.status,
+                                    });
+                                    setBookingDialogOpen(true);
+                                  }}
+                                >
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Edit Booking
+                                </DropdownMenuItem>
+                                {booking.status === 'pending' && (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      onClick={() => handleApproveBooking(booking.id)}
+                                      className="text-green-600"
+                                    >
+                                      <Check className="h-4 w-4 mr-2" />
+                                      Approve Booking
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() => handleRejectBooking(booking.id)}
+                                      className="text-orange-600"
+                                    >
+                                      <X className="h-4 w-4 mr-2" />
+                                      Reject Booking
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => handleCancelBooking(booking.id)}
+                                  className="text-orange-600"
+                                >
+                                  <X className="h-4 w-4 mr-2" />
+                                  Cancel Booking
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => handleDeleteBooking(booking.id)}
+                                  className="text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete Booking
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </TableCell>
                         </TableRow>
                       );
@@ -894,7 +1189,7 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
                                   )}
                                 </p>
                               </div>
-                              <Badge variant={getStatusBadgeVariant(booking.status)} className="text-xs">
+                              <Badge variant={getStatusBadgeVariant(booking.status)} className={`text-xs ${getStatusBadgeColor(booking.status)}`}>
                                 {booking.status}
                               </Badge>
                             </div>
@@ -1101,6 +1396,187 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        {/* Automations Tab */}
+        <TabsContent value="automations" className="space-y-6">
+          {/* Auto-Approval Card */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Check className="h-5 w-5 text-green-600" />
+                    Automatic Booking Approvals
+                  </CardTitle>
+                  <CardDescription>
+                    Automatically approve bookings when there are no scheduling conflicts
+                  </CardDescription>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Label htmlFor="auto-approval-toggle" className="text-sm font-medium">
+                    {autoApprovalEnabled ? 'Enabled' : 'Disabled'}
+                  </Label>
+                  <Switch
+                    id="auto-approval-toggle"
+                    checked={autoApprovalEnabled}
+                    onCheckedChange={toggleAutoApproval}
+                    disabled={loadingAutoApproval}
+                  />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">How Auto-Approval Works</h4>
+                      <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1 list-disc list-inside">
+                        <li>When enabled, pending bookings are automatically checked for conflicts</li>
+                        <li>If no date conflicts exist for the same equipment, the booking is approved instantly</li>
+                        <li>Conflicting bookings still require manual approval from the zone manager</li>
+                        <li>All auto-approved bookings are logged in the history below</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {autoApprovalEnabled && (
+                  <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                    <div className="flex items-center gap-2">
+                      <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
+                      <p className="text-sm font-medium text-green-900 dark:text-green-100">
+                        Auto-approval is currently active. New non-conflicting bookings will be approved automatically.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Auto-Approved Bookings History */}
+                {autoApprovedBookings.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="font-semibold">Recent Auto-Approved Bookings ({autoApprovedBookings.length})</h4>
+                    <div className="border rounded-lg overflow-hidden">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Equipment</TableHead>
+                            <TableHead>Club</TableHead>
+                            <TableHead>Dates</TableHead>
+                            <TableHead>Auto-Approved</TableHead>
+                            <TableHead>Status</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {autoApprovedBookings.slice(0, 5).map((booking) => {
+                            const pickupDate = booking.pickupDate ? new Date(booking.pickupDate) : null;
+                            const returnDate = booking.returnDate ? new Date(booking.returnDate) : null;
+                            const isValidPickup = pickupDate && !isNaN(pickupDate.getTime());
+                            const isValidReturn = returnDate && !isNaN(returnDate.getTime());
+                            const approvedDate = booking.approvedAt ? new Date(booking.approvedAt) : null;
+                            const isValidApproved = approvedDate && !isNaN(approvedDate.getTime());
+                            
+                            return (
+                              <TableRow key={booking.id}>
+                                <TableCell className="font-medium">{booking.equipmentName}</TableCell>
+                                <TableCell>{booking.clubName}</TableCell>
+                                <TableCell className="text-sm">
+                                  {isValidPickup && isValidReturn ? (
+                                    `${format(pickupDate, 'MMM d')} - ${format(returnDate, 'MMM d')}`
+                                  ) : (
+                                    'Invalid date'
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-sm">
+                                  {isValidApproved ? format(approvedDate, 'MMM d, h:mm a') : '-'}
+                                </TableCell>
+                                <TableCell>
+                                  <Badge variant={getStatusBadgeVariant(booking.status)} className={getStatusBadgeColor(booking.status)}>
+                                    {booking.status}
+                                  </Badge>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Auto-Email Card */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Mail className="h-5 w-5 text-blue-600" />
+                    Automatic Email Confirmations
+                  </CardTitle>
+                  <CardDescription>
+                    Automatically send confirmation emails when bookings are approved
+                  </CardDescription>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Label htmlFor="auto-email-toggle" className="text-sm font-medium">
+                    {autoEmailEnabled ? 'Enabled' : 'Disabled'}
+                  </Label>
+                  <Switch
+                    id="auto-email-toggle"
+                    checked={autoEmailEnabled}
+                    onCheckedChange={toggleAutoEmail}
+                    disabled={loadingAutoEmail}
+                  />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">How Auto-Email Works</h4>
+                      <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1 list-disc list-inside">
+                        <li>When enabled, confirmation emails are sent automatically when bookings are approved</li>
+                        <li>Emails are sent to the club custodian and backup contact</li>
+                        <li>Includes booking details, equipment information, and pickup/return instructions</li>
+                        <li>Works with both manual and automatic approvals</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {autoEmailEnabled && (
+                  <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-5 w-5 text-green-600 dark:text-green-400" />
+                      <p className="text-sm font-medium text-green-900 dark:text-green-100">
+                        Auto-email is currently active. Confirmation emails will be sent automatically upon booking approval.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5" />
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-amber-900 dark:text-amber-100 mb-1">Email Template</h4>
+                      <p className="text-sm text-amber-800 dark:text-amber-200">
+                        Confirmation emails include: booking reference, equipment details, pickup/return dates and locations, custodian information, and zone contact details.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Pricing Rules Tab */}
@@ -1359,7 +1835,7 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
                     </div>
                     <div>
                       <Label className="text-muted-foreground">Status</Label>
-                      <Badge variant={getStatusBadgeVariant(selectedBooking.status)}>
+                      <Badge variant={getStatusBadgeVariant(selectedBooking.status)} className={getStatusBadgeColor(selectedBooking.status)}>
                         {selectedBooking.status}
                       </Badge>
                     </div>

@@ -379,7 +379,7 @@ export function ClubEquipmentDashboard({
             {/* Title and Description */}
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-3xl font-bold text-white">Zone Equipment</h1>
+                <h1 className="text-3xl font-bold text-white">Book Zone Equipment</h1>
                 <Badge variant="outline" className="bg-white/20 text-white border-white/40">
                   Request & Manage
                 </Badge>

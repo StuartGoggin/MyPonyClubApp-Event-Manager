@@ -29,8 +29,9 @@ export interface AuthUser {
 /**
  * Extract and verify JWT token from request
  * Returns user object if valid, null otherwise
+ * Throws error for expired tokens (to be handled by caller)
  */
-async function getUserFromToken(request: NextRequest): Promise<AuthUser | null> {
+export async function getUserFromToken(request: NextRequest): Promise<AuthUser | null> {
   try {
     // Check for Authorization header
     const authHeader = request.headers.get('authorization');
@@ -86,7 +87,12 @@ async function getUserFromToken(request: NextRequest): Promise<AuthUser | null> 
       lastName: userData.lastName,
       isActive: userData.isActive,
     };
-  } catch (error) {
+  } catch (error: any) {
+    // Re-throw JWT expiration errors so they can be handled specifically
+    if (error?.code === 'ERR_JWT_EXPIRED') {
+      console.log('JWT token has expired');
+      throw error;
+    }
     console.error('Error verifying user token:', error);
     return null;
   }
@@ -134,22 +140,51 @@ function isZoneManager(user: AuthUser, zoneId?: string): boolean {
 export async function requireAuth(
   request: NextRequest
 ): Promise<{ user: AuthUser } | { error: NextResponse }> {
-  const user = await getUserFromToken(request);
-  
-  if (!user) {
+  try {
+    const user = await getUserFromToken(request);
+    
+    if (!user) {
+      return {
+        error: NextResponse.json(
+          { 
+            success: false,
+            error: 'Authentication required',
+            message: 'You must be logged in to perform this action'
+          },
+          { status: 401 }
+        )
+      };
+    }
+    
+    return { user };
+  } catch (error: any) {
+    // Handle JWT expiration specifically
+    if (error?.code === 'ERR_JWT_EXPIRED') {
+      return {
+        error: NextResponse.json(
+          { 
+            success: false,
+            error: 'Token expired',
+            code: 'TOKEN_EXPIRED',
+            message: 'Your session has expired. Please log in again.'
+          },
+          { status: 401 }
+        )
+      };
+    }
+    
+    // Generic auth error
     return {
       error: NextResponse.json(
         { 
           success: false,
-          error: 'Authentication required',
-          message: 'You must be logged in to perform this action'
+          error: 'Authentication failed',
+          message: 'Invalid or malformed authentication token'
         },
         { status: 401 }
       )
     };
   }
-  
-  return { user };
 }
 
 /**
@@ -219,7 +254,16 @@ export async function requireSuperUser(
  * Useful for routes that have different behavior for authenticated users
  */
 export async function getOptionalUser(request: NextRequest): Promise<AuthUser | null> {
-  return getUserFromToken(request);
+  try {
+    return await getUserFromToken(request);
+  } catch (error: any) {
+    // For optional auth, expired tokens should just return null
+    if (error?.code === 'ERR_JWT_EXPIRED') {
+      console.log('Optional auth: JWT token expired');
+      return null;
+    }
+    return null;
+  }
 }
 
 /**

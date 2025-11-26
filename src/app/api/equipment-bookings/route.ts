@@ -8,9 +8,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   listBookings,
   createBooking,
+  updateBooking,
+  getBooking,
 } from '@/lib/equipment-service';
 import { queueBookingConfirmationEmail } from '@/lib/equipment-email-templates';
 import type { CreateBookingRequest } from '@/types/equipment';
+import { adminDb } from '@/lib/firebase-admin';
 
 /**
  * GET /api/equipment-bookings
@@ -122,6 +125,90 @@ export async function POST(request: NextRequest) {
       requestedBy,
       requestedByEmail
     );
+
+    // Check for auto-approval if booking is pending
+    if (booking.status === 'pending') {
+      try {
+        // Get equipment details to find zoneId
+        const equipmentDoc = await adminDb.collection('equipment').doc(booking.equipmentId).get();
+        const equipment = equipmentDoc.data();
+        
+        if (equipment?.zoneId) {
+          // Check if auto-approval is enabled for this zone
+          const automationDoc = await adminDb
+            .collection('equipment_automation_settings')
+            .doc(equipment.zoneId)
+            .get();
+          
+          const automationSettings = automationDoc.exists ? automationDoc.data() : {};
+          const autoApprovalEnabled = automationSettings?.autoApproval?.enabled || false;
+          
+          if (autoApprovalEnabled) {
+            // Check for conflicts with other bookings
+            const conflictingBookings = await adminDb
+              .collection('equipment_bookings')
+              .where('equipmentId', '==', booking.equipmentId)
+              .where('status', 'in', ['approved', 'confirmed', 'picked_up', 'in_use'])
+              .get();
+            
+            let hasConflict = false;
+            const pickupTime = bookingData.pickupDate.getTime();
+            const returnTime = bookingData.returnDate.getTime();
+            
+            conflictingBookings.forEach((doc: any) => {
+              const existingBooking = doc.data();
+              const existingPickup = new Date(existingBooking.pickupDate).getTime();
+              const existingReturn = new Date(existingBooking.returnDate).getTime();
+              
+              // Check if dates overlap
+              if (
+                (pickupTime >= existingPickup && pickupTime <= existingReturn) ||
+                (returnTime >= existingPickup && returnTime <= existingReturn) ||
+                (pickupTime <= existingPickup && returnTime >= existingReturn)
+              ) {
+                hasConflict = true;
+              }
+            });
+            
+            // Auto-approve if no conflict
+            if (!hasConflict) {
+              await updateBooking(booking.id, {
+                status: 'approved',
+                approvedBy: 'auto-approval-system',
+                approvedAt: new Date(),
+                autoApproved: true
+              });
+              
+              // Re-fetch the updated booking
+              const updatedBooking = await getBooking(booking.id);
+              if (updatedBooking) {
+                booking.status = updatedBooking.status;
+                booking.approvedBy = updatedBooking.approvedBy;
+                booking.approvedAt = updatedBooking.approvedAt;
+              }
+              
+              console.log(`✅ Booking ${booking.bookingReference} auto-approved (no conflicts)`);
+              
+              // Check if auto-email is also enabled
+              const autoEmailEnabled = automationSettings?.autoEmail?.enabled || false;
+              if (autoEmailEnabled && updatedBooking) {
+                try {
+                  await queueBookingConfirmationEmail(updatedBooking);
+                  console.log(`📧 Auto-email queued for auto-approved booking ${booking.bookingReference}`);
+                } catch (emailError) {
+                  console.error('Error queueing auto-email:', emailError);
+                }
+              }
+            } else {
+              console.log(`⏸️ Booking ${booking.bookingReference} requires manual approval (conflict detected)`);
+            }
+          }
+        }
+      } catch (autoApprovalError) {
+        console.error('Error checking auto-approval:', autoApprovalError);
+        // Don't fail the booking creation if auto-approval check fails
+      }
+    }
 
     // Queue confirmation email
     const queueEmail = body.queueEmail !== false; // Default to true

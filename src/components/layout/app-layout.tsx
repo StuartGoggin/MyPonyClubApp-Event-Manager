@@ -91,7 +91,7 @@ export function AppLayout({ children }: PropsWithChildren) {
           href: '/club-manager/equipment',
           title: 'Equipment Catalog',
           icon: Package,
-          label: 'Zone Equipment',
+          label: 'Book Zone Equipment',
           requireAuth: true,
           // All authenticated users can browse and book equipment
         },

@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import { scheduleTokenRefresh, stopTokenRefresh } from '@/lib/token-refresh';
 
 interface User {
   id: string;
@@ -47,6 +48,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const parsedUser = JSON.parse(userData);
         setUser(parsedUser);
+        
+        // Start automatic token refresh
+        scheduleTokenRefresh(token);
       } catch (error) {
         console.error('Error parsing user data:', error);
         localStorage.removeItem('auth_token');
@@ -55,6 +59,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     
     setLoading(false);
+    
+    // Cleanup on unmount
+    return () => {
+      stopTokenRefresh();
+    };
   }, [isHydrated]);
 
   const login = async (credentials: { ponyClubId: string; mobileNumber: string }) => {
@@ -77,6 +86,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(data.user);
         setLoading(false); // Set loading to false after successful login
         
+        // Start automatic token refresh
+        scheduleTokenRefresh(data.token);
+        
         // Redirect based on user role
         switch (data.user.role) {
           case 'super_user':
@@ -98,6 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
+    stopTokenRefresh();
     localStorage.removeItem('auth_token');
     localStorage.removeItem('user_data');
     setUser(null);

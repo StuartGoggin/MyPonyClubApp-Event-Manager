@@ -666,6 +666,19 @@ export async function updateBooking(
 }
 
 /**
+ * Delete booking permanently
+ */
+export async function deleteBooking(bookingId: string): Promise<void> {
+  try {
+    await db.collection(BOOKINGS_COLLECTION).doc(bookingId).delete();
+    console.log(`✅ Booking deleted: ${bookingId}`);
+  } catch (error) {
+    console.error('Error deleting booking:', error);
+    throw error;
+  }
+}
+
+/**
  * Get booking chain for equipment
  */
 export async function getBookingChain(

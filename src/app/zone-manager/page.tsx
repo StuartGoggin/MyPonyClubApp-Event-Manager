@@ -40,6 +40,8 @@ function ZoneManagerContent() {
   const [error, setError] = useState<string | null>(null);
   const [showAddZoneEventForm, setShowAddZoneEventForm] = useState(false);
   const [pendingCommittees, setPendingCommittees] = useState(0);
+  const [equipmentActionCount, setEquipmentActionCount] = useState(0);
+  const [equipmentBookings, setEquipmentBookings] = useState<any[]>([]);
   const [mainTab, setMainTab] = useState<string>('events');
 
   // Settings form state
@@ -137,6 +139,32 @@ function ZoneManagerContent() {
     }
   }, [user?.id]);
 
+  const fetchEquipmentBookings = useCallback(async () => {
+    if (!selectedZoneId) return;
+    
+    try {
+      const response = await fetch(`/api/equipment-bookings?zoneId=${selectedZoneId}`);
+      if (response.ok) {
+        const data = await response.json();
+        const bookings = data.data || [];
+        setEquipmentBookings(bookings);
+        
+        // Calculate action counts
+        const pendingCount = bookings.filter((b: any) => b.status === 'pending').length;
+        const handoverCount = bookings.filter((b: any) => 
+          b.status === 'approved' || 
+          b.status === 'confirmed' || 
+          b.status === 'picked_up' || 
+          b.status === 'in_use'
+        ).length;
+        
+        setEquipmentActionCount(pendingCount + handoverCount);
+      }
+    } catch (error) {
+      console.error('Error fetching equipment bookings:', error);
+    }
+  }, [selectedZoneId]);
+
   useEffect(() => {
     fetchData();
   }, [fetchData]);
@@ -146,6 +174,12 @@ function ZoneManagerContent() {
       fetchPendingCommitteesCount();
     }
   }, [user?.id, fetchPendingCommitteesCount]);
+
+  useEffect(() => {
+    if (selectedZoneId) {
+      fetchEquipmentBookings();
+    }
+  }, [selectedZoneId, fetchEquipmentBookings]);
 
   // Populate settings form when zone changes
   useEffect(() => {
@@ -445,6 +479,11 @@ function ZoneManagerContent() {
                         <div className="font-semibold">Equipment</div>
                         <div className="text-xs opacity-80">Inventory & bookings</div>
                       </div>
+                      {equipmentActionCount > 0 && (
+                        <Badge variant="destructive" className="text-xs">
+                          {equipmentActionCount}
+                        </Badge>
+                      )}
                     </button>
 
                     {/* Settings Section */}
@@ -606,7 +645,11 @@ function ZoneManagerContent() {
                 <div className="space-y-6">
                   <ZoneEquipmentDashboard 
                     zoneId={selectedZoneId} 
-                    zoneName={selectedZone.name} 
+                    zoneName={selectedZone.name}
+                    onActionCountsChange={(counts) => {
+                      const totalCount = counts.pending + counts.handover;
+                      setEquipmentActionCount(totalCount);
+                    }}
                   />
                 </div>
               )}

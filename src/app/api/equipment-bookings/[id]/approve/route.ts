@@ -10,6 +10,8 @@ import {
   updateBooking,
 } from '@/lib/equipment-service';
 import { requireZoneManager } from '@/lib/api-auth';
+import { queueBookingConfirmationEmail } from '@/lib/equipment-email-templates';
+import { adminDb } from '@/lib/firebase-admin';
 
 interface RouteParams {
   params: {
@@ -87,10 +89,28 @@ export async function POST(
 
     console.log('Booking updated successfully, fetching updated booking...');
     
-    // TODO: Send approval notification email
-    // TODO: Update adjacent bookings' handover details if needed
-
     const updated = await getBooking(id);
+    
+    // Check if auto-email is enabled for this zone
+    if (updated) {
+      try {
+        const automationDoc = await adminDb
+          .collection('equipment_automation_settings')
+          .doc(booking.zoneId)
+          .get();
+        
+        const automationSettings = automationDoc.exists ? automationDoc.data() : {};
+        const autoEmailEnabled = automationSettings?.autoEmail?.enabled || false;
+        
+        if (autoEmailEnabled) {
+          await queueBookingConfirmationEmail(updated);
+          console.log('Confirmation email queued for booking:', id);
+        }
+      } catch (emailError) {
+        console.error('Error checking auto-email settings or queueing email:', emailError);
+        // Don't fail the approval if email queueing fails
+      }
+    }
     
     console.log('Updated booking fetched:', updated?.bookingReference);
 

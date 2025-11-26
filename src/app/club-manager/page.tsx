@@ -492,7 +492,7 @@ export default function ClubEventManagerDashboard() {
                     >
                       <Package className="h-5 w-5 flex-shrink-0" />
                       <div className="flex-1 text-left">
-                        <div className="font-semibold">Equipment</div>
+                        <div className="font-semibold">Book Zone Equipment</div>
                         <div className="text-xs opacity-80">Request & manage</div>
                       </div>
                     </button>

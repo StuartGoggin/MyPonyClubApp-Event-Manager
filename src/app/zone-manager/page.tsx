@@ -295,11 +295,6 @@ function ZoneManagerContent() {
   // Dashboard statistics for selected zone
   const pendingEvents = zoneEvents.filter(event => event.status === 'proposed').length;
   const pendingSchedules = zoneEvents.filter(event => event.schedule && event.schedule.status === 'pending').length;
-  const approvedEvents = zoneEvents.filter(event => event.status === 'approved').length;
-  const totalClubs = zoneClubs.length;
-  const activeClubs = zoneClubs.filter(club => 
-    events.some(event => event.clubId === club.id)
-  ).length;
 
   if (loading) {
     return (
@@ -477,80 +472,11 @@ function ZoneManagerContent() {
               {/* Events Section */}
               {mainTab === 'events' && (
                 <div className="space-y-6">
-                  {/* Statistics Cards */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <Card className="bg-white dark:bg-slate-900 border-l-4 border-l-amber-500 shadow-lg hover:shadow-xl transition-shadow">
-                      <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Pending Events</p>
-                            <p className="text-3xl font-bold text-slate-900 dark:text-white mt-1">
-                              {pendingEvents}
-                            </p>
-                          </div>
-                          <div className="p-3 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
-                            <Clock className="h-6 w-6 text-amber-600 dark:text-amber-400" />
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="bg-white dark:bg-slate-900 border-l-4 border-l-green-500 shadow-lg hover:shadow-xl transition-shadow">
-                      <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Approved</p>
-                            <p className="text-3xl font-bold text-slate-900 dark:text-white mt-1">
-                              {approvedEvents}
-                            </p>
-                          </div>
-                          <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                            <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="bg-white dark:bg-slate-900 border-l-4 border-l-blue-500 shadow-lg hover:shadow-xl transition-shadow">
-                      <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Pending Schedules</p>
-                            <p className="text-3xl font-bold text-slate-900 dark:text-white mt-1">
-                              {pendingSchedules}
-                            </p>
-                          </div>
-                          <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                            <FileText className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="bg-white dark:bg-slate-900 border-l-4 border-l-purple-500 shadow-lg hover:shadow-xl transition-shadow">
-                      <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Active Clubs</p>
-                            <p className="text-3xl font-bold text-slate-900 dark:text-white mt-1">
-                              {activeClubs}/{totalClubs}
-                            </p>
-                          </div>
-                          <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                            <Building className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-
-                  {/* Event Management Section */}
-                  <div className="space-y-6">
-                {/* Event Sub-tabs */}
-                <Tabs defaultValue="approvals" className="space-y-4">
+                  {/* Event Sub-tabs */}
+                  <Tabs defaultValue="approvals" className="space-y-4">
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
                     <TabsList className="flex-1 grid grid-cols-4 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm">
-                      <TabsTrigger value="approvals" className="text-xs sm:text-sm">
+                      <TabsTrigger value="approvals" className="text-xs sm:text-sm" title="Review and approve club event date requests">
                         <Clock className="h-4 w-4 mr-1 sm:mr-2 flex-shrink-0" />
                         <span className="hidden sm:inline">Event Dates</span>
                         <span className="sm:hidden">Dates</span>
@@ -560,7 +486,7 @@ function ZoneManagerContent() {
                           </Badge>
                         )}
                       </TabsTrigger>
-                      <TabsTrigger value="schedules" className="text-xs sm:text-sm">
+                      <TabsTrigger value="schedules" className="text-xs sm:text-sm" title="Review and approve event schedules submitted by clubs">
                         <FileText className="h-4 w-4 mr-1 sm:mr-2 flex-shrink-0" />
                         <span className="hidden sm:inline">Schedules</span>
                         <span className="sm:hidden">Sched</span>
@@ -570,7 +496,7 @@ function ZoneManagerContent() {
                           </Badge>
                         )}
                       </TabsTrigger>
-                      <TabsTrigger value="committees" className="text-xs sm:text-sm">
+                      <TabsTrigger value="committees" className="text-xs sm:text-sm" title="Review and approve committee nominations from clubs">
                         <Users className="h-4 w-4 mr-1 sm:mr-2 flex-shrink-0" />
                         <span className="hidden sm:inline">Committees</span>
                         <span className="sm:hidden">Comm</span>
@@ -580,7 +506,7 @@ function ZoneManagerContent() {
                           </Badge>
                         )}
                       </TabsTrigger>
-                      <TabsTrigger value="manage" className="text-xs sm:text-sm">
+                      <TabsTrigger value="manage" className="text-xs sm:text-sm" title="Manage all approved zone events">
                         <CheckCircle className="h-4 w-4 mr-1 sm:mr-2 flex-shrink-0" />
                         <span className="hidden sm:inline">Manage</span>
                         <span className="sm:hidden">Mgmt</span>
@@ -672,9 +598,8 @@ function ZoneManagerContent() {
                     </CardContent>
                   </Card>
                 )}
-                  </div>
-                </div>
-              )}
+              </div>
+            )}
 
               {/* Equipment Section */}
               {mainTab === 'equipment' && (

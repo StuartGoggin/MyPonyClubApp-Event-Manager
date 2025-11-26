@@ -545,20 +545,13 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName }: ZoneEquipmentDashbo
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Equipment Management</h2>
-        <p className="text-muted-foreground">
-          Manage equipment inventory, bookings, and pricing for {zoneName}
-        </p>
-      </div>
-
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="inventory">Inventory</TabsTrigger>
-          <TabsTrigger value="bookings">Bookings</TabsTrigger>
-          <TabsTrigger value="manage-bookings">Manage Bookings</TabsTrigger>
-          <TabsTrigger value="handover">Pickup & Drop-off</TabsTrigger>
-          <TabsTrigger value="pricing">Pricing</TabsTrigger>
+          <TabsTrigger value="inventory" title="Manage equipment inventory">Inventory</TabsTrigger>
+          <TabsTrigger value="bookings" title="View all equipment bookings">Bookings</TabsTrigger>
+          <TabsTrigger value="manage-bookings" title="Update and manage booking statuses">Manage Bookings</TabsTrigger>
+          <TabsTrigger value="handover" title="Coordinate equipment pickup and drop-off between clubs">Pickup & Drop-off</TabsTrigger>
+          <TabsTrigger value="pricing" title="Configure pricing rules for equipment">Pricing</TabsTrigger>
         </TabsList>
 
         {/* Inventory Tab */}

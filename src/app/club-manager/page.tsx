@@ -36,6 +36,8 @@ export default function ClubEventManagerDashboard() {
   const [editingNominationId, setEditingNominationId] = useState<string | null>(null);
   const [nominationData, setNominationData] = useState<any>(null);
   const [committeeRefreshKey, setCommitteeRefreshKey] = useState(0);
+  const [mainTab, setMainTab] = useState<string>('events');
+  const [isNominationDue, setIsNominationDue] = useState(false);
 
   // Helper function to check if user has access to a club
   const hasClubAccess = (clubId: string, userZoneId?: string): boolean => {
@@ -175,6 +177,34 @@ export default function ClubEventManagerDashboard() {
     
     fetchData();
   }, [isAuthenticated, authLoading, user, router, fetchData]);
+
+  // Check if committee nomination is due for current year
+  const checkNominationStatus = useCallback(async (clubId: string) => {
+    try {
+      const currentYear = new Date().getFullYear();
+      const response = await fetch(`/api/committee-nominations?clubId=${clubId}&year=${currentYear}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        // Nomination is due if there's no nomination for current year
+        setIsNominationDue(!data || Object.keys(data).length === 0);
+      } else {
+        // If no nomination found, it's due
+        setIsNominationDue(true);
+      }
+    } catch (error) {
+      console.error('Error checking nomination status:', error);
+      // Assume it's due on error to be safe
+      setIsNominationDue(true);
+    }
+  }, []);
+
+  // Check nomination status when club changes or nomination is refreshed
+  useEffect(() => {
+    if (selectedClubId) {
+      checkNominationStatus(selectedClubId);
+    }
+  }, [selectedClubId, committeeRefreshKey, checkNominationStatus]);
 
   const handleEventUpdate = () => {
     console.log('Club Manager: handleEventUpdate called - triggering data refresh');
@@ -379,25 +409,100 @@ export default function ClubEventManagerDashboard() {
                     })}
                 </SelectContent>
               </Select>
-              
-              {/* Settings Button */}
-              <Button
-                onClick={() => router.push(`/club-manager/settings?clubId=${selectedClubId}`)}
-                variant="secondary"
-                size="sm"
-                className="mt-2 w-full bg-white/90 hover:bg-white text-blue-600 shadow-lg"
-                disabled={!selectedClubId}
-              >
-                <Settings className="mr-2 h-4 w-4" />
-                Club Settings
-              </Button>
             </div>
           </div>
         </div>
 
-        {/* Modern Statistics Cards */}
+        {/* Main Layout - Sidebar Navigation */}
         {selectedClub && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="flex flex-col lg:flex-row gap-6">
+            {/* Vertical Sidebar Navigation */}
+            <div className="lg:w-64 flex-shrink-0">
+              <Card className="sticky top-6 shadow-lg">
+                <CardContent className="p-2">
+                  <nav className="space-y-1">
+                    {/* Overview Section */}
+                    <button
+                      onClick={() => setMainTab('overview')}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                        mainTab === 'overview'
+                          ? 'bg-primary text-primary-foreground shadow-md'
+                          : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+                      }`}
+                      title="View club statistics and overview"
+                    >
+                      <Activity className="h-5 w-5 flex-shrink-0" />
+                      <div className="flex-1 text-left">
+                        <div className="font-semibold">Overview</div>
+                        <div className="text-xs opacity-80">Club statistics</div>
+                      </div>
+                    </button>
+
+                    {/* Events Section */}
+                    <button
+                      onClick={() => setMainTab('events')}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                        mainTab === 'events'
+                          ? 'bg-primary text-primary-foreground shadow-md'
+                          : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+                      }`}
+                      title="Manage club events and schedules"
+                    >
+                      <Calendar className="h-5 w-5 flex-shrink-0" />
+                      <div className="flex-1 text-left">
+                        <div className="font-semibold">Events</div>
+                        <div className="text-xs opacity-80">Manage events</div>
+                      </div>
+                    </button>
+
+                    {/* Committees Section */}
+                    <button
+                      onClick={() => setMainTab('committees')}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                        mainTab === 'committees'
+                          ? 'bg-primary text-primary-foreground shadow-md'
+                          : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+                      }`}
+                      title="Manage committee nominations"
+                    >
+                      <Users className="h-5 w-5 flex-shrink-0" />
+                      <div className="flex-1 text-left">
+                        <div className="font-semibold flex items-center gap-2">
+                          Committees
+                          {isNominationDue && (
+                            <Badge className="bg-red-500 text-white text-[10px] px-1.5 py-0 h-4">
+                              Due
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="text-xs opacity-80">Nominations</div>
+                      </div>
+                    </button>
+
+                    {/* Settings Section */}
+                    <button
+                      onClick={() => router.push(`/club-manager/settings?clubId=${selectedClubId}`)}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all hover:bg-muted text-muted-foreground hover:text-foreground"
+                      title="Club configuration and settings"
+                    >
+                      <Settings className="h-5 w-5 flex-shrink-0" />
+                      <div className="flex-1 text-left">
+                        <div className="font-semibold">Settings</div>
+                        <div className="text-xs opacity-80">Configuration</div>
+                      </div>
+                    </button>
+                  </nav>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Main Content Area */}
+            <div className="flex-1 min-w-0">
+              {/* Overview Tab */}
+              {mainTab === 'overview' && (
+                <div className="space-y-6">
+                  {/* Statistics Cards */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card className="bg-white dark:bg-slate-900 border-l-4 border-l-purple-500 shadow-lg hover:shadow-xl transition-shadow">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
@@ -461,41 +566,14 @@ export default function ClubEventManagerDashboard() {
                 </div>
               </CardContent>
             </Card>
-          </div>
-        )}
+                  </div>
+                </div>
+              )}
 
-        {/* Committee Nomination Section */}
-        {selectedClub && (
-          <div className="mb-8">
-            <CommitteeNominationStatus
-              key={`committee-${selectedClubId}-${committeeRefreshKey}`}
-              clubId={selectedClubId}
-              onNominateCommittee={() => {
-                setEditingNominationId(null);
-                setNominationData(null);
-                setShowCommitteeNominationModal(true);
-              }}
-              onEditNomination={async (nominationId) => {
-                // Fetch the nomination data
-                try {
-                  const response = await fetch(`/api/committee-nominations/${nominationId}`);
-                  if (response.ok) {
-                    const data = await response.json();
-                    setEditingNominationId(nominationId);
-                    setNominationData(data);
-                    setShowCommitteeNominationModal(true);
-                  }
-                } catch (error) {
-                  console.error('Error fetching nomination for edit:', error);
-                }
-              }}
-            />
-          </div>
-        )}
-
-      {/* Event Management Section */}
-      {selectedClub && (
-        <div className="flex-1 mb-8">
+              {/* Events Tab */}
+              {mainTab === 'events' && (
+                <div className="space-y-6">
+                  <div className="flex-1">
           <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg">
             {/* Header with Event Filter and Add Event Button */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 p-4 sm:p-6 border-b border-border/20">
@@ -623,8 +701,43 @@ export default function ClubEventManagerDashboard() {
               )}
             </div>
           </div>
-        </div>
-      )}
+                  </div>
+                </div>
+              )}
+
+              {/* Committees Tab */}
+              {mainTab === 'committees' && (
+                <div className="space-y-6">
+                  <div>
+                    <CommitteeNominationStatus
+                      key={`committee-${selectedClubId}-${committeeRefreshKey}`}
+                      clubId={selectedClubId}
+                      onNominateCommittee={() => {
+                        setEditingNominationId(null);
+                        setNominationData(null);
+                        setShowCommitteeNominationModal(true);
+                      }}
+                      onEditNomination={async (nominationId) => {
+                        // Fetch the nomination data
+                        try {
+                          const response = await fetch(`/api/committee-nominations/${nominationId}`);
+                          if (response.ok) {
+                            const data = await response.json();
+                            setEditingNominationId(nominationId);
+                            setNominationData(data);
+                            setShowCommitteeNominationModal(true);
+                          }
+                        } catch (error) {
+                          console.error('Error fetching nomination for edit:', error);
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
       {/* Compact Empty States */}
       {!selectedClub && clubs.length > 0 && (

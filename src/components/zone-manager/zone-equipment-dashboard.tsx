@@ -101,13 +101,14 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
   
   // Notify parent of count changes
   useEffect(() => {
-    if (onActionCountsChange) {
+    // Only notify parent after bookings have been loaded (not during initial empty state)
+    if (onActionCountsChange && !loadingBookings) {
       onActionCountsChange({
         pending: pendingApprovalsCount,
         handover: handoverActionsCount
       });
     }
-  }, [pendingApprovalsCount, handoverActionsCount, onActionCountsChange]);
+  }, [pendingApprovalsCount, handoverActionsCount, onActionCountsChange, loadingBookings]);
   
   // Handover coordination state
   const [selectedHandoverBooking, setSelectedHandoverBooking] = useState<EquipmentBooking | null>(null);

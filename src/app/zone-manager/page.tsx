@@ -648,6 +648,7 @@ function ZoneManagerContent() {
                     zoneName={selectedZone.name}
                     onActionCountsChange={(counts) => {
                       const totalCount = counts.pending + counts.handover;
+                      // Always update the count, even if it's 0, to reflect real data
                       setEquipmentActionCount(totalCount);
                     }}
                   />

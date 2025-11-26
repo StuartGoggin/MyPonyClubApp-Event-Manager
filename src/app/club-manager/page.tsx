@@ -6,12 +6,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, CheckCircle, Clock, Users, Building, Plus, Activity, Calendar, FileText, XCircle, Filter, AlertTriangle, Settings } from 'lucide-react';
+import { MapPin, CheckCircle, Clock, Users, Building, Plus, Activity, Calendar, FileText, XCircle, Filter, AlertTriangle, Settings, Package } from 'lucide-react';
 import { Zone, Club, Event, EventType } from '@/lib/types';
 import { ClubEventSubmission } from '@/components/club-manager/club-event-submission';
 import { ClubEventStatus } from '@/components/club-manager/club-event-status';
 import { CommitteeNominationStatus } from '@/components/club-manager/committee-nomination-status';
 import { CommitteeNominationForm } from '@/components/forms/committee-nomination-form';
+import { ClubEquipmentDashboard } from '@/components/equipment/club-equipment-dashboard';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/auth-context';
 import { useRouter } from 'next/navigation';
@@ -479,6 +480,23 @@ export default function ClubEventManagerDashboard() {
                       </div>
                     </button>
 
+                    {/* Equipment Section */}
+                    <button
+                      onClick={() => setMainTab('equipment')}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                        mainTab === 'equipment'
+                          ? 'bg-primary text-primary-foreground shadow-md'
+                          : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+                      }`}
+                      title="Browse and request zone equipment"
+                    >
+                      <Package className="h-5 w-5 flex-shrink-0" />
+                      <div className="flex-1 text-left">
+                        <div className="font-semibold">Equipment</div>
+                        <div className="text-xs opacity-80">Request & manage</div>
+                      </div>
+                    </button>
+
                     {/* Settings Section */}
                     <button
                       onClick={() => router.push(`/club-manager/settings?clubId=${selectedClubId}`)}
@@ -733,6 +751,35 @@ export default function ClubEventManagerDashboard() {
                       }}
                     />
                   </div>
+                </div>
+              )}
+
+              {/* Equipment Tab */}
+              {mainTab === 'equipment' && selectedClub && selectedZone && (
+                <div className="space-y-6">
+                  <ClubEquipmentDashboard
+                    zoneId={selectedZone.id}
+                    zoneName={selectedZone.name}
+                    clubId={selectedClub.id}
+                    clubName={selectedClub.name}
+                    clubLocation={(() => {
+                      if (selectedClub.address && typeof selectedClub.address === 'object') {
+                        const addr = selectedClub.address as any;
+                        const parts = [
+                          addr.address1,
+                          addr.address2,
+                          addr.town,
+                          addr.postcode,
+                          addr.county
+                        ].filter(Boolean);
+                        return parts.join(', ');
+                      }
+                      return (selectedClub as any).physicalAddress || '';
+                    })()}
+                    userEmail={user?.email || ''}
+                    userName={`${user?.firstName || ''} ${user?.lastName || ''}`.trim()}
+                    userPhone={(user as any)?.mobileNumber || ''}
+                  />
                 </div>
               )}
             </div>

@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Edit, X, ArrowRight, Truck, User, MapPin, Package, Printer, Mail } from 'lucide-react';
+import { Edit, X, ArrowRight, Truck, User, MapPin, Package, Printer, Mail, ShoppingCart, Calendar, ArrowDownToLine } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import type { EquipmentBooking, BookingStatus } from '@/types/equipment';
@@ -40,6 +40,8 @@ export function ClubEquipmentDashboard({
 }: ClubEquipmentDashboardProps) {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('browse');
+  const [upcomingBookingsCount, setUpcomingBookingsCount] = useState(0);
+  const [upcomingPickupsCount, setUpcomingPickupsCount] = useState(0);
   
   // Bookings state
   const [bookings, setBookings] = useState<EquipmentBooking[]>([]);
@@ -68,7 +70,25 @@ export function ClubEquipmentDashboard({
       const response = await fetch(`/api/equipment-bookings?clubId=${clubId}`);
       if (!response.ok) throw new Error('Failed to fetch bookings');
       const data = await response.json();
-      setBookings(data.data || []);
+      const fetchedBookings = data.data || [];
+      setBookings(fetchedBookings);
+      
+      // Calculate upcoming bookings and pickups
+      const now = new Date();
+      const upcoming = fetchedBookings.filter((b: EquipmentBooking) => {
+        const pickupDate = b.pickupDate ? new Date(b.pickupDate) : null;
+        return pickupDate && pickupDate > now && (b.status === 'confirmed' || b.status === 'pending');
+      });
+      setUpcomingBookingsCount(upcoming.length);
+      
+      // Count upcoming pickups (within next 7 days)
+      const weekFromNow = new Date();
+      weekFromNow.setDate(weekFromNow.getDate() + 7);
+      const upcomingPickups = fetchedBookings.filter((b: EquipmentBooking) => {
+        const pickupDate = b.pickupDate ? new Date(b.pickupDate) : null;
+        return pickupDate && pickupDate > now && pickupDate <= weekFromNow && (b.status === 'confirmed' || b.status === 'pending');
+      });
+      setUpcomingPickupsCount(upcomingPickups.length);
     } catch (error) {
       toast({
         title: 'Error',
@@ -340,23 +360,137 @@ export function ClubEquipmentDashboard({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Equipment</h2>
-        <p className="text-muted-foreground">
-          Browse available equipment, manage your bookings, and coordinate handovers
-        </p>
+      {/* Header Section */}
+      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-700 rounded-2xl shadow-2xl overflow-hidden">
+        <div className="p-6 sm:p-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+            {/* Icon/Logo Section */}
+            <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 bg-white/10 backdrop-blur-sm rounded-xl p-3 shadow-lg">
+              <div className="w-full h-full flex items-center justify-center">
+                <Package className="w-full h-full text-white drop-shadow-lg" />
+              </div>
+            </div>
+            
+            {/* Title and Description */}
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-2">
+                <h1 className="text-3xl font-bold text-white">Zone Equipment</h1>
+                <Badge variant="outline" className="bg-white/20 text-white border-white/40">
+                  Request & Manage
+                </Badge>
+              </div>
+              <p className="text-blue-100 text-lg mb-3">
+                Browse and request equipment from {zoneName}
+              </p>
+              
+              {/* Club and Zone Info */}
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-6">
+                <div className="flex items-center gap-2 text-white/90">
+                  <div className="bg-white/20 rounded-lg p-1.5">
+                    <MapPin className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-blue-200 font-medium">Your Club</p>
+                    <p className="font-semibold">{clubName}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-white/90">
+                  <div className="bg-white/20 rounded-lg p-1.5">
+                    <Package className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-blue-200 font-medium">Equipment Zone</p>
+                    <p className="font-semibold">{zoneName}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="browse">Browse & Book</TabsTrigger>
-          <TabsTrigger value="my-bookings">My Bookings</TabsTrigger>
-          <TabsTrigger value="handover">Pickup & Drop-off</TabsTrigger>
-        </TabsList>
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Vertical Sidebar Navigation */}
+        <div className="lg:w-64 flex-shrink-0">
+          <Card className="sticky top-6 shadow-lg">
+            <CardContent className="p-2">
+              <nav className="space-y-1">
+                {/* Browse & Book Section */}
+                <button
+                  onClick={() => setActiveTab('browse')}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                    activeTab === 'browse'
+                      ? 'bg-primary text-primary-foreground shadow-md'
+                      : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+                  }`}
+                  title="Browse available equipment and create bookings"
+                >
+                  <ShoppingCart className="h-5 w-5 flex-shrink-0" />
+                  <div className="flex-1 text-left">
+                    <div className="font-semibold">Browse & Book</div>
+                    <div className="text-xs opacity-80">Available equipment</div>
+                  </div>
+                </button>
 
-        {/* Browse & Book Tab */}
-        <TabsContent value="browse">
-          <EquipmentCatalog
+                {/* My Bookings Section */}
+                <button
+                  onClick={() => setActiveTab('my-bookings')}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                    activeTab === 'my-bookings'
+                      ? 'bg-primary text-primary-foreground shadow-md'
+                      : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+                  }`}
+                  title="View and manage your equipment bookings"
+                >
+                  <Calendar className="h-5 w-5 flex-shrink-0" />
+                  <div className="flex-1 text-left">
+                    <div className="font-semibold flex items-center gap-2">
+                      My Bookings
+                      {upcomingBookingsCount > 0 && (
+                        <Badge className="bg-blue-500 text-white text-[10px] px-1.5 py-0 h-4">
+                          {upcomingBookingsCount}
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="text-xs opacity-80">Manage bookings</div>
+                  </div>
+                </button>
+
+                {/* Pickup & Drop-off Section */}
+                <button
+                  onClick={() => setActiveTab('handover')}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                    activeTab === 'handover'
+                      ? 'bg-primary text-primary-foreground shadow-md'
+                      : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+                  }`}
+                  title="Coordinate equipment pickup and drop-off"
+                >
+                  <ArrowDownToLine className="h-5 w-5 flex-shrink-0" />
+                  <div className="flex-1 text-left">
+                    <div className="font-semibold flex items-center gap-2">
+                      Pickup & Drop-off
+                      {upcomingPickupsCount > 0 && (
+                        <Badge className="bg-orange-500 text-white text-[10px] px-1.5 py-0 h-4">
+                          {upcomingPickupsCount}
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="text-xs opacity-80">Coordination</div>
+                  </div>
+                </button>
+              </nav>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Main Content Area */}
+        <div className="flex-1 min-w-0">
+
+          {/* Browse & Book Tab */}
+          {activeTab === 'browse' && (
+            <div className="space-y-6">
+              <EquipmentCatalog
             zoneId={zoneId}
             zoneName={zoneName}
             clubId={clubId}
@@ -365,11 +499,13 @@ export function ClubEquipmentDashboard({
             userEmail={userEmail}
             userName={userName}
             userPhone={userPhone}
-          />
-        </TabsContent>
+              />
+            </div>
+          )}
 
-        {/* My Bookings Tab */}
-        <TabsContent value="my-bookings" className="space-y-4">
+          {/* My Bookings Tab */}
+          {activeTab === 'my-bookings' && (
+            <div className="space-y-4">
           <div className="flex justify-between items-center">
             <p className="text-sm text-muted-foreground">
               {bookings.length} booking{bookings.length !== 1 ? 's' : ''}
@@ -475,10 +611,12 @@ export function ClubEquipmentDashboard({
               </TableBody>
             </Table>
           </Card>
-        </TabsContent>
+            </div>
+          )}
 
-        {/* Handover Coordination Tab */}
-        <TabsContent value="handover" className="space-y-4">
+          {/* Handover Coordination Tab */}
+          {activeTab === 'handover' && (
+            <div className="space-y-4">
           <div>
             <p className="text-sm text-muted-foreground">
               Coordinate equipment pickup and drop-off with other clubs
@@ -734,8 +872,10 @@ export function ClubEquipmentDashboard({
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
-      </Tabs>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Booking Edit/View Dialog */}
       <Dialog open={bookingDialogOpen} onOpenChange={setBookingDialogOpen}>

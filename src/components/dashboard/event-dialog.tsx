@@ -29,12 +29,16 @@ import {
   Navigation,
   ExternalLink,
   Package,
-  Truck
+  Truck,
+  ArrowRight,
+  Home
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { EventScheduleUpload } from '@/components/event-schedule-upload';
 import { EventScheduleReview } from '@/components/event-schedule-review';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 interface EventDialogProps {
   event: Event | null;
@@ -64,6 +68,63 @@ export function EventDialog({
   onOpenChange,
   currentUser,
 }: EventDialogProps) {
+  const { toast } = useToast();
+  const [loadingHandover, setLoadingHandover] = useState(false);
+  const [handoverChain, setHandoverChain] = useState<any>(null);
+  const [equipmentHomeLocation, setEquipmentHomeLocation] = useState<any>(null);
+
+  // Fetch handover chain when dialog opens for equipment bookings
+  useEffect(() => {
+    if (isOpen && event?.source === 'equipment_booking' && event.metadata) {
+      const bookingId = (event.metadata as any).bookingId;
+      const equipmentId = (event.metadata as any).equipmentId;
+      
+      if (bookingId && equipmentId) {
+        fetchHandoverChain(bookingId, equipmentId);
+      }
+    } else {
+      // Clear handover data when dialog closes or event changes
+      setHandoverChain(null);
+      setEquipmentHomeLocation(null);
+    }
+  }, [isOpen, event]);
+
+  const fetchHandoverChain = async (bookingId: string, equipmentId: string) => {
+    setLoadingHandover(true);
+    try {
+      // Get auth headers
+      const getAuthHeaders = () => {
+        const token = localStorage.getItem('authToken');
+        return token ? { 'Authorization': `Bearer ${token}` } : {};
+      };
+
+      const [chainResponse, equipmentResponse] = await Promise.all([
+        fetch(`/api/equipment-bookings/${bookingId}/handover-chain`, {
+          headers: getAuthHeaders()
+        }),
+        fetch(`/api/equipment/${equipmentId}`, {
+          headers: getAuthHeaders()
+        })
+      ]);
+
+      if (chainResponse.ok) {
+        const chainData = await chainResponse.json();
+        setHandoverChain(chainData);
+      } else {
+        console.error('Failed to fetch handover chain:', chainResponse.status);
+      }
+
+      if (equipmentResponse.ok) {
+        const equipmentData = await equipmentResponse.json();
+        setEquipmentHomeLocation(equipmentData.data?.homeLocation);
+      }
+    } catch (error) {
+      console.error('Error fetching handover details:', error);
+    } finally {
+      setLoadingHandover(false);
+    }
+  };
+
   if (!event) return null;
   
   // Only require club for club-level events
@@ -310,6 +371,125 @@ export function EventDialog({
                     <MapPin className="h-3 w-3" />
                     {event.location}
                   </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Handover Chain - Show for equipment bookings */}
+          {event.source === 'equipment_booking' && (
+            <div className="border-t pt-4">
+              <h3 className="font-semibold mb-3 flex items-center gap-2">
+                <Truck className="h-4 w-4" />
+                Equipment Handover Chain
+              </h3>
+              
+              {loadingHandover ? (
+                <div className="text-sm text-muted-foreground">Loading handover details...</div>
+              ) : !handoverChain ? (
+                <div className="text-sm text-muted-foreground">No handover information available</div>
+              ) : (
+                <div className="space-y-3">
+                  {/* Pickup Section */}
+                  {handoverChain.pickup && (
+                    <div className="bg-blue-50 border-l-4 border-blue-500 p-3 rounded-lg">
+                      <div className="flex items-center gap-2 font-medium text-blue-900 mb-2">
+                        <ArrowRight className="h-4 w-4" />
+                        Pick up from
+                      </div>
+                      <div className="space-y-1 text-sm">
+                        {handoverChain.pickup.isZoneStorage ? (
+                          <>
+                            <div className="flex items-center gap-2 text-blue-800">
+                              <Home className="h-3 w-3" />
+                              <span className="font-medium">Zone Storage Location</span>
+                            </div>
+                            {equipmentHomeLocation && (
+                              <>
+                                <div className="text-blue-700">{equipmentHomeLocation.address}</div>
+                                <div className="text-blue-700">
+                                  Contact: {equipmentHomeLocation.contactPerson.name} - {equipmentHomeLocation.contactPerson.phone}
+                                </div>
+                              </>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            <div className="font-medium text-blue-800">{handoverChain.pickup.clubName}</div>
+                            <div className="text-blue-700">
+                              {handoverChain.pickup.contact.name} - {handoverChain.pickup.contact.phone}
+                            </div>
+                            {handoverChain.pickup.contact.email && (
+                              <div className="text-blue-600 text-xs">{handoverChain.pickup.contact.email}</div>
+                            )}
+                          </>
+                        )}
+                        <div className="text-blue-600 text-xs mt-1">
+                          {format(new Date(handoverChain.pickup.date), 'PPP')}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Current Booking */}
+                  {handoverChain.current && (
+                    <div className="bg-green-50 border-l-4 border-green-500 p-3 rounded-lg">
+                      <div className="flex items-center gap-2 font-medium text-green-900 mb-2">
+                        <CheckCircle className="h-4 w-4" />
+                        Your Booking
+                      </div>
+                      <div className="space-y-1 text-sm">
+                        <div className="font-medium text-green-800">{handoverChain.current.clubName}</div>
+                        <div className="text-green-700">
+                          {handoverChain.current.contact.name} - {handoverChain.current.contact.phone}
+                        </div>
+                        <div className="text-green-600 text-xs">
+                          {format(new Date(handoverChain.current.pickupDate), 'PP')} - {format(new Date(handoverChain.current.returnDate), 'PP')}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Drop-off Section */}
+                  {handoverChain.dropoff && (
+                    <div className="bg-purple-50 border-l-4 border-purple-500 p-3 rounded-lg">
+                      <div className="flex items-center gap-2 font-medium text-purple-900 mb-2">
+                        <ArrowRight className="h-4 w-4" />
+                        Return to
+                      </div>
+                      <div className="space-y-1 text-sm">
+                        {handoverChain.dropoff.isZoneStorage ? (
+                          <>
+                            <div className="flex items-center gap-2 text-purple-800">
+                              <Home className="h-3 w-3" />
+                              <span className="font-medium">Zone Storage Location</span>
+                            </div>
+                            {equipmentHomeLocation && (
+                              <>
+                                <div className="text-purple-700">{equipmentHomeLocation.address}</div>
+                                <div className="text-purple-700">
+                                  Contact: {equipmentHomeLocation.contactPerson.name} - {equipmentHomeLocation.contactPerson.phone}
+                                </div>
+                              </>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            <div className="font-medium text-purple-800">{handoverChain.dropoff.clubName}</div>
+                            <div className="text-purple-700">
+                              {handoverChain.dropoff.contact.name} - {handoverChain.dropoff.contact.phone}
+                            </div>
+                            {handoverChain.dropoff.contact.email && (
+                              <div className="text-purple-600 text-xs">{handoverChain.dropoff.contact.email}</div>
+                            )}
+                          </>
+                        )}
+                        <div className="text-purple-600 text-xs mt-1">
+                          {format(new Date(handoverChain.dropoff.date), 'PPP')}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

@@ -331,70 +331,72 @@ export function EquipmentCatalog({
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Equipment Catalog</h2>
-        <p className="text-muted-foreground">
-          Browse and book equipment available from {zoneName}
-        </p>
-      </div>
+    <Card>
+      <CardHeader className="pb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+            <Package className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <CardTitle className="text-xl">Equipment Catalog</CardTitle>
+            <CardDescription>
+              Browse and book equipment available from {zoneName}
+            </CardDescription>
+          </div>
+        </div>
+      </CardHeader>
 
-      {/* Filters */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col gap-4 md:flex-row md:items-end">
-            <div className="flex-1">
-              <Label htmlFor="search">Search Equipment</Label>
-              <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="search"
-                  placeholder="Search by name or description..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8"
-                />
-              </div>
-            </div>
-            <div className="w-full md:w-48">
-              <Label htmlFor="category">Category</Label>
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger id="category">
-                  <SelectValue placeholder="All Categories" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+      <CardContent className="space-y-6">
+        {/* Filters */}
+        <div className="flex flex-col gap-4 md:flex-row md:items-end pb-4 border-b">
+          <div className="flex-1">
+            <Label htmlFor="search">Search Equipment</Label>
+            <div className="relative">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="search"
+                placeholder="Search by name or description..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8"
+              />
             </div>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Equipment Grid */}
-      {loading ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Card key={i} className="animate-pulse">
-              <CardHeader>
-                <div className="h-6 bg-muted rounded w-3/4" />
-                <div className="h-4 bg-muted rounded w-1/2 mt-2" />
-              </CardHeader>
-              <CardContent>
-                <div className="h-20 bg-muted rounded" />
-              </CardContent>
-            </Card>
-          ))}
+          <div className="w-full md:w-48">
+            <Label htmlFor="category">Category</Label>
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger id="category">
+                <SelectValue placeholder="All Categories" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {categories.map((cat) => (
+                  <SelectItem key={cat} value={cat}>
+                    {cat}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-      ) : filteredEquipment.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
+
+        {/* Equipment Grid */}
+        {loading ? (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Card key={i} className="animate-pulse">
+                <CardHeader>
+                  <div className="h-6 bg-muted rounded w-3/4" />
+                  <div className="h-4 bg-muted rounded w-1/2 mt-2" />
+                </CardHeader>
+                <CardContent>
+                  <div className="h-20 bg-muted rounded" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : filteredEquipment.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12">
             <Package className="h-12 w-12 text-muted-foreground mb-4" />
             <p className="text-lg font-medium">No equipment found</p>
             <p className="text-sm text-muted-foreground">
@@ -402,12 +404,11 @@ export function EquipmentCatalog({
                 ? 'Try adjusting your filters'
                 : 'No equipment is currently available'}
             </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          </div>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredEquipment.map((item) => (
-            <Card key={item.id} className="flex flex-col">
+            <Card key={item.id} className="flex flex-col bg-muted/30 border-muted">
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -477,6 +478,7 @@ export function EquipmentCatalog({
           ))}
         </div>
       )}
+      </CardContent>
 
       {/* Booking Dialog */}
       <Dialog open={bookingDialogOpen} onOpenChange={setBookingDialogOpen}>
@@ -754,6 +756,6 @@ export function EquipmentCatalog({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </Card>
   );
 }

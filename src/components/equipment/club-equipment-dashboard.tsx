@@ -216,77 +216,387 @@ export function ClubEquipmentDashboard({
         <head>
           <title>Equipment Handover Details - ${handoverChain.current.equipmentName}</title>
           <style>
-            body { font-family: Arial, sans-serif; margin: 40px; }
-            h1 { color: #333; border-bottom: 2px solid #4CAF50; padding-bottom: 10px; }
-            h2 { color: #666; margin-top: 30px; }
-            .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
-            .pickup { background-color: #E3F2FD; border-left: 4px solid #2196F3; }
-            .current { background-color: #E8F5E9; border-left: 4px solid #4CAF50; font-weight: bold; }
-            .dropoff { background-color: #F3E5F5; border-left: 4px solid #9C27B0; }
-            .storage { background-color: #F5F5F5; border-left: 4px solid #9E9E9E; }
-            .label { font-weight: bold; color: #555; }
-            .value { margin-left: 10px; }
-            .contact { margin: 10px 0; padding: 10px; background: #fafafa; border-radius: 3px; }
-            @media print { button { display: none; } }
+            @page { 
+              size: A4 portrait; 
+              margin: 15mm; 
+            }
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { 
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; 
+              margin: 20px; 
+              color: #1e293b;
+              line-height: 1.4;
+              font-size: 11px;
+            }
+            .header { 
+              margin-bottom: 12px; 
+              padding-bottom: 8px; 
+              border-bottom: 2px solid #e2e8f0; 
+            }
+            h1 { 
+              font-size: 18px; 
+              font-weight: 700; 
+              color: #0f172a; 
+              margin-bottom: 6px;
+            }
+            .meta { 
+              display: flex; 
+              gap: 16px; 
+              font-size: 10px; 
+              color: #64748b; 
+              margin-top: 4px;
+            }
+            .meta-item { font-weight: 500; }
+            .meta-item strong { color: #334155; }
+            
+            .handover-flow { margin: 8px 0; }
+            .flow-section { 
+              margin: 10px 0; 
+              page-break-inside: avoid;
+            }
+            .section-header {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              margin-bottom: 6px;
+            }
+            .section-icon {
+              width: 32px;
+              height: 32px;
+              border-radius: 8px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 16px;
+              font-weight: 700;
+              color: white;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+              flex-shrink: 0;
+            }
+            .pickup-icon { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+            .current-icon { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+            .dropoff-icon { background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%); }
+            .storage-icon { background: linear-gradient(135deg, #64748b 0%, #475569 100%); }
+            
+            .section-title {
+              font-size: 14px;
+              font-weight: 700;
+              color: #0f172a;
+            }
+            
+            .card {
+              background: white;
+              border-radius: 8px;
+              padding: 10px 12px;
+              box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+              border: 1px solid #e2e8f0;
+            }
+            .card.current {
+              background: linear-gradient(to bottom right, #f0fdf4 0%, #dcfce7 100%);
+              border: 2px solid #10b981;
+              box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1);
+            }
+            .card.pickup { border-left: 3px solid #3b82f6; }
+            .card.dropoff { border-left: 3px solid #a855f7; }
+            .card.storage { 
+              background: linear-gradient(to bottom right, #f8fafc 0%, #f1f5f9 100%);
+              border-left: 3px solid #64748b; 
+            }
+            
+            .info-group { margin: 8px 0; }
+            .info-group:first-child { margin-top: 0; }
+            .info-group:last-child { margin-bottom: 0; }
+            
+            .info-row {
+              display: flex;
+              padding: 3px 0;
+              font-size: 10px;
+            }
+            .label { 
+              font-weight: 600; 
+              color: #475569;
+              min-width: 90px;
+            }
+            .value { 
+              color: #0f172a;
+              flex: 1;
+            }
+            
+            .contact-box {
+              background: linear-gradient(to bottom right, #f8fafc 0%, #f1f5f9 100%);
+              border-radius: 6px;
+              padding: 8px 10px;
+              margin: 6px 0;
+              border: 1px solid #e2e8f0;
+            }
+            .current .contact-box {
+              background: linear-gradient(to bottom right, #ecfdf5 0%, #d1fae5 100%);
+              border-color: #86efac;
+            }
+            .contact-title {
+              font-weight: 700;
+              color: #0f172a;
+              margin-bottom: 4px;
+              font-size: 11px;
+            }
+            
+            .storage-notice {
+              padding: 12px;
+              background: linear-gradient(to bottom right, #f8fafc 0%, #f1f5f9 100%);
+              border-radius: 6px;
+              border: 2px dashed #cbd5e1;
+              text-align: center;
+            }
+            .storage-title { 
+              font-weight: 700; 
+              font-size: 12px;
+              color: #334155;
+              margin-bottom: 4px;
+            }
+            .storage-text { 
+              color: #64748b;
+              font-size: 10px;
+            }
+            
+            .connector {
+              margin: 6px 0;
+              text-align: center;
+              height: 20px;
+            }
+            .connector-line {
+              width: 2px;
+              height: 8px;
+              background: linear-gradient(to bottom, #cbd5e1 0%, #94a3b8 100%);
+              margin: 0 auto;
+            }
+            .connector-dot {
+              width: 8px;
+              height: 8px;
+              background: #94a3b8;
+              border-radius: 50%;
+              margin: 2px auto;
+            }
+            
+            button {
+              margin-top: 16px;
+              padding: 10px 20px;
+              background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+              color: white;
+              border: none;
+              border-radius: 6px;
+              font-weight: 600;
+              font-size: 13px;
+              cursor: pointer;
+              box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+            }
+            button:hover {
+              background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            }
+            
+            @media print { 
+              body { margin: 0; }
+              button { display: none; }
+              .card { 
+                box-shadow: none;
+                border: 1px solid #cbd5e1 !important;
+              }
+              .card.current { border: 2px solid #10b981 !important; }
+              .section-icon { box-shadow: none; }
+            }
           </style>
         </head>
         <body>
-          <h1>Equipment Handover Details</h1>
-          <p><strong>Equipment:</strong> ${handoverChain.current.equipmentName}</p>
-          <p><strong>Club:</strong> ${clubName}</p>
-          <p><strong>Generated:</strong> ${format(new Date(), 'PPP p')}</p>
-          
-          <h2>🔵 Pickup From</h2>
-          <div class="section ${handoverChain.previous ? 'pickup' : 'storage'}">
-            ${handoverChain.previous ? `
-              <p><span class="label">Club:</span><span class="value">${handoverChain.previous.clubName}</span></p>
-              <div class="contact">
-                <p><span class="label">Contact:</span><span class="value">${handoverChain.previous.custodian.name}</span></p>
-                <p><span class="label">Email:</span><span class="value">${handoverChain.previous.custodian.email}</span></p>
-                <p><span class="label">Phone:</span><span class="value">${handoverChain.previous.custodian.phone}</span></p>
-              </div>
-              <p><span class="label">Event:</span><span class="value">${handoverChain.previous.eventName || 'TBD'}</span></p>
-              <p><span class="label">Location:</span><span class="value">${handoverChain.previous.useLocation?.address || 'TBD'}</span></p>
-              <p><span class="label">Return Date:</span><span class="value">${formatDate(handoverChain.previous.returnDate)}</span></p>
-            ` : `
-              <p><strong>Zone Storage</strong></p>
-              <p>Equipment will be collected from zone storage location</p>
-            `}
-          </div>
-
-          <h2>🟢 Your Booking</h2>
-          <div class="section current">
-            <p><span class="label">Club:</span><span class="value">${handoverChain.current.clubName}</span></p>
-            <div class="contact">
-              <p><span class="label">Contact:</span><span class="value">${handoverChain.current.custodian.name}</span></p>
-              <p><span class="label">Email:</span><span class="value">${handoverChain.current.custodian.email}</span></p>
-              <p><span class="label">Phone:</span><span class="value">${handoverChain.current.custodian.phone}</span></p>
+          <div class="header">
+            <h1>Equipment Handover Details</h1>
+            <div class="meta">
+              <span class="meta-item"><strong>Equipment:</strong> ${handoverChain.current.equipmentName}</span>
+              <span class="meta-item"><strong>Club:</strong> ${clubName}</span>
+              <span class="meta-item"><strong>Generated:</strong> ${format(new Date(), 'PPP p')}</span>
             </div>
-            <p><span class="label">Event:</span><span class="value">${handoverChain.current.eventName || 'TBD'}</span></p>
-            <p><span class="label">Location:</span><span class="value">${handoverChain.current.useLocation?.address || 'TBD'}</span></p>
-            <p><span class="label">Pickup Date:</span><span class="value">${formatDate(handoverChain.current.pickupDate)}</span></p>
-            <p><span class="label">Return Date:</span><span class="value">${formatDate(handoverChain.current.returnDate)}</span></p>
           </div>
-
-          <h2>🟣 Drop-off To</h2>
-          <div class="section ${handoverChain.next ? 'dropoff' : 'storage'}">
-            ${handoverChain.next ? `
-              <p><span class="label">Club:</span><span class="value">${handoverChain.next.clubName}</span></p>
-              <div class="contact">
-                <p><span class="label">Contact:</span><span class="value">${handoverChain.next.custodian.name}</span></p>
-                <p><span class="label">Email:</span><span class="value">${handoverChain.next.custodian.email}</span></p>
-                <p><span class="label">Phone:</span><span class="value">${handoverChain.next.custodian.phone}</span></p>
+          
+          <div class="handover-flow">
+            <!-- Pickup Section -->
+            <div class="flow-section">
+              <div class="section-header">
+                <div class="section-icon ${handoverChain.previous ? 'pickup-icon' : 'storage-icon'}">
+                  ${handoverChain.previous ? '📦' : '🏢'}
+                </div>
+                <div class="section-title">Pickup From</div>
               </div>
-              <p><span class="label">Event:</span><span class="value">${handoverChain.next.eventName || 'TBD'}</span></p>
-              <p><span class="label">Location:</span><span class="value">${handoverChain.next.useLocation?.address || 'TBD'}</span></p>
-              <p><span class="label">Pickup Date:</span><span class="value">${formatDate(handoverChain.next.pickupDate)}</span></p>
-            ` : `
-              <p><strong>Zone Storage</strong></p>
-              <p>Equipment will be returned to zone storage location</p>
-            `}
+              ${handoverChain.previous ? `
+                <div class="card pickup">
+                  <div class="info-group">
+                    <div class="info-row">
+                      <span class="label">Club:</span>
+                      <span class="value">${handoverChain.previous.clubName}</span>
+                    </div>
+                  </div>
+                  
+                  <div class="contact-box">
+                    <div class="contact-title">Contact Person</div>
+                    <div class="info-row">
+                      <span class="label">Name:</span>
+                      <span class="value">${handoverChain.previous.custodian.name}</span>
+                    </div>
+                    <div class="info-row">
+                      <span class="label">Email:</span>
+                      <span class="value">${handoverChain.previous.custodian.email}</span>
+                    </div>
+                    <div class="info-row">
+                      <span class="label">Phone:</span>
+                      <span class="value">${handoverChain.previous.custodian.phone}</span>
+                    </div>
+                  </div>
+                  
+                  <div class="info-group">
+                    <div class="info-row">
+                      <span class="label">Event:</span>
+                      <span class="value">${handoverChain.previous.eventName || 'TBD'}</span>
+                    </div>
+                    <div class="info-row">
+                      <span class="label">Location:</span>
+                      <span class="value">${handoverChain.previous.useLocation?.address || 'TBD'}</span>
+                    </div>
+                    <div class="info-row">
+                      <span class="label">Return Date:</span>
+                      <span class="value">${formatDate(handoverChain.previous.returnDate)}</span>
+                    </div>
+                  </div>
+                </div>
+              ` : `
+                <div class="card storage">
+                  <div class="storage-notice">
+                    <div class="storage-title">Zone Storage</div>
+                    <div class="storage-text">Equipment will be collected from the zone storage location</div>
+                  </div>
+                </div>
+              `}
+            </div>
+
+            <div class="connector">
+              <div class="connector-line"></div>
+              <div class="connector-dot"></div>
+              <div class="connector-line"></div>
+            </div>
+
+            <!-- Current Booking Section -->
+            <div class="flow-section">
+              <div class="section-header">
+                <div class="section-icon current-icon">✓</div>
+                <div class="section-title">Your Booking</div>
+              </div>
+              <div class="card current">
+                <div class="info-group">
+                  <div class="info-row">
+                    <span class="label">Club:</span>
+                    <span class="value">${handoverChain.current.clubName}</span>
+                  </div>
+                </div>
+                
+                <div class="contact-box">
+                  <div class="contact-title">Contact Person</div>
+                  <div class="info-row">
+                    <span class="label">Name:</span>
+                    <span class="value">${handoverChain.current.custodian.name}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="label">Email:</span>
+                    <span class="value">${handoverChain.current.custodian.email}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="label">Phone:</span>
+                    <span class="value">${handoverChain.current.custodian.phone}</span>
+                  </div>
+                </div>
+                
+                <div class="info-group">
+                  <div class="info-row">
+                    <span class="label">Event:</span>
+                    <span class="value">${handoverChain.current.eventName || 'TBD'}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="label">Location:</span>
+                    <span class="value">${handoverChain.current.useLocation?.address || 'TBD'}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="label">Pickup Date:</span>
+                    <span class="value">${formatDate(handoverChain.current.pickupDate)}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="label">Return Date:</span>
+                    <span class="value">${formatDate(handoverChain.current.returnDate)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="connector">
+              <div class="connector-line"></div>
+              <div class="connector-dot"></div>
+              <div class="connector-line"></div>
+            </div>
+
+            <!-- Drop-off Section -->
+            <div class="flow-section">
+              <div class="section-header">
+                <div class="section-icon ${handoverChain.next ? 'dropoff-icon' : 'storage-icon'}">
+                  ${handoverChain.next ? '🎯' : '🏢'}
+                </div>
+                <div class="section-title">Drop-off To</div>
+              </div>
+              ${handoverChain.next ? `
+                <div class="card dropoff">
+                  <div class="info-group">
+                    <div class="info-row">
+                      <span class="label">Club:</span>
+                      <span class="value">${handoverChain.next.clubName}</span>
+                    </div>
+                  </div>
+                  
+                  <div class="contact-box">
+                    <div class="contact-title">Contact Person</div>
+                    <div class="info-row">
+                      <span class="label">Name:</span>
+                      <span class="value">${handoverChain.next.custodian.name}</span>
+                    </div>
+                    <div class="info-row">
+                      <span class="label">Email:</span>
+                      <span class="value">${handoverChain.next.custodian.email}</span>
+                    </div>
+                    <div class="info-row">
+                      <span class="label">Phone:</span>
+                      <span class="value">${handoverChain.next.custodian.phone}</span>
+                    </div>
+                  </div>
+                  
+                  <div class="info-group">
+                    <div class="info-row">
+                      <span class="label">Event:</span>
+                      <span class="value">${handoverChain.next.eventName || 'TBD'}</span>
+                    </div>
+                    <div class="info-row">
+                      <span class="label">Location:</span>
+                      <span class="value">${handoverChain.next.useLocation?.address || 'TBD'}</span>
+                    </div>
+                    <div class="info-row">
+                      <span class="label">Pickup Date:</span>
+                      <span class="value">${formatDate(handoverChain.next.pickupDate)}</span>
+                    </div>
+                  </div>
+                </div>
+              ` : `
+                <div class="card storage">
+                  <div class="storage-notice">
+                    <div class="storage-title">Zone Storage</div>
+                    <div class="storage-text">Equipment will be returned to the zone storage location</div>
+                  </div>
+                </div>
+              `}
+            </div>
           </div>
 
-          <button onclick="window.print()" style="margin-top: 30px; padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">Print</button>
+          <button onclick="window.print()">Print Handover Details</button>
         </body>
       </html>
     `;
@@ -295,7 +605,42 @@ export function ClubEquipmentDashboard({
     printWindow.document.close();
   };
 
-  const handleEmailHandover = () => {
+  const handleEmailHandover = async () => {
+    if (!handoverChain) return;
+
+    try {
+      const response = await fetch('/api/equipment-handover-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          handoverChain,
+          contextName: clubName,
+          contextType: 'club',
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send email');
+      }
+
+      const result = await response.json();
+      toast({
+        title: 'Email Queued',
+        description: 'Handover details have been queued for delivery to all participants.',
+      });
+    } catch (error) {
+      console.error('Error sending handover email:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to queue handover email. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleEmailHandover_OLD = () => {
     if (!handoverChain) return;
 
     const formatDate = (date: any) => {
@@ -313,45 +658,327 @@ export function ClubEquipmentDashboard({
 
     const subject = encodeURIComponent(`Equipment Handover Details - ${handoverChain.current.equipmentName}`);
     
-    const body = encodeURIComponent(
-      `Equipment Handover Details\n\n` +
-      `Equipment: ${handoverChain.current.equipmentName}\n` +
-      `Club: ${clubName}\n\n` +
-      `PICKUP FROM:\n` +
-      (handoverChain.previous ? 
-        `Club: ${handoverChain.previous.clubName}\n` +
-        `Contact: ${handoverChain.previous.custodian.name}\n` +
-        `Email: ${handoverChain.previous.custodian.email}\n` +
-        `Phone: ${handoverChain.previous.custodian.phone}\n` +
-        `Event: ${handoverChain.previous.eventName || 'TBD'}\n` +
-        `Location: ${handoverChain.previous.useLocation?.address || 'TBD'}\n` +
-        `Return Date: ${formatDate(handoverChain.previous.returnDate)}\n\n`
-        : 'Zone Storage\n\n'
-      ) +
-      `YOUR BOOKING:\n` +
-      `Club: ${handoverChain.current.clubName}\n` +
-      `Contact: ${handoverChain.current.custodian.name}\n` +
-      `Email: ${handoverChain.current.custodian.email}\n` +
-      `Phone: ${handoverChain.current.custodian.phone}\n` +
-      `Event: ${handoverChain.current.eventName || 'TBD'}\n` +
-      `Location: ${handoverChain.current.useLocation?.address || 'TBD'}\n` +
-      `Pickup: ${formatDate(handoverChain.current.pickupDate)}\n` +
-      `Return: ${formatDate(handoverChain.current.returnDate)}\n\n` +
-      `DROP-OFF TO:\n` +
-      (handoverChain.next ? 
-        `Club: ${handoverChain.next.clubName}\n` +
-        `Contact: ${handoverChain.next.custodian.name}\n` +
-        `Email: ${handoverChain.next.custodian.email}\n` +
-        `Phone: ${handoverChain.next.custodian.phone}\n` +
-        `Event: ${handoverChain.next.eventName || 'TBD'}\n` +
-        `Location: ${handoverChain.next.useLocation?.address || 'TBD'}\n` +
-        `Pickup Date: ${formatDate(handoverChain.next.pickupDate)}\n`
-        : 'Zone Storage\n'
-      )
-    );
+    // HTML email body with modern styling (inline CSS for email compatibility)
+    const htmlBody = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background-color: #f8fafc;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+          
+          <!-- Header -->
+          <tr>
+            <td style="padding: 32px 32px 24px; border-bottom: 2px solid #e2e8f0;">
+              <h1 style="margin: 0 0 12px; font-size: 24px; font-weight: 700; color: #0f172a;">
+                Equipment Handover Details
+              </h1>
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="padding: 4px 0; font-size: 14px; color: #64748b;">
+                    <strong style="color: #334155;">Equipment:</strong> ${handoverChain.current.equipmentName}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 4px 0; font-size: 14px; color: #64748b;">
+                    <strong style="color: #334155;">Club:</strong> ${clubName}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 4px 0; font-size: 14px; color: #64748b;">
+                    <strong style="color: #334155;">Generated:</strong> ${format(new Date(), 'PPP p')}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
 
+          <!-- Pickup Section -->
+          <tr>
+            <td style="padding: 32px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td>
+                    <table cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="width: 48px; height: 48px; background: linear-gradient(135deg, ${handoverChain.previous ? '#3b82f6, #2563eb' : '#64748b, #475569'}); border-radius: 12px; text-align: center; font-size: 24px; vertical-align: middle;">
+                          ${handoverChain.previous ? '📦' : '🏢'}
+                        </td>
+                        <td style="padding-left: 12px; font-size: 18px; font-weight: 700; color: #0f172a; vertical-align: middle;">
+                          Pickup From
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding-top: 16px;">
+                    ${handoverChain.previous ? `
+                      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-left: 4px solid #3b82f6; border-radius: 8px; border: 1px solid #e2e8f0;">
+                        <tr>
+                          <td style="padding: 20px;">
+                            <table width="100%" cellpadding="4" cellspacing="0">
+                              <tr>
+                                <td style="font-weight: 600; color: #475569; width: 120px;">Club:</td>
+                                <td style="color: #0f172a;">${handoverChain.previous.clubName}</td>
+                              </tr>
+                            </table>
+                            
+                            <table width="100%" cellpadding="0" cellspacing="0" style="margin: 12px 0; background: linear-gradient(to bottom right, #f8fafc, #f1f5f9); border-radius: 8px; border: 1px solid #e2e8f0;">
+                              <tr>
+                                <td style="padding: 16px;">
+                                  <div style="font-weight: 700; color: #0f172a; margin-bottom: 8px; font-size: 15px;">Contact Person</div>
+                                  <table width="100%" cellpadding="4" cellspacing="0">
+                                    <tr>
+                                      <td style="font-weight: 600; color: #475569; width: 120px;">Name:</td>
+                                      <td style="color: #0f172a;">${handoverChain.previous.custodian.name}</td>
+                                    </tr>
+                                    <tr>
+                                      <td style="font-weight: 600; color: #475569;">Email:</td>
+                                      <td style="color: #0f172a;">${handoverChain.previous.custodian.email}</td>
+                                    </tr>
+                                    <tr>
+                                      <td style="font-weight: 600; color: #475569;">Phone:</td>
+                                      <td style="color: #0f172a;">${handoverChain.previous.custodian.phone}</td>
+                                    </tr>
+                                  </table>
+                                </td>
+                              </tr>
+                            </table>
+                            
+                            <table width="100%" cellpadding="4" cellspacing="0">
+                              <tr>
+                                <td style="font-weight: 600; color: #475569; width: 120px;">Event:</td>
+                                <td style="color: #0f172a;">${handoverChain.previous.eventName || 'TBD'}</td>
+                              </tr>
+                              <tr>
+                                <td style="font-weight: 600; color: #475569;">Location:</td>
+                                <td style="color: #0f172a;">${handoverChain.previous.useLocation?.address || 'TBD'}</td>
+                              </tr>
+                              <tr>
+                                <td style="font-weight: 600; color: #475569;">Return Date:</td>
+                                <td style="color: #0f172a;">${formatDate(handoverChain.previous.returnDate)}</td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                      </table>
+                    ` : `
+                      <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(to bottom right, #f8fafc, #f1f5f9); border-left: 4px solid #64748b; border-radius: 8px; border: 1px solid #e2e8f0;">
+                        <tr>
+                          <td style="padding: 20px; text-align: center;">
+                            <div style="font-weight: 700; font-size: 16px; color: #334155; margin-bottom: 8px;">Zone Storage</div>
+                            <div style="color: #64748b; font-size: 14px;">Equipment will be collected from the zone storage location</div>
+                          </td>
+                        </tr>
+                      </table>
+                    `}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Connector -->
+          <tr>
+            <td align="center" style="padding: 0;">
+              <div style="width: 2px; height: 20px; background: linear-gradient(to bottom, #cbd5e1, #94a3b8);"></div>
+              <div style="width: 12px; height: 12px; background: #94a3b8; border-radius: 50%; margin: 8px 0;"></div>
+              <div style="width: 2px; height: 20px; background: linear-gradient(to bottom, #cbd5e1, #94a3b8);"></div>
+            </td>
+          </tr>
+
+          <!-- Current Booking Section -->
+          <tr>
+            <td style="padding: 32px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td>
+                    <table cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="width: 48px; height: 48px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 12px; text-align: center; font-size: 24px; vertical-align: middle;">
+                          ✓
+                        </td>
+                        <td style="padding-left: 12px; font-size: 18px; font-weight: 700; color: #0f172a; vertical-align: middle;">
+                          Your Booking
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding-top: 16px;">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(to bottom right, #f0fdf4, #dcfce7); border: 2px solid #10b981; border-radius: 8px; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);">
+                      <tr>
+                        <td style="padding: 20px;">
+                          <table width="100%" cellpadding="4" cellspacing="0">
+                            <tr>
+                              <td style="font-weight: 600; color: #475569; width: 120px;">Club:</td>
+                              <td style="color: #0f172a;">${handoverChain.current.clubName}</td>
+                            </tr>
+                          </table>
+                          
+                          <table width="100%" cellpadding="0" cellspacing="0" style="margin: 12px 0; background: linear-gradient(to bottom right, #ecfdf5, #d1fae5); border-radius: 8px; border: 1px solid #86efac;">
+                            <tr>
+                              <td style="padding: 16px;">
+                                <div style="font-weight: 700; color: #0f172a; margin-bottom: 8px; font-size: 15px;">Contact Person</div>
+                                <table width="100%" cellpadding="4" cellspacing="0">
+                                  <tr>
+                                    <td style="font-weight: 600; color: #475569; width: 120px;">Name:</td>
+                                    <td style="color: #0f172a;">${handoverChain.current.custodian.name}</td>
+                                  </tr>
+                                  <tr>
+                                    <td style="font-weight: 600; color: #475569;">Email:</td>
+                                    <td style="color: #0f172a;">${handoverChain.current.custodian.email}</td>
+                                  </tr>
+                                  <tr>
+                                    <td style="font-weight: 600; color: #475569;">Phone:</td>
+                                    <td style="color: #0f172a;">${handoverChain.current.custodian.phone}</td>
+                                  </tr>
+                                </table>
+                              </td>
+                            </tr>
+                          </table>
+                          
+                          <table width="100%" cellpadding="4" cellspacing="0">
+                            <tr>
+                              <td style="font-weight: 600; color: #475569; width: 120px;">Event:</td>
+                              <td style="color: #0f172a;">${handoverChain.current.eventName || 'TBD'}</td>
+                            </tr>
+                            <tr>
+                              <td style="font-weight: 600; color: #475569;">Location:</td>
+                              <td style="color: #0f172a;">${handoverChain.current.useLocation?.address || 'TBD'}</td>
+                            </tr>
+                            <tr>
+                              <td style="font-weight: 600; color: #475569;">Pickup Date:</td>
+                              <td style="color: #0f172a;">${formatDate(handoverChain.current.pickupDate)}</td>
+                            </tr>
+                            <tr>
+                              <td style="font-weight: 600; color: #475569;">Return Date:</td>
+                              <td style="color: #0f172a;">${formatDate(handoverChain.current.returnDate)}</td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Connector -->
+          <tr>
+            <td align="center" style="padding: 0;">
+              <div style="width: 2px; height: 20px; background: linear-gradient(to bottom, #cbd5e1, #94a3b8);"></div>
+              <div style="width: 12px; height: 12px; background: #94a3b8; border-radius: 50%; margin: 8px 0;"></div>
+              <div style="width: 2px; height: 20px; background: linear-gradient(to bottom, #cbd5e1, #94a3b8);"></div>
+            </td>
+          </tr>
+
+          <!-- Drop-off Section -->
+          <tr>
+            <td style="padding: 32px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td>
+                    <table cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="width: 48px; height: 48px; background: linear-gradient(135deg, ${handoverChain.next ? '#a855f7, #9333ea' : '#64748b, #475569'}); border-radius: 12px; text-align: center; font-size: 24px; vertical-align: middle;">
+                          ${handoverChain.next ? '🎯' : '🏢'}
+                        </td>
+                        <td style="padding-left: 12px; font-size: 18px; font-weight: 700; color: #0f172a; vertical-align: middle;">
+                          Drop-off To
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding-top: 16px;">
+                    ${handoverChain.next ? `
+                      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-left: 4px solid #a855f7; border-radius: 8px; border: 1px solid #e2e8f0;">
+                        <tr>
+                          <td style="padding: 20px;">
+                            <table width="100%" cellpadding="4" cellspacing="0">
+                              <tr>
+                                <td style="font-weight: 600; color: #475569; width: 120px;">Club:</td>
+                                <td style="color: #0f172a;">${handoverChain.next.clubName}</td>
+                              </tr>
+                            </table>
+                            
+                            <table width="100%" cellpadding="0" cellspacing="0" style="margin: 12px 0; background: linear-gradient(to bottom right, #f8fafc, #f1f5f9); border-radius: 8px; border: 1px solid #e2e8f0;">
+                              <tr>
+                                <td style="padding: 16px;">
+                                  <div style="font-weight: 700; color: #0f172a; margin-bottom: 8px; font-size: 15px;">Contact Person</div>
+                                  <table width="100%" cellpadding="4" cellspacing="0">
+                                    <tr>
+                                      <td style="font-weight: 600; color: #475569; width: 120px;">Name:</td>
+                                      <td style="color: #0f172a;">${handoverChain.next.custodian.name}</td>
+                                    </tr>
+                                    <tr>
+                                      <td style="font-weight: 600; color: #475569;">Email:</td>
+                                      <td style="color: #0f172a;">${handoverChain.next.custodian.email}</td>
+                                    </tr>
+                                    <tr>
+                                      <td style="font-weight: 600; color: #475569;">Phone:</td>
+                                      <td style="color: #0f172a;">${handoverChain.next.custodian.phone}</td>
+                                    </tr>
+                                  </table>
+                                </td>
+                              </tr>
+                            </table>
+                            
+                            <table width="100%" cellpadding="4" cellspacing="0">
+                              <tr>
+                                <td style="font-weight: 600; color: #475569; width: 120px;">Event:</td>
+                                <td style="color: #0f172a;">${handoverChain.next.eventName || 'TBD'}</td>
+                              </tr>
+                              <tr>
+                                <td style="font-weight: 600; color: #475569;">Location:</td>
+                                <td style="color: #0f172a;">${handoverChain.next.useLocation?.address || 'TBD'}</td>
+                              </tr>
+                              <tr>
+                                <td style="font-weight: 600; color: #475569;">Pickup Date:</td>
+                                <td style="color: #0f172a;">${formatDate(handoverChain.next.pickupDate)}</td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                      </table>
+                    ` : `
+                      <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(to bottom right, #f8fafc, #f1f5f9); border-left: 4px solid #64748b; border-radius: 8px; border: 1px solid #e2e8f0;">
+                        <tr>
+                          <td style="padding: 20px; text-align: center;">
+                            <div style="font-weight: 700; font-size: 16px; color: #334155; margin-bottom: 8px;">Zone Storage</div>
+                            <div style="color: #64748b; font-size: 14px;">Equipment will be returned to the zone storage location</div>
+                          </td>
+                        </tr>
+                      </table>
+                    `}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `.trim();
+
+    // Create mailto link with HTML body
+    const body = encodeURIComponent(htmlBody);
     window.location.href = `mailto:${emails}?subject=${subject}&body=${body}`;
-  };
+  }; // END OLD FUNCTION
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -365,157 +992,85 @@ export function ClubEquipmentDashboard({
 
   return (
     <div className="space-y-6">
-      {/* Header Section */}
-      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-700 rounded-2xl shadow-2xl overflow-hidden">
-        <div className="p-6 sm:p-8">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-            {/* Icon/Logo Section */}
-            <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 bg-white/10 backdrop-blur-sm rounded-xl p-3 shadow-lg">
-              <div className="w-full h-full flex items-center justify-center">
-                <Package className="w-full h-full text-white drop-shadow-lg" />
-              </div>
-            </div>
-            
-            {/* Title and Description */}
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-3xl font-bold text-white">Book Zone Equipment</h1>
-                <Badge variant="outline" className="bg-white/20 text-white border-white/40">
-                  Request & Manage
-                </Badge>
-              </div>
-              <p className="text-blue-100 text-lg mb-3">
-                Browse and request equipment from {zoneName}
-              </p>
-              
-              {/* Club and Zone Info */}
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-6">
-                <div className="flex items-center gap-2 text-white/90">
-                  <div className="bg-white/20 rounded-lg p-1.5">
-                    <MapPin className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-blue-200 font-medium">Your Club</p>
-                    <p className="font-semibold">{clubName}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 text-white/90">
-                  <div className="bg-white/20 rounded-lg p-1.5">
-                    <Package className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-blue-200 font-medium">Equipment Zone</p>
-                    <p className="font-semibold">{zoneName}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+      {/* Header Section - Cleaner, More Compact */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+            <Package className="w-6 h-6 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Book Zone Equipment</h1>
+            <p className="text-sm text-muted-foreground">
+              Browse and request equipment from {zoneName}
+            </p>
+          </div>
+        </div>
+        
+        {/* Club and Zone Info - Compact Pills */}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 rounded-full text-sm">
+            <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="font-medium">{clubName}</span>
+          </div>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 rounded-full text-sm">
+            <Package className="h-3.5 w-3.5 text-primary" />
+            <span className="font-medium text-primary">{zoneName}</span>
           </div>
         </div>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6">
-        {/* Vertical Sidebar Navigation */}
-        <div className="lg:w-64 flex-shrink-0">
-          <Card className="sticky top-6 shadow-lg">
-            <CardContent className="p-2">
-              <nav className="space-y-1">
-                {/* Browse & Book Section */}
-                <button
-                  onClick={() => setActiveTab('browse')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                    activeTab === 'browse'
-                      ? 'bg-primary text-primary-foreground shadow-md'
-                      : 'hover:bg-muted text-muted-foreground hover:text-foreground'
-                  }`}
-                  title="Browse available equipment and create bookings"
-                >
-                  <ShoppingCart className="h-5 w-5 flex-shrink-0" />
-                  <div className="flex-1 text-left">
-                    <div className="font-semibold">Browse & Book</div>
-                    <div className="text-xs opacity-80">Available equipment</div>
-                  </div>
-                </button>
-
-                {/* My Bookings Section */}
-                <button
-                  onClick={() => setActiveTab('my-bookings')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                    activeTab === 'my-bookings'
-                      ? 'bg-primary text-primary-foreground shadow-md'
-                      : 'hover:bg-muted text-muted-foreground hover:text-foreground'
-                  }`}
-                  title="View and manage your equipment bookings"
-                >
-                  <Calendar className="h-5 w-5 flex-shrink-0" />
-                  <div className="flex-1 text-left">
-                    <div className="font-semibold flex items-center gap-2">
-                      My Bookings
-                      {upcomingBookingsCount > 0 && (
-                        <Badge className="bg-blue-500 text-white text-[10px] px-1.5 py-0 h-4">
-                          {upcomingBookingsCount}
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="text-xs opacity-80">Manage bookings</div>
-                  </div>
-                </button>
-
-                {/* Pickup & Drop-off Section */}
-                <button
-                  onClick={() => setActiveTab('handover')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                    activeTab === 'handover'
-                      ? 'bg-primary text-primary-foreground shadow-md'
-                      : 'hover:bg-muted text-muted-foreground hover:text-foreground'
-                  }`}
-                  title="Coordinate equipment pickup and drop-off"
-                >
-                  <ArrowDownToLine className="h-5 w-5 flex-shrink-0" />
-                  <div className="flex-1 text-left">
-                    <div className="font-semibold flex items-center gap-2">
-                      Pickup & Drop-off
-                      {upcomingPickupsCount > 0 && (
-                        <Badge className="bg-orange-500 text-white text-[10px] px-1.5 py-0 h-4">
-                          {upcomingPickupsCount}
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="text-xs opacity-80">Coordination</div>
-                  </div>
-                </button>
-              </nav>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Main Content Area */}
         <div className="flex-1 min-w-0">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-3 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm mb-6">
+              <TabsTrigger value="browse" title="Browse available equipment and create bookings">
+                <ShoppingCart className="h-4 w-4 mr-2" />
+                Browse & Book
+              </TabsTrigger>
+              <TabsTrigger value="my-bookings" title="View and manage your equipment bookings">
+                <Calendar className="h-4 w-4 mr-2" />
+                <span className="flex items-center gap-2">
+                  My Bookings
+                  {upcomingBookingsCount > 0 && (
+                    <Badge className="bg-blue-500 text-white text-[10px] px-1.5 py-0 h-4">
+                      {upcomingBookingsCount}
+                    </Badge>
+                  )}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger value="handover" title="Coordinate equipment pickup and drop-off">
+                <ArrowDownToLine className="h-4 w-4 mr-2" />
+                <span className="flex items-center gap-2">
+                  Pickup & Drop-off
+                  {upcomingPickupsCount > 0 && (
+                    <Badge className="bg-orange-500 text-white text-[10px] px-1.5 py-0 h-4">
+                      {upcomingPickupsCount}
+                    </Badge>
+                  )}
+                </span>
+              </TabsTrigger>
+            </TabsList>
 
-          {/* Browse & Book Tab */}
-          {activeTab === 'browse' && (
-            <div className="space-y-6">
+            <TabsContent value="browse" className="space-y-4">
               <EquipmentCatalog
-            zoneId={zoneId}
-            zoneName={zoneName}
-            clubId={clubId}
-            clubName={clubName}
-            clubLocation={clubLocation}
-            userEmail={userEmail}
-            userName={userName}
-            userPhone={userPhone}
+                zoneId={zoneId}
+                zoneName={zoneName}
+                clubId={clubId}
+                clubName={clubName}
+                clubLocation={clubLocation}
+                userEmail={userEmail}
+                userName={userName}
+                userPhone={userPhone}
               />
-            </div>
-          )}
+            </TabsContent>
 
-          {/* My Bookings Tab */}
-          {activeTab === 'my-bookings' && (
-            <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <p className="text-sm text-muted-foreground">
-              {bookings.length} booking{bookings.length !== 1 ? 's' : ''}
-            </p>
-          </div>
+            <TabsContent value="my-bookings" className="space-y-4">
+              <div className="flex justify-between items-center">
+                <p className="text-sm text-muted-foreground">
+                  {bookings.length} booking{bookings.length !== 1 ? 's' : ''}
+                </p>
+              </div>
 
           <Card>
             <Table>
@@ -613,22 +1168,19 @@ export function ClubEquipmentDashboard({
                     );
                   })
                 )}
-              </TableBody>
-            </Table>
-          </Card>
-            </div>
-          )}
+                  </TableBody>
+                </Table>
+              </Card>
+            </TabsContent>
 
-          {/* Handover Coordination Tab */}
-          {activeTab === 'handover' && (
-            <div className="space-y-4">
-          <div>
-            <p className="text-sm text-muted-foreground">
-              Coordinate equipment pickup and drop-off with other clubs
-            </p>
-          </div>
+            <TabsContent value="handover" className="space-y-4">
+              <div>
+                <p className="text-sm text-muted-foreground">
+                  Coordinate equipment pickup and drop-off with other clubs
+                </p>
+              </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Booking Selection */}
             <Card>
               <CardHeader>
@@ -718,17 +1270,17 @@ export function ClubEquipmentDashboard({
                     <div className="relative">
                       {/* Previous Booking (Pickup From) */}
                       {handoverChain.previous ? (
-                        <div className="mb-8">
-                          <div className="flex items-center gap-3 mb-2">
-                            <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                              <MapPin className="h-5 w-5 text-blue-600" />
+                        <div className="mb-6">
+                          <div className="flex items-center gap-4 mb-3">
+                            <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                              <MapPin className="h-6 w-6 text-white" />
                             </div>
                             <div className="flex-1">
-                              <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Pickup From</p>
-                              <p className="font-medium">{handoverChain.previous.clubName}</p>
+                              <p className="text-xs font-bold text-blue-600 uppercase tracking-wider">Pickup From</p>
+                              <p className="font-bold text-lg">{handoverChain.previous.clubName}</p>
                             </div>
                           </div>
-                          <Card className="ml-13 border-blue-200 bg-blue-50">
+                          <Card className="ml-16 border-blue-300 bg-gradient-to-br from-blue-50 to-blue-100/50 shadow-md">
                             <CardContent className="p-4">
                               <div className="space-y-2">
                                 <div className="flex items-center gap-2">
@@ -749,47 +1301,53 @@ export function ClubEquipmentDashboard({
                               </div>
                             </CardContent>
                           </Card>
-                          {/* Railway track connector */}
-                          <div className="ml-5 h-8 border-l-4 border-dashed border-blue-300"></div>
-                          <div className="ml-3 mb-2">
-                            <ArrowRight className="h-6 w-6 text-blue-400 rotate-90" />
+                          {/* Connector */}
+                          <div className="ml-6 flex flex-col items-center py-3">
+                            <div className="h-6 w-1 bg-gradient-to-b from-blue-400 to-green-400 rounded-full"></div>
+                            <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-green-400 rounded-full flex items-center justify-center shadow-md my-1">
+                              <ArrowRight className="h-5 w-5 text-white rotate-90" />
+                            </div>
+                            <div className="h-6 w-1 bg-gradient-to-b from-green-400 to-green-500 rounded-full"></div>
                           </div>
                         </div>
                       ) : (
-                        <div className="mb-8">
-                          <div className="flex items-center gap-3 mb-2">
-                            <div className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                              <MapPin className="h-5 w-5 text-gray-400" />
+                        <div className="mb-6">
+                          <div className="flex items-center gap-4 mb-3">
+                            <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-slate-400 to-slate-500 rounded-xl flex items-center justify-center shadow-lg">
+                              <Package className="h-6 w-6 text-white" />
                             </div>
                             <div className="flex-1">
-                              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Pickup From</p>
-                              <p className="text-sm text-muted-foreground">Zone Storage</p>
+                              <p className="text-xs font-bold text-slate-600 uppercase tracking-wider">Pickup From</p>
+                              <p className="font-bold text-lg text-slate-700">Zone Storage</p>
                             </div>
                           </div>
-                          <Card className="ml-13 border-gray-200 bg-gray-50">
+                          <Card className="ml-16 border-slate-300 bg-gradient-to-br from-slate-50 to-slate-100/50 shadow-md">
                             <CardContent className="p-4">
                               <p className="text-sm text-muted-foreground">Equipment will be collected from zone storage location</p>
                             </CardContent>
                           </Card>
-                          <div className="ml-5 h-8 border-l-4 border-dashed border-gray-300"></div>
-                          <div className="ml-3 mb-2">
-                            <ArrowRight className="h-6 w-6 text-gray-400 rotate-90" />
+                          <div className="ml-6 flex flex-col items-center py-3">
+                            <div className="h-6 w-1 bg-gradient-to-b from-slate-400 to-green-400 rounded-full"></div>
+                            <div className="w-8 h-8 bg-gradient-to-br from-slate-400 to-green-400 rounded-full flex items-center justify-center shadow-md my-1">
+                              <ArrowRight className="h-5 w-5 text-white rotate-90" />
+                            </div>
+                            <div className="h-6 w-1 bg-gradient-to-b from-green-400 to-green-500 rounded-full"></div>
                           </div>
                         </div>
                       )}
 
                       {/* Current Booking */}
-                      <div className="mb-8">
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className="flex-shrink-0 w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
-                            <Package className="h-5 w-5 text-white" />
+                      <div className="mb-6">
+                        <div className="flex items-center gap-4 mb-3">
+                          <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg ring-2 ring-green-300">
+                            <Package className="h-6 w-6 text-white" />
                           </div>
                           <div className="flex-1">
-                            <p className="text-xs font-semibold text-green-600 uppercase tracking-wide">Your Booking</p>
-                            <p className="font-medium">{handoverChain.current.clubName}</p>
+                            <p className="text-xs font-bold text-green-600 uppercase tracking-wider">Your Booking</p>
+                            <p className="font-bold text-lg">{handoverChain.current.clubName}</p>
                           </div>
                         </div>
-                        <Card className="ml-13 border-green-200 bg-green-50 ring-2 ring-green-500">
+                        <Card className="ml-16 border-green-400 bg-gradient-to-br from-green-50 to-emerald-100/50 ring-2 ring-green-400 shadow-lg">
                           <CardContent className="p-4">
                             <div className="space-y-2">
                               <div className="flex items-center gap-2">
@@ -813,25 +1371,28 @@ export function ClubEquipmentDashboard({
                             </div>
                           </CardContent>
                         </Card>
-                        <div className="ml-5 h-8 border-l-4 border-dashed border-green-300"></div>
-                        <div className="ml-3 mb-2">
-                          <ArrowRight className="h-6 w-6 text-green-400 rotate-90" />
+                        <div className="ml-6 flex flex-col items-center py-3">
+                          <div className="h-6 w-1 bg-gradient-to-b from-green-500 to-purple-400 rounded-full"></div>
+                          <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-purple-400 rounded-full flex items-center justify-center shadow-md my-1">
+                            <ArrowRight className="h-5 w-5 text-white rotate-90" />
+                          </div>
+                          <div className="h-6 w-1 bg-gradient-to-b from-purple-400 to-purple-500 rounded-full"></div>
                         </div>
                       </div>
 
                       {/* Next Booking (Drop-off To) */}
                       {handoverChain.next ? (
                         <div>
-                          <div className="flex items-center gap-3 mb-2">
-                            <div className="flex-shrink-0 w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                              <MapPin className="h-5 w-5 text-purple-600" />
+                          <div className="flex items-center gap-4 mb-3">
+                            <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                              <MapPin className="h-6 w-6 text-white" />
                             </div>
                             <div className="flex-1">
-                              <p className="text-xs font-semibold text-purple-600 uppercase tracking-wide">Drop-off To</p>
-                              <p className="font-medium">{handoverChain.next.clubName}</p>
+                              <p className="text-xs font-bold text-purple-600 uppercase tracking-wider">Drop-off To</p>
+                              <p className="font-bold text-lg">{handoverChain.next.clubName}</p>
                             </div>
                           </div>
-                          <Card className="ml-13 border-purple-200 bg-purple-50">
+                          <Card className="ml-16 border-purple-300 bg-gradient-to-br from-purple-50 to-purple-100/50 shadow-md">
                             <CardContent className="p-4">
                               <div className="space-y-2">
                                 <div className="flex items-center gap-2">
@@ -855,16 +1416,16 @@ export function ClubEquipmentDashboard({
                         </div>
                       ) : (
                         <div>
-                          <div className="flex items-center gap-3 mb-2">
-                            <div className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                              <MapPin className="h-5 w-5 text-gray-400" />
+                          <div className="flex items-center gap-4 mb-3">
+                            <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-slate-400 to-slate-500 rounded-xl flex items-center justify-center shadow-lg">
+                              <Package className="h-6 w-6 text-white" />
                             </div>
                             <div className="flex-1">
-                              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Drop-off To</p>
-                              <p className="text-sm text-muted-foreground">Zone Storage</p>
+                              <p className="text-xs font-bold text-slate-600 uppercase tracking-wider">Drop-off To</p>
+                              <p className="font-bold text-lg text-slate-700">Zone Storage</p>
                             </div>
                           </div>
-                          <Card className="ml-13 border-gray-200 bg-gray-50">
+                          <Card className="ml-16 border-slate-300 bg-gradient-to-br from-slate-50 to-slate-100/50 shadow-md">
                             <CardContent className="p-4">
                               <p className="text-sm text-muted-foreground">Equipment will be returned to zone storage location</p>
                             </CardContent>
@@ -877,8 +1438,8 @@ export function ClubEquipmentDashboard({
               </CardContent>
             </Card>
           </div>
-            </div>
-          )}
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
 

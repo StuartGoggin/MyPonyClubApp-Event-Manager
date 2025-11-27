@@ -458,9 +458,30 @@ function ZoneManagerContent() {
                         <div className="font-semibold">Events</div>
                         <div className="text-xs opacity-80">Manage zone events</div>
                       </div>
-                      {(pendingEvents + pendingSchedules + pendingCommittees > 0) && (
+                      {(pendingEvents + pendingSchedules > 0) && (
                         <Badge variant="destructive" className="text-xs">
-                          {pendingEvents + pendingSchedules + pendingCommittees}
+                          {pendingEvents + pendingSchedules}
+                        </Badge>
+                      )}
+                    </button>
+
+                    {/* Committees Section */}
+                    <button
+                      onClick={() => setMainTab('committees')}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                        mainTab === 'committees'
+                          ? 'bg-primary text-primary-foreground shadow-md'
+                          : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      <Users className="h-5 w-5 flex-shrink-0" />
+                      <div className="flex-1 text-left">
+                        <div className="font-semibold">Committees</div>
+                        <div className="text-xs opacity-80">Committee approvals</div>
+                      </div>
+                      {pendingCommittees > 0 && (
+                        <Badge variant="destructive" className="text-xs">
+                          {pendingCommittees}
                         </Badge>
                       )}
                     </button>
@@ -514,7 +535,7 @@ function ZoneManagerContent() {
                   {/* Event Sub-tabs */}
                   <Tabs defaultValue="approvals" className="space-y-4">
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
-                    <TabsList className="flex-1 grid grid-cols-4 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm">
+                    <TabsList className="flex-1 grid grid-cols-3 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm">
                       <TabsTrigger value="approvals" className="text-xs sm:text-sm" title="Review and approve club event date requests">
                         <Clock className="h-4 w-4 mr-1 sm:mr-2 flex-shrink-0" />
                         <span className="hidden sm:inline">Event Dates</span>
@@ -532,16 +553,6 @@ function ZoneManagerContent() {
                         {pendingSchedules > 0 && (
                           <Badge variant="destructive" className="ml-1 sm:ml-2 text-xs">
                             {pendingSchedules}
-                          </Badge>
-                        )}
-                      </TabsTrigger>
-                      <TabsTrigger value="committees" className="text-xs sm:text-sm" title="Review and approve committee nominations from clubs">
-                        <Users className="h-4 w-4 mr-1 sm:mr-2 flex-shrink-0" />
-                        <span className="hidden sm:inline">Committees</span>
-                        <span className="sm:hidden">Comm</span>
-                        {pendingCommittees > 0 && (
-                          <Badge variant="destructive" className="ml-1 sm:ml-2 text-xs">
-                            {pendingCommittees}
                           </Badge>
                         )}
                       </TabsTrigger>
@@ -594,13 +605,6 @@ function ZoneManagerContent() {
                     />
                   </TabsContent>
 
-                  <TabsContent value="committees" className="space-y-4">
-                    <ZoneCommitteeApprovals
-                      zoneId={selectedZoneId}
-                      onUpdate={fetchPendingCommitteesCount}
-                    />
-                  </TabsContent>
-
                   <TabsContent value="manage" className="space-y-4">
                     <ZoneEventManagement
                       zoneId={selectedZoneId}
@@ -639,6 +643,16 @@ function ZoneManagerContent() {
                 )}
               </div>
             )}
+
+              {/* Committees Section */}
+              {mainTab === 'committees' && (
+                <div className="space-y-6">
+                  <ZoneCommitteeApprovals
+                    zoneId={selectedZoneId}
+                    onUpdate={fetchPendingCommitteesCount}
+                  />
+                </div>
+              )}
 
               {/* Equipment Section */}
               {mainTab === 'equipment' && (

@@ -62,6 +62,7 @@ export function ClubEquipmentDashboard({
     current: EquipmentBooking;
     next?: EquipmentBooking;
   } | null>(null);
+  const [equipmentHomeLocation, setEquipmentHomeLocation] = useState<any>(null);
 
   // Fetch bookings function
   const fetchBookings = useCallback(async () => {
@@ -182,6 +183,17 @@ export function ClubEquipmentDashboard({
       
       const data = await response.json();
       setHandoverChain(data.chain);
+      
+      // Fetch equipment details to get homeLocation
+      try {
+        const equipmentResponse = await fetch(`/api/equipment/${booking.equipmentId}`);
+        if (equipmentResponse.ok) {
+          const equipmentData = await equipmentResponse.json();
+          setEquipmentHomeLocation(equipmentData.data?.homeLocation);
+        }
+      } catch (error) {
+        console.error('Failed to fetch equipment home location:', error);
+      }
     } catch (error) {
       // If endpoint doesn't exist yet, construct locally
       const equipmentBookings = bookings.filter(b => b.equipmentId === booking.equipmentId);
@@ -195,6 +207,17 @@ export function ClubEquipmentDashboard({
         current: booking,
         next: currentIndex < sortedBookings.length - 1 ? sortedBookings[currentIndex + 1] : undefined,
       });
+      
+      // Try to fetch equipment details for homeLocation
+      try {
+        const equipmentResponse = await fetch(`/api/equipment/${booking.equipmentId}`);
+        if (equipmentResponse.ok) {
+          const equipmentData = await equipmentResponse.json();
+          setEquipmentHomeLocation(equipmentData.data?.homeLocation);
+        }
+      } catch (error) {
+        console.error('Failed to fetch equipment home location:', error);
+      }
     }
   };
 
@@ -469,6 +492,22 @@ export function ClubEquipmentDashboard({
                   <div class="storage-notice">
                     <div class="storage-title">Zone Storage</div>
                     <div class="storage-text">Equipment will be collected from the zone storage location</div>
+                    ${equipmentHomeLocation ? `
+                      <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #cbd5e1;">
+                        ${equipmentHomeLocation.photo ? `
+                          <div style="margin-bottom: 8px;">
+                            <img src="${equipmentHomeLocation.photo}" alt="Storage Location" style="max-width: 200px; border-radius: 4px; border: 1px solid #cbd5e1;" />
+                          </div>
+                        ` : ''}
+                        <div class="info-row"><span class="label">Address:</span><span class="value">${equipmentHomeLocation.address}</span></div>
+                        ${equipmentHomeLocation.accessInstructions ? `<div class="info-row"><span class="label">Access:</span><span class="value">${equipmentHomeLocation.accessInstructions}</span></div>` : ''}
+                        <div style="font-weight: 600; margin-top: 8px; margin-bottom: 4px;">Contact for Access:</div>
+                        <div class="info-row"><span class="label">Name:</span><span class="value">${equipmentHomeLocation.contactPerson.name}${equipmentHomeLocation.contactPerson.role ? ` (${equipmentHomeLocation.contactPerson.role})` : ''}</span></div>
+                        <div class="info-row"><span class="label">Phone:</span><span class="value">${equipmentHomeLocation.contactPerson.phone}</span></div>
+                        <div class="info-row"><span class="label">Email:</span><span class="value">${equipmentHomeLocation.contactPerson.email}</span></div>
+                        ${equipmentHomeLocation.availabilityNotes ? `<div class="info-row"><span class="label">Availability:</span><span class="value">${equipmentHomeLocation.availabilityNotes}</span></div>` : ''}
+                      </div>
+                    ` : ''}
                   </div>
                 </div>
               `}
@@ -590,6 +629,22 @@ export function ClubEquipmentDashboard({
                   <div class="storage-notice">
                     <div class="storage-title">Zone Storage</div>
                     <div class="storage-text">Equipment will be returned to the zone storage location</div>
+                    ${equipmentHomeLocation ? `
+                      <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #cbd5e1;">
+                        ${equipmentHomeLocation.photo ? `
+                          <div style="margin-bottom: 8px;">
+                            <img src="${equipmentHomeLocation.photo}" alt="Storage Location" style="max-width: 200px; border-radius: 4px; border: 1px solid #cbd5e1;" />
+                          </div>
+                        ` : ''}
+                        <div class="info-row"><span class="label">Address:</span><span class="value">${equipmentHomeLocation.address}</span></div>
+                        ${equipmentHomeLocation.accessInstructions ? `<div class="info-row"><span class="label">Access:</span><span class="value">${equipmentHomeLocation.accessInstructions}</span></div>` : ''}
+                        <div style="font-weight: 600; margin-top: 8px; margin-bottom: 4px;">Contact for Access:</div>
+                        <div class="info-row"><span class="label">Name:</span><span class="value">${equipmentHomeLocation.contactPerson.name}${equipmentHomeLocation.contactPerson.role ? ` (${equipmentHomeLocation.contactPerson.role})` : ''}</span></div>
+                        <div class="info-row"><span class="label">Phone:</span><span class="value">${equipmentHomeLocation.contactPerson.phone}</span></div>
+                        <div class="info-row"><span class="label">Email:</span><span class="value">${equipmentHomeLocation.contactPerson.email}</span></div>
+                        ${equipmentHomeLocation.availabilityNotes ? `<div class="info-row"><span class="label">Availability:</span><span class="value">${equipmentHomeLocation.availabilityNotes}</span></div>` : ''}
+                      </div>
+                    ` : ''}
                   </div>
                 </div>
               `}
@@ -618,6 +673,7 @@ export function ClubEquipmentDashboard({
           handoverChain,
           contextName: clubName,
           contextType: 'club',
+          equipmentHomeLocation,
         }),
       });
 
@@ -1323,7 +1379,30 @@ export function ClubEquipmentDashboard({
                           </div>
                           <Card className="ml-16 border-slate-300 bg-gradient-to-br from-slate-50 to-slate-100/50 shadow-md">
                             <CardContent className="p-4">
-                              <p className="text-sm text-muted-foreground">Equipment will be collected from zone storage location</p>
+                              <p className="text-sm text-muted-foreground mb-3">Equipment will be collected from zone storage location</p>
+                              {equipmentHomeLocation && (
+                                <div className="mt-3 pt-3 border-t space-y-3">
+                                  {equipmentHomeLocation.photo && (
+                                    <img src={equipmentHomeLocation.photo} alt="Storage Location" className="w-full max-w-sm rounded-lg border-2 border-slate-200" />
+                                  )}
+                                  <div>
+                                    <p className="text-xs font-semibold text-slate-700 mb-1">Storage Location:</p>
+                                    <p className="text-xs text-slate-600">{equipmentHomeLocation.address}</p>
+                                    {equipmentHomeLocation.accessInstructions && (
+                                      <p className="text-xs text-slate-600 mt-1"><span className="font-semibold">Access:</span> {equipmentHomeLocation.accessInstructions}</p>
+                                    )}
+                                  </div>
+                                  <div>
+                                    <p className="text-xs font-semibold text-slate-700 mb-1">Contact for Access:</p>
+                                    <p className="text-xs text-slate-600">{equipmentHomeLocation.contactPerson.name}{equipmentHomeLocation.contactPerson.role && ` (${equipmentHomeLocation.contactPerson.role})`}</p>
+                                    <p className="text-xs text-slate-600">{equipmentHomeLocation.contactPerson.phone}</p>
+                                    <p className="text-xs text-slate-600">{equipmentHomeLocation.contactPerson.email}</p>
+                                    {equipmentHomeLocation.availabilityNotes && (
+                                      <p className="text-xs text-slate-600 mt-1"><span className="font-semibold">Availability:</span> {equipmentHomeLocation.availabilityNotes}</p>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
                             </CardContent>
                           </Card>
                           <div className="ml-6 flex flex-col items-center py-3">
@@ -1427,7 +1506,30 @@ export function ClubEquipmentDashboard({
                           </div>
                           <Card className="ml-16 border-slate-300 bg-gradient-to-br from-slate-50 to-slate-100/50 shadow-md">
                             <CardContent className="p-4">
-                              <p className="text-sm text-muted-foreground">Equipment will be returned to zone storage location</p>
+                              <p className="text-sm text-muted-foreground mb-3">Equipment will be returned to zone storage location</p>
+                              {equipmentHomeLocation && (
+                                <div className="mt-3 pt-3 border-t space-y-3">
+                                  {equipmentHomeLocation.photo && (
+                                    <img src={equipmentHomeLocation.photo} alt="Storage Location" className="w-full max-w-sm rounded-lg border-2 border-slate-200" />
+                                  )}
+                                  <div>
+                                    <p className="text-xs font-semibold text-slate-700 mb-1">Storage Location:</p>
+                                    <p className="text-xs text-slate-600">{equipmentHomeLocation.address}</p>
+                                    {equipmentHomeLocation.accessInstructions && (
+                                      <p className="text-xs text-slate-600 mt-1"><span className="font-semibold">Access:</span> {equipmentHomeLocation.accessInstructions}</p>
+                                    )}
+                                  </div>
+                                  <div>
+                                    <p className="text-xs font-semibold text-slate-700 mb-1">Contact for Access:</p>
+                                    <p className="text-xs text-slate-600">{equipmentHomeLocation.contactPerson.name}{equipmentHomeLocation.contactPerson.role && ` (${equipmentHomeLocation.contactPerson.role})`}</p>
+                                    <p className="text-xs text-slate-600">{equipmentHomeLocation.contactPerson.phone}</p>
+                                    <p className="text-xs text-slate-600">{equipmentHomeLocation.contactPerson.email}</p>
+                                    {equipmentHomeLocation.availabilityNotes && (
+                                      <p className="text-xs text-slate-600 mt-1"><span className="font-semibold">Availability:</span> {equipmentHomeLocation.availabilityNotes}</p>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
                             </CardContent>
                           </Card>
                         </div>

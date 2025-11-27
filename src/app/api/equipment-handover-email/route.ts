@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { handoverChain, contextName, contextType } = body;
+    const { handoverChain, contextName, contextType, equipmentHomeLocation } = body;
 
     if (!handoverChain || !handoverChain.current) {
       return NextResponse.json(
@@ -27,14 +27,21 @@ export async function POST(request: NextRequest) {
       handoverChain.next?.custodian.email,
     ].filter(Boolean);
 
+    // Add home location contact if equipment is coming from or going to storage
+    if (equipmentHomeLocation?.contactPerson?.email) {
+      if (!handoverChain.previous || !handoverChain.next) {
+        recipients.push(equipmentHomeLocation.contactPerson.email);
+      }
+    }
+
     // Build detailed subject line
     const subject = `Equipment Handover: ${handoverChain.current.equipmentName} - ${handoverChain.current.clubName} (${formatDate(handoverChain.current.pickupDate)} to ${formatDate(handoverChain.current.returnDate)})`;
 
     // Generate HTML email body
-    const htmlContent = generateHandoverEmailHTML(handoverChain, contextName, contextType, formatDate);
+    const htmlContent = generateHandoverEmailHTML(handoverChain, contextName, contextType, formatDate, equipmentHomeLocation);
 
     // Generate plain text version
-    const textContent = generateHandoverEmailText(handoverChain, contextName, contextType, formatDate);
+    const textContent = generateHandoverEmailText(handoverChain, contextName, contextType, formatDate, equipmentHomeLocation);
 
     // Queue the email
     const emailId = await addEmailToQueue({
@@ -42,7 +49,7 @@ export async function POST(request: NextRequest) {
       subject,
       htmlContent,
       textContent,
-      type: 'equipment-handover',
+      type: 'notification',
       priority: 'normal',
       status: 'pending',
       metadata: {
@@ -73,7 +80,8 @@ function generateHandoverEmailHTML(
   handoverChain: any,
   contextName: string,
   contextType: 'zone' | 'club',
-  formatDate: (date: any) => string
+  formatDate: (date: any) => string,
+  equipmentHomeLocation?: any
 ): string {
   return `
 <!DOCTYPE html>
@@ -187,9 +195,56 @@ function generateHandoverEmailHTML(
                     ` : `
                       <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(to bottom right, #f8fafc, #f1f5f9); border-left: 4px solid #64748b; border-radius: 8px; border: 1px solid #e2e8f0;">
                         <tr>
-                          <td style="padding: 20px; text-align: center;">
+                          <td style="padding: 20px;">
                             <div style="font-weight: 700; font-size: 16px; color: #334155; margin-bottom: 8px;">Zone Storage</div>
-                            <div style="color: #64748b; font-size: 14px;">Equipment will be collected from the zone storage location</div>
+                            <div style="color: #64748b; font-size: 14px; margin-bottom: 12px;">Equipment will be collected from the zone storage location</div>
+                            ${equipmentHomeLocation ? `
+                              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 12px; background: linear-gradient(to bottom right, #f1f5f9, #e2e8f0); border-radius: 8px; border: 1px solid #cbd5e1;">
+                                <tr>
+                                  <td style="padding: 16px;">
+                                    ${equipmentHomeLocation.photo ? `
+                                      <div style="margin-bottom: 12px;">
+                                        <img src="${equipmentHomeLocation.photo}" alt="Storage Location" style="width: 100%; max-width: 400px; border-radius: 8px; border: 2px solid #cbd5e1;" />
+                                      </div>
+                                    ` : ''}
+                                    <div style="font-weight: 700; color: #0f172a; margin-bottom: 8px; font-size: 14px;">Storage Location Details</div>
+                                    <table width="100%" cellpadding="4" cellspacing="0">
+                                      <tr>
+                                        <td style="font-weight: 600; color: #475569; width: 120px;">Address:</td>
+                                        <td style="color: #0f172a;">${equipmentHomeLocation.address}</td>
+                                      </tr>
+                                      ${equipmentHomeLocation.accessInstructions ? `
+                                        <tr>
+                                          <td style="font-weight: 600; color: #475569;">Access:</td>
+                                          <td style="color: #0f172a;">${equipmentHomeLocation.accessInstructions}</td>
+                                        </tr>
+                                      ` : ''}
+                                    </table>
+                                    <div style="font-weight: 700; color: #0f172a; margin: 12px 0 8px; font-size: 14px;">Contact for Access</div>
+                                    <table width="100%" cellpadding="4" cellspacing="0">
+                                      <tr>
+                                        <td style="font-weight: 600; color: #475569; width: 120px;">Name:</td>
+                                        <td style="color: #0f172a;">${equipmentHomeLocation.contactPerson.name}${equipmentHomeLocation.contactPerson.role ? ` (${equipmentHomeLocation.contactPerson.role})` : ''}</td>
+                                      </tr>
+                                      <tr>
+                                        <td style="font-weight: 600; color: #475569;">Phone:</td>
+                                        <td style="color: #0f172a;">${equipmentHomeLocation.contactPerson.phone}</td>
+                                      </tr>
+                                      <tr>
+                                        <td style="font-weight: 600; color: #475569;">Email:</td>
+                                        <td style="color: #0f172a;">${equipmentHomeLocation.contactPerson.email}</td>
+                                      </tr>
+                                      ${equipmentHomeLocation.availabilityNotes ? `
+                                        <tr>
+                                          <td style="font-weight: 600; color: #475569;">Availability:</td>
+                                          <td style="color: #0f172a;">${equipmentHomeLocation.availabilityNotes}</td>
+                                        </tr>
+                                      ` : ''}
+                                    </table>
+                                  </td>
+                                </tr>
+                              </table>
+                            ` : ''}
                           </td>
                         </tr>
                       </table>
@@ -396,7 +451,8 @@ function generateHandoverEmailText(
   handoverChain: any,
   contextName: string,
   contextType: 'zone' | 'club',
-  formatDate: (date: any) => string
+  formatDate: (date: any) => string,
+  equipmentHomeLocation?: any
 ): string {
   return `
 Equipment Handover Details
@@ -422,6 +478,18 @@ Return Date: ${formatDate(handoverChain.previous.returnDate)}
 ` : `
 Zone Storage
 Equipment will be collected from the zone storage location
+${equipmentHomeLocation ? `
+
+Storage Location Details:
+  Address: ${equipmentHomeLocation.address}
+${equipmentHomeLocation.accessInstructions ? `  Access: ${equipmentHomeLocation.accessInstructions}` : ''}
+
+Contact for Access:
+  Name: ${equipmentHomeLocation.contactPerson.name}${equipmentHomeLocation.contactPerson.role ? ` (${equipmentHomeLocation.contactPerson.role})` : ''}
+  Phone: ${equipmentHomeLocation.contactPerson.phone}
+  Email: ${equipmentHomeLocation.contactPerson.email}
+${equipmentHomeLocation.availabilityNotes ? `  Availability: ${equipmentHomeLocation.availabilityNotes}` : ''}
+` : ''}
 `}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -457,6 +525,18 @@ Pickup Date: ${formatDate(handoverChain.next.pickupDate)}
 ` : `
 Zone Storage
 Equipment will be returned to the zone storage location
+${equipmentHomeLocation ? `
+
+Storage Location Details:
+  Address: ${equipmentHomeLocation.address}
+${equipmentHomeLocation.accessInstructions ? `  Access: ${equipmentHomeLocation.accessInstructions}` : ''}
+
+Contact for Access:
+  Name: ${equipmentHomeLocation.contactPerson.name}${equipmentHomeLocation.contactPerson.role ? ` (${equipmentHomeLocation.contactPerson.role})` : ''}
+  Phone: ${equipmentHomeLocation.contactPerson.phone}
+  Email: ${equipmentHomeLocation.contactPerson.email}
+${equipmentHomeLocation.availabilityNotes ? `  Availability: ${equipmentHomeLocation.availabilityNotes}` : ''}
+` : ''}
 `}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

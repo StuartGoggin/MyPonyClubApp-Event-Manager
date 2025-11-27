@@ -63,6 +63,18 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
   const [loadingEquipment, setLoadingEquipment] = useState(true);
   const [editingEquipment, setEditingEquipment] = useState<EquipmentItem | null>(null);
   const [equipmentDialogOpen, setEquipmentDialogOpen] = useState(false);
+  const [homeLocationDialogOpen, setHomeLocationDialogOpen] = useState(false);
+  const [editingHomeLocationFor, setEditingHomeLocationFor] = useState<EquipmentItem | null>(null);
+  const [homeLocationForm, setHomeLocationForm] = useState({
+    address: '',
+    photo: '',
+    accessInstructions: '',
+    availabilityNotes: '',
+    contactName: '',
+    contactPhone: '',
+    contactEmail: '',
+    contactRole: '',
+  });
   
   // Bookings state
   const [bookings, setBookings] = useState<EquipmentBooking[]>([]);
@@ -117,6 +129,7 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
     current: EquipmentBooking;
     next?: EquipmentBooking;
   } | null>(null);
+  const [equipmentHomeLocation, setEquipmentHomeLocation] = useState<any>(null);
 
   // Equipment form state
   const [equipmentForm, setEquipmentForm] = useState({
@@ -377,6 +390,78 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
     }
   };
 
+  const handleEditHomeLocation = (item: EquipmentItem) => {
+    setEditingHomeLocationFor(item);
+    if (item.homeLocation) {
+      setHomeLocationForm({
+        address: item.homeLocation.address || '',
+        photo: item.homeLocation.photo || '',
+        accessInstructions: item.homeLocation.accessInstructions || '',
+        availabilityNotes: item.homeLocation.availabilityNotes || '',
+        contactName: item.homeLocation.contactPerson?.name || '',
+        contactPhone: item.homeLocation.contactPerson?.phone || '',
+        contactEmail: item.homeLocation.contactPerson?.email || '',
+        contactRole: item.homeLocation.contactPerson?.role || '',
+      });
+    } else {
+      setHomeLocationForm({
+        address: '',
+        photo: '',
+        accessInstructions: '',
+        availabilityNotes: '',
+        contactName: '',
+        contactPhone: '',
+        contactEmail: '',
+        contactRole: '',
+      });
+    }
+    setHomeLocationDialogOpen(true);
+  };
+
+  const handleSaveHomeLocation = async () => {
+    if (!editingHomeLocationFor) return;
+
+    try {
+      const homeLocation = {
+        address: homeLocationForm.address,
+        photo: homeLocationForm.photo || undefined,
+        accessInstructions: homeLocationForm.accessInstructions || undefined,
+        availabilityNotes: homeLocationForm.availabilityNotes || undefined,
+        contactPerson: {
+          name: homeLocationForm.contactName,
+          phone: homeLocationForm.contactPhone,
+          email: homeLocationForm.contactEmail,
+          role: homeLocationForm.contactRole || undefined,
+        },
+      };
+
+      const response = await fetch(`/api/equipment/${editingHomeLocationFor.id}`, {
+        method: 'PUT',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ homeLocation }),
+      });
+
+      if (!response.ok) throw new Error('Failed to update home location');
+
+      toast({
+        title: 'Success',
+        description: 'Zone home location updated successfully',
+      });
+
+      setHomeLocationDialogOpen(false);
+      fetchEquipment();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to update home location',
+        variant: 'destructive',
+      });
+    }
+  };
+
   // Booking actions
   const handleApproveBooking = async (bookingId: string) => {
     try {
@@ -543,6 +628,17 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
       
       const data = await response.json();
       setHandoverChain(data.chain);
+      
+      // Fetch equipment details to get homeLocation
+      try {
+        const equipmentResponse = await fetch(`/api/equipment/${booking.equipmentId}`);
+        if (equipmentResponse.ok) {
+          const equipmentData = await equipmentResponse.json();
+          setEquipmentHomeLocation(equipmentData.data?.homeLocation);
+        }
+      } catch (error) {
+        console.error('Failed to fetch equipment home location:', error);
+      }
     } catch (error) {
       // If endpoint doesn't exist yet, construct locally
       const equipmentBookings = bookings.filter(b => b.equipmentId === booking.equipmentId);
@@ -556,6 +652,17 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
         current: booking,
         next: currentIndex < sortedBookings.length - 1 ? sortedBookings[currentIndex + 1] : undefined,
       });
+      
+      // Try to fetch equipment details for homeLocation
+      try {
+        const equipmentResponse = await fetch(`/api/equipment/${booking.equipmentId}`);
+        if (equipmentResponse.ok) {
+          const equipmentData = await equipmentResponse.json();
+          setEquipmentHomeLocation(equipmentData.data?.homeLocation);
+        }
+      } catch (error) {
+        console.error('Failed to fetch equipment home location:', error);
+      }
     }
   };
 
@@ -830,6 +937,22 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
                   <div class="storage-notice">
                     <div class="storage-title">Zone Storage</div>
                     <div class="storage-text">Equipment will be collected from the zone storage location</div>
+                    ${equipmentHomeLocation ? `
+                      <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #cbd5e1;">
+                        ${equipmentHomeLocation.photo ? `
+                          <div style="margin-bottom: 8px;">
+                            <img src="${equipmentHomeLocation.photo}" alt="Storage Location" style="max-width: 200px; border-radius: 4px; border: 1px solid #cbd5e1;" />
+                          </div>
+                        ` : ''}
+                        <div class="info-row"><span class="label">Address:</span><span class="value">${equipmentHomeLocation.address}</span></div>
+                        ${equipmentHomeLocation.accessInstructions ? `<div class="info-row"><span class="label">Access:</span><span class="value">${equipmentHomeLocation.accessInstructions}</span></div>` : ''}
+                        <div style="font-weight: 600; margin-top: 8px; margin-bottom: 4px;">Contact for Access:</div>
+                        <div class="info-row"><span class="label">Name:</span><span class="value">${equipmentHomeLocation.contactPerson.name}${equipmentHomeLocation.contactPerson.role ? ` (${equipmentHomeLocation.contactPerson.role})` : ''}</span></div>
+                        <div class="info-row"><span class="label">Phone:</span><span class="value">${equipmentHomeLocation.contactPerson.phone}</span></div>
+                        <div class="info-row"><span class="label">Email:</span><span class="value">${equipmentHomeLocation.contactPerson.email}</span></div>
+                        ${equipmentHomeLocation.availabilityNotes ? `<div class="info-row"><span class="label">Availability:</span><span class="value">${equipmentHomeLocation.availabilityNotes}</span></div>` : ''}
+                      </div>
+                    ` : ''}
                   </div>
                 </div>
               `}
@@ -951,6 +1074,22 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
                   <div class="storage-notice">
                     <div class="storage-title">Zone Storage</div>
                     <div class="storage-text">Equipment will be returned to the zone storage location</div>
+                    ${equipmentHomeLocation ? `
+                      <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #cbd5e1;">
+                        ${equipmentHomeLocation.photo ? `
+                          <div style="margin-bottom: 8px;">
+                            <img src="${equipmentHomeLocation.photo}" alt="Storage Location" style="max-width: 200px; border-radius: 4px; border: 1px solid #cbd5e1;" />
+                          </div>
+                        ` : ''}
+                        <div class="info-row"><span class="label">Address:</span><span class="value">${equipmentHomeLocation.address}</span></div>
+                        ${equipmentHomeLocation.accessInstructions ? `<div class="info-row"><span class="label">Access:</span><span class="value">${equipmentHomeLocation.accessInstructions}</span></div>` : ''}
+                        <div style="font-weight: 600; margin-top: 8px; margin-bottom: 4px;">Contact for Access:</div>
+                        <div class="info-row"><span class="label">Name:</span><span class="value">${equipmentHomeLocation.contactPerson.name}${equipmentHomeLocation.contactPerson.role ? ` (${equipmentHomeLocation.contactPerson.role})` : ''}</span></div>
+                        <div class="info-row"><span class="label">Phone:</span><span class="value">${equipmentHomeLocation.contactPerson.phone}</span></div>
+                        <div class="info-row"><span class="label">Email:</span><span class="value">${equipmentHomeLocation.contactPerson.email}</span></div>
+                        ${equipmentHomeLocation.availabilityNotes ? `<div class="info-row"><span class="label">Availability:</span><span class="value">${equipmentHomeLocation.availabilityNotes}</span></div>` : ''}
+                      </div>
+                    ` : ''}
                   </div>
                 </div>
               `}
@@ -979,6 +1118,7 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
           handoverChain,
           contextName: zoneName,
           contextType: 'zone',
+          equipmentHomeLocation,
         }),
       });
 
@@ -1466,13 +1606,24 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
                           variant="ghost"
                           size="sm"
                           onClick={() => handleEditEquipment(item)}
+                          title="Edit equipment"
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
+                          onClick={() => handleEditHomeLocation(item)}
+                          title="Set zone home location"
+                          className={item.homeLocation ? "text-primary" : "text-muted-foreground"}
+                        >
+                          <MapPin className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => handleDeleteEquipment(item.id)}
+                          title="Delete equipment"
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
@@ -1918,7 +2069,30 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
                           </div>
                           <Card className="ml-16 border-slate-300 bg-gradient-to-br from-slate-50 to-slate-100/50 shadow-md">
                             <CardContent className="p-4">
-                              <p className="text-sm text-muted-foreground">Equipment will be collected from zone storage location</p>
+                              <p className="text-sm text-muted-foreground mb-3">Equipment will be collected from zone storage location</p>
+                              {equipmentHomeLocation && (
+                                <div className="mt-3 pt-3 border-t space-y-3">
+                                  {equipmentHomeLocation.photo && (
+                                    <img src={equipmentHomeLocation.photo} alt="Storage Location" className="w-full max-w-sm rounded-lg border-2 border-slate-200" />
+                                  )}
+                                  <div>
+                                    <p className="text-xs font-semibold text-slate-700 mb-1">Storage Location:</p>
+                                    <p className="text-xs text-slate-600">{equipmentHomeLocation.address}</p>
+                                    {equipmentHomeLocation.accessInstructions && (
+                                      <p className="text-xs text-slate-600 mt-1"><span className="font-semibold">Access:</span> {equipmentHomeLocation.accessInstructions}</p>
+                                    )}
+                                  </div>
+                                  <div>
+                                    <p className="text-xs font-semibold text-slate-700 mb-1">Contact for Access:</p>
+                                    <p className="text-xs text-slate-600">{equipmentHomeLocation.contactPerson.name}{equipmentHomeLocation.contactPerson.role && ` (${equipmentHomeLocation.contactPerson.role})`}</p>
+                                    <p className="text-xs text-slate-600">{equipmentHomeLocation.contactPerson.phone}</p>
+                                    <p className="text-xs text-slate-600">{equipmentHomeLocation.contactPerson.email}</p>
+                                    {equipmentHomeLocation.availabilityNotes && (
+                                      <p className="text-xs text-slate-600 mt-1"><span className="font-semibold">Availability:</span> {equipmentHomeLocation.availabilityNotes}</p>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
                             </CardContent>
                           </Card>
                           <div className="ml-6 flex flex-col items-center py-3">
@@ -2022,7 +2196,30 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
                           </div>
                           <Card className="ml-16 border-slate-300 bg-gradient-to-br from-slate-50 to-slate-100/50 shadow-md">
                             <CardContent className="p-4">
-                              <p className="text-sm text-muted-foreground">Equipment will be returned to zone storage location</p>
+                              <p className="text-sm text-muted-foreground mb-3">Equipment will be returned to zone storage location</p>
+                              {equipmentHomeLocation && (
+                                <div className="mt-3 pt-3 border-t space-y-3">
+                                  {equipmentHomeLocation.photo && (
+                                    <img src={equipmentHomeLocation.photo} alt="Storage Location" className="w-full max-w-sm rounded-lg border-2 border-slate-200" />
+                                  )}
+                                  <div>
+                                    <p className="text-xs font-semibold text-slate-700 mb-1">Storage Location:</p>
+                                    <p className="text-xs text-slate-600">{equipmentHomeLocation.address}</p>
+                                    {equipmentHomeLocation.accessInstructions && (
+                                      <p className="text-xs text-slate-600 mt-1"><span className="font-semibold">Access:</span> {equipmentHomeLocation.accessInstructions}</p>
+                                    )}
+                                  </div>
+                                  <div>
+                                    <p className="text-xs font-semibold text-slate-700 mb-1">Contact for Access:</p>
+                                    <p className="text-xs text-slate-600">{equipmentHomeLocation.contactPerson.name}{equipmentHomeLocation.contactPerson.role && ` (${equipmentHomeLocation.contactPerson.role})`}</p>
+                                    <p className="text-xs text-slate-600">{equipmentHomeLocation.contactPerson.phone}</p>
+                                    <p className="text-xs text-slate-600">{equipmentHomeLocation.contactPerson.email}</p>
+                                    {equipmentHomeLocation.availabilityNotes && (
+                                      <p className="text-xs text-slate-600 mt-1"><span className="font-semibold">Availability:</span> {equipmentHomeLocation.availabilityNotes}</p>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
                             </CardContent>
                           </Card>
                         </div>
@@ -2629,6 +2826,158 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
                 Save Changes
               </Button>
             )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Home Location Dialog */}
+      <Dialog open={homeLocationDialogOpen} onOpenChange={setHomeLocationDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">
+              Zone Home Location
+            </DialogTitle>
+            <DialogDescription>
+              Set the default storage location and contact details for {editingHomeLocationFor?.name}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            {/* Address Section */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold border-b pb-2">Storage Location</h3>
+              
+              <div className="space-y-2">
+                <Label htmlFor="address" className="text-sm font-medium">
+                  Address <span className="text-destructive">*</span>
+                </Label>
+                <Textarea
+                  id="address"
+                  value={homeLocationForm.address}
+                  onChange={(e) => setHomeLocationForm({ ...homeLocationForm, address: e.target.value })}
+                  placeholder="e.g., 123 Main Street, Suburb, State, Postcode"
+                  rows={2}
+                  className="text-base"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="photo" className="text-sm font-medium">
+                  Photo URL (Optional)
+                </Label>
+                <Input
+                  id="photo"
+                  value={homeLocationForm.photo}
+                  onChange={(e) => setHomeLocationForm({ ...homeLocationForm, photo: e.target.value })}
+                  placeholder="https://example.com/storage-photo.jpg"
+                  className="text-base"
+                />
+                <p className="text-xs text-muted-foreground">URL to a photo of the storage location</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="accessInstructions" className="text-sm font-medium">
+                  Access Instructions (Optional)
+                </Label>
+                <Textarea
+                  id="accessInstructions"
+                  value={homeLocationForm.accessInstructions}
+                  onChange={(e) => setHomeLocationForm({ ...homeLocationForm, accessInstructions: e.target.value })}
+                  placeholder="e.g., Enter through side gate, equipment stored in shed at rear"
+                  rows={3}
+                  className="text-base"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="availabilityNotes" className="text-sm font-medium">
+                  Availability Notes (Optional)
+                </Label>
+                <Textarea
+                  id="availabilityNotes"
+                  value={homeLocationForm.availabilityNotes}
+                  onChange={(e) => setHomeLocationForm({ ...homeLocationForm, availabilityNotes: e.target.value })}
+                  placeholder="e.g., Available Mon-Fri 9am-5pm, weekends by appointment"
+                  rows={2}
+                  className="text-base"
+                />
+              </div>
+            </div>
+
+            {/* Contact Person Section */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold border-b pb-2">Contact Person</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="contactName" className="text-sm font-medium">
+                    Name <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="contactName"
+                    value={homeLocationForm.contactName}
+                    onChange={(e) => setHomeLocationForm({ ...homeLocationForm, contactName: e.target.value })}
+                    placeholder="Contact person name"
+                    className="text-base"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="contactRole" className="text-sm font-medium">
+                    Role (Optional)
+                  </Label>
+                  <Input
+                    id="contactRole"
+                    value={homeLocationForm.contactRole}
+                    onChange={(e) => setHomeLocationForm({ ...homeLocationForm, contactRole: e.target.value })}
+                    placeholder="e.g., Equipment Manager"
+                    className="text-base"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="contactPhone" className="text-sm font-medium">
+                    Phone <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="contactPhone"
+                    value={homeLocationForm.contactPhone}
+                    onChange={(e) => setHomeLocationForm({ ...homeLocationForm, contactPhone: e.target.value })}
+                    placeholder="0400 000 000"
+                    className="text-base"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="contactEmail" className="text-sm font-medium">
+                    Email <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="contactEmail"
+                    type="email"
+                    value={homeLocationForm.contactEmail}
+                    onChange={(e) => setHomeLocationForm({ ...homeLocationForm, contactEmail: e.target.value })}
+                    placeholder="contact@example.com"
+                    className="text-base"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setHomeLocationDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveHomeLocation}
+              disabled={!homeLocationForm.address || !homeLocationForm.contactName || !homeLocationForm.contactPhone || !homeLocationForm.contactEmail}
+            >
+              Save Home Location
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

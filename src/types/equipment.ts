@@ -47,6 +47,20 @@ export interface MaintenanceSchedule {
   maintenanceNotes?: string;
 }
 
+export interface ZoneHomeLocation {
+  address: string;
+  coordinates?: GeoLocation;
+  photo?: string; // URL to photo of storage location
+  accessInstructions?: string; // e.g., "Behind clubhouse, use side gate"
+  contactPerson: {
+    name: string;
+    phone: string;
+    email: string;
+    role?: string; // e.g., "Equipment Manager", "Zone Rep"
+  };
+  availabilityNotes?: string; // e.g., "Available Mon-Fri 9am-5pm"
+}
+
 export interface EquipmentItem {
   id: string;
   zoneId: string;
@@ -61,7 +75,8 @@ export interface EquipmentItem {
   
   // Physical details
   quantity: number; // For items with multiple units (e.g., 10 jumps)
-  storageLocation: string;
+  storageLocation: string; // Simple text description for backward compatibility
+  homeLocation?: ZoneHomeLocation; // Detailed home location with contact info
   dimensions?: string;
   weight?: string;
   requiresTrailer: boolean;

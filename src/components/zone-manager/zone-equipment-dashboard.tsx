@@ -444,6 +444,15 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
         body: JSON.stringify({ homeLocation }),
       });
 
+      if (response.status === 401) {
+        toast({
+          title: 'Authentication Error',
+          description: 'Your session has expired. Please refresh the page and sign in again.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       if (!response.ok) throw new Error('Failed to update home location');
 
       toast({
@@ -454,9 +463,10 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
       setHomeLocationDialogOpen(false);
       fetchEquipment();
     } catch (error) {
+      console.error('Error updating home location:', error);
       toast({
         title: 'Error',
-        description: 'Failed to update home location',
+        description: error instanceof Error ? error.message : 'Failed to update home location',
         variant: 'destructive',
       });
     }
@@ -686,40 +696,53 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
           <style>
             @page { 
               size: A4 portrait; 
-              margin: 15mm; 
+              margin: 10mm; 
             }
             * { margin: 0; padding: 0; box-sizing: border-box; }
             body { 
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; 
-              margin: 20px; 
+              margin: 12px; 
               color: #1e293b;
-              line-height: 1.4;
-              font-size: 11px;
+              line-height: 1.3;
+              font-size: 9px;
+              background: #ffffff;
             }
             .header { 
-              margin-bottom: 12px; 
-              padding-bottom: 8px; 
-              border-bottom: 2px solid #e2e8f0; 
+              margin-bottom: 10px; 
+              padding: 10px 12px;
+              background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+              border-radius: 8px;
+              color: white;
             }
             h1 { 
-              font-size: 18px; 
+              font-size: 16px; 
               font-weight: 700; 
-              color: #0f172a; 
-              margin-bottom: 6px;
+              color: white; 
+              margin-bottom: 4px;
+              letter-spacing: -0.3px;
             }
             .meta { 
               display: flex; 
               gap: 16px; 
-              font-size: 10px; 
-              color: #64748b; 
+              font-size: 9px; 
+              color: #cbd5e1; 
               margin-top: 4px;
+              flex-wrap: wrap;
             }
-            .meta-item { font-weight: 500; }
-            .meta-item strong { color: #334155; }
+            .meta-item { 
+              font-weight: 500;
+              display: flex;
+              align-items: center;
+              gap: 3px;
+            }
+            .meta-item strong { 
+              color: white;
+              font-weight: 600;
+            }
             
             .handover-flow { margin: 8px 0; }
             .flow-section { 
-              margin: 10px 0; 
+              margin: 8px 0; 
               page-break-inside: avoid;
             }
             .section-header {
@@ -727,149 +750,205 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
               align-items: center;
               gap: 8px;
               margin-bottom: 6px;
+              padding-bottom: 4px;
+              border-bottom: 1px solid #f1f5f9;
             }
             .section-icon {
-              width: 32px;
-              height: 32px;
-              border-radius: 8px;
+              width: 28px;
+              height: 28px;
+              border-radius: 6px;
               display: flex;
               align-items: center;
               justify-content: center;
-              font-size: 16px;
+              font-size: 14px;
               font-weight: 700;
               color: white;
               box-shadow: 0 2px 4px rgba(0,0,0,0.1);
               flex-shrink: 0;
             }
-            .pickup-icon { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
-            .current-icon { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
-            .dropoff-icon { background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%); }
-            .storage-icon { background: linear-gradient(135deg, #64748b 0%, #475569 100%); }
+            .pickup-icon { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); }
+            .current-icon { background: linear-gradient(135deg, #10b981 0%, #047857 100%); }
+            .dropoff-icon { background: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%); }
+            .storage-icon { background: linear-gradient(135deg, #64748b 0%, #334155 100%); }
             
             .section-title {
-              font-size: 14px;
+              font-size: 12px;
               font-weight: 700;
-              color: #0f172a;
-            }
-            
-            .card {
-              background: white;
-              border-radius: 8px;
-              padding: 10px 12px;
-              box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-              border: 1px solid #e2e8f0;
-            }
-            .card.current {
-              background: linear-gradient(to bottom right, #f0fdf4 0%, #dcfce7 100%);
-              border: 2px solid #10b981;
-              box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1);
-            }
-            .card.pickup { border-left: 3px solid #3b82f6; }
-            .card.dropoff { border-left: 3px solid #a855f7; }
-            .card.storage { 
-              background: linear-gradient(to bottom right, #f8fafc 0%, #f1f5f9 100%);
-              border-left: 3px solid #64748b; 
-            }
-            
-            .info-group { margin: 8px 0; }
-            .info-group:first-child { margin-top: 0; }
-            .info-group:last-child { margin-bottom: 0; }
-            
-            .info-row {
-              display: flex;
-              padding: 3px 0;
-              font-size: 10px;
-            }
-            .label { 
-              font-weight: 600; 
-              color: #475569;
-              min-width: 90px;
-            }
-            .value { 
               color: #0f172a;
               flex: 1;
             }
             
-            .contact-box {
-              background: linear-gradient(to bottom right, #f8fafc 0%, #f1f5f9 100%);
+            .card {
+              background: white;
               border-radius: 6px;
               padding: 8px 10px;
+              box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+              border: 1px solid #f1f5f9;
+            }
+            .card.current {
+              background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+              border: 2px solid #10b981;
+              box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1);
+            }
+            .card.pickup { 
+              border-left: 3px solid #3b82f6;
+              background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            }
+            .card.dropoff { 
+              border-left: 3px solid #a855f7;
+              background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+            }
+            .card.storage { 
+              background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+              border-left: 3px solid #64748b; 
+            }
+            
+            .info-group { 
               margin: 6px 0;
+              padding: 5px 0;
+            }
+            .info-group:first-child { 
+              margin-top: 0;
+              padding-top: 0;
+            }
+            .info-group:last-child { 
+              margin-bottom: 0;
+              padding-bottom: 0;
+            }
+            .info-group + .info-group {
+              border-top: 1px solid #e2e8f0;
+            }
+            
+            .info-row {
+              display: flex;
+              padding: 2px 0;
+              font-size: 9px;
+              line-height: 1.4;
+            }
+            .label { 
+              font-weight: 600; 
+              color: #475569;
+              min-width: 75px;
+            }
+            .value { 
+              color: #0f172a;
+              flex: 1;
+              font-weight: 500;
+            }
+            
+            .contact-box {
+              background: white;
+              border-radius: 5px;
+              padding: 6px 8px;
+              margin: 5px 0;
               border: 1px solid #e2e8f0;
             }
             .current .contact-box {
-              background: linear-gradient(to bottom right, #ecfdf5 0%, #d1fae5 100%);
+              background: white;
               border-color: #86efac;
             }
             .contact-title {
               font-weight: 700;
               color: #0f172a;
-              margin-bottom: 4px;
-              font-size: 11px;
+              margin-bottom: 3px;
+              font-size: 10px;
+              padding-bottom: 2px;
+              border-bottom: 1px solid #f1f5f9;
             }
             
             .storage-notice {
-              padding: 12px;
-              background: linear-gradient(to bottom right, #f8fafc 0%, #f1f5f9 100%);
-              border-radius: 6px;
+              padding: 8px;
+              background: white;
+              border-radius: 5px;
               border: 2px dashed #cbd5e1;
-              text-align: center;
             }
             .storage-title { 
               font-weight: 700; 
-              font-size: 12px;
+              font-size: 10px;
               color: #334155;
-              margin-bottom: 4px;
+              margin-bottom: 3px;
             }
             .storage-text { 
               color: #64748b;
-              font-size: 10px;
+              font-size: 9px;
+              line-height: 1.3;
+            }
+            
+            .storage-details img {
+              max-width: 180px;
+              border-radius: 4px;
+              border: 1px solid #cbd5e1;
+              margin-bottom: 6px;
             }
             
             .connector {
-              margin: 6px 0;
+              margin: 4px 0;
               text-align: center;
-              height: 20px;
+              height: 16px;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
             }
             .connector-line {
               width: 2px;
-              height: 8px;
+              height: 5px;
               background: linear-gradient(to bottom, #cbd5e1 0%, #94a3b8 100%);
-              margin: 0 auto;
+              border-radius: 1px;
             }
             .connector-dot {
-              width: 8px;
-              height: 8px;
-              background: #94a3b8;
+              width: 6px;
+              height: 6px;
+              background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
               border-radius: 50%;
-              margin: 2px auto;
+              margin: 2px 0;
+              border: 1px solid white;
             }
             
             button {
-              margin-top: 16px;
-              padding: 10px 20px;
-              background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+              margin-top: 12px;
+              padding: 8px 16px;
+              background: linear-gradient(135deg, #10b981 0%, #047857 100%);
               color: white;
               border: none;
               border-radius: 6px;
               font-weight: 600;
-              font-size: 13px;
+              font-size: 11px;
               cursor: pointer;
               box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
             }
-            button:hover {
-              background: linear-gradient(135deg, #059669 0%, #047857 100%);
-            }
             
             @media print { 
-              body { margin: 0; }
+              body { margin: 0; background: white; }
               button { display: none; }
+              .header { 
+                background: #0f172a !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
               .card { 
                 box-shadow: none;
-                border: 1px solid #cbd5e1 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
               }
-              .card.current { border: 2px solid #10b981 !important; }
-              .section-icon { box-shadow: none; }
+              .card.current { 
+                border: 2px solid #10b981 !important;
+                background: #dcfce7 !important;
+              }
+              .card.pickup {
+                background: #dbeafe !important;
+              }
+              .card.dropoff {
+                background: #f3e8ff !important;
+              }
+              .card.storage {
+                background: #f1f5f9 !important;
+              }
+              .section-icon { 
+                box-shadow: none;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
             }
           </style>
         </head>
@@ -934,26 +1013,55 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
                 </div>
               ` : `
                 <div class="card storage">
-                  <div class="storage-notice">
-                    <div class="storage-title">Zone Storage</div>
-                    <div class="storage-text">Equipment will be collected from the zone storage location</div>
-                    ${equipmentHomeLocation ? `
-                      <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #cbd5e1;">
-                        ${equipmentHomeLocation.photo ? `
-                          <div style="margin-bottom: 8px;">
-                            <img src="${equipmentHomeLocation.photo}" alt="Storage Location" style="max-width: 200px; border-radius: 4px; border: 1px solid #cbd5e1;" />
-                          </div>
-                        ` : ''}
-                        <div class="info-row"><span class="label">Address:</span><span class="value">${equipmentHomeLocation.address}</span></div>
-                        ${equipmentHomeLocation.accessInstructions ? `<div class="info-row"><span class="label">Access:</span><span class="value">${equipmentHomeLocation.accessInstructions}</span></div>` : ''}
-                        <div style="font-weight: 600; margin-top: 8px; margin-bottom: 4px;">Contact for Access:</div>
-                        <div class="info-row"><span class="label">Name:</span><span class="value">${equipmentHomeLocation.contactPerson.name}${equipmentHomeLocation.contactPerson.role ? ` (${equipmentHomeLocation.contactPerson.role})` : ''}</span></div>
-                        <div class="info-row"><span class="label">Phone:</span><span class="value">${equipmentHomeLocation.contactPerson.phone}</span></div>
-                        <div class="info-row"><span class="label">Email:</span><span class="value">${equipmentHomeLocation.contactPerson.email}</span></div>
-                        ${equipmentHomeLocation.availabilityNotes ? `<div class="info-row"><span class="label">Availability:</span><span class="value">${equipmentHomeLocation.availabilityNotes}</span></div>` : ''}
+                  ${equipmentHomeLocation ? `
+                    <div class="info-group">
+                      <div class="storage-title" style="margin-bottom: 8px;">Zone Storage</div>
+                      <div class="storage-text" style="margin-bottom: 12px;">Equipment will be collected from the zone storage location</div>
+                    </div>
+                    ${equipmentHomeLocation.photo ? `
+                      <div style="text-align: center; margin: 12px 0;">
+                        <img src="${equipmentHomeLocation.photo}" alt="Storage Location" style="max-width: 280px; border-radius: 6px; border: 2px solid #cbd5e1;" />
                       </div>
                     ` : ''}
-                  </div>
+                    <div class="info-group">
+                      <div class="info-row">
+                        <span class="label">Address:</span>
+                        <span class="value">${equipmentHomeLocation.address}</span>
+                      </div>
+                      ${equipmentHomeLocation.accessInstructions ? `
+                        <div class="info-row">
+                          <span class="label">Access:</span>
+                          <span class="value">${equipmentHomeLocation.accessInstructions}</span>
+                        </div>
+                      ` : ''}
+                    </div>
+                    <div class="contact-box">
+                      <div class="contact-title">Contact for Access</div>
+                      <div class="info-row">
+                        <span class="label">Name:</span>
+                        <span class="value">${equipmentHomeLocation.contactPerson.name}${equipmentHomeLocation.contactPerson.role ? ` (${equipmentHomeLocation.contactPerson.role})` : ''}</span>
+                      </div>
+                      <div class="info-row">
+                        <span class="label">Phone:</span>
+                        <span class="value">${equipmentHomeLocation.contactPerson.phone}</span>
+                      </div>
+                      <div class="info-row">
+                        <span class="label">Email:</span>
+                        <span class="value">${equipmentHomeLocation.contactPerson.email}</span>
+                      </div>
+                      ${equipmentHomeLocation.availabilityNotes ? `
+                        <div class="info-row">
+                          <span class="label">Availability:</span>
+                          <span class="value">${equipmentHomeLocation.availabilityNotes}</span>
+                        </div>
+                      ` : ''}
+                    </div>
+                  ` : `
+                    <div class="storage-notice">
+                      <div class="storage-title">Zone Storage</div>
+                      <div class="storage-text">Equipment will be collected from the zone storage location</div>
+                    </div>
+                  `}
                 </div>
               `}
             </div>
@@ -1071,26 +1179,55 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
                 </div>
               ` : `
                 <div class="card storage">
-                  <div class="storage-notice">
-                    <div class="storage-title">Zone Storage</div>
-                    <div class="storage-text">Equipment will be returned to the zone storage location</div>
-                    ${equipmentHomeLocation ? `
-                      <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #cbd5e1;">
-                        ${equipmentHomeLocation.photo ? `
-                          <div style="margin-bottom: 8px;">
-                            <img src="${equipmentHomeLocation.photo}" alt="Storage Location" style="max-width: 200px; border-radius: 4px; border: 1px solid #cbd5e1;" />
-                          </div>
-                        ` : ''}
-                        <div class="info-row"><span class="label">Address:</span><span class="value">${equipmentHomeLocation.address}</span></div>
-                        ${equipmentHomeLocation.accessInstructions ? `<div class="info-row"><span class="label">Access:</span><span class="value">${equipmentHomeLocation.accessInstructions}</span></div>` : ''}
-                        <div style="font-weight: 600; margin-top: 8px; margin-bottom: 4px;">Contact for Access:</div>
-                        <div class="info-row"><span class="label">Name:</span><span class="value">${equipmentHomeLocation.contactPerson.name}${equipmentHomeLocation.contactPerson.role ? ` (${equipmentHomeLocation.contactPerson.role})` : ''}</span></div>
-                        <div class="info-row"><span class="label">Phone:</span><span class="value">${equipmentHomeLocation.contactPerson.phone}</span></div>
-                        <div class="info-row"><span class="label">Email:</span><span class="value">${equipmentHomeLocation.contactPerson.email}</span></div>
-                        ${equipmentHomeLocation.availabilityNotes ? `<div class="info-row"><span class="label">Availability:</span><span class="value">${equipmentHomeLocation.availabilityNotes}</span></div>` : ''}
+                  ${equipmentHomeLocation ? `
+                    <div class="info-group">
+                      <div class="storage-title" style="margin-bottom: 8px;">Zone Storage</div>
+                      <div class="storage-text" style="margin-bottom: 12px;">Equipment will be returned to the zone storage location</div>
+                    </div>
+                    ${equipmentHomeLocation.photo ? `
+                      <div style="text-align: center; margin: 12px 0;">
+                        <img src="${equipmentHomeLocation.photo}" alt="Storage Location" style="max-width: 280px; border-radius: 6px; border: 2px solid #cbd5e1;" />
                       </div>
                     ` : ''}
-                  </div>
+                    <div class="info-group">
+                      <div class="info-row">
+                        <span class="label">Address:</span>
+                        <span class="value">${equipmentHomeLocation.address}</span>
+                      </div>
+                      ${equipmentHomeLocation.accessInstructions ? `
+                        <div class="info-row">
+                          <span class="label">Access:</span>
+                          <span class="value">${equipmentHomeLocation.accessInstructions}</span>
+                        </div>
+                      ` : ''}
+                    </div>
+                    <div class="contact-box">
+                      <div class="contact-title">Contact for Access</div>
+                      <div class="info-row">
+                        <span class="label">Name:</span>
+                        <span class="value">${equipmentHomeLocation.contactPerson.name}${equipmentHomeLocation.contactPerson.role ? ` (${equipmentHomeLocation.contactPerson.role})` : ''}</span>
+                      </div>
+                      <div class="info-row">
+                        <span class="label">Phone:</span>
+                        <span class="value">${equipmentHomeLocation.contactPerson.phone}</span>
+                      </div>
+                      <div class="info-row">
+                        <span class="label">Email:</span>
+                        <span class="value">${equipmentHomeLocation.contactPerson.email}</span>
+                      </div>
+                      ${equipmentHomeLocation.availabilityNotes ? `
+                        <div class="info-row">
+                          <span class="label">Availability:</span>
+                          <span class="value">${equipmentHomeLocation.availabilityNotes}</span>
+                        </div>
+                      ` : ''}
+                    </div>
+                  ` : `
+                    <div class="storage-notice">
+                      <div class="storage-title">Zone Storage</div>
+                      <div class="storage-text">Equipment will be returned to the zone storage location</div>
+                    </div>
+                  `}
                 </div>
               `}
             </div>

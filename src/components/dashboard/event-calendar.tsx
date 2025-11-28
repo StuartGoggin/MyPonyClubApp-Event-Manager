@@ -76,8 +76,8 @@ export function EventCalendar({
   ];
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [view, setView] = useState<'month' | 'year'>('month');
+  const [currentDate, setCurrentDate] = useState(new Date(new Date().getFullYear() + 1, 0, 1));
+  const [view, setView] = useState<'month' | 'year'>('year');
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [eventSources, setEventSources] = useAtom(eventSourceAtom);

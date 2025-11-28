@@ -15,7 +15,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Mail, Send, Trash2, Edit, Eye, CheckCircle, XCircle, Clock, AlertTriangle, Settings, Download, Filter, Search, RefreshCw, FileText, Activity, AlertCircle } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
+import { CalendarIcon, Mail, Send, Trash2, Edit, Eye, CheckCircle, XCircle, Clock, AlertTriangle, Settings, Download, Filter, Search, RefreshCw, FileText, Activity, AlertCircle, MoreVertical } from 'lucide-react';
 import { format } from 'date-fns';
 import { QueuedEmail, EmailStatus, EmailQueueStats, EmailQueueConfig, EmailLog } from '@/lib/types';
 import { cn } from '@/lib/utils';
@@ -242,7 +243,7 @@ function EmailQueueAdminContent() {
     await fetchStats();
   };
 
-  const handleEmailAction = async (emailId: string, action: 'approve' | 'delete' | 'send' | 'cancel' | 'resend') => {
+  const handleEmailAction = async (emailId: string, action: 'approve' | 'delete' | 'send' | 'cancel' | 'resend' | 'approve-and-send') => {
     setIsRefreshing(true);
     
     try {
@@ -270,6 +271,33 @@ function EmailQueueAdminContent() {
         
         if (response.ok) {
           await fetchEmails();
+        }
+      } else if (action === 'approve-and-send') {
+        // Approve first
+        const approveResponse = await fetch('/api/email-queue', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            emailId,
+            updates: { 
+              status: 'pending',
+              approvedBy: 'admin',
+              approvedAt: new Date()
+            }
+          }),
+        });
+        
+        if (approveResponse.ok) {
+          // Then send immediately
+          const sendResponse = await fetch('/api/email-queue/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ emailId, sentById: 'admin' }),
+          });
+          
+          if (sendResponse.ok) {
+            await fetchEmails();
+          }
         }
       } else if (action === 'send') {
         const response = await fetch('/api/email-queue/send', {
@@ -715,119 +743,124 @@ function EmailQueueAdminContent() {
                         {email.scheduledFor ? format(email.scheduledFor, 'MMM dd, HH:mm') : '-'}
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-3xl">
-                              <DialogHeader>
-                                <DialogTitle>Email Preview</DialogTitle>
-                                <DialogDescription>{email.subject}</DialogDescription>
-                              </DialogHeader>
-                              <div className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div>
-                                    <Label className="text-sm font-medium">To:</Label>
-                                    <div className="text-sm">
-                                      {Array.isArray(email.to) ? email.to.join(', ') : email.to}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  Preview
+                                </DropdownMenuItem>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-3xl">
+                                <DialogHeader>
+                                  <DialogTitle>Email Preview</DialogTitle>
+                                  <DialogDescription>{email.subject}</DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-4">
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                      <Label className="text-sm font-medium">To:</Label>
+                                      <div className="text-sm">
+                                        {Array.isArray(email.to) ? email.to.join(', ') : email.to}
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <Label className="text-sm font-medium">Status:</Label>
+                                      <Badge className={cn("ml-2", getStatusColor(email.status))}>
+                                        {email.status}
+                                      </Badge>
                                     </div>
                                   </div>
                                   <div>
-                                    <Label className="text-sm font-medium">Status:</Label>
-                                    <Badge className={cn("ml-2", getStatusColor(email.status))}>
-                                      {email.status}
-                                    </Badge>
+                                    <Label className="text-sm font-medium">Content:</Label>
+                                    <div 
+                                      className="mt-2 p-4 border rounded-md max-h-96 overflow-y-auto"
+                                      dangerouslySetInnerHTML={{ __html: email.htmlContent || '' }}
+                                    />
                                   </div>
                                 </div>
-                                <div>
-                                  <Label className="text-sm font-medium">Content:</Label>
-                                  <div 
-                                    className="mt-2 p-4 border rounded-md max-h-96 overflow-y-auto"
-                                    dangerouslySetInnerHTML={{ __html: email.htmlContent || '' }}
-                                  />
-                                </div>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
-                          
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => setEditingEmail(email)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          
-                          {email.status === 'draft' && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleEmailAction(email.id, 'approve')}
-                            >
-                              <CheckCircle className="h-4 w-4" />
-                            </Button>
-                          )}
-                          
-                          {email.status === 'pending' && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleEmailAction(email.id, 'send')}
-                            >
-                              <Send className="h-4 w-4" />
-                            </Button>
-                          )}
-                          
-                          {(email.status === 'sent' || email.status === 'failed') && (
-                            <>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => handleEmailAction(email.id, 'resend')}
-                                title="Resend email"
-                              >
-                                <RefreshCw className="h-4 w-4" />
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => handleEditResend(email)}
-                                title="Edit recipients and resend"
-                              >
-                                <Edit className="h-3 w-3 mr-1" />
-                                <RefreshCw className="h-3 w-3" />
-                              </Button>
-                            </>
-                          )}
-                          
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Delete Email</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Are you sure you want to delete this email? This action cannot be undone.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction 
-                                  onClick={() => handleEmailAction(email.id, 'delete')}
-                                  className="bg-red-600 hover:bg-red-700"
+                              </DialogContent>
+                            </Dialog>
+                            
+                            <DropdownMenuItem onClick={() => setEditingEmail(email)}>
+                              <Edit className="h-4 w-4 mr-2" />
+                              Edit
+                            </DropdownMenuItem>
+                            
+                            {email.status === 'draft' && (
+                              <DropdownMenuItem onClick={() => handleEmailAction(email.id, 'approve')}>
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Approve
+                              </DropdownMenuItem>
+                            )}
+                            
+                            {email.status === 'pending' && (
+                              <>
+                                <DropdownMenuItem onClick={() => handleEmailAction(email.id, 'send')}>
+                                  <Send className="h-4 w-4 mr-2" />
+                                  Send Now
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleEmailAction(email.id, 'approve-and-send')}>
+                                  <CheckCircle className="h-4 w-4 mr-2" />
+                                  Approve & Send
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                            
+                            {(email.status === 'sent' || email.status === 'failed') && (
+                              <>
+                                <DropdownMenuItem onClick={() => handleEmailAction(email.id, 'resend')}>
+                                  <RefreshCw className="h-4 w-4 mr-2" />
+                                  Resend
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleEditResend(email)}>
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Edit & Resend
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                            
+                            <DropdownMenuSeparator />
+                            
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <DropdownMenuItem 
+                                  onSelect={(e) => e.preventDefault()}
+                                  className="text-red-600 focus:text-red-600"
                                 >
+                                  <Trash2 className="h-4 w-4 mr-2" />
                                   Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
+                                </DropdownMenuItem>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete Email</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete this email? This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction 
+                                    onClick={() => handleEmailAction(email.id, 'delete')}
+                                    className="bg-red-600 hover:bg-red-700"
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))}

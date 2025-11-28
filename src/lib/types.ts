@@ -448,7 +448,7 @@ export type EmailStatus = 'draft' | 'pending' | 'sent' | 'failed' | 'cancelled';
 
 export interface QueuedEmail {
   id: string;
-  type?: 'event_request' | 'notification' | 'reminder' | 'general' | 'manual' | 'backup';
+  type?: 'event_request' | 'notification' | 'reminder' | 'general' | 'manual' | 'backup' | 'Equipment-Request';
   status: EmailStatus;
   
   // Email content

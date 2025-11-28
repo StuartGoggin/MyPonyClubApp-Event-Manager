@@ -10,7 +10,7 @@ import {
   updateBooking,
 } from '@/lib/equipment-service';
 import { requireZoneManager } from '@/lib/api-auth';
-import { queueBookingConfirmationEmail } from '@/lib/equipment-email-templates';
+import { queueAllBookingNotifications } from '@/lib/equipment-email-templates';
 import { adminDb } from '@/lib/firebase-admin';
 
 interface RouteParams {
@@ -103,8 +103,8 @@ export async function POST(
         const autoEmailEnabled = automationSettings?.autoEmail?.enabled || false;
         
         if (autoEmailEnabled) {
-          await queueBookingConfirmationEmail(updated);
-          console.log('Confirmation email queued for booking:', id);
+          await queueAllBookingNotifications(updated, 'confirmed');
+          console.log('Confirmation emails queued for booking:', id);
         }
       } catch (emailError) {
         console.error('Error checking auto-email settings or queueing email:', emailError);

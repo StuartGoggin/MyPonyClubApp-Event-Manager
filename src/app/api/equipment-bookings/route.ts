@@ -11,7 +11,7 @@ import {
   updateBooking,
   getBooking,
 } from '@/lib/equipment-service';
-import { queueBookingConfirmationEmail } from '@/lib/equipment-email-templates';
+import { queueAllBookingNotifications, queueBookingConfirmationEmail, queueBookingReceivedEmail } from '@/lib/equipment-email-templates';
 import type { CreateBookingRequest } from '@/types/equipment';
 import { adminDb } from '@/lib/firebase-admin';
 
@@ -189,12 +189,12 @@ export async function POST(request: NextRequest) {
               
               console.log(`✅ Booking ${booking.bookingReference} auto-approved (no conflicts)`);
               
-              // Check if auto-email is also enabled
+              // Check if auto-email is also enabled - send full confirmation email
               const autoEmailEnabled = automationSettings?.autoEmail?.enabled || false;
               if (autoEmailEnabled && updatedBooking) {
                 try {
                   await queueBookingConfirmationEmail(updatedBooking);
-                  console.log(`📧 Auto-email queued for auto-approved booking ${booking.bookingReference}`);
+                  console.log(`📧 Auto-email (confirmation) queued for auto-approved booking ${booking.bookingReference}`);
                 } catch (emailError) {
                   console.error('Error queueing auto-email:', emailError);
                 }
@@ -214,10 +214,18 @@ export async function POST(request: NextRequest) {
     const queueEmail = body.queueEmail !== false; // Default to true
     if (queueEmail) {
       try {
-        await queueBookingConfirmationEmail(booking, true);
-        console.log(`📧 Booking confirmation email queued for ${booking.bookingReference}`);
+        // Send different email based on booking status
+        if (booking.status === 'approved') {
+          // Booking is approved - send confirmation with full details
+          await queueAllBookingNotifications(booking, 'confirmed');
+          console.log(`📧 Booking confirmation emails queued for ${booking.bookingReference}`);
+        } else {
+          // Booking is pending - send received notification
+          await queueAllBookingNotifications(booking, 'received');
+          console.log(`📧 Booking received emails queued for ${booking.bookingReference}`);
+        }
       } catch (emailError) {
-        console.error('Error queueing confirmation email:', emailError);
+        console.error('Error queueing email:', emailError);
         // Don't fail the booking if email fails
       }
     }

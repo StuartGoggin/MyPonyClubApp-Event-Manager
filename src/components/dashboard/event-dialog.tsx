@@ -93,7 +93,7 @@ export function EventDialog({
     setLoadingHandover(true);
     try {
       // Get auth headers
-      const getAuthHeaders = () => {
+      const getAuthHeaders = (): HeadersInit => {
         const token = localStorage.getItem('authToken');
         return token ? { 'Authorization': `Bearer ${token}` } : {};
       };

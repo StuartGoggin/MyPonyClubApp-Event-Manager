@@ -93,7 +93,16 @@ export function UserAccountMenu() {
 
   // Get user roles - support both single and multi-role
   const userRoles = getUserRoles(user);
-  const displayRole = userRoles[0] || 'standard'; // Show first role as primary
+  
+  // Role priority (highest to lowest)
+  const rolePriority = ['super_user', 'state_admin', 'zone_rep', 'club_manager', 'public_holiday_manager', 'event_secretary', 'standard'];
+  
+  // Get the highest priority role
+  const primaryRole = userRoles.sort((a, b) => {
+    const aIndex = rolePriority.indexOf(a);
+    const bIndex = rolePriority.indexOf(b);
+    return (aIndex === -1 ? 999 : aIndex) - (bIndex === -1 ? 999 : bIndex);
+  })[0] || 'standard';
 
   return (
     <div className="flex items-center gap-3 pl-4 border-l border-border/40">
@@ -101,16 +110,16 @@ export function UserAccountMenu() {
         <DropdownMenuTrigger asChild>
           <Button 
             variant="ghost" 
-            className="flex items-center gap-2 px-4 py-2 h-auto rounded-full bg-gradient-to-r from-white/10 to-white/5 backdrop-blur-sm border border-white/20 hover:border-white/30 transition-all duration-300 hover:scale-105"
+            className="flex items-center gap-2 px-2 sm:px-4 py-2 h-auto rounded-full bg-gradient-to-r from-white/10 to-white/5 backdrop-blur-sm border border-white/20 hover:border-white/30 transition-all duration-300 hover:scale-105"
           >
-            <div className="relative">
+            <div className="relative flex-shrink-0">
               <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center border-2 border-primary/40">
                 <User className="h-4 w-4 text-primary" />
               </div>
               <div className="absolute -bottom-1 -right-1 h-3 w-3 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full border-2 border-background"></div>
             </div>
-            <div className="flex flex-col items-start">
-              <span className="text-sm font-semibold text-foreground">
+            <div className="hidden sm:flex flex-col items-start min-w-0">
+              <span className="text-sm font-semibold text-foreground truncate max-w-[120px]">
                 {user.firstName} {user.lastName}
               </span>
               <div className="flex gap-1 flex-wrap">
@@ -125,7 +134,16 @@ export function UserAccountMenu() {
                 ))}
               </div>
             </div>
-            <ChevronDown className="h-3 w-3 text-muted-foreground ml-1" />
+            {/* Mobile: Show only primary role */}
+            <div className="flex sm:hidden flex-col items-start">
+              <Badge 
+                variant={getRoleBadgeVariant(primaryRole)} 
+                className="text-xs px-2 py-0.5 h-5 font-medium"
+              >
+                {getRoleDisplayName(primaryRole)}
+              </Badge>
+            </div>
+            <ChevronDown className="hidden sm:block h-3 w-3 text-muted-foreground ml-1 flex-shrink-0" />
           </Button>
         </DropdownMenuTrigger>
         

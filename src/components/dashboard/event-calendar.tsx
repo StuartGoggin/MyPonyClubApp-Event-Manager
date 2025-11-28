@@ -865,7 +865,7 @@ export function EventCalendar({
     </div>
       
     {view === 'month' && (
-      <div className='p-4'>
+      <div className="p-4 min-w-0">
         <CalendarGrid month={currentDate} events={filteredEvents} onEventClick={handleEventClick} today={today} clubs={clubs} zones={zones} stateLogo={stateLogo} evLogo={evLogo}/>
       </div>
     )}
@@ -873,10 +873,7 @@ export function EventCalendar({
     {view === 'year' && (
       <div className="p-4 grid grid-cols-1 gap-8">
         {yearMonths.map(month => (
-          <div
-            key={month.toString()}
-            className="bg-white rounded-lg shadow p-4 flex flex-col w-full"
-          >
+          <div key={month.toString()}>
             <CalendarGrid month={month} events={filteredEvents} onEventClick={handleEventClick} isYearView={true} today={today} clubs={clubs} zones={zones} stateLogo={stateLogo} evLogo={evLogo} />
           </div>
         ))}
@@ -1023,18 +1020,19 @@ const CalendarGrid = ({
   }, [events, month, isYearView]);
 
   return (
-    <div className={cn("enhanced-card rounded-lg border shadow-md overflow-x-auto", { "p-2": isYearView, "p-4": !isYearView })}>
+    <div className={cn("enhanced-card rounded-lg border shadow-md", { "p-2": isYearView, "p-4": !isYearView })}>
       {isYearView && (
         <h3 className="text-base font-semibold font-headline mb-2 text-center bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{format(month, 'MMMM')}</h3>
       )}
-  <table className={cn("w-full min-w-full text-xs text-center font-medium text-muted-foreground bg-muted/30 rounded-t-lg", { "max-h-[22rem]": isYearView, "overflow-y-auto": isYearView, "p-2": isYearView })}>
-        <thead>
-          <tr>
-            {dayOrder.map((day) => (
-              <th key={day} className="py-2 sm:py-3 font-semibold text-[10px] sm:text-xs">{day}</th>
-            ))}
-          </tr>
-        </thead>
+      <div className="overflow-x-auto w-full">
+        <table className={cn("w-full text-xs text-center font-medium text-muted-foreground bg-muted/30 rounded-t-lg", { "max-h-[22rem]": isYearView, "overflow-y-auto": isYearView, "p-2": isYearView }, "min-w-[640px]")}>
+          <thead>
+            <tr>
+              {dayOrder.map((day) => (
+                <th key={day} className="py-2 sm:py-3 font-semibold text-[10px] sm:text-xs">{day}</th>
+              ))}
+            </tr>
+          </thead>
         <tbody>
           {weeks.map((week, weekIndex) => {
             if (!week.some(d => isSameMonth(d, month))) {
@@ -1205,6 +1203,7 @@ const CalendarGrid = ({
           })}
         </tbody>
       </table>
+      </div>
     </div>
   );
 

@@ -12,6 +12,12 @@ export interface Zone {
   secretary?: Approver;
   eventApprovers?: Approver[];
   scheduleApprovers?: Approver[];
+  // Bank account details for equipment hire payments
+  bankAccount?: {
+    accountName: string;
+    bsb: string;
+    accountNumber: string;
+  };
 }
 
 export interface Club {

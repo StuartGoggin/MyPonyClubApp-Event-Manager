@@ -545,6 +545,13 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
     if (!selectedBooking) return;
 
     try {
+      console.log('Saving booking with data:', {
+        pickupDate: bookingForm.pickupDate,
+        returnDate: bookingForm.returnDate,
+        specialRequirements: bookingForm.specialRequirements,
+        status: bookingForm.status,
+      });
+
       const response = await fetch(`/api/equipment-bookings/${selectedBooking.id}`, {
         method: 'PUT',
         headers: getAuthHeaders(),
@@ -556,7 +563,12 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
         }),
       });
 
-      if (!response.ok) throw new Error('Failed to update booking');
+      const responseData = await response.json();
+      console.log('API response:', responseData);
+
+      if (!response.ok) {
+        throw new Error(responseData.error || responseData.details || 'Failed to update booking');
+      }
 
       toast({
         title: 'Success',
@@ -567,9 +579,10 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
       setEditingBooking(false);
       fetchBookings();
     } catch (error) {
+      console.error('Error saving booking:', error);
       toast({
         title: 'Error',
-        description: 'Failed to update booking',
+        description: error instanceof Error ? error.message : 'Failed to update booking',
         variant: 'destructive',
       });
     }

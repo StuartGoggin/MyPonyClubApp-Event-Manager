@@ -318,6 +318,7 @@ export interface EquipmentBooking {
   
   // Financial
   pricing: PricingBreakdown;
+  pricingType?: PricingType; // Denormalized from equipment for email templates
   paymentStatus: PaymentStatus;
   payments: Payment[];
   

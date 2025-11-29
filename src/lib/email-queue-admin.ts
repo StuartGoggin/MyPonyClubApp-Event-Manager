@@ -36,7 +36,12 @@ export async function addEmailToQueue(email: Omit<QueuedEmail, 'id' | 'createdAt
   }
 }
 
-export async function getQueuedEmails(status?: EmailStatus, emailType?: string): Promise<QueuedEmail[]> {
+export async function getQueuedEmails(
+  status?: EmailStatus, 
+  emailType?: string,
+  limit?: number,
+  summaryOnly: boolean = true
+): Promise<QueuedEmail[]> {
   try {
     let query = adminDb.collection(EMAIL_QUEUE_COLLECTION).orderBy('createdAt', 'desc');
 
@@ -46,6 +51,19 @@ export async function getQueuedEmails(status?: EmailStatus, emailType?: string):
 
     if (emailType) {
       query = query.where('type', '==', emailType);
+    }
+
+    // Apply limit if provided, otherwise default to 500 for performance
+    const effectiveLimit = limit || 500;
+    query = query.limit(effectiveLimit);
+
+    // For list views, only fetch essential fields to reduce data transfer
+    if (summaryOnly) {
+      query = query.select(
+        'to', 'cc', 'subject', 'type', 'status', 'priority',
+        'createdAt', 'updatedAt', 'sentAt', 'scheduledFor',
+        'retryCount', 'lastError', 'metadata'
+      );
     }
 
     const querySnapshot = await query.get();
@@ -239,37 +257,78 @@ export async function bulkDeleteEmails(emailIds: string[]): Promise<void> {
 // Email Queue Statistics
 export async function getEmailQueueStats(): Promise<EmailQueueStats> {
   try {
-    const allEmails = await getQueuedEmails();
-    
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const weekStart = new Date(today.getTime() - (7 * 24 * 60 * 60 * 1000));
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
+    const collection = adminDb.collection(EMAIL_QUEUE_COLLECTION);
+
+    // Use Promise.all to run all count queries in parallel
+    const [
+      totalSnapshot,
+      draftSnapshot,
+      pendingSnapshot,
+      sentSnapshot,
+      failedSnapshot,
+      cancelledSnapshot,
+      sentTodaySnapshot,
+      sentThisWeekSnapshot,
+      sentThisMonthSnapshot,
+      recentSentEmails // For calculating processing time
+    ] = await Promise.all([
+      collection.count().get(),
+      collection.where('status', '==', 'draft').count().get(),
+      collection.where('status', '==', 'pending').count().get(),
+      collection.where('status', '==', 'sent').count().get(),
+      collection.where('status', '==', 'failed').count().get(),
+      collection.where('status', '==', 'cancelled').count().get(),
+      collection.where('status', '==', 'sent').where('sentAt', '>=', today).count().get(),
+      collection.where('status', '==', 'sent').where('sentAt', '>=', weekStart).count().get(),
+      collection.where('status', '==', 'sent').where('sentAt', '>=', monthStart).count().get(),
+      // Get a sample of recent sent emails for processing time calculation
+      collection.where('status', '==', 'sent')
+        .orderBy('sentAt', 'desc')
+        .limit(100)
+        .select('createdAt', 'sentAt')
+        .get()
+    ]);
+
     const stats: EmailQueueStats = {
-      total: allEmails.length,
-      draft: allEmails.filter(e => e.status === 'draft').length,
-      pending: allEmails.filter(e => e.status === 'pending').length,
-      sent: allEmails.filter(e => e.status === 'sent').length,
-      failed: allEmails.filter(e => e.status === 'failed').length,
-      cancelled: allEmails.filter(e => e.status === 'cancelled').length,
-      sentToday: allEmails.filter(e => e.status === 'sent' && e.sentAt && e.sentAt >= today).length,
-      sentThisWeek: allEmails.filter(e => e.status === 'sent' && e.sentAt && e.sentAt >= weekStart).length,
-      sentThisMonth: allEmails.filter(e => e.status === 'sent' && e.sentAt && e.sentAt >= monthStart).length,
+      total: totalSnapshot.data().count,
+      draft: draftSnapshot.data().count,
+      pending: pendingSnapshot.data().count,
+      sent: sentSnapshot.data().count,
+      failed: failedSnapshot.data().count,
+      cancelled: cancelledSnapshot.data().count,
+      sentToday: sentTodaySnapshot.data().count,
+      sentThisWeek: sentThisWeekSnapshot.data().count,
+      sentThisMonth: sentThisMonthSnapshot.data().count,
       averageProcessingTimeMinutes: 0,
       successRate: 0,
     };
 
-    // Calculate processing time and success rate
-    const processedEmails = allEmails.filter(e => e.sentAt && e.createdAt);
-    if (processedEmails.length > 0) {
-      const totalProcessingTime = processedEmails.reduce((sum, email) => {
-        const processingTime = email.sentAt!.getTime() - email.createdAt.getTime();
-        return sum + processingTime;
-      }, 0);
-      stats.averageProcessingTimeMinutes = Math.round(totalProcessingTime / processedEmails.length / 60000);
+    // Calculate average processing time from recent emails
+    if (!recentSentEmails.empty) {
+      let totalProcessingTime = 0;
+      let validCount = 0;
+      
+      recentSentEmails.forEach((doc: any) => {
+        const data = doc.data();
+        if (data.sentAt && data.createdAt) {
+          const sentAt = data.sentAt.toDate();
+          const createdAt = data.createdAt.toDate();
+          totalProcessingTime += sentAt.getTime() - createdAt.getTime();
+          validCount++;
+        }
+      });
+      
+      if (validCount > 0) {
+        stats.averageProcessingTimeMinutes = Math.round(totalProcessingTime / validCount / 60000);
+      }
     }
 
+    // Calculate success rate
     const totalProcessed = stats.sent + stats.failed;
     if (totalProcessed > 0) {
       stats.successRate = Math.round((stats.sent / totalProcessed) * 100);

@@ -88,31 +88,11 @@ export function generateBookingReceivedHTML(booking: EquipmentBooking): string {
 
       <!-- Estimated Pricing -->
       <div style="background: #f0f7ff; border: 2px solid #2196f3; border-radius: 8px; padding: 20px; margin: 25px 0;">
-        <h3 style="color: #1976d2; margin: 0 0 15px 0; font-size: 18px;">💰 Estimated Pricing</h3>
-        <table style="width: 100%; border-collapse: collapse;">
-          <tr>
-            <td style="padding: 8px 0; font-weight: 600;">Daily Rate:</td>
-            <td style="padding: 8px 0; text-align: right;">$${booking.pricing.baseRate.toFixed(2)}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; font-weight: 600;">Subtotal:</td>
-            <td style="padding: 8px 0; text-align: right;">$${booking.pricing.subtotal.toFixed(2)}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; font-weight: 600;">Deposit:</td>
-            <td style="padding: 8px 0; text-align: right;">$${booking.pricing.deposit.toFixed(2)}</td>
-          </tr>
-          ${booking.pricing.bond ? `
-          <tr>
-            <td style="padding: 8px 0; font-weight: 600;">Bond:</td>
-            <td style="padding: 8px 0; text-align: right;">$${booking.pricing.bond.toFixed(2)}</td>
-          </tr>
-          ` : ''}
-          <tr style="border-top: 2px solid #2196f3;">
-            <td style="padding: 12px 0 0 0; font-weight: 700; font-size: 18px; color: #1976d2;">Estimated Total:</td>
-            <td style="padding: 12px 0 0 0; text-align: right; font-weight: 700; font-size: 18px; color: #1976d2;">$${booking.pricing.totalCharge.toFixed(2)}</td>
-          </tr>
-        </table>
+        <h3 style="color: #1976d2; margin: 0 0 15px 0; font-size: 18px;">💰 Payment Details</h3>
+        <div style="background: white; border-radius: 5px; padding: 15px; margin-bottom: 15px;">
+          <div style="font-weight: 700; font-size: 24px; color: #1976d2; margin-bottom: 5px;">Total Hiring Fee: $${booking.pricing.totalCharge.toFixed(2)}</div>
+          <div style="font-size: 14px; color: #666;">${booking.pricingType === 'flat_fee' ? 'Flat fee' : `For ${booking.durationDays} ${booking.durationDays === 1 ? 'day' : 'days'} hire period`}</div>
+        </div>
       </div>
 
       ${booking.specialRequirements ? `
@@ -177,12 +157,9 @@ export function generateBookingReceivedText(booking: EquipmentBooking): string {
   text += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
   
   // Pricing
-  text += `💰 ESTIMATED PRICING\n\n`;
-  text += `Daily Rate: $${booking.pricing.baseRate.toFixed(2)}\n`;
-  text += `Subtotal: $${booking.pricing.subtotal.toFixed(2)}\n`;
-  text += `Deposit: $${booking.pricing.deposit.toFixed(2)}\n`;
-  if (booking.pricing.bond) text += `Bond: $${booking.pricing.bond.toFixed(2)}\n`;
-  text += `Estimated Total: $${booking.pricing.totalCharge.toFixed(2)}\n\n`;
+  text += `💰 PAYMENT DETAILS\n\n`;
+  text += `Total Fee: $${booking.pricing.totalCharge.toFixed(2)}\n`;
+  text += `For ${booking.durationDays} ${booking.durationDays === 1 ? 'day' : 'days'} hire period\n\n`;
   
   if (booking.specialRequirements) {
     text += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
@@ -205,10 +182,11 @@ export function generateBookingReceivedText(booking: EquipmentBooking): string {
  * Sent when booking is APPROVED by zone manager
  * @param booking The equipment booking
  * @param handover Optional handover details (if not provided, limited details shown)
+ * @param zoneBankAccount Optional zone bank account details for payment
  */
-export function generateBookingApprovalHTML(booking: EquipmentBooking, handover?: HandoverDetails): string {
+export function generateBookingApprovalHTML(booking: EquipmentBooking, handover?: HandoverDetails, zoneBankAccount?: { accountName: string; bsb: string; accountNumber: string }): string {
   // Approval email uses same template as confirmation with text replacements
-  return generateBookingConfirmationHTML(booking, handover)
+  return generateBookingConfirmationHTML(booking, handover, zoneBankAccount)
     .replace(/Equipment Booking Confirmed/g, 'Equipment Booking Approved')
     .replace(/booking has been confirmed/g, 'booking has been approved')
     .replace(/has been confirmed/g, 'has been approved');
@@ -219,10 +197,11 @@ export function generateBookingApprovalHTML(booking: EquipmentBooking, handover?
  * Sent when booking is APPROVED by zone manager
  * @param booking The equipment booking
  * @param handover Optional handover details (if not provided, limited details shown)
+ * @param zoneBankAccount Optional zone bank account details for payment
  */
-export function generateBookingApprovalText(booking: EquipmentBooking, handover?: HandoverDetails): string {
+export function generateBookingApprovalText(booking: EquipmentBooking, handover?: HandoverDetails, zoneBankAccount?: { accountName: string; bsb: string; accountNumber: string }): string {
   // Approval email uses same template as confirmation with text replacements
-  return generateBookingConfirmationText(booking, handover)
+  return generateBookingConfirmationText(booking, handover, zoneBankAccount)
     .replace(/EQUIPMENT BOOKING CONFIRMED/g, 'EQUIPMENT BOOKING APPROVED')
     .replace(/equipment booking has been confirmed/g, 'equipment booking has been approved')
     .replace(/has been confirmed/g, 'has been approved');
@@ -234,12 +213,11 @@ export function generateBookingApprovalText(booking: EquipmentBooking, handover?
  * Sent when booking is APPROVED
  * @param booking The equipment booking
  * @param handover Optional handover details (if not provided, limited details shown)
+ * @param zoneBankAccount Optional zone bank account details for payment
  */
-export function generateBookingConfirmationHTML(booking: EquipmentBooking, handover?: HandoverDetails): string {
+export function generateBookingConfirmationHTML(booking: EquipmentBooking, handover?: HandoverDetails, zoneBankAccount?: { accountName: string; bsb: string; accountNumber: string }): string {
   const pickupDate = format(new Date(booking.pickupDate), 'EEEE, MMMM d, yyyy');
   const returnDate = format(new Date(booking.returnDate), 'EEEE, MMMM d, yyyy');
-  const pickupTime = handover?.pickup.scheduledTime || '10:00 AM - 12:00 PM';
-  const returnTime = handover?.return.scheduledTime || '10:00 AM - 12:00 PM';
 
   return `
 <!DOCTYPE html>
@@ -298,7 +276,8 @@ export function generateBookingConfirmationHTML(booking: EquipmentBooking, hando
         <h2 style="color: #28a745; font-size: 22px; margin-bottom: 15px;">🚚 PICKUP INFORMATION</h2>
         
         <div style="background: #e8f5e9; border: 2px solid #28a745; border-radius: 8px; padding: 20px; margin-top: 15px;">
-          <p style="margin: 0 0 10px 0; font-size: 16px;"><strong>📅 When:</strong> ${pickupDate} at ${pickupTime}</p>
+          <p style="margin: 0 0 10px 0; font-size: 16px;"><strong>📅 When:</strong> ${pickupDate}</p>
+          <p style="margin: 10px 0 0 0; font-size: 14px; color: #2e7d32;"><em>Please coordinate the specific pickup time directly with the contact person below.</em></p>
           
           ${handover?.pickup.previousCustodian ? `
             <!-- Collect from Previous User -->
@@ -357,8 +336,12 @@ export function generateBookingConfirmationHTML(booking: EquipmentBooking, hando
               
               <table style="width: 100%; border-collapse: collapse;">
                 <tr>
-                  <td style="padding: 6px 0; font-weight: 600; width: 120px;">Contact:</td>
+                  <td style="padding: 6px 0; font-weight: 600; width: 140px;">Contact Person:</td>
                   <td style="padding: 6px 0;">${handover?.pickup.location.contactName}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 6px 0; font-weight: 600;">Role:</td>
+                  <td style="padding: 6px 0;">Zone Manager</td>
                 </tr>
                 <tr>
                   <td style="padding: 6px 0; font-weight: 600;">Phone:</td>
@@ -397,7 +380,8 @@ export function generateBookingConfirmationHTML(booking: EquipmentBooking, hando
         <h2 style="color: #dc3545; font-size: 22px; margin-bottom: 15px;">📤 RETURN INFORMATION</h2>
         
         <div style="background: #fee; border: 2px solid #dc3545; border-radius: 8px; padding: 20px; margin-top: 15px;">
-          <p style="margin: 0 0 10px 0; font-size: 16px;"><strong>📅 When:</strong> ${returnDate} at ${returnTime}</p>
+          <p style="margin: 0 0 10px 0; font-size: 16px;"><strong>📅 When:</strong> ${returnDate}</p>
+          <p style="margin: 10px 0 0 0; font-size: 14px; color: #c62828;"><em>Please coordinate the specific return time directly with the contact person below.</em></p>
           
           ${handover?.return.nextCustodian ? `
             <!-- Handover to Next User -->
@@ -453,8 +437,12 @@ export function generateBookingConfirmationHTML(booking: EquipmentBooking, hando
               
               <table style="width: 100%; border-collapse: collapse;">
                 <tr>
-                  <td style="padding: 6px 0; font-weight: 600; width: 120px;">Contact:</td>
+                  <td style="padding: 6px 0; font-weight: 600; width: 140px;">Contact Person:</td>
                   <td style="padding: 6px 0;">${handover?.return.location.contactName}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 6px 0; font-weight: 600;">Role:</td>
+                  <td style="padding: 6px 0;">Zone Manager</td>
                 </tr>
                 <tr>
                   <td style="padding: 6px 0; font-weight: 600;">Phone:</td>
@@ -472,6 +460,15 @@ export function generateBookingConfirmationHTML(booking: EquipmentBooking, hando
                   ${handover?.return.location.address}
                 </p>
               </div>
+
+              ${handover?.return.location.notes ? `
+              <div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 12px; margin-top: 10px; border-radius: 3px;">
+                <p style="margin: 0; font-size: 14px; color: #0d47a1;">
+                  <strong>📝 Access Instructions:</strong><br>
+                  ${handover?.return.location.notes}
+                </p>
+              </div>
+              ` : ''}
             </div>
           `}
         </div>
@@ -481,35 +478,39 @@ export function generateBookingConfirmationHTML(booking: EquipmentBooking, hando
 
       <!-- Pricing Summary -->
       <div style="background: #f0f7ff; border: 2px solid #2196f3; border-radius: 8px; padding: 20px; margin: 25px 0;">
-        <h3 style="color: #1976d2; margin: 0 0 15px 0; font-size: 18px;">💰 Pricing Summary</h3>
-        <table style="width: 100%; border-collapse: collapse;">
-          <tr>
-            <td style="padding: 8px 0; font-weight: 600;">Rental Duration:</td>
-            <td style="padding: 8px 0; text-align: right;">${booking.durationDays} ${booking.durationDays === 1 ? 'day' : 'days'}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; font-weight: 600;">Daily Rate:</td>
-            <td style="padding: 8px 0; text-align: right;">$${booking.pricing.baseRate.toFixed(2)}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; font-weight: 600;">Subtotal:</td>
-            <td style="padding: 8px 0; text-align: right;">$${booking.pricing.subtotal.toFixed(2)}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; font-weight: 600;">Deposit:</td>
-            <td style="padding: 8px 0; text-align: right;">$${booking.pricing.deposit.toFixed(2)}</td>
-          </tr>
-          ${booking.pricing.bond ? `
-          <tr>
-            <td style="padding: 8px 0; font-weight: 600;">Bond:</td>
-            <td style="padding: 8px 0; text-align: right;">$${booking.pricing.bond.toFixed(2)}</td>
-          </tr>
-          ` : ''}
-          <tr style="border-top: 2px solid #2196f3;">
-            <td style="padding: 12px 0 0 0; font-weight: 700; font-size: 18px; color: #1976d2;">Total Charge:</td>
-            <td style="padding: 12px 0 0 0; text-align: right; font-weight: 700; font-size: 18px; color: #1976d2;">$${booking.pricing.totalCharge.toFixed(2)}</td>
-          </tr>
-        </table>
+        <h3 style="color: #1976d2; margin: 0 0 15px 0; font-size: 18px;">💰 Payment Details</h3>
+        <div style="background: white; border-radius: 5px; padding: 15px; margin-bottom: 15px;">
+          <div style="font-weight: 700; font-size: 24px; color: #1976d2; margin-bottom: 5px;">Total Hiring Fee: $${booking.pricing.totalCharge.toFixed(2)}</div>
+          <div style="font-size: 14px; color: #666; margin-bottom: 15px;">${booking.pricingType === 'flat_fee' ? 'Flat fee' : `For ${booking.durationDays} ${booking.durationDays === 1 ? 'day' : 'days'} hire period`}</div>
+        </div>
+        ${zoneBankAccount ? `
+        <div style="background: #e8f5e9; border: 2px solid #4caf50; border-radius: 5px; padding: 15px;">
+          <h4 style="color: #2e7d32; margin: 0 0 10px 0; font-size: 16px;">🏦 Payment Instructions</h4>
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 6px 0; font-weight: 600; color: #2e7d32; width: 140px;">Account Name:</td>
+              <td style="padding: 6px 0; color: #1b5e20;">${zoneBankAccount.accountName}</td>
+            </tr>
+            <tr>
+              <td style="padding: 6px 0; font-weight: 600; color: #2e7d32;">BSB:</td>
+              <td style="padding: 6px 0; color: #1b5e20;">${zoneBankAccount.bsb}</td>
+            </tr>
+            <tr>
+              <td style="padding: 6px 0; font-weight: 600; color: #2e7d32;">Account Number:</td>
+              <td style="padding: 6px 0; color: #1b5e20;">${zoneBankAccount.accountNumber}</td>
+            </tr>
+            <tr>
+              <td style="padding: 6px 0; font-weight: 600; color: #2e7d32;">Reference:</td>
+              <td style="padding: 6px 0; color: #1b5e20;">EQUIP ${booking.clubName}</td>
+            </tr>
+          </table>
+          <div style="background: #fff3cd; border-left: 3px solid #ffc107; padding: 10px; margin-top: 12px; border-radius: 3px;">
+            <p style="margin: 0; font-size: 13px; color: #856404;">
+              <strong>Important:</strong> Please include the reference <strong>EQUIP ${booking.clubName}</strong> in the payment description.
+            </p>
+          </div>
+        </div>
+        ` : ''}
       </div>
 
       <!-- Checklist -->
@@ -572,12 +573,11 @@ export function generateBookingConfirmationHTML(booking: EquipmentBooking, hando
  * Sent when booking is APPROVED
  * @param booking The equipment booking
  * @param handover Optional handover details (if not provided, limited details shown)
+ * @param zoneBankAccount Optional zone bank account details for payment
  */
-export function generateBookingConfirmationText(booking: EquipmentBooking, handover?: HandoverDetails): string {
+export function generateBookingConfirmationText(booking: EquipmentBooking, handover?: HandoverDetails, zoneBankAccount?: { accountName: string; bsb: string; accountNumber: string }): string {
   const pickupDate = format(new Date(booking.pickupDate), 'EEEE, MMMM d, yyyy');
   const returnDate = format(new Date(booking.returnDate), 'EEEE, MMMM d, yyyy');
-  const pickupTime = handover?.pickup.scheduledTime || '10:00 AM - 12:00 PM';
-  const returnTime = handover?.return.scheduledTime || '10:00 AM - 12:00 PM';
 
   let text = `EQUIPMENT BOOKING CONFIRMED\n`;
   text += `Reference: ${booking.bookingReference}\n\n`;
@@ -595,7 +595,8 @@ export function generateBookingConfirmationText(booking: EquipmentBooking, hando
   
   // Pickup Information
   text += `🚚 PICKUP INFORMATION\n\n`;
-  text += `📅 When: ${pickupDate} at ${pickupTime}\n\n`;
+  text += `📅 When: ${pickupDate}\n`;
+  text += `Please coordinate the specific pickup time directly with the contact person below.\n\n`;
   
   if (handover?.pickup.previousCustodian) {
     text += `👤 Collect from Previous User:\n\n`;
@@ -613,7 +614,8 @@ export function generateBookingConfirmationText(booking: EquipmentBooking, hando
     }
   } else {
     text += `🏢 Collect from Zone Storage:\n\n`;
-    text += `Contact: ${handover?.pickup.location.contactName}\n`;
+    text += `Contact Person: ${handover?.pickup.location.contactName}\n`;
+    text += `Role: Zone Manager\n`;
     text += `Phone: ${handover?.pickup.location.contactPhone}\n`;
     text += `Email: ${handover?.pickup.location.contactEmail}\n`;
     text += `\n📍 Storage Address:\n${handover?.pickup.location.address}\n`;
@@ -626,7 +628,8 @@ export function generateBookingConfirmationText(booking: EquipmentBooking, hando
   
   // Return Information
   text += `📤 RETURN INFORMATION\n\n`;
-  text += `📅 When: ${returnDate} at ${returnTime}\n\n`;
+  text += `📅 When: ${returnDate}\n`;
+  text += `Please coordinate the specific return time directly with the contact person below.\n\n`;
   
   if (handover?.return.nextCustodian) {
     text += `👤 Handover to Next User:\n\n`;
@@ -642,22 +645,31 @@ export function generateBookingConfirmationText(booking: EquipmentBooking, hando
     text += `\n⚠️  IMPORTANT: Please coordinate handover time with ${handover?.return.nextCustodian.name} before their event starts.\n`;
   } else {
     text += `🏢 Return to Zone Storage:\n\n`;
-    text += `Contact: ${handover?.return.location.contactName}\n`;
+    text += `Contact Person: ${handover?.return.location.contactName}\n`;
+    text += `Role: Zone Manager\n`;
     text += `Phone: ${handover?.return.location.contactPhone}\n`;
     text += `Email: ${handover?.return.location.contactEmail}\n`;
     text += `\n📍 Return Address:\n${handover?.return.location.address}\n`;
+    if (handover?.return.location.notes) {
+      text += `\n📝 Access Instructions: ${handover?.return.location.notes}\n`;
+    }
   }
   
-  text += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+  text += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
   
   // Pricing
-  text += `💰 PRICING SUMMARY\n\n`;
-  text += `Rental Duration: ${booking.durationDays} ${booking.durationDays === 1 ? 'day' : 'days'}\n`;
-  text += `Daily Rate: $${booking.pricing.baseRate.toFixed(2)}\n`;
-  text += `Subtotal: $${booking.pricing.subtotal.toFixed(2)}\n`;
-  text += `Deposit: $${booking.pricing.deposit.toFixed(2)}\n`;
-  if (booking.pricing.bond) text += `Bond: $${booking.pricing.bond.toFixed(2)}\n`;
-  text += `Total Charge: $${booking.pricing.totalCharge.toFixed(2)}\n\n`;
+  text += `💰 PAYMENT DETAILS\n\n`;
+  text += `Total Hiring Fee: $${booking.pricing.totalCharge.toFixed(2)}\n`;
+  text += `${booking.pricingType === 'flat_fee' ? 'Flat fee' : `For ${booking.durationDays} ${booking.durationDays === 1 ? 'day' : 'days'} hire period`}\n\n`;
+  
+  if (zoneBankAccount) {
+    text += `🏦 PAYMENT INSTRUCTIONS\n\n`;
+    text += `Account Name: ${zoneBankAccount.accountName}\n`;
+    text += `BSB: ${zoneBankAccount.bsb}\n`;
+    text += `Account Number: ${zoneBankAccount.accountNumber}\n`;
+    text += `Reference: EQUIP ${booking.clubName}\n\n`;
+    text += `⚠️  IMPORTANT: Please include the reference EQUIP ${booking.clubName} in the payment description.\n\n`;
+  }
   
   text += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
   
@@ -730,8 +742,18 @@ export async function queueBookingConfirmationEmail(
   // Compute handover details dynamically
   const handover = await computeHandoverDetails(booking);
   
-  const htmlContent = generateBookingConfirmationHTML(booking, handover);
-  const textContent = generateBookingConfirmationText(booking, handover);
+  // Fetch zone data for bank account details
+  let zoneBankAccount: { accountName: string; bsb: string; accountNumber: string } | undefined;
+  try {
+    const zoneDoc = await adminDb.collection('zones').doc(booking.zoneId).get();
+    const zoneData = zoneDoc.data();
+    zoneBankAccount = zoneData?.bankAccount;
+  } catch (error) {
+    console.error('Error fetching zone bank account:', error);
+  }
+  
+  const htmlContent = generateBookingConfirmationHTML(booking, handover, zoneBankAccount);
+  const textContent = generateBookingConfirmationText(booking, handover, zoneBankAccount);
   
   const emailId = await addEmailToQueue({
     to: [booking.custodian.email],
@@ -813,8 +835,20 @@ export async function queueAllBookingNotifications(
   // Compute handover details dynamically for approved/confirmed bookings
   const handover = needsHandover ? await computeHandoverDetails(booking) : undefined;
   
-  const htmlContent = needsHandover ? generateBookingApprovalHTML(booking, handover) : generateBookingReceivedHTML(booking);
-  const textContent = needsHandover ? generateBookingApprovalText(booking, handover) : generateBookingReceivedText(booking);
+  // Fetch zone data for bank account details
+  let zoneBankAccount: { accountName: string; bsb: string; accountNumber: string } | undefined;
+  if (needsHandover) {
+    try {
+      const zoneDoc = await adminDb.collection('zones').doc(booking.zoneId).get();
+      const zoneData = zoneDoc.data();
+      zoneBankAccount = zoneData?.bankAccount;
+    } catch (error) {
+      console.error('Error fetching zone bank account:', error);
+    }
+  }
+  
+  const htmlContent = needsHandover ? generateBookingApprovalHTML(booking, handover, zoneBankAccount) : generateBookingReceivedHTML(booking);
+  const textContent = needsHandover ? generateBookingApprovalText(booking, handover, zoneBankAccount) : generateBookingReceivedText(booking);
 
   const subjectBase = isApproved ? 'Equipment Booking Approved' : isConfirmed ? 'Equipment Booking Confirmed' : 'Equipment Booking Request Received';
   const subject = `${subjectBase} - ${booking.equipmentName} - Ref: ${booking.bookingReference}`;

@@ -53,7 +53,10 @@ function ZoneManagerContent() {
     secretaryName: '',
     secretaryEmail: '',
     secretaryMobile: '',
-    imageUrl: ''
+    imageUrl: '',
+    bankAccountName: '',
+    bankBsb: '',
+    bankAccountNumber: ''
   });
   const [logoPreview, setLogoPreview] = useState<string>('');
 
@@ -193,7 +196,10 @@ function ZoneManagerContent() {
         secretaryName: selectedZone.secretary?.name || '',
         secretaryEmail: selectedZone.secretary?.email || '',
         secretaryMobile: selectedZone.secretary?.mobile || '',
-        imageUrl: logoData
+        imageUrl: logoData,
+        bankAccountName: selectedZone.bankAccount?.accountName || '',
+        bankBsb: selectedZone.bankAccount?.bsb || '',
+        bankAccountNumber: selectedZone.bankAccount?.accountNumber || ''
       });
 
       if (logoData) {
@@ -278,6 +284,11 @@ function ZoneManagerContent() {
             name: formData.secretaryName,
             email: formData.secretaryEmail,
             mobile: formData.secretaryMobile
+          },
+          bankAccount: {
+            accountName: formData.bankAccountName,
+            bsb: formData.bankBsb,
+            accountNumber: formData.bankAccountNumber
           }
         }),
       });
@@ -834,6 +845,58 @@ function ZoneManagerContent() {
                             onChange={(e) => handleInputChange('secretaryMobile', e.target.value)}
                             placeholder="0400 000 000"
                           />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Bank Account Information */}
+                  <Card className="bg-white dark:bg-slate-900 shadow-lg border-slate-200 dark:border-slate-700 border-l-4 border-l-green-500">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <svg className="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                        </svg>
+                        Bank Account Details
+                      </CardTitle>
+                      <CardDescription>
+                        Bank account for equipment hire payments. These details will appear in booking confirmation emails.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="bankAccountName">Account Name</Label>
+                        <Input
+                          id="bankAccountName"
+                          value={formData.bankAccountName}
+                          onChange={(e) => handleInputChange('bankAccountName', e.target.value)}
+                          placeholder="South Melbourne Zone Pony Club"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="bankBsb">BSB</Label>
+                          <Input
+                            id="bankBsb"
+                            value={formData.bankBsb}
+                            onChange={(e) => handleInputChange('bankBsb', e.target.value)}
+                            placeholder="063-000"
+                            maxLength={7}
+                          />
+                          <p className="text-xs text-muted-foreground">Format: 000-000</p>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="bankAccountNumber">Account Number</Label>
+                          <Input
+                            id="bankAccountNumber"
+                            value={formData.bankAccountNumber}
+                            onChange={(e) => handleInputChange('bankAccountNumber', e.target.value)}
+                            placeholder="12345678"
+                            maxLength={10}
+                          />
+                          <p className="text-xs text-muted-foreground">6-10 digits</p>
                         </div>
                       </div>
                     </CardContent>

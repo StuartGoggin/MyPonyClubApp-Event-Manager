@@ -78,14 +78,17 @@ export async function checkAdminAccess(request: NextRequest): Promise<{
   }
 }
 
-export function withAdminAuth(handler: (request: NextRequest, user: User) => Promise<NextResponse>) {
-  return async (request: NextRequest): Promise<NextResponse> => {
+export function withAdminAuth(
+  handler: (request: NextRequest, context: any) => Promise<NextResponse>
+) {
+  return async (request: NextRequest, context: any): Promise<NextResponse> => {
     const authResult = await checkAdminAccess(request);
     
     if (!authResult.authorized) {
       return authResult.response!;
     }
     
-    return handler(request, authResult.user!);
+    // Pass context through to handler (contains params for dynamic routes)
+    return handler(request, context);
   };
 }

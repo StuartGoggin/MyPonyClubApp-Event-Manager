@@ -20,15 +20,20 @@ export const GET = withAdminAuth(async (request: NextRequest) => {
     const status = searchParams.get('status') as EmailStatus | 'all' | null;
     const type = searchParams.get('type');
     const action = searchParams.get('action');
+    const limitParam = searchParams.get('limit');
+    const limit = limitParam ? parseInt(limitParam, 10) : undefined;
 
     if (action === 'stats') {
       const stats = await getEmailQueueStats();
       return NextResponse.json({ success: true, data: stats });
     }
 
+    // Fetch emails with optimized query (summary only, with limit)
     const emails = await getQueuedEmails(
       status && status !== 'all' ? status : undefined,
-      type && type !== 'all' ? type : undefined
+      type && type !== 'all' ? type : undefined,
+      limit,
+      true // summaryOnly - don't fetch htmlContent/textContent/attachments
     );
 
     return NextResponse.json({ success: true, data: emails });

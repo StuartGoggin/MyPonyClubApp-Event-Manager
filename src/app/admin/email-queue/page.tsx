@@ -31,6 +31,8 @@ function EmailQueueAdminContent() {
   const [filterType, setFilterType] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [editingEmail, setEditingEmail] = useState<QueuedEmail | null>(null);
+  const [previewEmail, setPreviewEmail] = useState<QueuedEmail | null>(null);
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
   const [suggestedRecipients, setSuggestedRecipients] = useState<{current: string[]; suggested: string[]} | null>(null);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [resendingEmail, setResendingEmail] = useState<QueuedEmail | null>(null);
@@ -39,6 +41,27 @@ function EmailQueueAdminContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [logs, setLogs] = useState<any[]>([]);
   const [isLoadingLogs, setIsLoadingLogs] = useState(false);
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [refreshInterval, setRefreshInterval] = useState(30); // seconds
+
+  // Fetch full email details for preview
+  const fetchEmailForPreview = async (emailId: string) => {
+    try {
+      setIsLoadingPreview(true);
+      const response = await fetch(`/api/email-queue/${emailId}`);
+      const result = await response.json();
+      
+      if (result.success) {
+        setPreviewEmail(result.data);
+      } else {
+        console.error('Failed to fetch email details:', result.error);
+      }
+    } catch (error) {
+      console.error('Error fetching email details:', error);
+    } finally {
+      setIsLoadingPreview(false);
+    }
+  };
 
   // Fetch data functions
   const fetchEmails = useCallback(async () => {
@@ -139,6 +162,18 @@ function EmailQueueAdminContent() {
     
     loadData();
   }, [fetchEmails, fetchStats, fetchConfig, fetchLogs]);
+
+  // Auto-refresh effect
+  useEffect(() => {
+    if (!autoRefresh) return;
+    
+    const interval = setInterval(() => {
+      fetchEmails();
+      fetchStats();
+    }, refreshInterval * 1000);
+    
+    return () => clearInterval(interval);
+  }, [autoRefresh, refreshInterval, fetchEmails, fetchStats]);
 
   // Auto-reevaluate recipients when edit dialog opens
   useEffect(() => {
@@ -471,15 +506,43 @@ function EmailQueueAdminContent() {
           <h1 className="text-3xl font-bold tracking-tight">Email Queue Management</h1>
           <p className="text-muted-foreground">Review, edit, and manage queued emails before sending</p>
         </div>
-        <Button 
-          onClick={refreshData} 
-          disabled={isRefreshing}
-          variant="outline"
-          size="sm"
-        >
-          <RefreshCw className={cn("h-4 w-4 mr-2", isRefreshing && "animate-spin")} />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 px-3 py-2 border rounded-md bg-muted/50">
+            <Checkbox
+              id="autoRefresh"
+              checked={autoRefresh}
+              onCheckedChange={(checked) => setAutoRefresh(!!checked)}
+            />
+            <Label htmlFor="autoRefresh" className="text-sm cursor-pointer">
+              Auto-refresh every
+            </Label>
+            <Select 
+              value={refreshInterval.toString()} 
+              onValueChange={(value) => setRefreshInterval(parseInt(value))}
+              disabled={!autoRefresh}
+            >
+              <SelectTrigger className="w-20 h-8">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10s</SelectItem>
+                <SelectItem value="30">30s</SelectItem>
+                <SelectItem value="60">1m</SelectItem>
+                <SelectItem value="120">2m</SelectItem>
+                <SelectItem value="300">5m</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <Button 
+            onClick={refreshData} 
+            disabled={isRefreshing}
+            variant="outline"
+            size="sm"
+          >
+            <RefreshCw className={cn("h-4 w-4 mr-2", isRefreshing && "animate-spin")} />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="queue" className="space-y-6">
@@ -753,43 +816,13 @@ function EmailQueueAdminContent() {
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                  <Eye className="h-4 w-4 mr-2" />
-                                  Preview
-                                </DropdownMenuItem>
-                              </DialogTrigger>
-                              <DialogContent className="max-w-3xl">
-                                <DialogHeader>
-                                  <DialogTitle>Email Preview</DialogTitle>
-                                  <DialogDescription>{email.subject}</DialogDescription>
-                                </DialogHeader>
-                                <div className="space-y-4">
-                                  <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                      <Label className="text-sm font-medium">To:</Label>
-                                      <div className="text-sm">
-                                        {Array.isArray(email.to) ? email.to.join(', ') : email.to}
-                                      </div>
-                                    </div>
-                                    <div>
-                                      <Label className="text-sm font-medium">Status:</Label>
-                                      <Badge className={cn("ml-2", getStatusColor(email.status))}>
-                                        {email.status}
-                                      </Badge>
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <Label className="text-sm font-medium">Content:</Label>
-                                    <div 
-                                      className="mt-2 p-4 border rounded-md max-h-96 overflow-y-auto"
-                                      dangerouslySetInnerHTML={{ __html: email.htmlContent || '' }}
-                                    />
-                                  </div>
-                                </div>
-                              </DialogContent>
-                            </Dialog>
+                            <DropdownMenuItem onSelect={(e) => {
+                              e.preventDefault();
+                              fetchEmailForPreview(email.id);
+                            }}>
+                              <Eye className="h-4 w-4 mr-2" />
+                              Preview
+                            </DropdownMenuItem>
                             
                             <DropdownMenuItem onClick={() => setEditingEmail(email)}>
                               <Edit className="h-4 w-4 mr-2" />
@@ -1230,6 +1263,55 @@ function EmailQueueAdminContent() {
                 </Button>
               </div>
             </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Email Preview Dialog */}
+      {previewEmail && (
+        <Dialog open={!!previewEmail} onOpenChange={() => setPreviewEmail(null)}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Email Preview</DialogTitle>
+              <DialogDescription>{previewEmail.subject}</DialogDescription>
+            </DialogHeader>
+            {isLoadingPreview ? (
+              <div className="flex items-center justify-center p-8">
+                <RefreshCw className="h-8 w-8 animate-spin text-gray-400" />
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium">To:</Label>
+                    <div className="text-sm">
+                      {Array.isArray(previewEmail.to) 
+                        ? previewEmail.to.join(', ') 
+                        : previewEmail.to}
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Status:</Label>
+                    <Badge className={cn("ml-2", getStatusColor(previewEmail.status))}>
+                      {previewEmail.status}
+                    </Badge>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Content:</Label>
+                  {previewEmail.htmlContent ? (
+                    <div 
+                      className="mt-2 p-4 border rounded-md max-h-96 overflow-y-auto bg-white"
+                      dangerouslySetInnerHTML={{ __html: previewEmail.htmlContent }}
+                    />
+                  ) : (
+                    <div className="mt-2 p-4 border rounded-md text-gray-500 text-sm">
+                      No content available
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       )}

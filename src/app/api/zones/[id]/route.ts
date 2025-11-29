@@ -71,6 +71,7 @@ export async function PATCH(
     if (body.streetAddress !== undefined) updateData.streetAddress = body.streetAddress;
     if (body.imageUrl !== undefined) updateData.imageUrl = body.imageUrl;
     if (body.secretary !== undefined) updateData.secretary = body.secretary;
+    if (body.bankAccount !== undefined) updateData.bankAccount = body.bankAccount;
 
     // Update the zone
     await adminDb.collection('zones').doc(zoneId).update(updateData);

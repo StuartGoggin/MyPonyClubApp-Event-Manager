@@ -360,6 +360,21 @@ async function createHandoverDetails(
   const previousBooking = await findBookingEndingBefore(equipmentId, pickupDate);
   const nextBooking = await findBookingStartingAfter(equipmentId, returnDate);
   const storageCustodian = await getStorageCustodian(equipmentId, zoneId);
+  
+  // Get equipment homeLocation for zone storage details (matches UI display)
+  const equipment = await getEquipment(equipmentId);
+  const homeLocation = equipment?.homeLocation;
+  
+  // Fallback contact info from zone if homeLocation not set
+  const zoneDoc = await db.collection('zones').doc(zoneId).get();
+  const zone = zoneDoc.exists ? zoneDoc.data() : null;
+  const zoneSecretary = zone?.secretary || {};
+  
+  const zoneContactName = homeLocation?.contactPerson?.name || zoneSecretary.name || 'Zone Manager';
+  const zoneContactPhone = homeLocation?.contactPerson?.phone || zoneSecretary.phone || zoneSecretary.mobile || '';
+  const zoneContactEmail = homeLocation?.contactPerson?.email || zoneSecretary.email || '';
+  const zoneAddress = homeLocation?.address || equipment?.storageLocation || 'Zone Storage';
+  const zoneNotes = homeLocation?.accessInstructions;
 
   // Pickup details
   const pickup: PickupDetails = previousBooking
@@ -398,11 +413,12 @@ async function createHandoverDetails(
               isStorageLocation: true,
             }
           : {
-              address: 'Zone Storage',
-              coordinates: { latitude: 0, longitude: 0 },
-              contactName: 'Zone Manager',
-              contactPhone: '',
-              contactEmail: '',
+              address: zoneAddress,
+              coordinates: homeLocation?.coordinates || { latitude: 0, longitude: 0 },
+              contactName: zoneContactName,
+              contactPhone: zoneContactPhone,
+              contactEmail: zoneContactEmail,
+              notes: zoneNotes,
               isStorageLocation: true,
             },
         scheduledDate: pickupDate,
@@ -446,11 +462,12 @@ async function createHandoverDetails(
               isStorageLocation: true,
             }
           : {
-              address: 'Zone Storage',
-              coordinates: { latitude: 0, longitude: 0 },
-              contactName: 'Zone Manager',
-              contactPhone: '',
-              contactEmail: '',
+              address: zoneAddress,
+              coordinates: homeLocation?.coordinates || { latitude: 0, longitude: 0 },
+              contactName: zoneContactName,
+              contactPhone: zoneContactPhone,
+              contactEmail: zoneContactEmail,
+              notes: zoneNotes,
               isStorageLocation: true,
             },
         scheduledDate: returnDate,
@@ -544,6 +561,7 @@ export async function createBooking(
       requestedBy,
       requestedByEmail,
       pricing,
+      pricingType: equipment.pricingType || 'per_day', // Store pricing type for email templates
       paymentStatus: 'unpaid',
       payments: [],
       specialRequirements: request.specialRequirements,
@@ -762,6 +780,24 @@ async function calculatePricing(
   durationDays: number
 ): Promise<PricingBreakdown> {
   try {
+    // Check if equipment uses flat fee pricing
+    if (equipment.pricingType === 'flat_fee') {
+      const deposit = equipment.depositRequired || 0;
+      const bond = equipment.bondAmount || 0;
+      const flatFee = equipment.basePricePerDay; // For flat_fee type, basePricePerDay IS the flat fee
+      const totalCharge = flatFee + deposit + bond;
+
+      return {
+        baseRate: flatFee,
+        durationMultiplier: 1, // Not applicable for flat fee
+        subtotal: flatFee,
+        deposit,
+        bond: bond > 0 ? bond : undefined,
+        totalCharge,
+      };
+    }
+
+    // Per-day pricing logic (existing logic)
     // Find applicable pricing rule
     const rules = await db
       .collection(PRICING_RULES_COLLECTION)

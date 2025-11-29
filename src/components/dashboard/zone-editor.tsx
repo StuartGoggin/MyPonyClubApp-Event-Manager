@@ -18,7 +18,8 @@ export default function ZoneEditor({ initialZone, onSave }: ZoneEditorProps) {
     ...initialZone, 
     streetAddress: initialZone.streetAddress ?? '',
     eventApprovers: initialZone.eventApprovers ?? [],
-    scheduleApprovers: initialZone.scheduleApprovers ?? []
+    scheduleApprovers: initialZone.scheduleApprovers ?? [],
+    bankAccount: initialZone.bankAccount ?? { accountName: '', bsb: '', accountNumber: '' }
   });
   
   const [approverDialogOpen, setApproverDialogOpen] = useState(false);
@@ -30,11 +31,16 @@ export default function ZoneEditor({ initialZone, onSave }: ZoneEditorProps) {
                       zone.streetAddress.includes(' ') && 
                       /\d/.test(zone.streetAddress);
 
+  const bankAccountValid = zone.bankAccount &&
+                          zone.bankAccount.accountName.trim().length > 0 &&
+                          /^\d{3}[-\s]?\d{3}$/.test(zone.bankAccount.bsb) &&
+                          /^\d{6,10}$/.test(zone.bankAccount.accountNumber);
+
   const approverValid = approverForm.name.trim().length > 0 &&
                        /^\+?\d{8,15}$/.test(approverForm.mobile) &&
                        /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(approverForm.email);
 
-  const isValid = addressValid;
+  const isValid = addressValid && bankAccountValid;
 
   const addApprover = (type: 'eventApprovers' | 'scheduleApprovers') => {
     setEditingApproverType(type);
@@ -126,7 +132,76 @@ export default function ZoneEditor({ initialZone, onSave }: ZoneEditorProps) {
               {addressValid && (
                 <div className="flex items-center gap-2 text-sm text-green-600">
                   <CheckCircle className="h-4 w-4" />
-                  Address looks good!
+                  Address is valid.
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Bank Account Section */}
+        <Card className="enhanced-card border-l-4 border-l-green-500 shadow-lg">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <svg className="h-5 w-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+              </svg>
+              <span className="bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                Bank Account Details (Equipment Hire Payments)
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-foreground">Account Name</label>
+                <Input
+                  value={zone.bankAccount?.accountName || ''}
+                  onChange={e => setZone({ ...zone, bankAccount: { ...zone.bankAccount!, accountName: e.target.value } })}
+                  placeholder="South Melbourne Zone Pony Club"
+                  className="enhanced-select text-base"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-foreground">BSB</label>
+                  <Input
+                    value={zone.bankAccount?.bsb || ''}
+                    onChange={e => setZone({ ...zone, bankAccount: { ...zone.bankAccount!, bsb: e.target.value } })}
+                    placeholder="063-000"
+                    className={cn(
+                      "enhanced-select text-base transition-all duration-200",
+                      zone.bankAccount?.bsb && /^\d{3}[-\s]?\d{3}$/.test(zone.bankAccount.bsb)
+                        ? 'border-green-300 focus:border-green-500'
+                        : 'border-red-300 focus:border-red-500'
+                    )}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-foreground">Account Number</label>
+                  <Input
+                    value={zone.bankAccount?.accountNumber || ''}
+                    onChange={e => setZone({ ...zone, bankAccount: { ...zone.bankAccount!, accountNumber: e.target.value } })}
+                    placeholder="12345678"
+                    className={cn(
+                      "enhanced-select text-base transition-all duration-200",
+                      zone.bankAccount?.accountNumber && /^\d{6,10}$/.test(zone.bankAccount.accountNumber)
+                        ? 'border-green-300 focus:border-green-500'
+                        : 'border-red-300 focus:border-red-500'
+                    )}
+                  />
+                </div>
+              </div>
+              {!bankAccountValid && (
+                <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 p-3 rounded-lg">
+                  <AlertTriangle className="h-4 w-4" />
+                  Please enter valid bank account details. BSB format: 000-000, Account: 6-10 digits.
+                </div>
+              )}
+              {bankAccountValid && (
+                <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 p-3 rounded-lg">
+                  <CheckCircle className="h-4 w-4" />
+                  Bank account details look good!
                 </div>
               )}
             </div>

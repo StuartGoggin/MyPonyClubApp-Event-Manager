@@ -201,6 +201,34 @@ export function generateBookingReceivedText(booking: EquipmentBooking): string {
 }
 
 /**
+ * Generate booking approval email HTML (alias for confirmation)
+ * Sent when booking is APPROVED by zone manager
+ * @param booking The equipment booking
+ * @param handover Optional handover details (if not provided, limited details shown)
+ */
+export function generateBookingApprovalHTML(booking: EquipmentBooking, handover?: HandoverDetails): string {
+  // Approval email uses same template as confirmation with text replacements
+  return generateBookingConfirmationHTML(booking, handover)
+    .replace(/Equipment Booking Confirmed/g, 'Equipment Booking Approved')
+    .replace(/booking has been confirmed/g, 'booking has been approved')
+    .replace(/has been confirmed/g, 'has been approved');
+}
+
+/**
+ * Generate booking approval email plain text (alias for confirmation)
+ * Sent when booking is APPROVED by zone manager
+ * @param booking The equipment booking
+ * @param handover Optional handover details (if not provided, limited details shown)
+ */
+export function generateBookingApprovalText(booking: EquipmentBooking, handover?: HandoverDetails): string {
+  // Approval email uses same template as confirmation with text replacements
+  return generateBookingConfirmationText(booking, handover)
+    .replace(/EQUIPMENT BOOKING CONFIRMED/g, 'EQUIPMENT BOOKING APPROVED')
+    .replace(/equipment booking has been confirmed/g, 'equipment booking has been approved')
+    .replace(/has been confirmed/g, 'has been approved');
+}
+
+/**
  * Generate booking confirmation email HTML
  * Includes detailed pickup and return handover information
  * Sent when booking is APPROVED
@@ -776,23 +804,26 @@ function bookingJsonAttachment(booking: EquipmentBooking) {
  */
 export async function queueAllBookingNotifications(
   booking: EquipmentBooking,
-  status: 'received' | 'confirmed'
+  status: 'received' | 'confirmed' | 'approved'
 ): Promise<{ ids: string[] }> {
+  const isApproved = status === 'approved';
   const isConfirmed = status === 'confirmed';
+  const needsHandover = isApproved || isConfirmed;
   
-  // Compute handover details dynamically for confirmed bookings
-  const handover = isConfirmed ? await computeHandoverDetails(booking) : undefined;
+  // Compute handover details dynamically for approved/confirmed bookings
+  const handover = needsHandover ? await computeHandoverDetails(booking) : undefined;
   
-  const htmlContent = isConfirmed ? generateBookingConfirmationHTML(booking, handover) : generateBookingReceivedHTML(booking);
-  const textContent = isConfirmed ? generateBookingConfirmationText(booking, handover) : generateBookingReceivedText(booking);
+  const htmlContent = needsHandover ? generateBookingApprovalHTML(booking, handover) : generateBookingReceivedHTML(booking);
+  const textContent = needsHandover ? generateBookingApprovalText(booking, handover) : generateBookingReceivedText(booking);
 
-  const subjectBase = isConfirmed ? 'Equipment Booking Confirmed' : 'Equipment Booking Request Received';
+  const subjectBase = isApproved ? 'Equipment Booking Approved' : isConfirmed ? 'Equipment Booking Confirmed' : 'Equipment Booking Request Received';
   const subject = `${subjectBase} - ${booking.equipmentName} - Ref: ${booking.bookingReference}`;
+  const emailType = isApproved ? 'Equipment-Approved' : isConfirmed ? 'Equipment-Request' : 'Equipment-Request';
   const metadata = {
     bookingId: booking.id,
     equipmentId: booking.equipmentId,
     bookingReference: booking.bookingReference,
-    emailType: isConfirmed ? 'booking_confirmed' : 'booking_received',
+    emailType, // Use consistent type value from above
   };
 
   const ids: string[] = [];
@@ -804,7 +835,7 @@ export async function queueAllBookingNotifications(
     subject,
     htmlContent,
     textContent,
-    type: 'Equipment-Request',
+    type: emailType,
     status: 'pending',
     priority: 'normal',
     metadata: { ...metadata, roleTarget: 'booker' }
@@ -818,7 +849,7 @@ export async function queueAllBookingNotifications(
       subject,
       htmlContent,
       textContent,
-      type: 'Equipment-Request',
+      type: emailType,
       status: 'pending',
       priority: 'normal',
       metadata: { ...metadata, roleTarget: 'zone_manager' }
@@ -833,7 +864,7 @@ export async function queueAllBookingNotifications(
       subject,
       htmlContent,
       textContent,
-      type: 'Equipment-Request',
+      type: emailType,
       status: 'pending',
       priority: 'high',
       attachments: bookingJsonAttachment(booking),

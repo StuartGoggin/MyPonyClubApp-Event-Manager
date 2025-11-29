@@ -90,29 +90,18 @@ export async function POST(
     console.log('Booking updated successfully, fetching updated booking...');
     
     const updated = await getBooking(id);
-    
-    // Check if auto-email is enabled for this zone
+    console.log('Updated booking fetched:', updated?.bookingReference);
+
+    // Send approval notification email with handover details
     if (updated) {
       try {
-        const automationDoc = await adminDb
-          .collection('equipment_automation_settings')
-          .doc(booking.zoneId)
-          .get();
-        
-        const automationSettings = automationDoc.exists ? automationDoc.data() : {};
-        const autoEmailEnabled = automationSettings?.autoEmail?.enabled || false;
-        
-        if (autoEmailEnabled) {
-          await queueAllBookingNotifications(updated, 'confirmed');
-          console.log('Confirmation emails queued for booking:', id);
-        }
+        await queueAllBookingNotifications(updated, 'approved');
+        console.log('✅ Approval emails queued for booking:', id);
       } catch (emailError) {
-        console.error('Error checking auto-email settings or queueing email:', emailError);
+        console.error('Error queueing approval emails:', emailError);
         // Don't fail the approval if email queueing fails
       }
     }
-    
-    console.log('Updated booking fetched:', updated?.bookingReference);
 
     return NextResponse.json({
       success: true,

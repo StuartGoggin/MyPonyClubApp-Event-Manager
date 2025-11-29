@@ -46,15 +46,24 @@ export async function GET(
     const equipmentBookingsSnapshot = await adminDb
       .collection('equipment_bookings')
       .where('equipmentId', '==', currentBooking.equipmentId)
-      .where('status', 'in', ['confirmed', 'approved', 'picked_up', 'in_use'])
+      .where('status', 'in', ['pending', 'confirmed', 'approved', 'picked_up', 'in_use'])
       .get();
+
+    console.log(`[Handover Chain] Found ${equipmentBookingsSnapshot.size} bookings for equipment ${currentBooking.equipmentId}`);
 
     const allBookings: EquipmentBooking[] = [];
     equipmentBookingsSnapshot.forEach((doc: any) => {
-      allBookings.push({
+      const booking = {
         id: doc.id,
         ...doc.data(),
-      } as EquipmentBooking);
+      } as EquipmentBooking;
+      // Exclude cancelled bookings from handover chain
+      if (booking.status !== 'cancelled') {
+        console.log(`[Handover Chain] Including booking ${booking.id} (${booking.equipmentName}) - status: ${booking.status}`);
+        allBookings.push(booking);
+      } else {
+        console.log(`[Handover Chain] Excluding cancelled booking ${booking.id} (${booking.equipmentName})`);
+      }
     });
 
     // Sort bookings by pickup date

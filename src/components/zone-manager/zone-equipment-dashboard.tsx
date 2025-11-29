@@ -651,7 +651,11 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
       }
     } catch (error) {
       // If endpoint doesn't exist yet, construct locally
-      const equipmentBookings = bookings.filter(b => b.equipmentId === booking.equipmentId);
+      const equipmentBookings = bookings.filter(b => 
+        b.equipmentId === booking.equipmentId && 
+        b.status !== 'cancelled' &&
+        ['confirmed', 'approved', 'picked_up', 'in_use', 'pending'].includes(b.status)
+      );
       const sortedBookings = equipmentBookings.sort((a, b) => 
         new Date(a.pickupDate).getTime() - new Date(b.pickupDate).getTime()
       );
@@ -975,6 +979,10 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
                 <div class="card pickup">
                   <div class="info-group">
                     <div class="info-row">
+                      <span class="label">Equipment:</span>
+                      <span class="value">${handoverChain.previous.equipmentName}</span>
+                    </div>
+                    <div class="info-row">
                       <span class="label">Club:</span>
                       <span class="value">${handoverChain.previous.clubName}</span>
                     </div>
@@ -1081,6 +1089,10 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
               <div class="card current">
                 <div class="info-group">
                   <div class="info-row">
+                    <span class="label">Equipment:</span>
+                    <span class="value">${handoverChain.current.equipmentName}</span>
+                  </div>
+                  <div class="info-row">
                     <span class="label">Club:</span>
                     <span class="value">${handoverChain.current.clubName}</span>
                   </div>
@@ -1140,6 +1152,10 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
               ${handoverChain.next ? `
                 <div class="card dropoff">
                   <div class="info-group">
+                    <div class="info-row">
+                      <span class="label">Equipment:</span>
+                      <span class="value">${handoverChain.next.equipmentName}</span>
+                    </div>
                     <div class="info-row">
                       <span class="label">Club:</span>
                       <span class="value">${handoverChain.next.clubName}</span>
@@ -1362,6 +1378,10 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
                           <td style="padding: 20px;">
                             <table width="100%" cellpadding="4" cellspacing="0">
                               <tr>
+                                <td style="font-weight: 600; color: #475569; width: 120px;">Equipment:</td>
+                                <td style="color: #0f172a;">${handoverChain.previous.equipmentName}</td>
+                              </tr>
+                              <tr>
                                 <td style="font-weight: 600; color: #475569; width: 120px;">Club:</td>
                                 <td style="color: #0f172a;">${handoverChain.previous.clubName}</td>
                               </tr>
@@ -1456,6 +1476,10 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
                         <td style="padding: 20px;">
                           <table width="100%" cellpadding="4" cellspacing="0">
                             <tr>
+                              <td style="font-weight: 600; color: #475569; width: 120px;">Equipment:</td>
+                              <td style="color: #0f172a;">${handoverChain.current.equipmentName}</td>
+                            </tr>
+                            <tr>
                               <td style="font-weight: 600; color: #475569; width: 120px;">Club:</td>
                               <td style="color: #0f172a;">${handoverChain.current.clubName}</td>
                             </tr>
@@ -1544,6 +1568,10 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
                         <tr>
                           <td style="padding: 20px;">
                             <table width="100%" cellpadding="4" cellspacing="0">
+                              <tr>
+                                <td style="font-weight: 600; color: #475569; width: 120px;">Equipment:</td>
+                                <td style="color: #0f172a;">${handoverChain.next.equipmentName}</td>
+                              </tr>
                               <tr>
                                 <td style="font-weight: 600; color: #475569; width: 120px;">Club:</td>
                                 <td style="color: #0f172a;">${handoverChain.next.clubName}</td>
@@ -2161,6 +2189,7 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
                             <div className="flex-1">
                               <p className="text-xs font-bold text-blue-600 uppercase tracking-wider">Pickup From</p>
                               <p className="font-bold text-lg">{handoverChain.previous.clubName}</p>
+                              <p className="text-xs text-muted-foreground mt-0.5">{handoverChain.previous.equipmentName}</p>
                             </div>
                           </div>
                           <Card className="ml-16 border-blue-300 bg-gradient-to-br from-blue-50 to-blue-100/50 shadow-md">
@@ -2251,6 +2280,7 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
                           <div className="flex-1">
                             <p className="text-xs font-bold text-green-600 uppercase tracking-wider">Your Booking</p>
                             <p className="font-bold text-lg">{handoverChain.current.clubName}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">{handoverChain.current.equipmentName}</p>
                           </div>
                         </div>
                         <Card className="ml-16 border-green-400 bg-gradient-to-br from-green-50 to-emerald-100/50 ring-2 ring-green-400 shadow-lg">
@@ -2296,6 +2326,7 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
                             <div className="flex-1">
                               <p className="text-xs font-bold text-purple-600 uppercase tracking-wider">Drop-off To</p>
                               <p className="font-bold text-lg">{handoverChain.next.clubName}</p>
+                              <p className="text-xs text-muted-foreground mt-0.5">{handoverChain.next.equipmentName}</p>
                             </div>
                           </div>
                           <Card className="ml-16 border-purple-300 bg-gradient-to-br from-purple-50 to-purple-100/50 shadow-md">
@@ -2855,31 +2886,7 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
                     </div>
                   )}
 
-                  {selectedBooking.handover && (
-                    <Card className="bg-blue-50 border-blue-200">
-                      <CardHeader>
-                        <CardTitle className="text-sm">Handover Information</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-2 text-sm">
-                        {selectedBooking.handover.pickup.pickupMethod === 'collect_from_previous' && (
-                          <div>
-                            <p className="font-medium">Pickup from Previous Booking:</p>
-                            <p className="text-muted-foreground">
-                              {selectedBooking.handover.pickup.previousCustodian?.eventName || 'Previous event'}
-                            </p>
-                          </div>
-                        )}
-                        {selectedBooking.handover.return.returnMethod === 'handover_to_next' && (
-                          <div>
-                            <p className="font-medium">Handover to Next Booking:</p>
-                            <p className="text-muted-foreground">
-                              {selectedBooking.handover.return.nextCustodian?.eventName}
-                            </p>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  )}
+                  {/* Note: Handover details are computed dynamically via handover-chain API */}
                 </>
               ) : (
                 <>

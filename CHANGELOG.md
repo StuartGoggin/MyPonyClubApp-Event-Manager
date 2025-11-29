@@ -2,6 +2,35 @@
 
 All notable changes to the MyPonyClubApp Event Manager will be documented in this file.
 
+## [November 29, 2025] - Equipment Handover Chain Refactor
+
+### Fixed 🐛
+- **Equipment Handover Data Integrity**: Resolved critical issue where handover chain displayed incorrect equipment
+  - Bug Example: Dressage Trailer booking showed Dressage Arenas (different equipment) in handover details
+  - Root Cause: Handover details stored when booking created, became stale when related bookings cancelled
+  - Solution: Refactored to compute handover details dynamically from current active booking chain
+
+### Changed 🔄
+- **Handover Details Architecture** (Breaking Change for Internal API):
+  - Handover details now computed on-demand instead of stored in database
+  - `EquipmentBooking.handover` field now optional (legacy field, not used for new bookings)
+  - Email notifications compute handover details dynamically before sending
+  - Handover chain API already computed dynamically - no changes needed
+  - Automatic chain updates: when bookings cancelled/changed, chain reflects current state instantly
+
+### Technical Improvements 🔧
+- Added `computeHandoverDetails()` function for dynamic handover computation
+- Deprecated `refreshHandoverDetails()` to no-op (no longer needed with dynamic computation)
+- Updated email template functions to accept handover as optional parameter
+- Removed handover storage from booking creation workflow
+- Existing bookings with stored handover field unaffected - system uses dynamic computation
+
+### Benefits
+- **Data Integrity**: Handover chain always accurate, never shows stale data
+- **Automatic Updates**: No manual refresh needed when bookings change
+- **Simpler Code**: Eliminated complex refresh logic and cascade updates
+- **Performance**: No unnecessary database writes for handover updates
+
 ## [September 13, 2025] - Enhanced User Import System with Preview & Progress Tracking
 
 ### Added ✨

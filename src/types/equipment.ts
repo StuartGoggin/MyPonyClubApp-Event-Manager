@@ -322,7 +322,11 @@ export interface EquipmentBooking {
   payments: Payment[];
   
   // Handover management
-  handover: HandoverDetails;
+  // NOTE: Handover details are NEVER stored in database
+  // They are computed dynamically via computeHandoverDetails() when needed
+  // This field exists only for backward compatibility with old code
+  // DO NOT write to this field - it will be ignored
+  handover?: HandoverDetails;
   
   // Notes & special requirements
   specialRequirements?: string;

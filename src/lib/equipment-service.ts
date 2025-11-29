@@ -202,7 +202,11 @@ export async function checkAvailability(
     const snapshot = await query.get();
     const bookings = snapshot.docs
       .map((doc: any) => ({ id: doc.id, ...doc.data() }) as EquipmentBooking)
-      .filter((booking: any) => booking.id !== excludeBookingId);
+      .filter((booking: any) => {
+        // Exclude cancelled bookings and the current booking if specified
+        if (booking.status === 'cancelled') return false;
+        return booking.id !== excludeBookingId;
+      });
 
     // Check for overlapping bookings
     const conflictingBookings = bookings.filter((booking: any) => {
@@ -293,6 +297,8 @@ async function findBookingEndingBefore(
     const bookings = snapshot.docs
       .map((doc: any) => ({ id: doc.id, ...doc.data() }) as EquipmentBooking)
       .filter((b: EquipmentBooking) => {
+        // Exclude cancelled bookings from handover chain
+        if (b.status === 'cancelled') return false;
         const returnDate = new Date(b.returnDate);
         const hoursDiff = Math.abs(differenceInDays(returnDate, date));
         return isBefore(returnDate, date) && hoursDiff <= 1;
@@ -326,6 +332,8 @@ async function findBookingStartingAfter(
     const bookings = snapshot.docs
       .map((doc: any) => ({ id: doc.id, ...doc.data() }) as EquipmentBooking)
       .filter((b: EquipmentBooking) => {
+        // Exclude cancelled bookings from handover chain
+        if (b.status === 'cancelled') return false;
         const pickupDate = new Date(b.pickupDate);
         const hoursDiff = Math.abs(differenceInDays(pickupDate, date));
         return isAfter(pickupDate, date) && hoursDiff <= 1;
@@ -505,14 +513,7 @@ export async function createBooking(
       durationDays
     );
 
-    // Create handover details
-    const handover = await createHandoverDetails(
-      request.equipmentId,
-      equipment.zoneId,
-      request.pickupDate,
-      request.returnDate,
-      request.useLocation
-    );
+    // Note: Handover details are now computed dynamically, not stored
 
     const newBooking: Omit<EquipmentBooking, 'id'> = {
       bookingReference: generateBookingReference(),
@@ -531,8 +532,8 @@ export async function createBooking(
       durationDays,
       custodian: request.custodian,
       backupContact: request.backupContact,
-      pickupLocation: handover.pickup.location,
-      returnLocation: handover.return.location,
+      pickupLocation: { address: '', coordinates: { latitude: 0, longitude: 0 }, contactName: '', contactPhone: '', contactEmail: '' },
+      returnLocation: { address: '', coordinates: { latitude: 0, longitude: 0 }, contactName: '', contactPhone: '', contactEmail: '' },
       useLocation: {
         latitude: request.useLocation.coordinates.latitude,
         longitude: request.useLocation.coordinates.longitude,
@@ -545,7 +546,6 @@ export async function createBooking(
       pricing,
       paymentStatus: 'unpaid',
       payments: [],
-      handover,
       specialRequirements: request.specialRequirements,
       clubNotes: request.clubNotes,
       createdAt: new Date(),
@@ -679,6 +679,36 @@ export async function deleteBooking(bookingId: string): Promise<void> {
 }
 
 /**
+ * Compute handover details dynamically for a booking
+ * This replaces the old stored handover details
+ */
+export async function computeHandoverDetails(booking: EquipmentBooking): Promise<HandoverDetails> {
+  return createHandoverDetails(
+    booking.equipmentId,
+    booking.zoneId,
+    new Date(booking.pickupDate),
+    new Date(booking.returnDate),
+    {
+      address: booking.useLocation.address,
+      coordinates: {
+        latitude: booking.useLocation.latitude,
+        longitude: booking.useLocation.longitude
+      }
+    }
+  );
+}
+
+/**
+ * Refresh handover details for a booking
+ * NOTE: Handover details are now computed dynamically, so this function is deprecated
+ * Kept for backward compatibility but does nothing
+ */
+export async function refreshHandoverDetails(bookingId: string): Promise<void> {
+  // No-op: handover details are now computed dynamically
+  console.log(`ℹ️ refreshHandoverDetails called for ${bookingId} - handover is now computed dynamically`);
+}
+
+/**
  * Get booking chain for equipment
  */
 export async function getBookingChain(
@@ -696,6 +726,8 @@ export async function getBookingChain(
     const bookings = snapshot.docs
       .map((doc: any) => ({ id: doc.id, ...doc.data() }) as EquipmentBooking)
       .filter((b: EquipmentBooking) => {
+        // Exclude cancelled bookings from booking chain
+        if (b.status === 'cancelled') return false;
         const bStart = new Date(b.pickupDate);
         const bEnd = new Date(b.returnDate);
         return (

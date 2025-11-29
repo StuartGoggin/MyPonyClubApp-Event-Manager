@@ -5,10 +5,11 @@
  * handover coordination, and location changes. Uses the existing email queue system.
  */
 
-import { EquipmentBooking } from '@/types/equipment';
+import { EquipmentBooking, HandoverDetails } from '@/types/equipment';
 import { format } from 'date-fns';
 import { addEmailToQueue } from '@/lib/email-queue-admin';
 import { adminDb } from '@/lib/firebase-admin';
+import { computeHandoverDetails } from '@/lib/equipment-service';
 
 // =======================================================================
 // EMAIL TEMPLATE GENERATION FUNCTIONS
@@ -203,12 +204,14 @@ export function generateBookingReceivedText(booking: EquipmentBooking): string {
  * Generate booking confirmation email HTML
  * Includes detailed pickup and return handover information
  * Sent when booking is APPROVED
+ * @param booking The equipment booking
+ * @param handover Optional handover details (if not provided, limited details shown)
  */
-export function generateBookingConfirmationHTML(booking: EquipmentBooking): string {
+export function generateBookingConfirmationHTML(booking: EquipmentBooking, handover?: HandoverDetails): string {
   const pickupDate = format(new Date(booking.pickupDate), 'EEEE, MMMM d, yyyy');
   const returnDate = format(new Date(booking.returnDate), 'EEEE, MMMM d, yyyy');
-  const pickupTime = booking.handover.pickup.scheduledTime || '10:00 AM - 12:00 PM';
-  const returnTime = booking.handover.return.scheduledTime || '10:00 AM - 12:00 PM';
+  const pickupTime = handover?.pickup.scheduledTime || '10:00 AM - 12:00 PM';
+  const returnTime = handover?.return.scheduledTime || '10:00 AM - 12:00 PM';
 
   return `
 <!DOCTYPE html>
@@ -269,7 +272,7 @@ export function generateBookingConfirmationHTML(booking: EquipmentBooking): stri
         <div style="background: #e8f5e9; border: 2px solid #28a745; border-radius: 8px; padding: 20px; margin-top: 15px;">
           <p style="margin: 0 0 10px 0; font-size: 16px;"><strong>📅 When:</strong> ${pickupDate} at ${pickupTime}</p>
           
-          ${booking.handover.pickup.previousCustodian ? `
+          ${handover?.pickup.previousCustodian ? `
             <!-- Collect from Previous User -->
             <div style="background: white; border-radius: 5px; padding: 15px; margin-top: 15px;">
               <h3 style="color: #28a745; margin: 0 0 15px 0; font-size: 18px;">👤 Collect from Previous User</h3>
@@ -277,28 +280,28 @@ export function generateBookingConfirmationHTML(booking: EquipmentBooking): stri
               <table style="width: 100%; border-collapse: collapse;">
                 <tr>
                   <td style="padding: 6px 0; font-weight: 600; width: 120px;">Contact:</td>
-                  <td style="padding: 6px 0;">${booking.handover.pickup.previousCustodian.name}</td>
+                  <td style="padding: 6px 0;">${handover?.pickup.previousCustodian.name}</td>
                 </tr>
                 <tr>
                   <td style="padding: 6px 0; font-weight: 600;">Club:</td>
-                  <td style="padding: 6px 0;">${booking.handover.pickup.previousCustodian.clubName}</td>
+                  <td style="padding: 6px 0;">${handover?.pickup.previousCustodian.clubName}</td>
                 </tr>
                 <tr>
                   <td style="padding: 6px 0; font-weight: 600;">Phone:</td>
-                  <td style="padding: 6px 0;"><a href="tel:${booking.handover.pickup.previousCustodian.phone}" style="color: #667eea; text-decoration: none;">${booking.handover.pickup.previousCustodian.phone}</a></td>
+                  <td style="padding: 6px 0;"><a href="tel:${handover?.pickup.previousCustodian.phone}" style="color: #667eea; text-decoration: none;">${handover?.pickup.previousCustodian.phone}</a></td>
                 </tr>
                 <tr>
                   <td style="padding: 6px 0; font-weight: 600;">Email:</td>
-                  <td style="padding: 6px 0;"><a href="mailto:${booking.handover.pickup.previousCustodian.email}" style="color: #667eea; text-decoration: none;">${booking.handover.pickup.previousCustodian.email}</a></td>
+                  <td style="padding: 6px 0;"><a href="mailto:${handover?.pickup.previousCustodian.email}" style="color: #667eea; text-decoration: none;">${handover?.pickup.previousCustodian.email}</a></td>
                 </tr>
-                ${booking.handover.pickup.previousCustodian.eventName ? `
+                ${handover?.pickup.previousCustodian.eventName ? `
                 <tr>
                   <td style="padding: 6px 0; font-weight: 600;">Their Event:</td>
-                  <td style="padding: 6px 0;">${booking.handover.pickup.previousCustodian.eventName}</td>
+                  <td style="padding: 6px 0;">${handover?.pickup.previousCustodian.eventName}</td>
                 </tr>
                 <tr>
                   <td style="padding: 6px 0; font-weight: 600;">Event Ends:</td>
-                  <td style="padding: 6px 0;">${format(new Date(booking.handover.pickup.previousCustodian.scheduledDate!), 'EEEE, MMMM d, yyyy')}</td>
+                  <td style="padding: 6px 0;">${format(new Date(handover?.pickup.previousCustodian.scheduledDate!), 'EEEE, MMMM d, yyyy')}</td>
                 </tr>
                 ` : ''}
               </table>
@@ -306,15 +309,15 @@ export function generateBookingConfirmationHTML(booking: EquipmentBooking): stri
               <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 12px; margin-top: 15px; border-radius: 3px;">
                 <p style="margin: 0; font-size: 14px; color: #856404;">
                   <strong>📍 Pickup Address:</strong><br>
-                  ${booking.handover.pickup.location.address}
+                  ${handover?.pickup.location.address}
                 </p>
               </div>
 
-              ${booking.handover.pickup.location.notes ? `
+              ${handover?.pickup.location.notes ? `
               <div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 12px; margin-top: 10px; border-radius: 3px;">
                 <p style="margin: 0; font-size: 14px; color: #0d47a1;">
                   <strong>📝 Notes:</strong><br>
-                  ${booking.handover.pickup.location.notes}
+                  ${handover?.pickup.location.notes}
                 </p>
               </div>
               ` : ''}
@@ -327,30 +330,30 @@ export function generateBookingConfirmationHTML(booking: EquipmentBooking): stri
               <table style="width: 100%; border-collapse: collapse;">
                 <tr>
                   <td style="padding: 6px 0; font-weight: 600; width: 120px;">Contact:</td>
-                  <td style="padding: 6px 0;">${booking.handover.pickup.location.contactName}</td>
+                  <td style="padding: 6px 0;">${handover?.pickup.location.contactName}</td>
                 </tr>
                 <tr>
                   <td style="padding: 6px 0; font-weight: 600;">Phone:</td>
-                  <td style="padding: 6px 0;"><a href="tel:${booking.handover.pickup.location.contactPhone}" style="color: #667eea; text-decoration: none;">${booking.handover.pickup.location.contactPhone}</a></td>
+                  <td style="padding: 6px 0;"><a href="tel:${handover?.pickup.location.contactPhone}" style="color: #667eea; text-decoration: none;">${handover?.pickup.location.contactPhone}</a></td>
                 </tr>
                 <tr>
                   <td style="padding: 6px 0; font-weight: 600;">Email:</td>
-                  <td style="padding: 6px 0;"><a href="mailto:${booking.handover.pickup.location.contactEmail}" style="color: #667eea; text-decoration: none;">${booking.handover.pickup.location.contactEmail}</a></td>
+                  <td style="padding: 6px 0;"><a href="mailto:${handover?.pickup.location.contactEmail}" style="color: #667eea; text-decoration: none;">${handover?.pickup.location.contactEmail}</a></td>
                 </tr>
               </table>
 
               <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 12px; margin-top: 15px; border-radius: 3px;">
                 <p style="margin: 0; font-size: 14px; color: #856404;">
                   <strong>📍 Storage Address:</strong><br>
-                  ${booking.handover.pickup.location.address}
+                  ${handover?.pickup.location.address}
                 </p>
               </div>
 
-              ${booking.handover.pickup.location.notes ? `
+              ${handover?.pickup.location.notes ? `
               <div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 12px; margin-top: 10px; border-radius: 3px;">
                 <p style="margin: 0; font-size: 14px; color: #0d47a1;">
                   <strong>📝 Access Instructions:</strong><br>
-                  ${booking.handover.pickup.location.notes}
+                  ${handover?.pickup.location.notes}
                 </p>
               </div>
               ` : ''}
@@ -368,7 +371,7 @@ export function generateBookingConfirmationHTML(booking: EquipmentBooking): stri
         <div style="background: #fee; border: 2px solid #dc3545; border-radius: 8px; padding: 20px; margin-top: 15px;">
           <p style="margin: 0 0 10px 0; font-size: 16px;"><strong>📅 When:</strong> ${returnDate} at ${returnTime}</p>
           
-          ${booking.handover.return.nextCustodian ? `
+          ${handover?.return.nextCustodian ? `
             <!-- Handover to Next User -->
             <div style="background: white; border-radius: 5px; padding: 15px; margin-top: 15px;">
               <h3 style="color: #dc3545; margin: 0 0 15px 0; font-size: 18px;">👤 Handover to Next User</h3>
@@ -376,28 +379,28 @@ export function generateBookingConfirmationHTML(booking: EquipmentBooking): stri
               <table style="width: 100%; border-collapse: collapse;">
                 <tr>
                   <td style="padding: 6px 0; font-weight: 600; width: 120px;">Contact:</td>
-                  <td style="padding: 6px 0;">${booking.handover.return.nextCustodian.name}</td>
+                  <td style="padding: 6px 0;">${handover?.return.nextCustodian.name}</td>
                 </tr>
                 <tr>
                   <td style="padding: 6px 0; font-weight: 600;">Club:</td>
-                  <td style="padding: 6px 0;">${booking.handover.return.nextCustodian.clubName}</td>
+                  <td style="padding: 6px 0;">${handover?.return.nextCustodian.clubName}</td>
                 </tr>
                 <tr>
                   <td style="padding: 6px 0; font-weight: 600;">Phone:</td>
-                  <td style="padding: 6px 0;"><a href="tel:${booking.handover.return.nextCustodian.phone}" style="color: #667eea; text-decoration: none;">${booking.handover.return.nextCustodian.phone}</a></td>
+                  <td style="padding: 6px 0;"><a href="tel:${handover?.return.nextCustodian.phone}" style="color: #667eea; text-decoration: none;">${handover?.return.nextCustodian.phone}</a></td>
                 </tr>
                 <tr>
                   <td style="padding: 6px 0; font-weight: 600;">Email:</td>
-                  <td style="padding: 6px 0;"><a href="mailto:${booking.handover.return.nextCustodian.email}" style="color: #667eea; text-decoration: none;">${booking.handover.return.nextCustodian.email}</a></td>
+                  <td style="padding: 6px 0;"><a href="mailto:${handover?.return.nextCustodian.email}" style="color: #667eea; text-decoration: none;">${handover?.return.nextCustodian.email}</a></td>
                 </tr>
-                ${booking.handover.return.nextCustodian.eventName ? `
+                ${handover?.return.nextCustodian.eventName ? `
                 <tr>
                   <td style="padding: 6px 0; font-weight: 600;">Their Event:</td>
-                  <td style="padding: 6px 0;">${booking.handover.return.nextCustodian.eventName}</td>
+                  <td style="padding: 6px 0;">${handover?.return.nextCustodian.eventName}</td>
                 </tr>
                 <tr>
                   <td style="padding: 6px 0; font-weight: 600;">Starts:</td>
-                  <td style="padding: 6px 0;">${format(new Date(booking.handover.return.nextCustodian.scheduledDate!), 'EEEE, MMMM d, yyyy')}</td>
+                  <td style="padding: 6px 0;">${format(new Date(handover?.return.nextCustodian.scheduledDate!), 'EEEE, MMMM d, yyyy')}</td>
                 </tr>
                 ` : ''}
               </table>
@@ -405,13 +408,13 @@ export function generateBookingConfirmationHTML(booking: EquipmentBooking): stri
               <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 12px; margin-top: 15px; border-radius: 3px;">
                 <p style="margin: 0; font-size: 14px; color: #856404;">
                   <strong>📍 Handover Address:</strong><br>
-                  ${booking.handover.return.location.address}
+                  ${handover?.return.location.address}
                 </p>
               </div>
 
               <div style="background: #fff4e6; border: 2px solid #ff9800; padding: 12px; margin-top: 10px; border-radius: 3px;">
                 <p style="margin: 0; font-size: 14px; color: #e65100;">
-                  <strong>⚠️ IMPORTANT:</strong> Please coordinate handover time with ${booking.handover.return.nextCustodian.name} before their event starts.
+                  <strong>⚠️ IMPORTANT:</strong> Please coordinate handover time with ${handover?.return.nextCustodian.name} before their event starts.
                 </p>
               </div>
             </div>
@@ -423,22 +426,22 @@ export function generateBookingConfirmationHTML(booking: EquipmentBooking): stri
               <table style="width: 100%; border-collapse: collapse;">
                 <tr>
                   <td style="padding: 6px 0; font-weight: 600; width: 120px;">Contact:</td>
-                  <td style="padding: 6px 0;">${booking.handover.return.location.contactName}</td>
+                  <td style="padding: 6px 0;">${handover?.return.location.contactName}</td>
                 </tr>
                 <tr>
                   <td style="padding: 6px 0; font-weight: 600;">Phone:</td>
-                  <td style="padding: 6px 0;"><a href="tel:${booking.handover.return.location.contactPhone}" style="color: #667eea; text-decoration: none;">${booking.handover.return.location.contactPhone}</a></td>
+                  <td style="padding: 6px 0;"><a href="tel:${handover?.return.location.contactPhone}" style="color: #667eea; text-decoration: none;">${handover?.return.location.contactPhone}</a></td>
                 </tr>
                 <tr>
                   <td style="padding: 6px 0; font-weight: 600;">Email:</td>
-                  <td style="padding: 6px 0;"><a href="mailto:${booking.handover.return.location.contactEmail}" style="color: #667eea; text-decoration: none;">${booking.handover.return.location.contactEmail}</a></td>
+                  <td style="padding: 6px 0;"><a href="mailto:${handover?.return.location.contactEmail}" style="color: #667eea; text-decoration: none;">${handover?.return.location.contactEmail}</a></td>
                 </tr>
               </table>
 
               <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 12px; margin-top: 15px; border-radius: 3px;">
                 <p style="margin: 0; font-size: 14px; color: #856404;">
                   <strong>📍 Return Address:</strong><br>
-                  ${booking.handover.return.location.address}
+                  ${handover?.return.location.address}
                 </p>
               </div>
             </div>
@@ -500,8 +503,8 @@ export function generateBookingConfirmationHTML(booking: EquipmentBooking): stri
           <ul style="margin: 5px 0; padding-left: 20px;">
             <li style="margin: 5px 0;">Clean equipment thoroughly</li>
             <li style="margin: 5px 0;">Check for any damage</li>
-            ${booking.handover.return.nextCustodian ? `
-            <li style="margin: 5px 0;">Coordinate timing with next user (${booking.handover.return.nextCustodian.name})</li>
+            ${handover?.return.nextCustodian ? `
+            <li style="margin: 5px 0;">Coordinate timing with next user (${handover?.return.nextCustodian.name})</li>
             ` : ''}
             <li style="margin: 5px 0;">Return all items</li>
           </ul>
@@ -539,12 +542,14 @@ export function generateBookingConfirmationHTML(booking: EquipmentBooking): stri
 /**
  * Generate booking confirmation email plain text version
  * Sent when booking is APPROVED
+ * @param booking The equipment booking
+ * @param handover Optional handover details (if not provided, limited details shown)
  */
-export function generateBookingConfirmationText(booking: EquipmentBooking): string {
+export function generateBookingConfirmationText(booking: EquipmentBooking, handover?: HandoverDetails): string {
   const pickupDate = format(new Date(booking.pickupDate), 'EEEE, MMMM d, yyyy');
   const returnDate = format(new Date(booking.returnDate), 'EEEE, MMMM d, yyyy');
-  const pickupTime = booking.handover.pickup.scheduledTime || '10:00 AM - 12:00 PM';
-  const returnTime = booking.handover.return.scheduledTime || '10:00 AM - 12:00 PM';
+  const pickupTime = handover?.pickup.scheduledTime || '10:00 AM - 12:00 PM';
+  const returnTime = handover?.return.scheduledTime || '10:00 AM - 12:00 PM';
 
   let text = `EQUIPMENT BOOKING CONFIRMED\n`;
   text += `Reference: ${booking.bookingReference}\n\n`;
@@ -564,28 +569,28 @@ export function generateBookingConfirmationText(booking: EquipmentBooking): stri
   text += `🚚 PICKUP INFORMATION\n\n`;
   text += `📅 When: ${pickupDate} at ${pickupTime}\n\n`;
   
-  if (booking.handover.pickup.previousCustodian) {
+  if (handover?.pickup.previousCustodian) {
     text += `👤 Collect from Previous User:\n\n`;
-    text += `Contact: ${booking.handover.pickup.previousCustodian.name}\n`;
-    text += `Club: ${booking.handover.pickup.previousCustodian.clubName}\n`;
-    text += `Phone: ${booking.handover.pickup.previousCustodian.phone}\n`;
-    text += `Email: ${booking.handover.pickup.previousCustodian.email}\n`;
-    if (booking.handover.pickup.previousCustodian.eventName) {
-      text += `Their Event: ${booking.handover.pickup.previousCustodian.eventName}\n`;
-      text += `Event Ends: ${format(new Date(booking.handover.pickup.previousCustodian.scheduledDate!), 'EEEE, MMMM d, yyyy')}\n`;
+    text += `Contact: ${handover?.pickup.previousCustodian.name}\n`;
+    text += `Club: ${handover?.pickup.previousCustodian.clubName}\n`;
+    text += `Phone: ${handover?.pickup.previousCustodian.phone}\n`;
+    text += `Email: ${handover?.pickup.previousCustodian.email}\n`;
+    if (handover?.pickup.previousCustodian.eventName) {
+      text += `Their Event: ${handover?.pickup.previousCustodian.eventName}\n`;
+      text += `Event Ends: ${format(new Date(handover?.pickup.previousCustodian.scheduledDate!), 'EEEE, MMMM d, yyyy')}\n`;
     }
-    text += `\n📍 Pickup Address:\n${booking.handover.pickup.location.address}\n`;
-    if (booking.handover.pickup.location.notes) {
-      text += `\n📝 Notes: ${booking.handover.pickup.location.notes}\n`;
+    text += `\n📍 Pickup Address:\n${handover?.pickup.location.address}\n`;
+    if (handover?.pickup.location.notes) {
+      text += `\n📝 Notes: ${handover?.pickup.location.notes}\n`;
     }
   } else {
     text += `🏢 Collect from Zone Storage:\n\n`;
-    text += `Contact: ${booking.handover.pickup.location.contactName}\n`;
-    text += `Phone: ${booking.handover.pickup.location.contactPhone}\n`;
-    text += `Email: ${booking.handover.pickup.location.contactEmail}\n`;
-    text += `\n📍 Storage Address:\n${booking.handover.pickup.location.address}\n`;
-    if (booking.handover.pickup.location.notes) {
-      text += `\n📝 Access Instructions: ${booking.handover.pickup.location.notes}\n`;
+    text += `Contact: ${handover?.pickup.location.contactName}\n`;
+    text += `Phone: ${handover?.pickup.location.contactPhone}\n`;
+    text += `Email: ${handover?.pickup.location.contactEmail}\n`;
+    text += `\n📍 Storage Address:\n${handover?.pickup.location.address}\n`;
+    if (handover?.pickup.location.notes) {
+      text += `\n📝 Access Instructions: ${handover?.pickup.location.notes}\n`;
     }
   }
   
@@ -595,24 +600,24 @@ export function generateBookingConfirmationText(booking: EquipmentBooking): stri
   text += `📤 RETURN INFORMATION\n\n`;
   text += `📅 When: ${returnDate} at ${returnTime}\n\n`;
   
-  if (booking.handover.return.nextCustodian) {
+  if (handover?.return.nextCustodian) {
     text += `👤 Handover to Next User:\n\n`;
-    text += `Contact: ${booking.handover.return.nextCustodian.name}\n`;
-    text += `Club: ${booking.handover.return.nextCustodian.clubName}\n`;
-    text += `Phone: ${booking.handover.return.nextCustodian.phone}\n`;
-    text += `Email: ${booking.handover.return.nextCustodian.email}\n`;
-    if (booking.handover.return.nextCustodian.eventName) {
-      text += `Their Event: ${booking.handover.return.nextCustodian.eventName}\n`;
-      text += `Event Starts: ${format(new Date(booking.handover.return.nextCustodian.scheduledDate!), 'EEEE, MMMM d, yyyy')}\n`;
+    text += `Contact: ${handover?.return.nextCustodian.name}\n`;
+    text += `Club: ${handover?.return.nextCustodian.clubName}\n`;
+    text += `Phone: ${handover?.return.nextCustodian.phone}\n`;
+    text += `Email: ${handover?.return.nextCustodian.email}\n`;
+    if (handover?.return.nextCustodian.eventName) {
+      text += `Their Event: ${handover?.return.nextCustodian.eventName}\n`;
+      text += `Event Starts: ${format(new Date(handover?.return.nextCustodian.scheduledDate!), 'EEEE, MMMM d, yyyy')}\n`;
     }
-    text += `\n📍 Handover Address:\n${booking.handover.return.location.address}\n`;
-    text += `\n⚠️  IMPORTANT: Please coordinate handover time with ${booking.handover.return.nextCustodian.name} before their event starts.\n`;
+    text += `\n📍 Handover Address:\n${handover?.return.location.address}\n`;
+    text += `\n⚠️  IMPORTANT: Please coordinate handover time with ${handover?.return.nextCustodian.name} before their event starts.\n`;
   } else {
     text += `🏢 Return to Zone Storage:\n\n`;
-    text += `Contact: ${booking.handover.return.location.contactName}\n`;
-    text += `Phone: ${booking.handover.return.location.contactPhone}\n`;
-    text += `Email: ${booking.handover.return.location.contactEmail}\n`;
-    text += `\n📍 Return Address:\n${booking.handover.return.location.address}\n`;
+    text += `Contact: ${handover?.return.location.contactName}\n`;
+    text += `Phone: ${handover?.return.location.contactPhone}\n`;
+    text += `Email: ${handover?.return.location.contactEmail}\n`;
+    text += `\n📍 Return Address:\n${handover?.return.location.address}\n`;
   }
   
   text += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
@@ -638,8 +643,8 @@ export function generateBookingConfirmationText(booking: EquipmentBooking): stri
   text += `BEFORE RETURN:\n`;
   text += `✓ Clean equipment thoroughly\n`;
   text += `✓ Check for any damage\n`;
-  if (booking.handover.return.nextCustodian) {
-    text += `✓ Coordinate timing with next user (${booking.handover.return.nextCustodian.name})\n`;
+  if (handover?.return.nextCustodian) {
+    text += `✓ Coordinate timing with next user (${handover?.return.nextCustodian.name})\n`;
   }
   text += `✓ Return all items\n\n`;
   
@@ -694,8 +699,11 @@ export async function queueBookingConfirmationEmail(
   booking: EquipmentBooking,
   queue: boolean = true
 ): Promise<string> {
-  const htmlContent = generateBookingConfirmationHTML(booking);
-  const textContent = generateBookingConfirmationText(booking);
+  // Compute handover details dynamically
+  const handover = await computeHandoverDetails(booking);
+  
+  const htmlContent = generateBookingConfirmationHTML(booking, handover);
+  const textContent = generateBookingConfirmationText(booking, handover);
   
   const emailId = await addEmailToQueue({
     to: [booking.custodian.email],
@@ -755,7 +763,8 @@ function bookingJsonAttachment(booking: EquipmentBooking) {
     filename: `booking-${booking.bookingReference}.json`,
     contentType: 'application/json',
     size: Buffer.byteLength(content, 'utf8'),
-    content
+    content,
+    createdAt: new Date()
   }];
 }
 
@@ -770,8 +779,12 @@ export async function queueAllBookingNotifications(
   status: 'received' | 'confirmed'
 ): Promise<{ ids: string[] }> {
   const isConfirmed = status === 'confirmed';
-  const htmlContent = isConfirmed ? generateBookingConfirmationHTML(booking) : generateBookingReceivedHTML(booking);
-  const textContent = isConfirmed ? generateBookingConfirmationText(booking) : generateBookingReceivedText(booking);
+  
+  // Compute handover details dynamically for confirmed bookings
+  const handover = isConfirmed ? await computeHandoverDetails(booking) : undefined;
+  
+  const htmlContent = isConfirmed ? generateBookingConfirmationHTML(booking, handover) : generateBookingReceivedHTML(booking);
+  const textContent = isConfirmed ? generateBookingConfirmationText(booking, handover) : generateBookingReceivedText(booking);
 
   const subjectBase = isConfirmed ? 'Equipment Booking Confirmed' : 'Equipment Booking Request Received';
   const subject = `${subjectBase} - ${booking.equipmentName} - Ref: ${booking.bookingReference}`;

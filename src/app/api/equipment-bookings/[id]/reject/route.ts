@@ -85,6 +85,9 @@ export async function POST(
       rejectionReason: body.rejectionReason,
     });
 
+    // NOTE: Handover details are now computed dynamically, so no need to refresh chain
+    // The handover-chain API will automatically compute the correct chain when requested
+
     // TODO: Send rejection notification email
 
     const updated = await getBooking(id);

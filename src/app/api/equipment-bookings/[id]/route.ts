@@ -146,7 +146,12 @@ export async function DELETE(
       });
     } else {
       // Just cancel the booking (set status to cancelled)
+      const booking = await getBooking(id);
       await updateBooking(id, { status: 'cancelled' });
+      
+      // NOTE: Handover details are now computed dynamically, so no need to refresh chain
+      // The handover-chain API will automatically compute the correct chain when requested
+      console.log(`✅ Cancelled booking ${id} - handover chain will be recomputed dynamically`);
       
       return NextResponse.json({
         success: true,

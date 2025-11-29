@@ -495,12 +495,12 @@ export async function createBooking(
     const clubData = clubDoc.exists ? clubDoc.data() : null;
     const clubName = clubData?.name || 'Unknown Club';
 
-    // Get event details if linked
-    let eventName: string | undefined;
+    // Get event name from linkedEvent or use provided eventName
+    let eventName: string | undefined = request.eventName;
     if (request.linkedEventId) {
       const eventDoc = await db.collection('evEvents').doc(request.linkedEventId).get();
       const eventData = eventDoc.exists ? eventDoc.data() : null;
-      eventName = eventData?.title || undefined;
+      eventName = eventData?.title || request.eventName;
     }
 
     // Calculate duration

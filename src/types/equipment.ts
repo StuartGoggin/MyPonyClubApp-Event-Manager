@@ -498,6 +498,7 @@ export interface CreateBookingRequest {
   equipmentId: string;
   clubId: string;
   linkedEventId?: string;
+  eventName?: string; // Direct event name (used if no linkedEventId)
   pickupDate: Date;
   returnDate: Date;
   custodian: CustodianInfo;

@@ -111,6 +111,7 @@ export async function POST(request: NextRequest) {
       equipmentId: body.equipmentId,
       clubId: body.clubId,
       linkedEventId: body.linkedEventId,
+      eventName: body.eventName, // Direct event name from form
       pickupDate: new Date(body.pickupDate),
       returnDate: new Date(body.returnDate),
       custodian: body.custodian,

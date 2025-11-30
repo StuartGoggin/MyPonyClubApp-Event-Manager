@@ -79,10 +79,11 @@ export async function GET(request: NextRequest) {
 /**
  * POST /api/equipment-automations
  * Update automation settings for a zone
+ * @param processExisting - If true, auto-approve existing conflict-free pending bookings when enabling auto-approval
  */
 export async function POST(request: NextRequest) {
   try {
-    const { zoneId, type, enabled } = await request.json();
+    const { zoneId, type, enabled, processExisting = false } = await request.json();
 
     if (!zoneId || !type || typeof enabled !== 'boolean') {
       return NextResponse.json(
@@ -122,9 +123,100 @@ export async function POST(request: NextRequest) {
       { merge: true }
     );
 
+    // If enabling auto-approval and processExisting=true, auto-approve conflict-free pending bookings
+    let processedCount = 0;
+    let skippedCount = 0;
+    const processedBookings: string[] = [];
+
+    if (type === 'autoApproval' && enabled && processExisting) {
+      console.log(`🔄 Processing existing pending bookings for zone ${zoneId}...`);
+      
+      // Get all equipment for this zone
+      const equipmentSnapshot = await adminDb
+        .collection('equipment')
+        .where('zoneId', '==', zoneId)
+        .get();
+      
+      const equipmentIds = equipmentSnapshot.docs.map((doc: any) => doc.id);
+      
+      if (equipmentIds.length > 0) {
+        // Get all pending bookings for this zone's equipment
+        const pendingBookingsSnapshot = await adminDb
+          .collection(BOOKINGS_COLLECTION)
+          .where('equipmentId', 'in', equipmentIds)
+          .where('status', '==', 'pending')
+          .get();
+        
+        console.log(`📊 Found ${pendingBookingsSnapshot.size} pending bookings to process`);
+        
+        // Process each pending booking
+        for (const bookingDoc of pendingBookingsSnapshot.docs) {
+          const booking = bookingDoc.data();
+          const bookingId = bookingDoc.id;
+          
+          // Check for conflicts with other bookings
+          const conflictingBookings = await adminDb
+            .collection(BOOKINGS_COLLECTION)
+            .where('equipmentId', '==', booking.equipmentId)
+            .where('status', 'in', ['approved', 'confirmed', 'picked_up', 'in_use'])
+            .get();
+          
+          let hasConflict = false;
+          const pickupTime = new Date(booking.pickupDate).getTime();
+          const returnTime = new Date(booking.returnDate).getTime();
+          
+          conflictingBookings.forEach((conflictDoc: any) => {
+            const existingBooking = conflictDoc.data();
+            
+            // Skip comparing booking with itself
+            if (conflictDoc.id === bookingId) {
+              return;
+            }
+            
+            const existingPickup = new Date(existingBooking.pickupDate).getTime();
+            const existingReturn = new Date(existingBooking.returnDate).getTime();
+            
+            // Check if dates overlap
+            if (
+              (pickupTime >= existingPickup && pickupTime <= existingReturn) ||
+              (returnTime >= existingPickup && returnTime <= existingReturn) ||
+              (pickupTime <= existingPickup && returnTime >= existingReturn)
+            ) {
+              hasConflict = true;
+            }
+          });
+          
+          // Auto-approve if no conflict
+          if (!hasConflict) {
+            await adminDb.collection(BOOKINGS_COLLECTION).doc(bookingId).update({
+              status: 'approved',
+              approvedBy: 'auto-approval-system',
+              approvedAt: new Date(),
+              autoApproved: true,
+              bulkProcessed: true
+            });
+            
+            processedCount++;
+            processedBookings.push(booking.bookingReference || bookingId);
+            console.log(`✅ Auto-approved existing booking ${booking.bookingReference}`);
+          } else {
+            skippedCount++;
+            console.log(`⚠️ Skipped booking ${booking.bookingReference} due to conflicts`);
+          }
+        }
+      }
+      
+      console.log(`🎯 Bulk processing complete: ${processedCount} approved, ${skippedCount} skipped`);
+    }
+
     return NextResponse.json({
       success: true,
-      message: `${type} ${enabled ? 'enabled' : 'disabled'} successfully`
+      message: `${type} ${enabled ? 'enabled' : 'disabled'} successfully`,
+      bulkProcessing: processExisting ? {
+        processed: processedCount,
+        skipped: skippedCount,
+        bookings: processedBookings
+      } : undefined
     });
   } catch (error) {
     console.error('Error updating automation settings:', error);

@@ -334,6 +334,17 @@ export interface EquipmentBooking {
   internalNotes?: string; // Zone manager notes
   clubNotes?: string;
   
+  // Conflict tracking
+  conflictDetected?: boolean; // True if this booking overlaps with other bookings
+  conflictingBookings?: Array<{
+    id: string;
+    bookingReference: string;
+    clubName: string;
+    custodianName?: string;
+    pickupDate: Date;
+    returnDate: Date;
+  }>;
+  
   // Metadata
   createdAt: Date;
   updatedAt: Date;

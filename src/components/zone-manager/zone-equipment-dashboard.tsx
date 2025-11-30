@@ -97,6 +97,12 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
   const [autoApprovalEnabled, setAutoApprovalEnabled] = useState(false);
   const [autoApprovedBookings, setAutoApprovedBookings] = useState<EquipmentBooking[]>([]);
   const [loadingAutoApproval, setLoadingAutoApproval] = useState(false);
+  const [processExistingBookings, setProcessExistingBookings] = useState(false);
+  const [bulkProcessingResults, setBulkProcessingResults] = useState<{
+    processed: number;
+    skipped: number;
+    bookings: string[];
+  } | null>(null);
   
   // Auto-email state
   const [autoEmailEnabled, setAutoEmailEnabled] = useState(false);
@@ -228,18 +234,38 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
         body: JSON.stringify({
           zoneId,
           type: 'autoApproval',
-          enabled: newState
+          enabled: newState,
+          processExisting: newState && processExistingBookings // Only process when enabling
         })
       });
 
       if (!response.ok) throw new Error('Failed to update auto-approval settings');
 
+      const result = await response.json();
       setAutoApprovalEnabled(newState);
       
-      toast({
-        title: 'Success',
-        description: `Auto-approval ${newState ? 'enabled' : 'disabled'} successfully`,
-      });
+      // Store bulk processing results if available
+      if (result.bulkProcessing) {
+        setBulkProcessingResults(result.bulkProcessing);
+        
+        // Show detailed success message
+        toast({
+          title: 'Auto-approval enabled',
+          description: `Processed ${result.bulkProcessing.processed} existing booking(s). ${result.bulkProcessing.skipped} skipped due to conflicts.`,
+        });
+        
+        // Refresh bookings to show updated statuses
+        await fetchBookings();
+        await fetchAutoApprovalSettings();
+      } else {
+        toast({
+          title: 'Success',
+          description: `Auto-approval ${newState ? 'enabled' : 'disabled'} successfully`,
+        });
+      }
+      
+      // Reset checkbox after toggle
+      setProcessExistingBookings(false);
     } catch (error) {
       toast({
         title: 'Error',
@@ -2449,7 +2475,7 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
                     <div className="flex-1">
                       <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">How Auto-Approval Works</h4>
                       <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1 list-disc list-inside">
-                        <li>When enabled, pending bookings are automatically checked for conflicts</li>
+                        <li>When enabled, new pending bookings are automatically checked for conflicts</li>
                         <li>If no date conflicts exist for the same equipment, the booking is approved instantly</li>
                         <li>Conflicting bookings still require manual approval from the zone manager</li>
                         <li>All auto-approved bookings are logged in the history below</li>
@@ -2457,6 +2483,64 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
                     </div>
                   </div>
                 </div>
+
+                {/* Process Existing Bookings Checkbox */}
+                {!autoApprovalEnabled && pendingApprovalsCount > 0 && (
+                  <div className="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <input
+                            type="checkbox"
+                            id="process-existing-bookings"
+                            checked={processExistingBookings}
+                            onChange={(e) => setProcessExistingBookings(e.target.checked)}
+                            className="h-4 w-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500"
+                          />
+                          <label htmlFor="process-existing-bookings" className="font-semibold text-amber-900 dark:text-amber-100 cursor-pointer">
+                            Also auto-approve existing conflict-free pending bookings ({pendingApprovalsCount})
+                          </label>
+                        </div>
+                        <p className="text-sm text-amber-800 dark:text-amber-200 ml-6">
+                          When you enable auto-approval, also process your current {pendingApprovalsCount} pending {pendingApprovalsCount === 1 ? 'booking' : 'bookings'}. 
+                          Only bookings without scheduling conflicts will be approved.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Bulk Processing Results */}
+                {bulkProcessingResults && (
+                  <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <Check className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5" />
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-green-900 dark:text-green-100 mb-2">Bulk Processing Complete</h4>
+                        <div className="text-sm text-green-800 dark:text-green-200 space-y-1">
+                          <p><strong>{bulkProcessingResults.processed}</strong> existing bookings auto-approved</p>
+                          <p><strong>{bulkProcessingResults.skipped}</strong> bookings skipped (conflicts detected)</p>
+                          {bulkProcessingResults.bookings.length > 0 && (
+                            <details className="mt-2">
+                              <summary className="cursor-pointer font-medium">View approved booking references</summary>
+                              <ul className="mt-2 ml-4 list-disc space-y-1">
+                                {bulkProcessingResults.bookings.map((ref) => (
+                                  <li key={ref}>{ref}</li>
+                                ))}
+                              </ul>
+                            </details>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => setBulkProcessingResults(null)}
+                          className="mt-2 text-sm text-green-700 dark:text-green-300 underline"
+                        >
+                          Dismiss
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {autoApprovalEnabled && (
                   <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg p-4">

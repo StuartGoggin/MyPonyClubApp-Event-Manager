@@ -133,7 +133,7 @@ export function CommitteeNominationForm({ clubId, clubName, zoneId, zoneName, on
         }));
       }
     }
-  }, [selectedUserData, clubs]);
+  }, [selectedUserData, clubs, selectedClubId]);
 
   // Load club contact details when club is selected
   useEffect(() => {

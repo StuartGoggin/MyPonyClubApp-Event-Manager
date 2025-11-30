@@ -528,7 +528,16 @@ export interface EmailQueueConfig {
   maxQueueSize?: number;
   defaultPriority?: 'low' | 'normal' | 'high';
   
-  // Approval settings
+  // Auto-send settings (when enabled, emails send immediately without manual approval)
+  autoSendEquipmentBookingRequests?: boolean; // Auto-send when booking is created (pending approval)
+  autoSendEquipmentBookingApprovals?: boolean; // Auto-send when booking is approved
+  autoSendEventRequests?: boolean; // Auto-send event request notifications
+  autoSendNotifications?: boolean; // Auto-send general notifications
+  autoSendReminders?: boolean; // Auto-send reminder emails
+  autoSendGeneral?: boolean; // Auto-send general emails
+  autoSendBackups?: boolean; // Auto-send backup notifications
+  
+  // Legacy approval settings (deprecated - kept for backwards compatibility)
   requireApproval?: boolean; // General approval requirement
   requireApprovalForEventRequests?: boolean;
   requireApprovalForEquipmentNotifications?: boolean;

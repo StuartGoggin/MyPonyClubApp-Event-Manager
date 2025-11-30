@@ -7,7 +7,7 @@
 
 import { EquipmentBooking, HandoverDetails } from '@/types/equipment';
 import { format } from 'date-fns';
-import { addEmailToQueue } from '@/lib/email-queue-admin';
+import { addEmailToQueue, getEmailQueueConfig } from '@/lib/email-queue-admin';
 import { adminDb } from '@/lib/firebase-admin';
 import { computeHandoverDetails } from '@/lib/equipment-service';
 
@@ -22,6 +22,8 @@ import { computeHandoverDetails } from '@/lib/equipment-service';
 export function generateBookingReceivedHTML(booking: EquipmentBooking): string {
   const pickupDate = format(new Date(booking.pickupDate), 'EEEE, MMMM d, yyyy');
   const returnDate = format(new Date(booking.returnDate), 'EEEE, MMMM d, yyyy');
+  const hasConflict = (booking as any).conflictDetected === true;
+  const conflictingBookings = (booking as any).conflictingBookings || [];
 
   return `
 <!DOCTYPE html>
@@ -36,8 +38,8 @@ export function generateBookingReceivedHTML(booking: EquipmentBooking): string {
   <div style="background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
     
     <!-- Header -->
-    <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 30px; text-align: center;">
-      <h1 style="color: white; margin: 0; font-size: 28px;">📨 Equipment Booking Request Received</h1>
+    <div style="background: linear-gradient(135deg, ${hasConflict ? '#dc3545 0%, #c82333 100%' : '#f59e0b 0%, #d97706 100%'}); padding: 30px; text-align: center;">
+      <h1 style="color: white; margin: 0; font-size: 28px;">${hasConflict ? '⚠️ CONFLICT - Manual Approval Required' : '📨 Equipment Booking Request Received'}</h1>
       <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;">Reference: ${booking.bookingReference}</p>
     </div>
 
@@ -47,6 +49,27 @@ export function generateBookingReceivedHTML(booking: EquipmentBooking): string {
       <p style="font-size: 16px; margin-bottom: 25px;">Hi ${booking.custodian.name},</p>
       
       <p style="font-size: 16px;">Thank you for your equipment booking request! Your request has been received and is currently awaiting approval from the zone equipment manager.</p>
+
+      ${hasConflict ? `
+      <!-- CONFLICT ALERT -->
+      <div style="background: #f8d7da; border: 3px solid #dc3545; border-radius: 8px; padding: 20px; margin: 25px 0;">
+        <h3 style="color: #721c24; margin: 0 0 15px 0; font-size: 20px;">🚨 SCHEDULING CONFLICT DETECTED - MANUAL REVIEW REQUIRED</h3>
+        <p style="margin: 0 0 15px 0; color: #721c24; font-size: 15px; font-weight: 600;">
+          This booking overlaps with ${conflictingBookings.length} existing ${conflictingBookings.length === 1 ? 'booking' : 'bookings'}. 
+          Zone manager must review and approve manually.
+        </p>
+        <div style="background: white; border-radius: 5px; padding: 15px; margin-top: 15px;">
+          <p style="margin: 0 0 10px 0; font-weight: 600; color: #721c24;">Conflicting ${conflictingBookings.length === 1 ? 'Booking' : 'Bookings'}:</p>
+          ${conflictingBookings.map((conflict: any) => `
+          <div style="border-left: 3px solid #dc3545; padding: 8px 12px; margin: 8px 0; background: #fff5f5;">
+            <strong>${conflict.clubName}</strong> (${conflict.bookingReference})<br>
+            ${conflict.custodianName ? conflict.custodianName + '<br>' : ''}
+            ${format(new Date(conflict.pickupDate), 'MMM d')} - ${format(new Date(conflict.returnDate), 'MMM d, yyyy')}
+          </div>
+          `).join('')}
+        </div>
+      </div>
+      ` : ''}
 
       <!-- Status Alert -->
       <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 20px; margin: 25px 0;">
@@ -134,12 +157,28 @@ export function generateBookingReceivedHTML(booking: EquipmentBooking): string {
 export function generateBookingReceivedText(booking: EquipmentBooking): string {
   const pickupDate = format(new Date(booking.pickupDate), 'EEEE, MMMM d, yyyy');
   const returnDate = format(new Date(booking.returnDate), 'EEEE, MMMM d, yyyy');
+  const hasConflict = (booking as any).conflictDetected === true;
+  const conflictingBookings = (booking as any).conflictingBookings || [];
 
-  let text = `📨 EQUIPMENT BOOKING REQUEST RECEIVED\n`;
+  let text = hasConflict ? `⚠️ CONFLICT - MANUAL APPROVAL REQUIRED\n` : `📨 EQUIPMENT BOOKING REQUEST RECEIVED\n`;
   text += `Reference: ${booking.bookingReference}\n\n`;
   text += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
   text += `Hi ${booking.custodian.name},\n\n`;
   text += `Thank you for your equipment booking request!\n\n`;
+  
+  if (hasConflict) {
+    text += `🚨 SCHEDULING CONFLICT DETECTED - MANUAL REVIEW REQUIRED\n\n`;
+    text += `This booking overlaps with ${conflictingBookings.length} existing ${conflictingBookings.length === 1 ? 'booking' : 'bookings'}.\n`;
+    text += `Zone manager must review and approve manually.\n\n`;
+    text += `Conflicting ${conflictingBookings.length === 1 ? 'Booking' : 'Bookings'}:\n`;
+    conflictingBookings.forEach((conflict: any) => {
+      text += `  • ${conflict.clubName} (${conflict.bookingReference})\n`;
+      if (conflict.custodianName) text += `    ${conflict.custodianName}\n`;
+      text += `    ${format(new Date(conflict.pickupDate), 'MMM d')} - ${format(new Date(conflict.returnDate), 'MMM d, yyyy')}\n`;
+    });
+    text += `\n`;
+  }
+  
   text += `⏳ STATUS: AWAITING APPROVAL\n\n`;
   text += `Your request has been received and is currently being reviewed by the zone equipment manager.\n`;
   text += `You will receive a confirmation email once it has been approved (typically within 24-48 hours).\n\n`;
@@ -711,14 +750,21 @@ export async function queueBookingReceivedEmail(
   const htmlContent = generateBookingReceivedHTML(booking);
   const textContent = generateBookingReceivedText(booking);
   
+  // Check if auto-send is enabled for equipment booking requests
+  const config = await getEmailQueueConfig();
+  const autoSend = config?.autoSendEquipmentBookingRequests ?? false;
+  
+  const hasConflict = (booking as any).conflictDetected === true;
+  const subjectPrefix = hasConflict ? '⚠️ CONFLICT - Manual Approval Required: ' : '';
+  
   const emailId = await addEmailToQueue({
     to: [booking.custodian.email],
     cc: booking.requestedByEmail !== booking.custodian.email ? [booking.requestedByEmail] : undefined,
-    subject: `Equipment Booking Request Received - ${booking.equipmentName} - Ref: ${booking.bookingReference}`,
+    subject: `${subjectPrefix}Equipment Booking Request Received - ${booking.equipmentName} - Ref: ${booking.bookingReference}`,
     htmlContent,
     textContent,
     type: 'Equipment-Request',
-    status: 'pending',
+    status: autoSend ? 'pending' : 'draft', // 'pending' = auto-send, 'draft' = requires approval
     priority: 'normal',
     metadata: {
       bookingId: booking.id,
@@ -755,6 +801,10 @@ export async function queueBookingConfirmationEmail(
   const htmlContent = generateBookingConfirmationHTML(booking, handover, zoneBankAccount);
   const textContent = generateBookingConfirmationText(booking, handover, zoneBankAccount);
   
+  // Check if auto-send is enabled for equipment booking approvals
+  const config = await getEmailQueueConfig();
+  const autoSend = config?.autoSendEquipmentBookingApprovals ?? false;
+  
   const emailId = await addEmailToQueue({
     to: [booking.custodian.email],
     cc: booking.requestedByEmail !== booking.custodian.email ? [booking.requestedByEmail] : undefined,
@@ -762,7 +812,7 @@ export async function queueBookingConfirmationEmail(
     htmlContent,
     textContent,
     type: 'Equipment-Request',
-    status: 'pending',
+    status: autoSend ? 'pending' : 'draft', // 'pending' = auto-send, 'draft' = requires approval
     priority: 'normal',
     metadata: {
       bookingId: booking.id,
@@ -831,6 +881,7 @@ export async function queueAllBookingNotifications(
   const isApproved = status === 'approved';
   const isConfirmed = status === 'confirmed';
   const needsHandover = isApproved || isConfirmed;
+  const hasConflict = (booking as any).conflictDetected === true;
   
   // Compute handover details dynamically for approved/confirmed bookings
   const handover = needsHandover ? await computeHandoverDetails(booking) : undefined;
@@ -851,7 +902,8 @@ export async function queueAllBookingNotifications(
   const textContent = needsHandover ? generateBookingApprovalText(booking, handover, zoneBankAccount) : generateBookingReceivedText(booking);
 
   const subjectBase = isApproved ? 'Equipment Booking Approved' : isConfirmed ? 'Equipment Booking Confirmed' : 'Equipment Booking Request Received';
-  const subject = `${subjectBase} - ${booking.equipmentName} - Ref: ${booking.bookingReference}`;
+  const conflictPrefix = hasConflict && !needsHandover ? '⚠️ CONFLICT - Manual Approval Required: ' : '';
+  const subject = `${conflictPrefix}${subjectBase} - ${booking.equipmentName} - Ref: ${booking.bookingReference}`;
   const emailType = isApproved ? 'Equipment-Approved' : isConfirmed ? 'Equipment-Request' : 'Equipment-Request';
   const metadata = {
     bookingId: booking.id,
@@ -859,6 +911,12 @@ export async function queueAllBookingNotifications(
     bookingReference: booking.bookingReference,
     emailType, // Use consistent type value from above
   };
+  
+  // Check if auto-send is enabled based on email type
+  const config = await getEmailQueueConfig();
+  const autoSend = needsHandover 
+    ? (config?.autoSendEquipmentBookingApprovals ?? false) 
+    : (config?.autoSendEquipmentBookingRequests ?? false);
 
   const ids: string[] = [];
 
@@ -870,7 +928,7 @@ export async function queueAllBookingNotifications(
     htmlContent,
     textContent,
     type: emailType,
-    status: 'pending',
+    status: autoSend ? 'pending' : 'draft', // 'pending' = auto-send, 'draft' = requires approval
     priority: 'normal',
     metadata: { ...metadata, roleTarget: 'booker' }
   }));
@@ -884,7 +942,7 @@ export async function queueAllBookingNotifications(
       htmlContent,
       textContent,
       type: emailType,
-      status: 'pending',
+      status: autoSend ? 'pending' : 'draft', // 'pending' = auto-send, 'draft' = requires approval
       priority: 'normal',
       metadata: { ...metadata, roleTarget: 'zone_manager' }
     }));
@@ -899,7 +957,7 @@ export async function queueAllBookingNotifications(
       htmlContent,
       textContent,
       type: emailType,
-      status: 'pending',
+      status: autoSend ? 'pending' : 'draft', // 'pending' = auto-send, 'draft' = requires approval
       priority: 'high',
       attachments: bookingJsonAttachment(booking),
       metadata: { ...metadata, roleTarget: 'super_user' }

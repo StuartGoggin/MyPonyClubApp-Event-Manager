@@ -35,8 +35,8 @@ const db = adminDb;
 // FIRESTORE COLLECTIONS
 // ============================================================================
 
-const EQUIPMENT_COLLECTION = 'equipment-items';
-const BOOKINGS_COLLECTION = 'equipment-bookings';
+const EQUIPMENT_COLLECTION = 'equipment';
+const BOOKINGS_COLLECTION = 'equipment_bookings';
 const PRICING_RULES_COLLECTION = 'equipment-pricing-rules';
 const CUSTODIANS_COLLECTION = 'equipment-custodians';
 const LOCATION_HISTORY_COLLECTION = 'equipment-location-history';
@@ -490,17 +490,10 @@ export async function createBooking(
   requestedByEmail: string
 ): Promise<EquipmentBooking> {
   try {
-    // Check availability
-    const availability = await checkAvailability(
-      request.equipmentId,
-      request.pickupDate,
-      request.returnDate
-    );
-
-    if (!availability.available) {
-      throw new Error('Equipment is not available for the selected dates');
-    }
-
+    // Note: We no longer block bookings based on availability here
+    // The route handler checks for conflicts and flags them for manual approval
+    // This allows the permissive booking system where conflicts are allowed but require zone manager review
+    
     // Get equipment details
     const equipment = await getEquipment(request.equipmentId);
     if (!equipment) {

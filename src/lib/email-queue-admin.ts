@@ -368,7 +368,15 @@ export async function getEmailQueueConfig(): Promise<EmailQueueConfig> {
           pass: ''
         }
       },
-      // Set proper defaults for specific approval requirements
+      // Auto-send defaults (false = require manual approval, true = send automatically)
+      autoSendEquipmentBookingRequests: false, // Default: require approval for new bookings
+      autoSendEquipmentBookingApprovals: false, // Default: require approval for booking confirmations
+      autoSendEventRequests: false, // Default: require approval for event requests
+      autoSendNotifications: false, // Default: require approval for notifications
+      autoSendReminders: false, // Default: require approval for reminders
+      autoSendGeneral: false, // Default: require approval for general emails
+      autoSendBackups: false, // Default: require approval for backup notifications
+      // Legacy approval settings (kept for backwards compatibility)
       requireApprovalForEventRequests: true,
       requireApprovalForEquipmentNotifications: true,
       requireApprovalForNotifications: false,

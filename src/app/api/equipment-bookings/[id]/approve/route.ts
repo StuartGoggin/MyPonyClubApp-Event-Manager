@@ -11,6 +11,7 @@ import {
 } from '@/lib/equipment-service';
 import { requireZoneManager } from '@/lib/api-auth';
 import { queueAllBookingNotifications } from '@/lib/equipment-email-templates';
+import { autoSendQueuedEmail } from '@/lib/auto-send-email';
 import { adminDb } from '@/lib/firebase-admin';
 
 interface RouteParams {
@@ -95,8 +96,24 @@ export async function POST(
     // Send approval notification email with handover details
     if (updated) {
       try {
-        await queueAllBookingNotifications(updated, 'approved');
+        const result = await queueAllBookingNotifications(updated, 'approved');
         console.log('✅ Approval emails queued for booking:', id);
+        
+        // Auto-send pending emails
+        for (const emailId of result.ids) {
+          try {
+            console.log(`🚀 Attempting auto-send for approval email ${emailId}`);
+            const autoSendResult = await autoSendQueuedEmail(emailId);
+            if (autoSendResult.success) {
+              console.log(`✅ Approval email ${emailId} auto-sent successfully`);
+            } else {
+              console.log(`⏸️ Approval email ${emailId} not auto-sent: ${autoSendResult.error}`);
+            }
+          } catch (autoSendError) {
+            console.error(`Auto-send error for email ${emailId}:`, autoSendError);
+            // Don't fail the approval if auto-send fails
+          }
+        }
       } catch (emailError) {
         console.error('Error queueing approval emails:', emailError);
         // Don't fail the approval if email queueing fails

@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
-import { CalendarIcon, Mail, Send, Trash2, Edit, Eye, CheckCircle, XCircle, Clock, AlertTriangle, Settings, Download, Filter, Search, RefreshCw, FileText, Activity, AlertCircle, MoreVertical } from 'lucide-react';
+import { CalendarIcon, Mail, Send, Trash2, Edit, Eye, CheckCircle, XCircle, Clock, AlertTriangle, Settings, Download, Filter, Search, RefreshCw, FileText, Activity, AlertCircle, MoreVertical, Zap } from 'lucide-react';
 import { format } from 'date-fns';
 import { QueuedEmail, EmailStatus, EmailQueueStats, EmailQueueConfig, EmailLog } from '@/lib/types';
 import { cn } from '@/lib/utils';
@@ -981,90 +981,263 @@ function EmailQueueAdminContent() {
                 Configure how the email queue system operates
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Queue Settings</h3>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="maxRetries">Max Retries</Label>
-                      <Input 
-                        id="maxRetries" 
-                        type="number" 
-                        value={config?.maxRetries || 3} 
-                        onChange={(e) => config && setConfig({...config, maxRetries: parseInt(e.target.value)})}
-                      />
+            <CardContent className="space-y-8">
+              
+              {/* Queue Settings Section */}
+              <div className="space-y-4">
+                <div className="border-b pb-2">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <Settings className="h-5 w-5" />
+                    Queue Settings
+                  </h3>
+                  <p className="text-sm text-gray-600 mt-1">Configure retry behavior and queue limits</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="maxRetries">Max Retries</Label>
+                    <Input 
+                      id="maxRetries" 
+                      type="number" 
+                      value={config?.maxRetries || 3} 
+                      onChange={(e) => config && setConfig({...config, maxRetries: parseInt(e.target.value)})}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Number of retry attempts for failed emails</p>
+                  </div>
+                  <div>
+                    <Label htmlFor="retryDelay">Retry Delay (minutes)</Label>
+                    <Input 
+                      id="retryDelay" 
+                      type="number" 
+                      value={config?.retryDelayMinutes || 30} 
+                      onChange={(e) => config && setConfig({...config, retryDelayMinutes: parseInt(e.target.value)})}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Time to wait between retry attempts</p>
+                  </div>
+                  <div>
+                    <Label htmlFor="maxQueueSize">Max Queue Size</Label>
+                    <Input 
+                      id="maxQueueSize" 
+                      type="number" 
+                      value={config?.maxQueueSize || 100} 
+                      onChange={(e) => config && setConfig({...config, maxQueueSize: parseInt(e.target.value)})}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Maximum number of queued emails</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Auto-Send Settings Section */}
+              <div className="space-y-4">
+                <div className="border-b pb-2">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <Zap className="h-5 w-5 text-yellow-500" />
+                    Auto-Send Email Controls
+                  </h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    When enabled (<span className="text-green-600 font-medium">ON</span>), emails send immediately without requiring manual approval. 
+                    When disabled (<span className="text-gray-600 font-medium">OFF</span>), emails are queued as drafts and must be manually approved before sending.
+                  </p>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Equipment Booking Emails */}
+                  <div className="space-y-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h4 className="font-semibold text-blue-900 flex items-center gap-2">
+                      📦 Equipment Booking Emails
+                    </h4>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <Label htmlFor="autoSendEquipmentBookingRequests" className="font-medium">Booking Requests</Label>
+                          <p className="text-xs text-gray-600 mt-1">Sent when new equipment booking is created</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Checkbox 
+                            id="autoSendEquipmentBookingRequests"
+                            checked={config?.autoSendEquipmentBookingRequests || false}
+                            onCheckedChange={(checked) => config && setConfig({...config, autoSendEquipmentBookingRequests: !!checked})}
+                            className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                          />
+                          <span className={cn(
+                            "text-xs font-medium px-2 py-1 rounded",
+                            config?.autoSendEquipmentBookingRequests 
+                              ? "bg-green-100 text-green-700" 
+                              : "bg-gray-100 text-gray-600"
+                          )}>
+                            {config?.autoSendEquipmentBookingRequests ? "ON" : "OFF"}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <Label htmlFor="autoSendEquipmentBookingApprovals" className="font-medium">Booking Approvals</Label>
+                          <p className="text-xs text-gray-600 mt-1">Sent when equipment booking is approved</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Checkbox 
+                            id="autoSendEquipmentBookingApprovals"
+                            checked={config?.autoSendEquipmentBookingApprovals || false}
+                            onCheckedChange={(checked) => config && setConfig({...config, autoSendEquipmentBookingApprovals: !!checked})}
+                            className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                          />
+                          <span className={cn(
+                            "text-xs font-medium px-2 py-1 rounded",
+                            config?.autoSendEquipmentBookingApprovals 
+                              ? "bg-green-100 text-green-700" 
+                              : "bg-gray-100 text-gray-600"
+                          )}>
+                            {config?.autoSendEquipmentBookingApprovals ? "ON" : "OFF"}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <Label htmlFor="retryDelay">Retry Delay (minutes)</Label>
-                      <Input 
-                        id="retryDelay" 
-                        type="number" 
-                        value={config?.retryDelayMinutes || 30} 
-                        onChange={(e) => config && setConfig({...config, retryDelayMinutes: parseInt(e.target.value)})}
-                      />
+                  </div>
+
+                  {/* Event & Notification Emails */}
+                  <div className="space-y-4 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                    <h4 className="font-semibold text-purple-900 flex items-center gap-2">
+                      📧 Event & Notification Emails
+                    </h4>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <Label htmlFor="autoSendEventRequests" className="font-medium">Event Requests</Label>
+                          <p className="text-xs text-gray-600 mt-1">Event request notifications</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Checkbox 
+                            id="autoSendEventRequests"
+                            checked={config?.autoSendEventRequests || false}
+                            onCheckedChange={(checked) => config && setConfig({...config, autoSendEventRequests: !!checked})}
+                            className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                          />
+                          <span className={cn(
+                            "text-xs font-medium px-2 py-1 rounded",
+                            config?.autoSendEventRequests 
+                              ? "bg-green-100 text-green-700" 
+                              : "bg-gray-100 text-gray-600"
+                          )}>
+                            {config?.autoSendEventRequests ? "ON" : "OFF"}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <Label htmlFor="autoSendNotifications" className="font-medium">General Notifications</Label>
+                          <p className="text-xs text-gray-600 mt-1">System notifications</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Checkbox 
+                            id="autoSendNotifications"
+                            checked={config?.autoSendNotifications || false}
+                            onCheckedChange={(checked) => config && setConfig({...config, autoSendNotifications: !!checked})}
+                            className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                          />
+                          <span className={cn(
+                            "text-xs font-medium px-2 py-1 rounded",
+                            config?.autoSendNotifications 
+                              ? "bg-green-100 text-green-700" 
+                              : "bg-gray-100 text-gray-600"
+                          )}>
+                            {config?.autoSendNotifications ? "ON" : "OFF"}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <Label htmlFor="autoSendReminders" className="font-medium">Reminders</Label>
+                          <p className="text-xs text-gray-600 mt-1">Scheduled reminder emails</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Checkbox 
+                            id="autoSendReminders"
+                            checked={config?.autoSendReminders || false}
+                            onCheckedChange={(checked) => config && setConfig({...config, autoSendReminders: !!checked})}
+                            className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                          />
+                          <span className={cn(
+                            "text-xs font-medium px-2 py-1 rounded",
+                            config?.autoSendReminders 
+                              ? "bg-green-100 text-green-700" 
+                              : "bg-gray-100 text-gray-600"
+                          )}>
+                            {config?.autoSendReminders ? "ON" : "OFF"}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <Label htmlFor="maxQueueSize">Max Queue Size</Label>
-                      <Input 
-                        id="maxQueueSize" 
-                        type="number" 
-                        value={config?.maxQueueSize || 100} 
-                        onChange={(e) => config && setConfig({...config, maxQueueSize: parseInt(e.target.value)})}
-                      />
+                  </div>
+
+                  {/* Other Email Types */}
+                  <div className="space-y-4 p-4 bg-gray-50 border border-gray-200 rounded-lg md:col-span-2">
+                    <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                      📬 Other Email Types
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <Label htmlFor="autoSendGeneral" className="font-medium">General Emails</Label>
+                          <p className="text-xs text-gray-600 mt-1">Miscellaneous system emails</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Checkbox 
+                            id="autoSendGeneral"
+                            checked={config?.autoSendGeneral || false}
+                            onCheckedChange={(checked) => config && setConfig({...config, autoSendGeneral: !!checked})}
+                            className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                          />
+                          <span className={cn(
+                            "text-xs font-medium px-2 py-1 rounded",
+                            config?.autoSendGeneral 
+                              ? "bg-green-100 text-green-700" 
+                              : "bg-gray-100 text-gray-600"
+                          )}>
+                            {config?.autoSendGeneral ? "ON" : "OFF"}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <Label htmlFor="autoSendBackups" className="font-medium">Backup Notifications</Label>
+                          <p className="text-xs text-gray-600 mt-1">System backup reports</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Checkbox 
+                            id="autoSendBackups"
+                            checked={config?.autoSendBackups || false}
+                            onCheckedChange={(checked) => config && setConfig({...config, autoSendBackups: !!checked})}
+                            className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                          />
+                          <span className={cn(
+                            "text-xs font-medium px-2 py-1 rounded",
+                            config?.autoSendBackups 
+                              ? "bg-green-100 text-green-700" 
+                              : "bg-gray-100 text-gray-600"
+                          )}>
+                            {config?.autoSendBackups ? "ON" : "OFF"}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Approval Requirements</h3>
-                  <div className="space-y-4">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="approveEventRequests"
-                        checked={config?.requireApprovalForEventRequests || false}
-                        onCheckedChange={(checked) => config && setConfig({...config, requireApprovalForEventRequests: !!checked})}
-                      />
-                      <Label htmlFor="approveEventRequests">Event Requests</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="approveEquipmentNotifications"
-                        checked={config?.requireApprovalForEquipmentNotifications || false}
-                        onCheckedChange={(checked) => config && setConfig({...config, requireApprovalForEquipmentNotifications: !!checked})}
-                      />
-                      <Label htmlFor="approveEquipmentNotifications">Equipment Notifications</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="approveNotifications"
-                        checked={config?.requireApprovalForNotifications || false}
-                        onCheckedChange={(checked) => config && setConfig({...config, requireApprovalForNotifications: !!checked})}
-                      />
-                      <Label htmlFor="approveNotifications">Notifications</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="approveReminders"
-                        checked={config?.requireApprovalForReminders || false}
-                        onCheckedChange={(checked) => config && setConfig({...config, requireApprovalForReminders: !!checked})}
-                      />
-                      <Label htmlFor="approveReminders">Reminders</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="approveGeneral"
-                        checked={config?.requireApprovalForGeneral || false}
-                        onCheckedChange={(checked) => config && setConfig({...config, requireApprovalForGeneral: !!checked})}
-                      />
-                      <Label htmlFor="approveGeneral">General Emails</Label>
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <div className="flex gap-3">
+                    <AlertTriangle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                    <div className="text-sm">
+                      <p className="font-semibold text-yellow-900">Important: Testing vs Production</p>
+                      <p className="text-yellow-800 mt-1">
+                        For testing, keep all auto-send options <span className="font-semibold">OFF</span> so you can review emails before sending.
+                        For production, enable auto-send for emails you want to send immediately without manual approval.
+                      </p>
                     </div>
                   </div>
                 </div>
               </div>
 
               <div className="pt-4 border-t">
-                <Button onClick={saveConfig}>
+                <Button onClick={saveConfig} size="lg" className="w-full md:w-auto">
                   <Settings className="h-4 w-4 mr-2" />
                   Save Configuration
                 </Button>

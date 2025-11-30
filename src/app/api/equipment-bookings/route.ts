@@ -12,6 +12,7 @@ import {
   getBooking,
 } from '@/lib/equipment-service';
 import { queueAllBookingNotifications, queueBookingConfirmationEmail, queueBookingReceivedEmail } from '@/lib/equipment-email-templates';
+import { autoSendQueuedEmail } from '@/lib/auto-send-email';
 import type { CreateBookingRequest } from '@/types/equipment';
 import { adminDb } from '@/lib/firebase-admin';
 
@@ -127,14 +128,89 @@ export async function POST(request: NextRequest) {
       requestedByEmail
     );
 
+    console.log(`📋 Booking status after creation: ${booking.status}`);
+    console.log(`🔑 Booking ID: ${booking.id}`);
+    console.log(`🎯 Equipment ID: ${booking.equipmentId}`);
+
     // Check for auto-approval if booking is pending
     if (booking.status === 'pending') {
+      console.log(`✅ Booking is pending - entering conflict detection block`);
       try {
         // Get equipment details to find zoneId
         const equipmentDoc = await adminDb.collection('equipment').doc(booking.equipmentId).get();
+        
+        if (!equipmentDoc.exists) {
+          console.log(`❌ Equipment document does NOT exist for ID: ${booking.equipmentId}`);
+        } else {
+          const equipment = equipmentDoc.data();
+          console.log(`📦 Equipment found: ${equipment?.name}`);
+          console.log(`🏷️ Equipment zoneId: ${equipment?.zoneId}`);
+          console.log(`📍 Full equipment data:`, JSON.stringify(equipment, null, 2));
+        }
+        
         const equipment = equipmentDoc.data();
         
         if (equipment?.zoneId) {
+          // ALWAYS check for conflicts with other bookings (including pending for first-come-first-served priority)
+          const conflictingBookings = await adminDb
+            .collection('equipment_bookings')
+            .where('equipmentId', '==', booking.equipmentId)
+            .where('status', 'in', ['pending', 'approved', 'confirmed', 'picked_up', 'in_use'])
+            .get();
+          
+          console.log(`🔍 Checking conflicts for ${booking.bookingReference} (ID: ${booking.id})`);
+          console.log(`📊 Found ${conflictingBookings.size} total bookings for this equipment`);
+          
+          let hasConflict = false;
+          const conflictDetails: any[] = [];
+          const pickupTime = bookingData.pickupDate.getTime();
+          const returnTime = bookingData.returnDate.getTime();
+          
+          conflictingBookings.forEach((doc: any) => {
+            const existingBooking = doc.data();
+            console.log(`  Checking booking ${existingBooking.bookingReference} (doc.id: ${doc.id}, data.id: ${existingBooking.id})`);
+            
+            // Skip comparing booking with itself
+            if (existingBooking.id === booking.id || doc.id === booking.id) {
+              console.log(`    ⏭️  Skipping self-comparison`);
+              return;
+            }
+            
+            const existingPickup = new Date(existingBooking.pickupDate).getTime();
+            const existingReturn = new Date(existingBooking.returnDate).getTime();
+            
+            // Check if dates overlap
+            if (
+              (pickupTime >= existingPickup && pickupTime <= existingReturn) ||
+              (returnTime >= existingPickup && returnTime <= existingReturn) ||
+              (pickupTime <= existingPickup && returnTime >= existingReturn)
+            ) {
+              hasConflict = true;
+              conflictDetails.push({
+                bookingReference: existingBooking.bookingReference,
+                clubName: existingBooking.clubName,
+                pickupDate: existingBooking.pickupDate,
+                returnDate: existingBooking.returnDate,
+                custodianName: existingBooking.custodian?.name
+              });
+            }
+          });
+          
+          // Store conflict info in booking metadata (always, regardless of auto-approval setting)
+          if (hasConflict && conflictDetails.length > 0) {
+            await updateBooking(booking.id, {
+              conflictDetected: true,
+              conflictingBookings: conflictDetails
+            });
+            // Re-fetch to get updated data
+            const updatedBooking = await getBooking(booking.id);
+            if (updatedBooking) {
+              booking.conflictDetected = true;
+              booking.conflictingBookings = conflictDetails;
+            }
+            console.log(`⚠️ Conflict detected for ${booking.bookingReference} with ${conflictDetails.length} existing booking(s)`);
+          }
+          
           // Check if auto-approval is enabled for this zone
           const automationDoc = await adminDb
             .collection('equipment_automation_settings')
@@ -145,33 +221,7 @@ export async function POST(request: NextRequest) {
           const autoApprovalEnabled = automationSettings?.autoApproval?.enabled || false;
           
           if (autoApprovalEnabled) {
-            // Check for conflicts with other bookings
-            const conflictingBookings = await adminDb
-              .collection('equipment_bookings')
-              .where('equipmentId', '==', booking.equipmentId)
-              .where('status', 'in', ['approved', 'confirmed', 'picked_up', 'in_use'])
-              .get();
-            
-            let hasConflict = false;
-            const pickupTime = bookingData.pickupDate.getTime();
-            const returnTime = bookingData.returnDate.getTime();
-            
-            conflictingBookings.forEach((doc: any) => {
-              const existingBooking = doc.data();
-              const existingPickup = new Date(existingBooking.pickupDate).getTime();
-              const existingReturn = new Date(existingBooking.returnDate).getTime();
-              
-              // Check if dates overlap
-              if (
-                (pickupTime >= existingPickup && pickupTime <= existingReturn) ||
-                (returnTime >= existingPickup && returnTime <= existingReturn) ||
-                (pickupTime <= existingPickup && returnTime >= existingReturn)
-              ) {
-                hasConflict = true;
-              }
-            });
-            
-            // Auto-approve if no conflict
+            // Auto-approve ONLY if no conflict
             if (!hasConflict) {
               await updateBooking(booking.id, {
                 status: 'approved',
@@ -216,14 +266,33 @@ export async function POST(request: NextRequest) {
     if (queueEmail) {
       try {
         // Send different email based on booking status
+        let emailIds: string[] = [];
         if (booking.status === 'approved') {
           // Booking is approved - send confirmation with full details
-          await queueAllBookingNotifications(booking, 'confirmed');
+          const result = await queueAllBookingNotifications(booking, 'confirmed');
+          emailIds = result.ids;
           console.log(`📧 Booking confirmation emails queued for ${booking.bookingReference}`);
         } else {
           // Booking is pending - send received notification
-          await queueAllBookingNotifications(booking, 'received');
+          const result = await queueAllBookingNotifications(booking, 'received');
+          emailIds = result.ids;
           console.log(`📧 Booking received emails queued for ${booking.bookingReference}`);
+        }
+        
+        // Auto-send pending emails (if auto-send is enabled, emails will have status='pending')
+        for (const emailId of emailIds) {
+          try {
+            console.log(`🚀 Attempting auto-send for email ${emailId}`);
+            const autoSendResult = await autoSendQueuedEmail(emailId);
+            if (autoSendResult.success) {
+              console.log(`✅ Email ${emailId} auto-sent successfully`);
+            } else {
+              console.log(`⏸️ Email ${emailId} not auto-sent: ${autoSendResult.error}`);
+            }
+          } catch (autoSendError) {
+            console.error(`Auto-send error for email ${emailId}:`, autoSendError);
+            // Don't fail the booking if auto-send fails
+          }
         }
       } catch (emailError) {
         console.error('Error queueing email:', emailError);

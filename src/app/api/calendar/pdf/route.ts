@@ -3,9 +3,9 @@ import { generateCalendarPDF } from '@/lib/calendar-pdf';
 import { getAllEvents, getAllClubs, getAllEventTypes, getAllZones } from '@/lib/server-data';
 
 /**
- * Parse date (string, Date, or Timestamp) without timezone conversion
- * Avoids the issue where Date constructor treats strings as UTC,
- * causing dates to shift when converted to local timezone
+ * Parse date (string, Date, or Timestamp) using UTC to avoid timezone inconsistencies
+ * Since dates are stored in Firestore as timestamps, we need consistent date extraction
+ * across different server timezones (dev might be UTC+10, production might be UTC)
  */
 function parseDateString(date: string | Date | any): { year: number; month: number; day: number } {
   // Handle Firestore Timestamp objects
@@ -13,12 +13,12 @@ function parseDateString(date: string | Date | any): { year: number; month: numb
     date = date.toDate();
   }
   
-  // Handle Date objects
+  // Handle Date objects - use UTC methods for consistency
   if (date instanceof Date) {
     return {
-      year: date.getFullYear(),
-      month: date.getMonth() + 1, // JavaScript months are 0-indexed
-      day: date.getDate()
+      year: date.getUTCFullYear(),
+      month: date.getUTCMonth() + 1, // JavaScript months are 0-indexed
+      day: date.getUTCDate()
     };
   }
   

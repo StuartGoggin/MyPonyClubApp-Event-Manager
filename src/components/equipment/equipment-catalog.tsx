@@ -61,6 +61,26 @@ export function EquipmentCatalog({
   const [specialRequirements, setSpecialRequirements] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Availability checking state
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
+  const [availabilityStatus, setAvailabilityStatus] = useState<{
+    available: boolean;
+    conflictingBookings: Array<{
+      id: string;
+      bookingReference: string;
+      pickupDate: string;
+      returnDate: string;
+      clubName: string;
+    }>;
+  } | null>(null);
+
+  // Calendar availability map (all bookings for selected equipment)
+  const [calendarBookings, setCalendarBookings] = useState<Array<{
+    pickupDate: string;
+    returnDate: string;
+  }>>([]);
+  const [loadingCalendar, setLoadingCalendar] = useState(false);
+
   // Name autocomplete state
   const [nameSearchTerm, setNameSearchTerm] = useState('');
   const [showNameSuggestions, setShowNameSuggestions] = useState(false);
@@ -76,6 +96,74 @@ export function EquipmentCatalog({
     setSelectedClubName(clubName || '');
     setEventLocation(clubLocation || '');
   }, [userName, userEmail, userPhone, clubName, clubLocation]);
+
+  // Check availability when dates or equipment change
+  useEffect(() => {
+    if (!selectedEquipment || !pickupDate || !returnDate) {
+      setAvailabilityStatus(null);
+      return;
+    }
+
+    const checkAvailability = async () => {
+      setCheckingAvailability(true);
+      try {
+        const response = await fetch(
+          `/api/equipment-bookings/availability?equipmentId=${selectedEquipment.id}&startDate=${pickupDate.toISOString()}&endDate=${returnDate.toISOString()}`
+        );
+        
+        if (response.ok) {
+          const data = await response.json();
+          setAvailabilityStatus(data);
+        } else {
+          console.error('Failed to check availability');
+          setAvailabilityStatus(null);
+        }
+      } catch (error) {
+        console.error('Error checking availability:', error);
+        setAvailabilityStatus(null);
+      } finally {
+        setCheckingAvailability(false);
+      }
+    };
+
+    checkAvailability();
+  }, [selectedEquipment, pickupDate, returnDate]);
+
+  // Fetch all bookings for calendar visualization when equipment is selected
+  useEffect(() => {
+    if (!selectedEquipment) {
+      setCalendarBookings([]);
+      return;
+    }
+
+    const fetchCalendarBookings = async () => {
+      setLoadingCalendar(true);
+      try {
+        const response = await fetch(
+          `/api/equipment-bookings?equipmentId=${selectedEquipment.id}&status=pending,approved,confirmed,picked_up,in_use`
+        );
+        
+        if (response.ok) {
+          const data = await response.json();
+          const bookings = (data.data || []).map((b: any) => ({
+            pickupDate: b.pickupDate,
+            returnDate: b.returnDate,
+          }));
+          setCalendarBookings(bookings);
+        } else {
+          console.error('Failed to fetch calendar bookings');
+          setCalendarBookings([]);
+        }
+      } catch (error) {
+        console.error('Error fetching calendar bookings:', error);
+        setCalendarBookings([]);
+      } finally {
+        setLoadingCalendar(false);
+      }
+    };
+
+    fetchCalendarBookings();
+  }, [selectedEquipment]);
 
   // Fetch equipment
   const fetchEquipment = useCallback(async () => {
@@ -102,6 +190,19 @@ export function EquipmentCatalog({
       setLoading(false);
     }
   }, [zoneId, toast]);
+
+  // Helper to check if a date is within any booking period
+  const isDateBooked = (date: Date): boolean => {
+    return calendarBookings.some(booking => {
+      const pickup = new Date(booking.pickupDate);
+      const returnDate = new Date(booking.returnDate);
+      pickup.setHours(0, 0, 0, 0);
+      returnDate.setHours(0, 0, 0, 0);
+      const checkDate = new Date(date);
+      checkDate.setHours(0, 0, 0, 0);
+      return checkDate >= pickup && checkDate <= returnDate;
+    });
+  };
 
   useEffect(() => {
     fetchEquipment();
@@ -654,8 +755,25 @@ export function EquipmentCatalog({
                         setPickupDateOpen(false);
                       }}
                       disabled={(date) => date < new Date()}
+                      modifiers={{
+                        booked: (date) => isDateBooked(date),
+                      }}
+                      modifiersClassNames={{
+                        booked: 'bg-red-100 text-red-900 hover:bg-red-200 line-through',
+                      }}
                       initialFocus
                     />
+                    {loadingCalendar && (
+                      <div className="px-3 py-2 text-xs text-muted-foreground border-t">
+                        Loading availability...
+                      </div>
+                    )}
+                    {!loadingCalendar && calendarBookings.length > 0 && (
+                      <div className="px-3 py-2 text-xs text-muted-foreground border-t">
+                        <span className="inline-block w-3 h-3 bg-red-100 border border-red-300 rounded mr-1"></span>
+                        Already booked
+                      </div>
+                    )}
                   </PopoverContent>
                 </Popover>
               </div>
@@ -685,12 +803,80 @@ export function EquipmentCatalog({
                       }}
                       disabled={(date) => !pickupDate || date <= pickupDate}
                       defaultMonth={pickupDate ? new Date(pickupDate.getTime() + 86400000) : undefined}
+                      modifiers={{
+                        booked: (date) => isDateBooked(date),
+                      }}
+                      modifiersClassNames={{
+                        booked: 'bg-red-100 text-red-900 hover:bg-red-200 line-through',
+                      }}
                       initialFocus
                     />
+                    {loadingCalendar && (
+                      <div className="px-3 py-2 text-xs text-muted-foreground border-t">
+                        Loading availability...
+                      </div>
+                    )}
+                    {!loadingCalendar && calendarBookings.length > 0 && (
+                      <div className="px-3 py-2 text-xs text-muted-foreground border-t">
+                        <span className="inline-block w-3 h-3 bg-red-100 border border-red-300 rounded mr-1"></span>
+                        Already booked
+                      </div>
+                    )}
                   </PopoverContent>
                 </Popover>
               </div>
             </div>
+
+            {/* Availability Status */}
+            {pickupDate && returnDate && (
+              <div className="pt-2">
+                {checkingAvailability ? (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+                    Checking availability...
+                  </div>
+                ) : availabilityStatus ? (
+                  availabilityStatus.available ? (
+                    <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-md">
+                      <div className="h-5 w-5 rounded-full bg-green-500 flex items-center justify-center">
+                        <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <span className="text-sm font-medium text-green-800">Equipment is available for these dates</span>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-300 rounded-md">
+                        <AlertCircle className="h-5 w-5 text-amber-600" />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-amber-900">
+                            Dates conflict with {availabilityStatus.conflictingBookings.length} existing {availabilityStatus.conflictingBookings.length === 1 ? 'booking' : 'bookings'}
+                          </p>
+                          <p className="text-xs text-amber-700 mt-1">
+                            Your booking will require manual approval from the zone manager.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="p-3 bg-white border border-amber-200 rounded-md">
+                        <p className="text-xs font-semibold text-gray-700 mb-2">Conflicting Bookings:</p>
+                        <div className="space-y-1.5">
+                          {availabilityStatus.conflictingBookings.map((conflict) => (
+                            <div key={conflict.id} className="text-xs p-2 bg-gray-50 rounded border-l-2 border-amber-500">
+                              <div className="font-medium text-gray-900">{conflict.clubName}</div>
+                              <div className="text-gray-600">
+                                {format(new Date(conflict.pickupDate), 'MMM d')} - {format(new Date(conflict.returnDate), 'MMM d, yyyy')}
+                              </div>
+                              <div className="text-gray-500">Ref: {conflict.bookingReference}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                ) : null}
+              </div>
+            )}
 
             {/* Use Location */}
             <div className="space-y-2">

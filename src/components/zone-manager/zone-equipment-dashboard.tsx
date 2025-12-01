@@ -14,7 +14,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Package, Plus, Edit, Trash2, Check, X, Calendar, DollarSign, AlertCircle, MapPin, ArrowRight, Truck, User, Printer, Mail, MoreHorizontal, Eye } from 'lucide-react';
+import { Package, Plus, Edit, Trash2, Check, X, Calendar as CalendarCheckIcon, DollarSign, AlertCircle, MapPin, ArrowRight, Truck, User, Printer, Mail, MoreHorizontal, Eye, CalendarIcon } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth-context';
@@ -89,6 +92,28 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
     status: 'pending' as BookingStatus,
   });
   
+  // Availability checking state for edit form
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
+  const [availabilityStatus, setAvailabilityStatus] = useState<{
+    available: boolean;
+    conflictingBookings: Array<{
+      id: string;
+      bookingReference: string;
+      pickupDate: string;
+      returnDate: string;
+      clubName: string;
+    }>;
+  } | null>(null);
+
+  // Calendar availability map (all bookings for selected equipment during edit)
+  const [calendarBookings, setCalendarBookings] = useState<Array<{
+    pickupDate: string;
+    returnDate: string;
+  }>>([]);
+  const [loadingCalendar, setLoadingCalendar] = useState(false);
+  const [pickupDateOpen, setPickupDateOpen] = useState(false);
+  const [returnDateOpen, setReturnDateOpen] = useState(false);
+  
   // Pricing rules state
   const [pricingRules, setPricingRules] = useState<PricingRule[]>([]);
   const [loadingPricing, setLoadingPricing] = useState(true);
@@ -132,6 +157,40 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
     }
   }, [pendingApprovalsCount, handoverActionsCount, onActionCountsChange, loadingBookings]);
   
+  // Check availability when editing booking dates
+  useEffect(() => {
+    if (!editingBooking || !selectedBooking || !bookingForm.pickupDate || !bookingForm.returnDate) {
+      setAvailabilityStatus(null);
+      return;
+    }
+
+    const checkAvailability = async () => {
+      setCheckingAvailability(true);
+      try {
+        const pickupDate = new Date(bookingForm.pickupDate).toISOString();
+        const returnDate = new Date(bookingForm.returnDate).toISOString();
+        const response = await fetch(
+          `/api/equipment-bookings/availability?equipmentId=${selectedBooking.equipmentId}&startDate=${pickupDate}&endDate=${returnDate}&excludeBookingId=${selectedBooking.id}`
+        );
+        
+        if (response.ok) {
+          const data = await response.json();
+          setAvailabilityStatus(data);
+        } else {
+          console.error('Failed to check availability');
+          setAvailabilityStatus(null);
+        }
+      } catch (error) {
+        console.error('Error checking availability:', error);
+        setAvailabilityStatus(null);
+      } finally {
+        setCheckingAvailability(false);
+      }
+    };
+
+    checkAvailability();
+  }, [editingBooking, selectedBooking, bookingForm.pickupDate, bookingForm.returnDate]);
+  
   // Handover coordination state
   const [selectedHandoverBooking, setSelectedHandoverBooking] = useState<EquipmentBooking | null>(null);
   const [handoverChain, setHandoverChain] = useState<{
@@ -173,6 +232,59 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
       setLoadingEquipment(false);
     }
   }, [zoneId, toast]);
+
+  // Helper to check if a date is within any booking period
+  const isDateBooked = (date: Date): boolean => {
+    return calendarBookings.some(booking => {
+      const pickup = new Date(booking.pickupDate);
+      const returnDate = new Date(booking.returnDate);
+      pickup.setHours(0, 0, 0, 0);
+      returnDate.setHours(0, 0, 0, 0);
+      const checkDate = new Date(date);
+      checkDate.setHours(0, 0, 0, 0);
+      return checkDate >= pickup && checkDate <= returnDate;
+    });
+  };
+
+  // Fetch all bookings for calendar visualization when editing booking
+  useEffect(() => {
+    if (!editingBooking || !selectedBooking) {
+      setCalendarBookings([]);
+      return;
+    }
+
+    const fetchCalendarBookings = async () => {
+      setLoadingCalendar(true);
+      try {
+        const response = await fetch(
+          `/api/equipment-bookings?equipmentId=${selectedBooking.equipmentId}&status=pending,approved,confirmed,picked_up,in_use`,
+          { headers: getAuthHeaders() }
+        );
+        
+        if (response.ok) {
+          const data = await response.json();
+          const bookings = (data.data || [])
+            // Exclude current booking being edited
+            .filter((b: any) => b.id !== selectedBooking.id)
+            .map((b: any) => ({
+              pickupDate: b.pickupDate,
+              returnDate: b.returnDate,
+            }));
+          setCalendarBookings(bookings);
+        } else {
+          console.error('Failed to fetch calendar bookings');
+          setCalendarBookings([]);
+        }
+      } catch (error) {
+        console.error('Error fetching calendar bookings:', error);
+        setCalendarBookings([]);
+      } finally {
+        setLoadingCalendar(false);
+      }
+    };
+
+    fetchCalendarBookings();
+  }, [editingBooking, selectedBooking]);
 
   const fetchBookings = useCallback(async () => {
     try {
@@ -3189,25 +3301,152 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="edit-pickup-date">Pickup Date</Label>
-                    <Input
-                      id="edit-pickup-date"
-                      type="date"
-                      value={bookingForm.pickupDate}
-                      onChange={(e) => setBookingForm({ ...bookingForm, pickupDate: e.target.value })}
-                    />
+                    <Label>Pickup Date</Label>
+                    <Popover open={pickupDateOpen} onOpenChange={setPickupDateOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            'w-full justify-start text-left font-normal',
+                            !bookingForm.pickupDate && 'text-muted-foreground'
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {bookingForm.pickupDate ? format(new Date(bookingForm.pickupDate), 'PPP') : 'Select date'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={bookingForm.pickupDate ? new Date(bookingForm.pickupDate) : undefined}
+                          onSelect={(date) => {
+                            setBookingForm({ ...bookingForm, pickupDate: date ? format(date, 'yyyy-MM-dd') : '' });
+                            setPickupDateOpen(false);
+                          }}
+                          disabled={(date) => date < new Date()}
+                          modifiers={{
+                            booked: (date) => isDateBooked(date),
+                          }}
+                          modifiersClassNames={{
+                            booked: 'bg-red-100 text-red-900 hover:bg-red-200 line-through',
+                          }}
+                          initialFocus
+                        />
+                        {loadingCalendar && (
+                          <div className="px-3 py-2 text-xs text-muted-foreground border-t">
+                            Loading availability...
+                          </div>
+                        )}
+                        {!loadingCalendar && calendarBookings.length > 0 && (
+                          <div className="px-3 py-2 text-xs text-muted-foreground border-t">
+                            <span className="inline-block w-3 h-3 bg-red-100 border border-red-300 rounded mr-1"></span>
+                            Already booked
+                          </div>
+                        )}
+                      </PopoverContent>
+                    </Popover>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="edit-return-date">Return Date</Label>
-                    <Input
-                      id="edit-return-date"
-                      type="date"
-                      value={bookingForm.returnDate}
-                      min={bookingForm.pickupDate || undefined}
-                      onChange={(e) => setBookingForm({ ...bookingForm, returnDate: e.target.value })}
-                    />
+                    <Label>Return Date</Label>
+                    <Popover open={returnDateOpen} onOpenChange={setReturnDateOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            'w-full justify-start text-left font-normal',
+                            !bookingForm.returnDate && 'text-muted-foreground'
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {bookingForm.returnDate ? format(new Date(bookingForm.returnDate), 'PPP') : 'Select date'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={bookingForm.returnDate ? new Date(bookingForm.returnDate) : undefined}
+                          onSelect={(date) => {
+                            setBookingForm({ ...bookingForm, returnDate: date ? format(date, 'yyyy-MM-dd') : '' });
+                            setReturnDateOpen(false);
+                          }}
+                          disabled={(date) => {
+                            if (date < new Date()) return true;
+                            if (bookingForm.pickupDate) {
+                              return date < new Date(bookingForm.pickupDate);
+                            }
+                            return false;
+                          }}
+                          modifiers={{
+                            booked: (date) => isDateBooked(date),
+                          }}
+                          modifiersClassNames={{
+                            booked: 'bg-red-100 text-red-900 hover:bg-red-200 line-through',
+                          }}
+                          initialFocus
+                        />
+                        {loadingCalendar && (
+                          <div className="px-3 py-2 text-xs text-muted-foreground border-t">
+                            Loading availability...
+                          </div>
+                        )}
+                        {!loadingCalendar && calendarBookings.length > 0 && (
+                          <div className="px-3 py-2 text-xs text-muted-foreground border-t">
+                            <span className="inline-block w-3 h-3 bg-red-100 border border-red-300 rounded mr-1"></span>
+                            Already booked
+                          </div>
+                        )}
+                      </PopoverContent>
+                    </Popover>
                   </div>
+
+                  {/* Availability Status */}
+                  {bookingForm.pickupDate && bookingForm.returnDate && editingBooking && (
+                    <div className="pt-2">
+                      {checkingAvailability ? (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+                          Checking availability...
+                        </div>
+                      ) : availabilityStatus ? (
+                        availabilityStatus.available ? (
+                          <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-md">
+                            <div className="h-5 w-5 rounded-full bg-green-500 flex items-center justify-center">
+                              <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                            </div>
+                            <span className="text-sm font-medium text-green-800">No conflicts - dates are available</span>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-300 rounded-md">
+                              <AlertCircle className="h-5 w-5 text-amber-600" />
+                              <div className="flex-1">
+                                <p className="text-sm font-medium text-amber-900">
+                                  Warning: Conflicts with {availabilityStatus.conflictingBookings.length} existing {availabilityStatus.conflictingBookings.length === 1 ? 'booking' : 'bookings'}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="p-3 bg-white border border-amber-200 rounded-md">
+                              <p className="text-xs font-semibold text-gray-700 mb-2">Conflicting Bookings:</p>
+                              <div className="space-y-1.5">
+                                {availabilityStatus.conflictingBookings.map((conflict) => (
+                                  <div key={conflict.id} className="text-xs p-2 bg-gray-50 rounded border-l-2 border-amber-500">
+                                    <div className="font-medium text-gray-900">{conflict.clubName}</div>
+                                    <div className="text-gray-600">
+                                      {format(new Date(conflict.pickupDate), 'MMM d')} - {format(new Date(conflict.returnDate), 'MMM d, yyyy')}
+                                    </div>
+                                    <div className="text-gray-500">Ref: {conflict.bookingReference}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      ) : null}
+                    </div>
+                  )}
 
                   <div className="space-y-2">
                     <Label htmlFor="edit-special-requirements">Special Requirements</Label>

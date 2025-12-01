@@ -630,7 +630,14 @@ export async function listBookings(filters?: {
     }
 
     if (filters?.status) {
-      query = query.where('status', '==', filters.status);
+      // Support multiple statuses separated by comma (e.g., "pending,approved,confirmed")
+      const statuses = filters.status.split(',').map(s => s.trim());
+      if (statuses.length === 1) {
+        query = query.where('status', '==', statuses[0]);
+      } else if (statuses.length > 1) {
+        // Use 'in' operator for multiple statuses (max 10 per Firestore limitation)
+        query = query.where('status', 'in', statuses.slice(0, 10));
+      }
     }
 
     const snapshot = await query.orderBy('pickupDate', 'desc').get();

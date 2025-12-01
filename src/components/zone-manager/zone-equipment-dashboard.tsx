@@ -3204,6 +3204,7 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
                       id="edit-return-date"
                       type="date"
                       value={bookingForm.returnDate}
+                      min={bookingForm.pickupDate || undefined}
                       onChange={(e) => setBookingForm({ ...bookingForm, returnDate: e.target.value })}
                     />
                   </div>

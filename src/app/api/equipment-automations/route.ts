@@ -53,10 +53,22 @@ export async function GET(request: NextRequest) {
       .limit(100)
       .get();
 
-    const autoApprovedBookings = autoApprovedSnapshot.docs.map((doc: any) => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+    const autoApprovedBookings = autoApprovedSnapshot.docs.map((doc: any) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        // Convert Firestore Timestamps to ISO strings for serialization
+        requestedDate: data.requestedDate?.toDate?.() || data.requestedDate,
+        pickupDate: data.pickupDate?.toDate?.() || data.pickupDate,
+        returnDate: data.returnDate?.toDate?.() || data.returnDate,
+        actualPickupDate: data.actualPickupDate?.toDate?.() || data.actualPickupDate,
+        actualReturnDate: data.actualReturnDate?.toDate?.() || data.actualReturnDate,
+        approvedAt: data.approvedAt?.toDate?.() || data.approvedAt,
+        createdAt: data.createdAt?.toDate?.() || data.createdAt,
+        updatedAt: data.updatedAt?.toDate?.() || data.updatedAt,
+      };
+    });
 
     return NextResponse.json({
       success: true,
@@ -180,16 +192,19 @@ export async function POST(request: NextRequest) {
           const booking = bookingDoc.data();
           const bookingId = bookingDoc.id;
           
-          // Check for conflicts with other bookings
+          // Check for conflicts with other bookings (including pending for first-come-first-served)
           const conflictingBookings = await adminDb
             .collection(BOOKINGS_COLLECTION)
             .where('equipmentId', '==', booking.equipmentId)
-            .where('status', 'in', ['approved', 'confirmed', 'picked_up', 'in_use'])
+            .where('status', 'in', ['pending', 'approved', 'confirmed', 'picked_up', 'in_use'])
             .get();
           
           let hasConflict = false;
-          const pickupTime = new Date(booking.pickupDate).getTime();
-          const returnTime = new Date(booking.returnDate).getTime();
+          // Handle Firestore Timestamps - convert to Date first
+          const bookingPickupDate = booking.pickupDate?.toDate ? booking.pickupDate.toDate() : new Date(booking.pickupDate);
+          const bookingReturnDate = booking.returnDate?.toDate ? booking.returnDate.toDate() : new Date(booking.returnDate);
+          const pickupTime = bookingPickupDate.getTime();
+          const returnTime = bookingReturnDate.getTime();
           
           conflictingBookings.forEach((conflictDoc: any) => {
             const existingBooking = conflictDoc.data();
@@ -199,8 +214,11 @@ export async function POST(request: NextRequest) {
               return;
             }
             
-            const existingPickup = new Date(existingBooking.pickupDate).getTime();
-            const existingReturn = new Date(existingBooking.returnDate).getTime();
+            // Handle Firestore Timestamps - convert to Date first
+            const existingPickupDate = existingBooking.pickupDate?.toDate ? existingBooking.pickupDate.toDate() : new Date(existingBooking.pickupDate);
+            const existingReturnDate = existingBooking.returnDate?.toDate ? existingBooking.returnDate.toDate() : new Date(existingBooking.returnDate);
+            const existingPickup = existingPickupDate.getTime();
+            const existingReturn = existingReturnDate.getTime();
             
             // Check if dates overlap
             if (

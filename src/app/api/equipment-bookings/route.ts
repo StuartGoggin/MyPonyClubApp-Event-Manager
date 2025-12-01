@@ -176,8 +176,13 @@ export async function POST(request: NextRequest) {
               return;
             }
             
-            const existingPickup = new Date(existingBooking.pickupDate).getTime();
-            const existingReturn = new Date(existingBooking.returnDate).getTime();
+            // Handle Firestore Timestamps - convert to Date first
+            const existingPickupDate = existingBooking.pickupDate?.toDate ? existingBooking.pickupDate.toDate() : new Date(existingBooking.pickupDate);
+            const existingReturnDate = existingBooking.returnDate?.toDate ? existingBooking.returnDate.toDate() : new Date(existingBooking.returnDate);
+            const existingPickup = existingPickupDate.getTime();
+            const existingReturn = existingReturnDate.getTime();
+            
+            console.log(`    Comparing: New [${new Date(pickupTime).toISOString()}→${new Date(returnTime).toISOString()}] vs Existing [${existingPickupDate.toISOString()}→${existingReturnDate.toISOString()}]`);
             
             // Check if dates overlap
             if (
@@ -185,12 +190,13 @@ export async function POST(request: NextRequest) {
               (returnTime >= existingPickup && returnTime <= existingReturn) ||
               (pickupTime <= existingPickup && returnTime >= existingReturn)
             ) {
+              console.log(`    ⚠️ OVERLAP DETECTED!`);
               hasConflict = true;
               conflictDetails.push({
                 bookingReference: existingBooking.bookingReference,
                 clubName: existingBooking.clubName,
-                pickupDate: existingBooking.pickupDate,
-                returnDate: existingBooking.returnDate,
+                pickupDate: existingPickupDate.toISOString(), // Use converted Date object
+                returnDate: existingReturnDate.toISOString(), // Use converted Date object
                 custodianName: existingBooking.custodian?.name
               });
             }

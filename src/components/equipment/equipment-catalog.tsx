@@ -53,6 +53,8 @@ export function EquipmentCatalog({
   const [selectedClubName, setSelectedClubName] = useState(clubName || '');
   const [pickupDate, setPickupDate] = useState<Date>();
   const [returnDate, setReturnDate] = useState<Date>();
+  const [pickupDateOpen, setPickupDateOpen] = useState(false);
+  const [returnDateOpen, setReturnDateOpen] = useState(false);
   const [eventName, setEventName] = useState('');
   const [eventLocation, setEventLocation] = useState(clubLocation || '');
   const [useLocation, setUseLocation] = useState('');
@@ -630,7 +632,7 @@ export function EquipmentCatalog({
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Pickup Date *</Label>
-                <Popover>
+                <Popover open={pickupDateOpen} onOpenChange={setPickupDateOpen}>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
@@ -647,7 +649,10 @@ export function EquipmentCatalog({
                     <Calendar
                       mode="single"
                       selected={pickupDate}
-                      onSelect={setPickupDate}
+                      onSelect={(date) => {
+                        setPickupDate(date);
+                        setPickupDateOpen(false);
+                      }}
                       disabled={(date) => date < new Date()}
                       initialFocus
                     />
@@ -657,7 +662,7 @@ export function EquipmentCatalog({
 
               <div className="space-y-2">
                 <Label>Return Date *</Label>
-                <Popover>
+                <Popover open={returnDateOpen} onOpenChange={setReturnDateOpen}>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
@@ -674,8 +679,12 @@ export function EquipmentCatalog({
                     <Calendar
                       mode="single"
                       selected={returnDate}
-                      onSelect={setReturnDate}
+                      onSelect={(date) => {
+                        setReturnDate(date);
+                        setReturnDateOpen(false);
+                      }}
                       disabled={(date) => !pickupDate || date <= pickupDate}
+                      defaultMonth={pickupDate ? new Date(pickupDate.getTime() + 86400000) : undefined}
                       initialFocus
                     />
                   </PopoverContent>

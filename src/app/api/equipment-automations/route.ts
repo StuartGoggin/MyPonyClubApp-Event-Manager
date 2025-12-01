@@ -40,7 +40,8 @@ export async function GET(request: NextRequest) {
     };
     
     const autoEmail = {
-      enabled: settings?.autoEmail?.enabled || false
+      bookingRequests: settings?.autoEmail?.bookingRequests || false,
+      bookingApprovals: settings?.autoEmail?.bookingApprovals || false
     };
 
     // Get auto-approved bookings for this zone
@@ -80,10 +81,12 @@ export async function GET(request: NextRequest) {
  * POST /api/equipment-automations
  * Update automation settings for a zone
  * @param processExisting - If true, auto-approve existing conflict-free pending bookings when enabling auto-approval
+ * @param processExistingDraftEmails - If true, approve pending draft emails when enabling auto-email
+ * @param emailType - For autoEmail type: 'bookingRequests' or 'bookingApprovals'
  */
 export async function POST(request: NextRequest) {
   try {
-    const { zoneId, type, enabled, processExisting = false } = await request.json();
+    const { zoneId, type, enabled, processExisting = false, processExistingDraftEmails = false, emailType } = await request.json();
 
     if (!zoneId || !type || typeof enabled !== 'boolean') {
       return NextResponse.json(
@@ -100,6 +103,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // For autoEmail, emailType is required
+    if (type === 'autoEmail' && !emailType) {
+      return NextResponse.json(
+        { success: false, error: 'Email type is required for autoEmail automation' },
+        { status: 400 }
+      );
+    }
+
     // Verify user has access to this zone
     const authResult = await requireZoneManager(request, zoneId);
     
@@ -112,16 +123,31 @@ export async function POST(request: NextRequest) {
     // Update automation settings
     const settingsRef = adminDb.collection(AUTOMATIONS_COLLECTION).doc(zoneId);
     
-    await settingsRef.set(
-      {
-        [type]: {
-          enabled,
-          updatedAt: new Date().toISOString(),
-          updatedBy: user.email || 'system'
-        }
-      },
-      { merge: true }
-    );
+    if (type === 'autoEmail') {
+      // Update specific email automation type
+      await settingsRef.set(
+        {
+          autoEmail: {
+            [emailType]: enabled,
+            updatedAt: new Date().toISOString(),
+            updatedBy: user.email || 'system'
+          }
+        },
+        { merge: true }
+      );
+    } else {
+      // Update other automation types
+      await settingsRef.set(
+        {
+          [type]: {
+            enabled,
+            updatedAt: new Date().toISOString(),
+            updatedBy: user.email || 'system'
+          }
+        },
+        { merge: true }
+      );
+    }
 
     // If enabling auto-approval and processExisting=true, auto-approve conflict-free pending bookings
     let processedCount = 0;
@@ -209,13 +235,66 @@ export async function POST(request: NextRequest) {
       console.log(`🎯 Bulk processing complete: ${processedCount} approved, ${skippedCount} skipped`);
     }
 
+    // If enabling auto-email and processExistingDraftEmails=true, approve pending draft emails
+    let emailsProcessed = 0;
+    if (type === 'autoEmail' && enabled && processExistingDraftEmails) {
+      console.log(`📧 Processing existing draft emails for zone ${zoneId} (${emailType})...`);
+      
+      try {
+        // Get draft emails for this zone's equipment bookings
+        const emailMetadataType = emailType === 'bookingRequests' ? 'booking_received' : 'booking_confirmed';
+        
+        // Query email queue for draft emails
+        const draftEmailsSnapshot = await adminDb
+          .collection('email_queue')
+          .where('status', '==', 'draft')
+          .where('type', '==', 'Equipment-Request')
+          .where('metadata.emailType', '==', emailMetadataType)
+          .get();
+        
+        console.log(`📊 Found ${draftEmailsSnapshot.size} draft ${emailType} emails`);
+        
+        // Filter to only emails for this zone's equipment
+        const equipmentSnapshot = await adminDb
+          .collection('equipment')
+          .where('zoneId', '==', zoneId)
+          .get();
+        const zoneEquipmentIds = equipmentSnapshot.docs.map((doc: any) => doc.id);
+        
+        for (const emailDoc of draftEmailsSnapshot.docs) {
+          const emailData = emailDoc.data();
+          const equipmentId = emailData.metadata?.equipmentId;
+          
+          // Only process emails for this zone's equipment
+          if (equipmentId && zoneEquipmentIds.includes(equipmentId)) {
+            await adminDb.collection('email_queue').doc(emailDoc.id).update({
+              status: 'pending', // Change from draft to pending (ready to send)
+              updatedAt: new Date().toISOString(),
+              approvedBy: user.email || 'auto-email-system',
+              approvedAt: new Date().toISOString()
+            });
+            emailsProcessed++;
+            console.log(`✅ Approved draft email ${emailDoc.id} for ${emailMetadataType}`);
+          }
+        }
+        
+        console.log(`📧 Email processing complete: ${emailsProcessed} emails approved`);
+      } catch (emailError) {
+        console.error('Error processing draft emails:', emailError);
+        // Continue even if email processing fails
+      }
+    }
+
     return NextResponse.json({
       success: true,
-      message: `${type} ${enabled ? 'enabled' : 'disabled'} successfully`,
+      message: `${type === 'autoEmail' ? `Auto-email ${emailType}` : type} ${enabled ? 'enabled' : 'disabled'} successfully`,
       bulkProcessing: processExisting ? {
         processed: processedCount,
         skipped: skippedCount,
         bookings: processedBookings
+      } : undefined,
+      emailProcessing: processExistingDraftEmails ? {
+        processed: emailsProcessed
       } : undefined
     });
   } catch (error) {

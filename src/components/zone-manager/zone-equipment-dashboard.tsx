@@ -104,9 +104,13 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
     bookings: string[];
   } | null>(null);
   
-  // Auto-email state
-  const [autoEmailEnabled, setAutoEmailEnabled] = useState(false);
-  const [loadingAutoEmail, setLoadingAutoEmail] = useState(false);
+  // Auto-email state (separate controls for requests and approvals)
+  const [autoEmailBookingRequests, setAutoEmailBookingRequests] = useState(false);
+  const [autoEmailBookingApprovals, setAutoEmailBookingApprovals] = useState(false);
+  const [loadingAutoEmailRequests, setLoadingAutoEmailRequests] = useState(false);
+  const [loadingAutoEmailApprovals, setLoadingAutoEmailApprovals] = useState(false);
+  const [processExistingDraftEmails, setProcessExistingDraftEmails] = useState(false);
+  const [draftEmailsCount, setDraftEmailsCount] = useState({ requests: 0, approvals: 0 });
   
   // Tab count indicators - recalculated whenever bookings change
   const pendingApprovalsCount = bookings.filter(b => b.status === 'pending').length;
@@ -206,6 +210,31 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
     }
   }, [zoneId, toast]);
 
+  // Fetch draft email counts for this zone
+  const fetchDraftEmailCounts = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/email-queue?status=draft&zoneId=${zoneId}`, {
+        headers: getAuthHeaders()
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const emails = data.emails || [];
+        
+        const requestsCount = emails.filter((e: any) => 
+          e.metadata?.emailType === 'booking_received'
+        ).length;
+        
+        const approvalsCount = emails.filter((e: any) => 
+          e.metadata?.emailType === 'booking_confirmed'
+        ).length;
+        
+        setDraftEmailsCount({ requests: requestsCount, approvals: approvalsCount });
+      }
+    } catch (error) {
+      console.error('Error fetching draft email counts:', error);
+    }
+  }, [zoneId]);
+
   // Fetch auto-approval settings and history
   const fetchAutoApprovalSettings = useCallback(async () => {
     try {
@@ -215,12 +244,112 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
       if (!response.ok) throw new Error('Failed to fetch automation settings');
       const data = await response.json();
       setAutoApprovalEnabled(data.autoApproval?.enabled || false);
-      setAutoEmailEnabled(data.autoEmail?.enabled || false);
+      setAutoEmailBookingRequests(data.autoEmail?.bookingRequests || false);
+      setAutoEmailBookingApprovals(data.autoEmail?.bookingApprovals || false);
       setAutoApprovedBookings(data.autoApprovedBookings || []);
+      
+      // Fetch draft email counts for this zone
+      await fetchDraftEmailCounts();
     } catch (error) {
       console.error('Error fetching automation settings:', error);
     }
-  }, [zoneId]);
+  }, [zoneId, fetchDraftEmailCounts]);
+
+  // Toggle auto-email for booking requests
+  const toggleAutoEmailBookingRequests = async () => {
+    try {
+      setLoadingAutoEmailRequests(true);
+      const newState = !autoEmailBookingRequests;
+      
+      const response = await fetch(`/api/equipment-automations`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          zoneId,
+          type: 'autoEmail',
+          emailType: 'bookingRequests',
+          enabled: newState,
+          processExistingDraftEmails: newState && processExistingDraftEmails
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to toggle auto-email');
+
+      const data = await response.json();
+      setAutoEmailBookingRequests(newState);
+      
+      // Show success toast with email processing info
+      let message = `Auto-email for booking requests ${newState ? 'enabled' : 'disabled'}`;
+      if (data.emailProcessing) {
+        message += `. ${data.emailProcessing.processed} draft emails approved.`;
+      }
+      
+      toast({
+        title: 'Success',
+        description: message,
+      });
+
+      // Refresh settings and email counts
+      await fetchAutoApprovalSettings();
+      setProcessExistingDraftEmails(false);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to toggle auto-email',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingAutoEmailRequests(false);
+    }
+  };
+
+  // Toggle auto-email for booking approvals
+  const toggleAutoEmailBookingApprovals = async () => {
+    try {
+      setLoadingAutoEmailApprovals(true);
+      const newState = !autoEmailBookingApprovals;
+      
+      const response = await fetch(`/api/equipment-automations`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          zoneId,
+          type: 'autoEmail',
+          emailType: 'bookingApprovals',
+          enabled: newState,
+          processExistingDraftEmails: newState && processExistingDraftEmails
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to toggle auto-email');
+
+      const data = await response.json();
+      setAutoEmailBookingApprovals(newState);
+      
+      // Show success toast with email processing info
+      let message = `Auto-email for booking approvals ${newState ? 'enabled' : 'disabled'}`;
+      if (data.emailProcessing) {
+        message += `. ${data.emailProcessing.processed} draft emails approved.`;
+      }
+      
+      toast({
+        title: 'Success',
+        description: message,
+      });
+
+      // Refresh settings and email counts
+      await fetchAutoApprovalSettings();
+      setProcessExistingDraftEmails(false);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to toggle auto-email',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingAutoEmailApprovals(false);
+    }
+  };
 
   // Toggle auto-approval
   const toggleAutoApproval = async () => {
@@ -274,41 +403,6 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
       });
     } finally {
       setLoadingAutoApproval(false);
-    }
-  };
-
-  // Toggle auto-email
-  const toggleAutoEmail = async () => {
-    try {
-      setLoadingAutoEmail(true);
-      const newState = !autoEmailEnabled;
-      
-      const response = await fetch(`/api/equipment-automations`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({
-          zoneId,
-          type: 'autoEmail',
-          enabled: newState
-        })
-      });
-
-      if (!response.ok) throw new Error('Failed to update auto-email settings');
-
-      setAutoEmailEnabled(newState);
-      
-      toast({
-        title: 'Success',
-        description: `Auto-email ${newState ? 'enabled' : 'disabled'} successfully`,
-      });
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to update auto-email settings',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoadingAutoEmail(false);
     }
   };
 
@@ -2608,28 +2702,29 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
             </CardContent>
           </Card>
 
-          {/* Auto-Email Card */}
+          {/* Auto-Email Cards */}
+          {/* Booking Request Emails */}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2">
-                    <Mail className="h-5 w-5 text-blue-600" />
-                    Automatic Email Confirmations
+                    <Mail className="h-5 w-5 text-amber-600" />
+                    Auto-Send Booking Request Emails
                   </CardTitle>
                   <CardDescription>
-                    Automatically send confirmation emails when bookings are approved
+                    Automatically send emails when new booking requests are received
                   </CardDescription>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Label htmlFor="auto-email-toggle" className="text-sm font-medium">
-                    {autoEmailEnabled ? 'Enabled' : 'Disabled'}
+                  <Label htmlFor="auto-email-requests-toggle" className="text-sm font-medium">
+                    {autoEmailBookingRequests ? 'Enabled' : 'Disabled'}
                   </Label>
                   <Switch
-                    id="auto-email-toggle"
-                    checked={autoEmailEnabled}
-                    onCheckedChange={toggleAutoEmail}
-                    disabled={loadingAutoEmail}
+                    id="auto-email-requests-toggle"
+                    checked={autoEmailBookingRequests}
+                    onCheckedChange={toggleAutoEmailBookingRequests}
+                    disabled={loadingAutoEmailRequests}
                   />
                 </div>
               </div>
@@ -2640,39 +2735,134 @@ export function ZoneEquipmentDashboard({ zoneId, zoneName, onActionCountsChange 
                   <div className="flex items-start gap-3">
                     <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
                     <div className="flex-1">
-                      <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">How Auto-Email Works</h4>
+                      <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">How Auto-Send Works</h4>
                       <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1 list-disc list-inside">
-                        <li>When enabled, confirmation emails are sent automatically when bookings are approved</li>
-                        <li>Emails are sent to the club custodian and backup contact</li>
-                        <li>Includes booking details, equipment information, and pickup/return instructions</li>
-                        <li>Works with both manual and automatic approvals</li>
+                        <li>When enabled, booking request confirmation emails are sent automatically</li>
+                        <li>When disabled, emails are saved as drafts in the email queue for manual review</li>
+                        <li>Site-level settings can override zone-level settings (admin controls)</li>
+                        <li>Emails are sent to the custodian and requester (if different)</li>
                       </ul>
                     </div>
                   </div>
                 </div>
 
-                {autoEmailEnabled && (
-                  <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg p-4">
-                    <div className="flex items-center gap-2">
-                      <Mail className="h-5 w-5 text-green-600 dark:text-green-400" />
-                      <p className="text-sm font-medium text-green-900 dark:text-green-100">
-                        Auto-email is currently active. Confirmation emails will be sent automatically upon booking approval.
-                      </p>
+                {/* Process Existing Draft Emails Checkbox */}
+                {!autoEmailBookingRequests && draftEmailsCount.requests > 0 && (
+                  <div className="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <input
+                            type="checkbox"
+                            id="process-existing-draft-requests"
+                            checked={processExistingDraftEmails}
+                            onChange={(e) => setProcessExistingDraftEmails(e.target.checked)}
+                            className="h-4 w-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500"
+                          />
+                          <label htmlFor="process-existing-draft-requests" className="font-semibold text-amber-900 dark:text-amber-100 cursor-pointer">
+                            Also approve existing draft booking request emails ({draftEmailsCount.requests})
+                          </label>
+                        </div>
+                        <p className="text-sm text-amber-800 dark:text-amber-200 ml-6">
+                          When you enable auto-send, also approve your current {draftEmailsCount.requests} draft {draftEmailsCount.requests === 1 ? 'email' : 'emails'} for sending.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 )}
 
-                <div className="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-                  <div className="flex items-start gap-3">
-                    <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5" />
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-amber-900 dark:text-amber-100 mb-1">Email Template</h4>
-                      <p className="text-sm text-amber-800 dark:text-amber-200">
-                        Confirmation emails include: booking reference, equipment details, pickup/return dates and locations, custodian information, and zone contact details.
+                {autoEmailBookingRequests && (
+                  <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                    <div className="flex items-center gap-2">
+                      <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
+                      <p className="text-sm font-medium text-green-900 dark:text-green-100">
+                        Auto-send is currently active. Booking request emails will be sent automatically.
                       </p>
                     </div>
                   </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Booking Approval Emails */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Mail className="h-5 w-5 text-green-600" />
+                    Auto-Send Booking Approval Emails
+                  </CardTitle>
+                  <CardDescription>
+                    Automatically send confirmation emails when bookings are approved
+                  </CardDescription>
                 </div>
+                <div className="flex items-center gap-3">
+                  <Label htmlFor="auto-email-approvals-toggle" className="text-sm font-medium">
+                    {autoEmailBookingApprovals ? 'Enabled' : 'Disabled'}
+                  </Label>
+                  <Switch
+                    id="auto-email-approvals-toggle"
+                    checked={autoEmailBookingApprovals}
+                    onCheckedChange={toggleAutoEmailBookingApprovals}
+                    disabled={loadingAutoEmailApprovals}
+                  />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">How Auto-Send Works</h4>
+                      <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1 list-disc list-inside">
+                        <li>When enabled, booking approval confirmation emails are sent automatically</li>
+                        <li>When disabled, emails are saved as drafts in the email queue for manual review</li>
+                        <li>Site-level settings can override zone-level settings (admin controls)</li>
+                        <li>Includes pickup/return details and handover coordination information</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Process Existing Draft Emails Checkbox */}
+                {!autoEmailBookingApprovals && draftEmailsCount.approvals > 0 && (
+                  <div className="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <input
+                            type="checkbox"
+                            id="process-existing-draft-approvals"
+                            checked={processExistingDraftEmails}
+                            onChange={(e) => setProcessExistingDraftEmails(e.target.checked)}
+                            className="h-4 w-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500"
+                          />
+                          <label htmlFor="process-existing-draft-approvals" className="font-semibold text-amber-900 dark:text-amber-100 cursor-pointer">
+                            Also approve existing draft approval emails ({draftEmailsCount.approvals})
+                          </label>
+                        </div>
+                        <p className="text-sm text-amber-800 dark:text-amber-200 ml-6">
+                          When you enable auto-send, also approve your current {draftEmailsCount.approvals} draft {draftEmailsCount.approvals === 1 ? 'email' : 'emails'} for sending.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {autoEmailBookingApprovals && (
+                  <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                    <div className="flex items-center gap-2">
+                      <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
+                      <p className="text-sm font-medium text-green-900 dark:text-green-100">
+                        Auto-send is currently active. Approval confirmation emails will be sent automatically.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

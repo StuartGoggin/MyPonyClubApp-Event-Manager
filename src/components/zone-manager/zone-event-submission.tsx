@@ -63,7 +63,11 @@ export function ZoneEventSubmission({
     try {
       const eventData = {
         name: formData.name,
-        date: formData.date?.toISOString(), // Ensure date is properly formatted
+        date: (() => {
+          const d = new Date(formData.date!);
+          d.setHours(0, 0, 0, 0);
+          return d;
+        })(), // Store as local midnight to avoid timezone issues
         eventTypeId: formData.eventTypeId,
         zoneId: formData.zoneId,
         location: formData.location,

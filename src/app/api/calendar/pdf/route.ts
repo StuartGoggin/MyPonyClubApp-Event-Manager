@@ -2,6 +2,36 @@ import { NextRequest, NextResponse } from 'next/server';
 import { generateCalendarPDF } from '@/lib/calendar-pdf';
 import { getAllEvents, getAllClubs, getAllEventTypes, getAllZones } from '@/lib/server-data';
 
+/**
+ * Parse date (string, Date, or Timestamp) without timezone conversion
+ * Avoids the issue where Date constructor treats strings as UTC,
+ * causing dates to shift when converted to local timezone
+ */
+function parseDateString(date: string | Date | any): { year: number; month: number; day: number } {
+  // Handle Firestore Timestamp objects
+  if (date && typeof date === 'object' && 'toDate' in date) {
+    date = date.toDate();
+  }
+  
+  // Handle Date objects
+  if (date instanceof Date) {
+    return {
+      year: date.getFullYear(),
+      month: date.getMonth() + 1, // JavaScript months are 0-indexed
+      day: date.getDate()
+    };
+  }
+  
+  // Handle string dates
+  const dateStr = String(date);
+  const parts = dateStr.split('T')[0].split('-'); // Handle both 'YYYY-MM-DD' and ISO strings
+  return {
+    year: parseInt(parts[0], 10),
+    month: parseInt(parts[1], 10),
+    day: parseInt(parts[2], 10)
+  };
+}
+
 // Force dynamic rendering for this route since it uses request parameters
 export const dynamic = 'force-dynamic';
 
@@ -37,22 +67,26 @@ export async function GET(request: NextRequest) {
     if (scope === 'month') {
       // Filter events for the specific month
       filteredEvents = events.filter(event => {
-        const eventDate = new Date(event.date);
-        return eventDate.getFullYear() === year && eventDate.getMonth() + 1 === month;
+        const { year: eventYear, month: eventMonth } = parseDateString(event.date);
+        return eventYear === year && eventMonth === month;
       });
     } else if (scope === 'year') {
       // Filter events for the specific year
       filteredEvents = events.filter(event => {
-        const eventDate = new Date(event.date);
-        return eventDate.getFullYear() === year;
+        const { year: eventYear } = parseDateString(event.date);
+        return eventYear === year;
       });
     } else if (scope === 'custom' && startDate && endDate) {
       // Filter events for custom date range
-      const start = new Date(startDate);
-      const end = new Date(endDate);
+      const startParts = parseDateString(startDate);
+      const endParts = parseDateString(endDate);
       filteredEvents = events.filter(event => {
-        const eventDate = new Date(event.date);
-        return eventDate >= start && eventDate <= end;
+        const eventParts = parseDateString(event.date);
+        // Compare as YYYYMMDD integers for simple date comparison
+        const eventNum = eventParts.year * 10000 + eventParts.month * 100 + eventParts.day;
+        const startNum = startParts.year * 10000 + startParts.month * 100 + startParts.day;
+        const endNum = endParts.year * 10000 + endParts.month * 100 + endParts.day;
+        return eventNum >= startNum && eventNum <= endNum;
       });
     }
 
@@ -140,7 +174,14 @@ export async function GET(request: NextRequest) {
       
       return {
   name: event.name || eventType?.name || 'Event',
-  date: event.date.toISOString().split('T')[0], // Convert Date to YYYY-MM-DD string
+  date: (() => {
+    // Format date without timezone conversion
+    const d = event.date instanceof Date ? event.date : new Date(event.date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  })(),
   status: event.status || 'pending',
   club: isPublicHoliday ? '' : isStateEvent ? 'State Event' : isZoneEvent ? `${zone?.name || 'Zone'} (Zone Event)` : (club?.name || ''),
   eventType: eventType?.name,

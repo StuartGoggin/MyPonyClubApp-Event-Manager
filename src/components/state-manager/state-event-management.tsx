@@ -211,11 +211,15 @@ export function StateEventManagement({
 
     setIsSubmitting(true);
     try {
+      // Convert date to local midnight to avoid timezone issues
+      const dateObj = new Date(formData.date);
+      dateObj.setHours(0, 0, 0, 0);
+      
       const eventData = {
         ...formData,
         status: 'approved', // State events are automatically approved
         source: 'state' as const, // Mark as state-level event
-        date: new Date(formData.date).toISOString()
+        date: dateObj
         // Note: No zoneId or clubId for state-level events
       };
 

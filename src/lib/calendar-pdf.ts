@@ -39,6 +39,36 @@ function getOrdinalSuffix(day: number): string {
   }
 }
 
+/**
+ * Parse date (string, Date, or Timestamp) without timezone conversion
+ * Avoids the issue where Date constructor treats strings as UTC,
+ * causing dates to shift when converted to local timezone
+ */
+function parseDateString(date: string | Date | any): { year: number; month: number; day: number } {
+  // Handle Firestore Timestamp objects
+  if (date && typeof date === 'object' && 'toDate' in date) {
+    date = date.toDate();
+  }
+  
+  // Handle Date objects
+  if (date instanceof Date) {
+    return {
+      year: date.getFullYear(),
+      month: date.getMonth() + 1, // JavaScript months are 0-indexed
+      day: date.getDate()
+    };
+  }
+  
+  // Handle string dates
+  const dateStr = String(date);
+  const parts = dateStr.split('T')[0].split('-'); // Handle both 'YYYY-MM-DD' and ISO strings
+  return {
+    year: parseInt(parts[0], 10),
+    month: parseInt(parts[1], 10),
+    day: parseInt(parts[2], 10)
+  };
+}
+
 export function generateCalendarPDF(options: CalendarPDFOptions): Buffer {
   try {
     // Check if this is zone format and delegate to zone format generator
@@ -175,10 +205,8 @@ export function generateCalendarPDF(options: CalendarPDFOptions): Buffer {
           } else if (dayCounter <= daysInMonth) {
             // Check for events on this day
             const dayEvents = options.events.filter(event => {
-              const eventDate = new Date(event.date);
-              return eventDate.getFullYear() === year && 
-                     eventDate.getMonth() + 1 === month && 
-                     eventDate.getDate() === dayCounter;
+              const { year: eventYear, month: eventMonth, day: eventDay } = parseDateString(event.date);
+              return eventYear === year && eventMonth === month && eventDay === dayCounter;
             });
 
             // Enhanced day cell with modern design
@@ -280,8 +308,8 @@ export function generateCalendarPDF(options: CalendarPDFOptions): Buffer {
       // Enhanced event list section with detailed information
       const eventListY = currentY + 10; // Reduced spacing
       const monthEvents = options.events.filter(event => {
-        const eventDate = new Date(event.date);
-        return eventDate.getFullYear() === year && eventDate.getMonth() + 1 === month;
+        const { year: eventYear, month: eventMonth } = parseDateString(event.date);
+        return eventYear === year && eventMonth === month;
       });
 
       if (monthEvents.length > 0) {
@@ -309,11 +337,9 @@ export function generateCalendarPDF(options: CalendarPDFOptions): Buffer {
         for (const event of sortedEvents) {
           if (listY > pageHeight - margin - 15) break; // Prevent overflow
           
-          const eventDate = new Date(event.date);
-          const dateStr = eventDate.toLocaleDateString('en-AU', { 
-            day: '2-digit', 
-            month: 'short' 
-          });
+          const { year, month, day } = parseDateString(event.date);
+          const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+          const dateStr = `${day.toString().padStart(2, '0')} ${monthNames[month - 1]}`;
           const isApproved = event.status === 'approved';
           
           // Status indicator dot
@@ -623,8 +649,8 @@ function generateZoneFormatPDF(options: CalendarPDFOptions): Buffer {
     // Group events by month
     const eventsByMonth: { [key: string]: typeof options.events } = {};
     options.events.forEach(event => {
-      const eventDate = new Date(event.date);
-      const monthKey = `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}`;
+      const { year, month } = parseDateString(event.date);
+      const monthKey = `${year}-${String(month).padStart(2, '0')}`;
       if (!eventsByMonth[monthKey]) {
         eventsByMonth[monthKey] = [];
       }
@@ -898,9 +924,9 @@ function generateZoneFormatPDF(options: CalendarPDFOptions): Buffer {
               case 0: // Date - already drawn as merged cell if multiple events, otherwise draw normally
                 if (numEvents === 1) {
                   doc.rect(currentX, yPosition - 1, col.width, rowHeight);
-                  const eventDate = new Date(event.date);
-                  const dateText = eventDate.getDate() + getOrdinalSuffix(eventDate.getDate()) + ' ' + 
-                                  eventDate.toLocaleDateString('en-AU', { month: 'short', year: 'numeric' });
+                  const { year: eventYear, month: eventMonth, day: eventDay } = parseDateString(event.date);
+                  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                  const dateText = eventDay + getOrdinalSuffix(eventDay) + ' ' + monthNames[eventMonth - 1] + ' ' + eventYear;
                   doc.setFont('helvetica', 'normal');
                   doc.setFontSize(8);
                   doc.setTextColor(...colors.text);

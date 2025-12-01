@@ -48,6 +48,36 @@ function getOrdinalSuffix(day: number): string {
   }
 }
 
+/**
+ * Parse date (string, Date, or Timestamp) without timezone conversion
+ * Avoids the issue where Date constructor treats strings as UTC,
+ * causing dates to shift when converted to local timezone
+ */
+function parseDateString(date: string | Date | any): { year: number; month: number; day: number } {
+  // Handle Firestore Timestamp objects
+  if (date && typeof date === 'object' && 'toDate' in date) {
+    date = date.toDate();
+  }
+  
+  // Handle Date objects
+  if (date instanceof Date) {
+    return {
+      year: date.getFullYear(),
+      month: date.getMonth() + 1, // JavaScript months are 0-indexed
+      day: date.getDate()
+    };
+  }
+  
+  // Handle string dates
+  const dateStr = String(date);
+  const parts = dateStr.split('T')[0].split('-'); // Handle both 'YYYY-MM-DD' and ISO strings
+  return {
+    year: parseInt(parts[0], 10),
+    month: parseInt(parts[1], 10),
+    day: parseInt(parts[2], 10)
+  };
+}
+
 export function generateZoneFormatCalendarPDF(options: ZoneCalendarPDFOptions): Buffer {
   try {
     // Create a new jsPDF instance - Portrait orientation
@@ -312,8 +342,8 @@ This calendar may be updated throughout the year. For the latest information, vi
     const eventsByMonth: { [key: string]: typeof options.events } = {};
     
     options.events.forEach(event => {
-      const eventDate = new Date(event.date);
-      const monthKey = `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}`;
+      const { year, month } = parseDateString(event.date);
+      const monthKey = `${year}-${String(month).padStart(2, '0')}`;
       if (!eventsByMonth[monthKey]) {
         eventsByMonth[monthKey] = [];
       }
@@ -373,7 +403,7 @@ This calendar may be updated throughout the year. For the latest information, vi
           drawTableHeader();
         }
         
-        const eventDate = new Date(event.date);
+        const { year, month, day } = parseDateString(event.date);
         const eventBgColor = getEventBackgroundColor(event);
         
         // Calculate row height based on text content
@@ -404,7 +434,7 @@ This calendar may be updated throughout the year. For the latest information, vi
         
         // Date cell with better alignment
         doc.rect(currentX, yPosition - 1.5, columnWidths.date, rowHeight);
-        const dateStr = eventDate.getDate() + getOrdinalSuffix(eventDate.getDate()) + ' ' + getMonthName(eventDate.getMonth() + 1);
+        const dateStr = day + getOrdinalSuffix(day) + ' ' + getMonthName(month);
         const dateY = yPosition + (rowHeight / 2) + 1.5;
         doc.text(dateStr, currentX + 3, dateY);
         currentX += columnWidths.date;

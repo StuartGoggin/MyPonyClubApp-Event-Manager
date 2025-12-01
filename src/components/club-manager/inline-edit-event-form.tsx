@@ -117,7 +117,11 @@ export function InlineEditEventForm({
       // Prepare the update data
       const updateData = {
         ...formData,
-        date: new Date(formData.date).toISOString(),
+        date: (() => {
+          const d = new Date(formData.date);
+          d.setHours(0, 0, 0, 0);
+          return d;
+        })(),
         // If date was changed and event was approved, set status back to proposed
         ...(dateChanged && event.status === 'approved' && { status: 'proposed' })
       };

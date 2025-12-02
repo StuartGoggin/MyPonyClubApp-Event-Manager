@@ -11,6 +11,7 @@ import {
   updateBooking,
   deleteBooking,
 } from '@/lib/equipment-service';
+import { getUserFromRequest, userHasRole, userInZone } from '@/lib/auth-helpers';
 
 interface RouteParams {
   params: {
@@ -67,7 +68,19 @@ export async function PUT(
 ) {
   try {
     const { id } = params;
-    const body = await request.json();
+    
+    // Authenticate user
+    const user = await getUserFromRequest(request);
+    if (!user) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Unauthorized',
+          message: 'Authentication required to update bookings',
+        },
+        { status: 401 }
+      );
+    }
 
     // Check if booking exists
     const existing = await getBooking(id);
@@ -81,18 +94,28 @@ export async function PUT(
       );
     }
 
-    // TODO: Add authorization check (only zone manager or booking owner)
+    // Authorization check: Only zone rep (in same zone), state admin, or super user can modify
+    const isZoneRep = userHasRole(user, 'zone_rep') && userInZone(user, existing.zoneId);
+    const isAdmin = userHasRole(user, 'state_admin', 'super_user');
 
-    // Update booking
-    await updateBooking(id, body);
+    if (!isZoneRep && !isAdmin) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Forbidden',
+          message: 'You do not have permission to modify this booking. Only zone representatives or administrators can update bookings.',
+        },
+        { status: 403 }
+      );
+    }
 
-    // Fetch updated booking
-    const updated = await getBooking(id);
+    // Update the booking
+    const updates = await request.json();
+    const updatedBooking = await updateBooking(id, updates);
 
     return NextResponse.json({
       success: true,
-      data: updated,
-      message: 'Booking updated successfully',
+      data: updatedBooking,
     });
   } catch (error) {
     console.error('Error updating booking:', error);
@@ -120,6 +143,19 @@ export async function DELETE(
     const { id } = params;
     const { searchParams } = new URL(request.url);
     const permanent = searchParams.get('permanent') === 'true';
+    
+    // Authenticate user
+    const user = await getUserFromRequest(request);
+    if (!user) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Unauthorized',
+          message: 'Authentication required to delete bookings',
+        },
+        { status: 401 }
+      );
+    }
 
     // Check if booking exists
     const existing = await getBooking(id);
@@ -133,12 +169,38 @@ export async function DELETE(
       );
     }
 
-    // TODO: Add authorization check
-    // TODO: Implement booking deletion workflow with email notifications
+    // Authorization check: Only zone rep (in same zone), state admin, or super user can delete
+    const isZoneRep = userHasRole(user, 'zone_rep') && userInZone(user, existing.zoneId);
+    const isAdmin = userHasRole(user, 'state_admin', 'super_user');
+
+    if (!isZoneRep && !isAdmin) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Forbidden',
+          message: 'You do not have permission to delete this booking. Only zone representatives or administrators can delete bookings.',
+        },
+        { status: 403 }
+      );
+    }
+
+    // Only super users can permanently delete bookings
+    if (permanent && !userHasRole(user, 'super_user')) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Forbidden',
+          message: 'Only super users can permanently delete bookings. Use cancel instead.',
+        },
+        { status: 403 }
+      );
+    }
 
     if (permanent) {
       // Permanently delete the booking
       await deleteBooking(id);
+      
+      console.log(`🗑️ Booking ${id} permanently deleted by ${user.name} (${user.role})`);
       
       return NextResponse.json({
         success: true,
@@ -146,12 +208,13 @@ export async function DELETE(
       });
     } else {
       // Just cancel the booking (set status to cancelled)
-      const booking = await getBooking(id);
       await updateBooking(id, { status: 'cancelled' });
       
       // NOTE: Handover details are now computed dynamically, so no need to refresh chain
       // The handover-chain API will automatically compute the correct chain when requested
-      console.log(`✅ Cancelled booking ${id} - handover chain will be recomputed dynamically`);
+      console.log(`✅ Cancelled booking ${id} by ${user.name} (${user.role}) - handover chain will be recomputed dynamically`);
+      
+      // TODO: Implement booking cancellation email notifications
       
       return NextResponse.json({
         success: true,

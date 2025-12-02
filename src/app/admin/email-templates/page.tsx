@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { AlertCircle, Edit, Eye, Mail, Plus, Save, Trash2, RefreshCw, FileText, Users, User, Shield } from 'lucide-react';
+import DOMPurify from 'isomorphic-dompurify';
 import { EmailTemplate, EmailTemplateType, EmailTemplateStatus, CreateEmailTemplateRequest, UpdateEmailTemplateRequest, EmailTemplateAttachmentSettings } from '@/lib/types-email-templates';
 
 export default function EmailTemplatesPage() {
@@ -1098,7 +1099,7 @@ export default function EmailTemplatesPage() {
                 <TabsContent value="html">
                   <div className="border rounded overflow-hidden">
                     <div 
-                      dangerouslySetInnerHTML={{ __html: previewContent.html }}
+                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(previewContent.html) }}
                       className="p-4 bg-white font-sans"
                     />
                   </div>

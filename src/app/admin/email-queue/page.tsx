@@ -18,6 +18,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
 import { CalendarIcon, Mail, Send, Trash2, Edit, Eye, CheckCircle, XCircle, Clock, AlertTriangle, Settings, Download, Filter, Search, RefreshCw, FileText, Activity, AlertCircle, MoreVertical, Zap } from 'lucide-react';
 import { format } from 'date-fns';
+import DOMPurify from 'isomorphic-dompurify';
 import { QueuedEmail, EmailStatus, EmailQueueStats, EmailQueueConfig, EmailLog } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import AdminAuthWrapper from '@/components/admin-auth-wrapper';
@@ -1475,7 +1476,7 @@ function EmailQueueAdminContent() {
                   {previewEmail.htmlContent ? (
                     <div 
                       className="mt-2 p-4 border rounded-md max-h-96 overflow-y-auto bg-white"
-                      dangerouslySetInnerHTML={{ __html: previewEmail.htmlContent }}
+                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(previewEmail.htmlContent) }}
                     />
                   ) : (
                     <div className="mt-2 p-4 border rounded-md text-gray-500 text-sm">

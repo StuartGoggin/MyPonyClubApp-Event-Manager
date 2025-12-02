@@ -6,7 +6,6 @@
   "scripts": {
     "dev": "next dev -p 9002",
     "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
-    
     "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
     "build": "next build",
     "postbuild": "node scripts/copy-public-to-standalone.js",
@@ -70,6 +69,7 @@
     "firebase-admin": "^12.7.0",
     "genkit": "^1.16.0",
     "helmet": "^8.1.0",
+    "isomorphic-dompurify": "^2.33.0",
     "jose": "^6.1.0",
     "jotai": "^2.8.3",
     "jspdf": "^3.0.2",

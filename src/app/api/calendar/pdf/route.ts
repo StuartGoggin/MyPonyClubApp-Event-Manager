@@ -195,8 +195,6 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    console.log(`PDF: Found ${enhancedEvents.length} events for ${scope} ${year}${scope === 'month' ? '-' + month : ''}`);
-
     // Prepare months array for PDF utility
     const months = [];
     if (scope === 'month') {
@@ -257,8 +255,6 @@ export async function GET(request: NextRequest) {
     const today = new Date();
     const asOfDate = formatAsOfDate(today);
     
-    console.log('PDF Filename generation:', { format, filterScope, zoneId, clubId, scope, year, month });
-    
     // Zone format with zone filter
     if (format === 'zone' && filterScope === 'zone' && zoneId) {
       const zone = zones.find(z => z.id === zoneId);
@@ -274,7 +270,6 @@ export async function GET(request: NextRequest) {
       } else if (scope === 'custom') {
         filename = `${zoneName} Calendar ${startDate} to ${endDate} as of ${asOfDate}.pdf`;
       }
-      console.log('Generated zone filename:', filename);
     }
     // Zone format with club filter
     else if (format === 'zone' && filterScope === 'club' && clubId) {
@@ -291,7 +286,6 @@ export async function GET(request: NextRequest) {
       } else if (scope === 'custom') {
         filename = `${clubName} Calendar ${startDate} to ${endDate} as of ${asOfDate}.pdf`;
       }
-      console.log('Generated club filename:', filename);
     }
     // Zone format with all events
     else if (format === 'zone' && filterScope === 'all') {
@@ -305,7 +299,6 @@ export async function GET(request: NextRequest) {
       } else if (scope === 'custom') {
         filename = `PonyClub Events ${startDate} to ${endDate} as of ${asOfDate}.pdf`;
       }
-      console.log('Generated all events filename:', filename);
     }
     // Standard format downloads
     else {
@@ -350,7 +343,6 @@ export async function GET(request: NextRequest) {
           filename = `PonyClub Events ${startDate} to ${endDate} as of ${asOfDate}.pdf`;
         }
       }
-      console.log('Generated standard filename:', filename);
     }
 
   return new NextResponse(new Uint8Array(pdfBuffer), {

@@ -9,8 +9,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { eventId, emailType } = body;
 
-    console.log('Resend email request:', { eventId, emailType });
-
     if (!eventId || !emailType) {
       console.error('Missing required fields:', { eventId, emailType });
       return NextResponse.json(
@@ -31,12 +29,6 @@ export async function POST(request: NextRequest) {
     }
 
     const event = { id: eventDoc.id, ...eventDoc.data() } as any;
-    console.log('Event found:', { 
-      id: event.id, 
-      name: event.name,
-      submittedByEmail: event.submittedByEmail,
-      coordinatorContact: event.coordinatorContact 
-    });
 
     // Try to find the original email from the email queue
     let requesterEmail = event.submittedByEmail || '';
@@ -59,8 +51,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log('Requester email resolved to:', requesterEmail);
-
     // Fetch club details
     let clubName = 'Unknown Club';
     let zoneIdFromClub = '';
@@ -70,7 +60,6 @@ export async function POST(request: NextRequest) {
         const clubData = clubDoc.data();
         clubName = clubData?.name || 'Unknown Club';
         zoneIdFromClub = clubData?.zoneId || '';
-        console.log('Club lookup:', { clubId: event.clubId, clubName, zoneId: zoneIdFromClub });
       }
     }
 
@@ -82,9 +71,6 @@ export async function POST(request: NextRequest) {
       if (zoneDoc.exists) {
         zoneName = zoneDoc.data()?.name || 'Unknown Zone';
       }
-      console.log('Zone lookup:', { zoneId, zoneName, exists: zoneDoc.exists });
-    } else {
-      console.log('No zoneId on event or club');
     }
 
     // Fetch event type details
@@ -133,12 +119,6 @@ export async function POST(request: NextRequest) {
       supportEmail: 'support@myponyclub.events',
       systemUrl: process.env.NEXT_PUBLIC_APP_URL || 'https://myponyclub.events'
     };
-
-    console.log('Template variables prepared:', {
-      zoneName: templateVariables.zoneName,
-      clubName: templateVariables.clubName,
-      referenceNumber: templateVariables.referenceNumber
-    });
 
     let emailContent;
     let recipients: string[] = [];
@@ -200,8 +180,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('Sending email to:', recipients);
-
     // Create email attachment object for queue
     const createEmailAttachment = (filename: string, content: string, contentType: string): any => ({
       id: `att-${Date.now()}-${Math.random().toString(36).substring(2)}`,
@@ -213,7 +191,6 @@ export async function POST(request: NextRequest) {
     });
 
     // Queue the email (same as original send-event-request-email does)
-    console.log('Queueing email for recipient(s)');
     const queuedEmailData = {
       to: recipients,
       subject: subject,
@@ -238,7 +215,6 @@ export async function POST(request: NextRequest) {
     };
 
     const emailId = await addEmailToQueue(queuedEmailData);
-    console.log('Email queued with ID:', emailId);
 
     return NextResponse.json({
       success: true,

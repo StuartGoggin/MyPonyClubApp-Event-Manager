@@ -1353,7 +1353,7 @@ export function ClubEquipmentDashboard({
                 Browse & Book
               </TabsTrigger>
               <TabsTrigger value="my-bookings" title="View and manage your equipment bookings">
-                <Calendar className="h-4 w-4 mr-2" />
+                <CalendarCheckIcon className="h-4 w-4 mr-2" />
                 <span className="flex items-center gap-2">
                   My Bookings
                   {upcomingBookingsCount > 0 && (
@@ -1903,7 +1903,7 @@ export function ClubEquipmentDashboard({
                           {bookingForm.pickupDate ? format(new Date(bookingForm.pickupDate), 'PPP') : 'Select date'}
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
+                      <PopoverContent className="w-auto p-0 z-[100]" align="start">
                         <Calendar
                           mode="single"
                           selected={bookingForm.pickupDate ? new Date(bookingForm.pickupDate) : undefined}
@@ -1950,7 +1950,7 @@ export function ClubEquipmentDashboard({
                           {bookingForm.returnDate ? format(new Date(bookingForm.returnDate), 'PPP') : 'Select date'}
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
+                      <PopoverContent className="w-auto p-0 z-[100]" align="start">
                         <Calendar
                           mode="single"
                           selected={bookingForm.returnDate ? new Date(bookingForm.returnDate) : undefined}

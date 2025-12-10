@@ -10,10 +10,10 @@ import { sendDCApprovedEmail } from '@/lib/committee-nomination-emails';
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const nominationId = params.id;
+    const { id: nominationId } = await params;
     const body = await request.json();
     const { zoneRepId, zoneRepName, message } = body;
 

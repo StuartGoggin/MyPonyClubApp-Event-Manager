@@ -5,7 +5,7 @@ import { invalidateZonesCache } from '@/lib/server-data';
 // GET: Get a single zone by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     if (!adminDb || !isDatabaseConnected()) {
@@ -15,7 +15,7 @@ export async function GET(
       );
     }
 
-    const zoneId = params.id;
+    const { id: zoneId } = await params;
     const zoneDoc = await adminDb.collection('zones').doc(zoneId).get();
 
     if (!zoneDoc.exists) {
@@ -39,8 +39,9 @@ export async function GET(
 // PATCH: Update a zone
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id: zoneId } = await params;
   try {
     if (!adminDb || !isDatabaseConnected()) {
       return NextResponse.json(
@@ -49,7 +50,6 @@ export async function PATCH(
       );
     }
 
-    const zoneId = params.id;
     const body = await request.json();
 
     // Validate zone exists

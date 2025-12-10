@@ -4,10 +4,10 @@ import { UpdateEmailTemplateRequest } from '@/lib/types-email-templates';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const template = await EmailTemplateService.getTemplateById(params.id);
+    const template = await EmailTemplateService.getTemplateById((await params).id);
     
     if (!template) {
       return NextResponse.json(
@@ -38,7 +38,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const body: UpdateEmailTemplateRequest = await request.json();
@@ -46,7 +46,7 @@ export async function PUT(
     // TODO: Get actual user ID from authentication
     const modifiedBy = 'admin'; // Placeholder
 
-    const template = await EmailTemplateService.updateTemplate(params.id, body, modifiedBy);
+    const template = await EmailTemplateService.updateTemplate((await params).id, body, modifiedBy);
     
     if (!template) {
       return NextResponse.json(
@@ -78,10 +78,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const success = await EmailTemplateService.deleteTemplate(params.id);
+    const success = await EmailTemplateService.deleteTemplate((await params).id);
     
     if (!success) {
       return NextResponse.json(

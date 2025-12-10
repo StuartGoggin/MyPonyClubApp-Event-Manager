@@ -8,10 +8,10 @@ import { bucket } from '@/lib/firebase-admin';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const executionId = params.id;
+    const { id: executionId } = await params;
 
     // Get the execution record to retrieve the storage path
     const executions = await BackupScheduleService.getExecutions(undefined, 1000);

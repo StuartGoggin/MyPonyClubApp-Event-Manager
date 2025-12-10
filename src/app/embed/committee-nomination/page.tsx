@@ -5,12 +5,12 @@ import { CommitteeNominationForm } from '@/components/forms/committee-nomination
  * Can be embedded in club websites via iframe:
  * <iframe src="https://yourapp.com/embed/committee-nomination?clubId=xxx&clubName=xxx" />
  */
-export default function EmbedCommitteeNominationPage({
+export default async function EmbedCommitteeNominationPage({
   searchParams,
 }: {
-  searchParams: { clubId?: string; clubName?: string };
+  searchParams: Promise<{ clubId?: string; clubName?: string }>;
 }) {
-  const { clubId, clubName } = searchParams;
+  const { clubId, clubName } = await searchParams;
 
   if (!clubId || !clubName) {
     return (

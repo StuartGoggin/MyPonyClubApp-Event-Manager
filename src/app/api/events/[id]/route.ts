@@ -53,11 +53,11 @@ async function updateEvent(eventId: string, updateData: any) {
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const updateData = await request.json();
-    await updateEvent(params.id, updateData);
+    await updateEvent((await params).id, updateData);
     
     return NextResponse.json({ 
       success: true,
@@ -74,11 +74,11 @@ export async function PUT(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const updateData = await request.json();
-    await updateEvent(params.id, updateData);
+    await updateEvent((await params).id, updateData);
     
     return NextResponse.json({ 
       success: true,
@@ -95,7 +95,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     if (!adminDb) {
@@ -105,7 +105,7 @@ export async function DELETE(
       );
     }
 
-    const eventId = params.id;
+    const { id: eventId } = await params;
     
     if (!eventId) {
       return NextResponse.json(

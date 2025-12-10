@@ -15,9 +15,9 @@ import { autoSendQueuedEmail } from '@/lib/auto-send-email';
 import { adminDb } from '@/lib/firebase-admin';
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 /**
@@ -28,9 +28,8 @@ export async function POST(
   request: NextRequest,
   { params }: RouteParams
 ) {
+  const { id } = await params;
   try {
-    const { id } = params;
-    
     // Parse body if present, otherwise use empty object
     let body = {};
     try {

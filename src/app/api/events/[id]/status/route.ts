@@ -4,7 +4,7 @@ import { invalidateEventsCache } from '@/lib/server-data';
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     if (!adminDb) {
@@ -14,7 +14,7 @@ export async function PATCH(
       );
     }
 
-    const eventId = params.id;
+    const { id: eventId } = await params;
     const { status, zoneManagerNotes, processedBy, processedAt } = await request.json();
     
     if (!eventId) {

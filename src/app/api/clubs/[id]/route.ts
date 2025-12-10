@@ -5,7 +5,7 @@ import { invalidateClubsCache } from '@/lib/server-data';
 // GET: Get a single club by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     if (!adminDb || !isDatabaseConnected()) {
@@ -15,7 +15,7 @@ export async function GET(
       );
     }
 
-    const clubId = params.id;
+    const { id: clubId } = await params;
     const clubDoc = await adminDb.collection('clubs').doc(clubId).get();
 
     if (!clubDoc.exists) {
@@ -39,7 +39,7 @@ export async function GET(
 // PATCH: Update a club
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     if (!adminDb || !isDatabaseConnected()) {
@@ -49,7 +49,7 @@ export async function PATCH(
       );
     }
 
-    const clubId = params.id;
+    const { id: clubId } = await params;
     const body = await request.json();
 
     // Validate club exists

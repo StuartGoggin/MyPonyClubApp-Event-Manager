@@ -4,10 +4,10 @@ import { BackupExecutionService } from '@/lib/backup-execution-service';
 // POST: Manually trigger a backup
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const execution = await BackupExecutionService.manualBackup(params.id);
+    const execution = await BackupExecutionService.manualBackup((await params).id);
     
     return NextResponse.json({
       success: true,

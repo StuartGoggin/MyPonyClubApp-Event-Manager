@@ -5,9 +5,9 @@ import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 
 // POST: Upload schedule document for an event (LOCAL STORAGE VERSION)
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const eventId = params.id;
+    const { id: eventId } = await params;
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const submittedBy = formData.get('submittedBy') as string;

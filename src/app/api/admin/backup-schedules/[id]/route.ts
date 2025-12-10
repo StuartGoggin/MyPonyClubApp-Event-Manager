@@ -4,10 +4,10 @@ import { BackupScheduleService } from '@/lib/backup-schedule-service';
 // GET: Get a specific backup schedule
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const schedule = await BackupScheduleService.getScheduleById(params.id);
+    const schedule = await BackupScheduleService.getScheduleById((await params).id);
     
     if (!schedule) {
       return NextResponse.json(
@@ -39,12 +39,12 @@ export async function GET(
 // PUT: Update a backup schedule
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const updates = await request.json();
     
-    const schedule = await BackupScheduleService.updateSchedule(params.id, updates);
+    const schedule = await BackupScheduleService.updateSchedule((await params).id, updates);
     
     return NextResponse.json({
       success: true,
@@ -67,10 +67,10 @@ export async function PUT(
 // DELETE: Delete a backup schedule
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await BackupScheduleService.deleteSchedule(params.id);
+    await BackupScheduleService.deleteSchedule((await params).id);
     
     return NextResponse.json({
       success: true,

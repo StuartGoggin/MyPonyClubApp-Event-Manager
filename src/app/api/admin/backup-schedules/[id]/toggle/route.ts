@@ -4,10 +4,10 @@ import { BackupScheduleService } from '@/lib/backup-schedule-service';
 // POST: Toggle schedule active status
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const schedule = await BackupScheduleService.toggleScheduleStatus(params.id);
+    const schedule = await BackupScheduleService.toggleScheduleStatus((await params).id);
     
     return NextResponse.json({
       success: true,

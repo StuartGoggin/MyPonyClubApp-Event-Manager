@@ -9,10 +9,10 @@ import { adminDb } from '@/lib/firebase-admin';
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     // Get the nomination
     const nominationRef = adminDb.collection('committee_nominations').doc(id);

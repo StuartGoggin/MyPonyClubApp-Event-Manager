@@ -3,9 +3,9 @@ import { EventSchedule, EventScheduleStatus } from '@/lib/types';
 import { adminDb } from '@/lib/firebase-admin';
 import * as admin from 'firebase-admin';
 // POST: Upload schedule document for an event
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const eventId = params.id;
+    const { id: eventId } = await params;
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const submittedBy = formData.get('submittedBy') as string;

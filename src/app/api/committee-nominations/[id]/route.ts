@@ -10,10 +10,10 @@ import { CommitteeNominationFormData } from '@/types/committee-nomination';
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const formData: CommitteeNominationFormData = await request.json();
 
     // Get the existing nomination
@@ -109,10 +109,10 @@ export async function PUT(
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     const nominationDoc = await adminDb.collection('committee_nominations').doc(id).get();
 

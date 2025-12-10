@@ -14,9 +14,9 @@ import {
 import { requireZoneManager } from '@/lib/api-auth';
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 /**
@@ -28,7 +28,7 @@ export async function GET(
   { params }: RouteParams
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const equipment = await getEquipment(id);
 
     if (!equipment) {
@@ -67,7 +67,7 @@ export async function PUT(
   { params }: RouteParams
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
 
     // Check if equipment exists and get its zoneId
@@ -122,7 +122,7 @@ export async function DELETE(
   { params }: RouteParams
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     // Check if equipment exists and get its zoneId
     const existing = await getEquipment(id);

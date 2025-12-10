@@ -9,7 +9,7 @@ import type { EquipmentBooking } from '@/types/equipment';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authResult = await requireZoneManager(request);
@@ -17,7 +17,7 @@ export async function GET(
       return authResult.error;
     }
 
-    const bookingId = params.id;
+    const { id: bookingId } = await params;
 
     // Fetch the current booking
     const bookingDoc = await adminDb.collection('equipment_bookings').doc(bookingId).get();

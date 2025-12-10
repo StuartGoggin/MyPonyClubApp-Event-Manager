@@ -7,10 +7,10 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const eventId = params.id;
+    const { id: eventId } = await params;
 
     // Get the event with schedule
     const eventRef = adminDb.collection('events').doc(eventId);
@@ -154,10 +154,10 @@ Format your response as a JSON object with the following structure:
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const eventId = params.id;
+    const { id: eventId } = await params;
 
     // Get the event with schedule
     const eventRef = adminDb.collection('events').doc(eventId);

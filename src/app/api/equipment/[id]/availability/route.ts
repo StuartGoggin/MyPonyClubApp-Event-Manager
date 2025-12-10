@@ -7,9 +7,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { checkAvailability } from '@/lib/equipment-service';
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 /**
@@ -22,7 +22,7 @@ export async function POST(
   { params }: RouteParams
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
 
     // Validate required fields

@@ -11,9 +11,9 @@ import {
 import { requireZoneManager } from '@/lib/api-auth';
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 /**
@@ -25,7 +25,7 @@ export async function POST(
   { params }: RouteParams
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     
     // Parse body safely
     let body: any = {};

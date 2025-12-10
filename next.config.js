@@ -59,9 +59,6 @@ const nextConfig = {
   
   // Disable strict mode for faster dev server (re-enable for production builds)
   reactStrictMode: process.env.NODE_ENV === 'production',
-  
-  // Use SWC for faster builds
-  swcMinify: true,
 };
 
 module.exports = nextConfig;

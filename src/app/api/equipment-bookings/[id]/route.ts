@@ -14,9 +14,9 @@ import {
 import { getUserFromRequest, userHasRole, userInZone } from '@/lib/auth-helpers';
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 /**
@@ -28,7 +28,7 @@ export async function GET(
   { params }: RouteParams
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const booking = await getBooking(id);
 
     if (!booking) {
@@ -67,7 +67,7 @@ export async function PUT(
   { params }: RouteParams
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     
     // Authenticate user
     const user = await getUserFromRequest(request);
@@ -140,7 +140,7 @@ export async function DELETE(
   { params }: RouteParams
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const { searchParams } = new URL(request.url);
     const permanent = searchParams.get('permanent') === 'true';
     

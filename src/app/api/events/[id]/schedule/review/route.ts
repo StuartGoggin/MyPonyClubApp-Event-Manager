@@ -3,8 +3,8 @@ import { adminDb } from '@/lib/firebase-admin';
 import { EventScheduleStatus } from '@/lib/types';
 
 // PATCH: Review/approve/reject schedule document for an event
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
-  const eventId = params.id;
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id: eventId } = await params;
   const body = await request.json();
   const { scheduleId, action, reviewedBy, notes } = body;
 

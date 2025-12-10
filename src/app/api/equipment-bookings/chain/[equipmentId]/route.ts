@@ -8,9 +8,9 @@ import { getBookingChain } from '@/lib/equipment-service';
 import { addDays } from 'date-fns';
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     equipmentId: string;
-  };
+  }>;
 }
 
 /**
@@ -23,7 +23,7 @@ export async function GET(
   { params }: RouteParams
 ) {
   try {
-    const { equipmentId } = params;
+    const { equipmentId } = await params;
     const { searchParams } = new URL(request.url);
 
     // Default to 30 days before and after current date

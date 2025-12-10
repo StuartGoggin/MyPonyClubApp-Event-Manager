@@ -40,8 +40,12 @@ export async function GET(request: NextRequest) {
       filteredEvents = filteredEvents.slice(0, limit);
     }
 
-    // Sort by date
-    filteredEvents.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    // Sort by date (dates are now strings in YYYY-MM-DD format)
+    filteredEvents.sort((a, b) => {
+      const dateA = typeof a.date === 'string' ? a.date : new Date(a.date).toISOString().split('T')[0];
+      const dateB = typeof b.date === 'string' ? b.date : new Date(b.date).toISOString().split('T')[0];
+      return dateA.localeCompare(dateB); // String comparison works for YYYY-MM-DD format
+    });
 
     // Enhance events with club and zone information
     const enhancedEvents = filteredEvents.map(event => {

@@ -3,8 +3,9 @@ import { generateCalendarPDF } from '@/lib/calendar-pdf';
 import { getAllEvents, getAllClubs, getAllEventTypes, getAllZones } from '@/lib/server-data';
 
 /**
- * Parse date (string, Date, or Timestamp) using local timezone to match UI display
- * Dates should be displayed the same way in PDF as they appear in the calendar UI
+ * Parse date (string, Date, or Timestamp) to extract calendar date components
+ * Always extracts the UTC date to ensure consistency across timezones
+ * This matches how dates are stored in Firestore (as UTC timestamps from date strings)
  */
 function parseDateString(date: string | Date | any): { year: number; month: number; day: number } {
   // Handle Firestore Timestamp objects
@@ -12,12 +13,12 @@ function parseDateString(date: string | Date | any): { year: number; month: numb
     date = date.toDate();
   }
   
-  // Handle Date objects - use local time methods to match UI behavior
+  // Handle Date objects - use UTC to match Firestore storage
   if (date instanceof Date) {
     return {
-      year: date.getFullYear(),
-      month: date.getMonth() + 1, // JavaScript months are 0-indexed
-      day: date.getDate()
+      year: date.getUTCFullYear(),
+      month: date.getUTCMonth() + 1,
+      day: date.getUTCDate()
     };
   }
   

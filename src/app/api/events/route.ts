@@ -55,8 +55,12 @@ export async function GET(request: NextRequest) {
       allEvents = allEvents.filter(event => event.status === status);
     }
 
-    // Sort by date descending
-    allEvents.sort((a, b) => b.date.getTime() - a.date.getTime());
+    // Sort by date descending (dates are now strings in YYYY-MM-DD format)
+    allEvents.sort((a, b) => {
+      const dateA = typeof a.date === 'string' ? a.date : new Date(a.date).toISOString().split('T')[0];
+      const dateB = typeof b.date === 'string' ? b.date : new Date(b.date).toISOString().split('T')[0];
+      return dateB.localeCompare(dateA); // String comparison works for YYYY-MM-DD format
+    });
 
     return NextResponse.json({ events: allEvents });
   } catch (error: any) {

@@ -241,9 +241,18 @@ export async function getAllEvents(): Promise<Event[]> {
     eventsSnapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
       if (doc.exists) {
         const data = doc.data();
-        // Convert Firestore timestamp to Date if needed
+        // Convert Firestore timestamp to ISO date string (YYYY-MM-DD)
+        // Add 12 hours to the timestamp to ensure we get the correct calendar date
+        // This handles edge cases where events stored at midnight in one timezone 
+        // become previous day when converted to UTC
         if (data.date && typeof data.date.toDate === 'function') {
-          data.date = data.date.toDate();
+          const dateObj = data.date.toDate();
+          // Add 12 hours to move to middle of day, avoiding timezone boundary issues
+          const adjustedDate = new Date(dateObj.getTime() + 12 * 60 * 60 * 1000);
+          const year = adjustedDate.getUTCFullYear();
+          const month = String(adjustedDate.getUTCMonth() + 1).padStart(2, '0');
+          const day = String(adjustedDate.getUTCDate()).padStart(2, '0');
+          data.date = `${year}-${month}-${day}`;
         }
         // Clean event name - remove priority suffixes
         if (data.name) {

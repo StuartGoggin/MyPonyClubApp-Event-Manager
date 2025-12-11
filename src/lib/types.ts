@@ -386,6 +386,8 @@ export interface Event {
   submittedByContact?: string;
   submittedByEmail?: string;
   submittedByPhone?: string;
+  submittedAt?: Date;       // Date when the event was submitted for approval
+  createdAt?: Date;         // Date when the event was created in the system
 
   // Priority and historical traditional event fields
   priority?: EventPriority;

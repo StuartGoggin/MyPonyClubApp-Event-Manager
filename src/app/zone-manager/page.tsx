@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { MapPin, CheckCircle, Clock, Users, Building, Plus, FileText, CalendarPlus, Settings, Package, Calendar, Save, Upload, Loader2, Image as ImageIcon, X, User, Mail, Phone } from 'lucide-react';
+import { MapPin, CheckCircle, Clock, Users, Building, Plus, FileText, CalendarPlus, Settings, Package, Calendar, Save, Upload, Loader2, Image as ImageIcon, X, User, Mail, Phone, BarChart3 } from 'lucide-react';
 import { Zone, Club, Event, EventType } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { ZoneEventApproval } from '@/components/zone-manager/zone-event-approval';
@@ -19,6 +19,7 @@ import { ZoneEventManagement } from '@/components/zone-manager/zone-event-manage
 import { ZoneEventSubmission } from '@/components/zone-manager/zone-event-submission';
 import { ZoneCommitteeApprovals } from '@/components/zone-manager/zone-committee-approvals';
 import { ZoneEquipmentDashboard } from '@/components/zone-manager/zone-equipment-dashboard';
+import { ZoneEventReports } from '@/components/zone-manager/zone-event-reports';
 import { RouteGuard } from '@/components/auth/route-guard';
 import { useAuth } from '@/contexts/auth-context';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -546,7 +547,7 @@ function ZoneManagerContent() {
                   {/* Event Sub-tabs */}
                   <Tabs defaultValue="approvals" className="space-y-4">
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
-                    <TabsList className="flex-1 grid grid-cols-3 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm">
+                    <TabsList className="flex-1 grid grid-cols-4 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm">
                       <TabsTrigger value="approvals" className="text-xs sm:text-sm" title="Review and approve club event date requests">
                         <Clock className="h-4 w-4 mr-1 sm:mr-2 flex-shrink-0" />
                         <span className="hidden sm:inline">Event Dates</span>
@@ -571,6 +572,11 @@ function ZoneManagerContent() {
                         <CheckCircle className="h-4 w-4 mr-1 sm:mr-2 flex-shrink-0" />
                         <span className="hidden sm:inline">Manage</span>
                         <span className="sm:hidden">Mgmt</span>
+                      </TabsTrigger>
+                      <TabsTrigger value="reports" className="text-xs sm:text-sm" title="Generate reports for zone events">
+                        <BarChart3 className="h-4 w-4 mr-1 sm:mr-2 flex-shrink-0" />
+                        <span className="hidden sm:inline">Reports</span>
+                        <span className="sm:hidden">Rpts</span>
                       </TabsTrigger>
                     </TabsList>
 
@@ -624,6 +630,15 @@ function ZoneManagerContent() {
                       clubs={zoneClubs}
                       eventTypes={eventTypes}
                       onEventUpdate={fetchData}
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="reports" className="space-y-4">
+                    <ZoneEventReports
+                      zone={selectedZone}
+                      events={zoneEvents}
+                      clubs={zoneClubs}
+                      eventTypes={eventTypes}
                     />
                   </TabsContent>
                 </Tabs>

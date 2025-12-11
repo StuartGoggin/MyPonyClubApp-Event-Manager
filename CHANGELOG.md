@@ -2,6 +2,111 @@
 
 All notable changes to the MyPonyClubApp Event Manager will be documented in this file.
 
+## [December 12, 2025] - Committee Letter with Scheduling Conflicts
+
+### Added ✨
+- **Scheduling Conflict Detection in Committee Letters**: Events now display detailed conflict information
+  - **Conflict Detection**: Identifies events scheduled within ±1 day of pending events
+  - **Visual Indicators**: Amber-highlighted conflict sections with warning icon
+  - **Conflict Details**: Each conflict displays:
+    - Club logo (8mm × 8mm) for quick visual identification
+    - Event name in bold
+    - Organizing club name
+    - Event date
+    - Distance from current event (calculated using Haversine formula)
+  - **Preview Table**: New "Conflicts" column showing conflict badges (green for none, amber for conflicts)
+  - **Smart Layout**: Conflicts section automatically handles pagination and spacing
+
+### Changed 🔄
+- **Committee Approval Letter PDF**: Complete visual redesign for improved readability and professionalism
+  - **Zone Branding**: Large zone logo in header (30mm × 30mm) with styled zone name in dark blue
+  - **Club Logos**: Club logos displayed next to each event (16mm × 16mm) with dedicated 20mm column
+  - **Enhanced Layout**:
+    - Decorative header line and colored section headers
+    - Event boxes with alternating background colors (improved readability)
+    - Numbered event badges in circles with club logo overlays
+    - Two-column grid: Dedicated logo column (20mm) + Event details column
+    - Clean text labels (no emojis to avoid font encoding issues)
+    - Scheduling conflicts in amber boxes with club logos and distances
+    - Professional footer with page numbers and generation date
+  - **Better Typography**:
+    - Larger headings (20pt zone name, 12pt section headers)
+    - Subject line with subtle background highlight
+    - Improved spacing and line heights for better readability
+    - Color-coded text (dark blue for headers, amber for conflicts, green for distances)
+  - **Image Loading**: Robust async image loading with error handling and fallback to numbered badges
+  - **PDF Quality**: Higher quality logos with proper aspect ratio preservation
+  - **Text Positioning**: Fixed text overlap issues by creating dedicated logo space
+
+### Technical Details 🔧
+- Enhanced `generateCommitteeLetter()` function in `zone-event-reports.tsx`
+- Added conflict detection functions:
+  - `calculateDistance()` - Haversine formula for accurate geographic distance
+  - `getNearbyEvents()` - Identifies events within ±1 day window
+  - `getEventDistance()` - Calculates and formats distance between events
+- Implemented `loadImageAsBase64()` helper for secure image embedding in PDF
+- Added comprehensive error handling for logo loading failures
+- Uses jsPDF advanced features: roundedRect, circle shapes, color fills, text alignment
+- Optimized image loading: Pre-loads all club logos (including conflicts) in parallel before PDF generation
+- Fixed font encoding issues by removing emoji characters
+- Implemented dedicated column layout to prevent logo/text overlap
+- Zone logo: 35mm × 35mm in header
+- Club logos: 12mm × 12mm next to events (or numbered badge fallback)
+
+### Benefits
+- **Professional Appearance**: Polished, branded documents suitable for official committee meetings
+- **Visual Clarity**: Color-coded sections and alternating backgrounds improve scanning and reading
+- **Quick Identification**: Club logos help committee members instantly recognize events
+- **Better Organization**: Grid layout presents information in structured, easy-to-digest format
+- **Consistent Branding**: Zone and club logos reinforce organizational identity
+
+## [December 11, 2025] - Zone Manager Reports Feature
+
+### Added ✨
+- **Zone Manager Reports Tab**: New reporting section within Zone Event Management
+  - **Committee Approval Letter Generator**: Generate official letters to zone committee for pending event approvals
+    - Professional PDF format (A4 portrait) with proper formatting and pagination
+    - Includes all pending events with complete details (date, club, type, location, coordinator)
+    - Smart empty state when no pending events exist
+    - Filename format: `{ZoneName}-Committee-Letter-{YYYY-MM-DD}.pdf`
+  - **Event Preview Table**: Shows all pending events before report generation
+  - **Event Count Badge**: Real-time display of pending events count
+  - **Requested Date Tracking**: Events now include submission timestamps
+    - New fields: `submittedAt` and `createdAt` on Event type
+    - All event creation endpoints updated to set timestamps
+    - Display logic uses fallback: `submittedAt → createdAt → 'N/A'`
+  - **Extensible Reports Architecture**: Framework for adding future reports
+    - Event statistics and analytics (planned)
+    - Club participation summary (planned)
+    - Equipment booking reports (planned)
+  - **Email Integration Placeholder**: Email delivery capability coming in future update
+
+### Changed 🔄
+- **Zone Event Management UI**: Reports moved to top-level tab (4th main tab)
+  - Tab structure: Event Dates | Schedules | Manage | Reports
+  - Previously nested within Manage section, now promoted for better visibility
+  - Tab icons updated to include BarChart3 for Reports
+
+### Technical Details 🔧
+- New component: `src/components/zone-manager/zone-event-reports.tsx`
+- Integration: Updated `zone-manager/page.tsx` with top-level Reports tab
+- Extended Event interface with `submittedAt?: Date` and `createdAt?: Date` fields
+- Updated 4 event creation endpoints:
+  - `/api/events` (main event creation)
+  - `/api/admin/import-batches` (calendar imports)
+  - `/api/admin/sync-public-holidays` (public holiday sync)
+  - `/api/admin/sync-ev-events` (EV events sync)
+- Dependencies: Leverages existing jsPDF library for PDF generation
+- Event filtering: Only includes events with status = 'proposed' (pending approval)
+- Documentation: Added comprehensive guides at `docs/ZONE_MANAGER_REPORTS.md` and `docs/IMPLEMENTATION_SUMMARY_REPORTS.md`
+
+### Benefits
+- **Streamlined Committee Process**: Single document for all pending event approvals
+- **Professional Documentation**: Formal letter format suitable for official minutes
+- **Time Savings**: Eliminates manual compilation of pending events
+- **Audit Trail**: Creates record of approval requests with timestamps
+- **Consistent Communication**: Standardized format for zone committee interactions
+
 ## [November 29, 2025] - Equipment Handover Chain Refactor
 
 ### Fixed 🐛

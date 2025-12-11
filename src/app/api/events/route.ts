@@ -116,6 +116,7 @@ export async function POST(request: NextRequest) {
       ...eventData,
       date: Timestamp.fromDate(eventDate),
       createdAt: Timestamp.now(),
+      submittedAt: Timestamp.now(),
       updatedAt: Timestamp.now()
     };
 

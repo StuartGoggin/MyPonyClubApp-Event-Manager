@@ -100,6 +100,7 @@ async function executeImportBatch(batchId: string) {
           source: 'calendar_import',
           importBatchId: batchId,
           createdAt: Timestamp.now(),
+          submittedAt: Timestamp.now(),
           updatedAt: Timestamp.now()
         };
 

@@ -249,7 +249,8 @@ async function syncEvEvents(config: SyncConfig): Promise<SyncResult> {
           // Add new
           const docRef = await adminDb!.collection('events').add({
             ...eventData,
-            createdAt: new Date()
+            createdAt: new Date(),
+            submittedAt: new Date()
           });
           stats.added++;
           console.log(`➕ Added new event: ${event.name} (${event.start_date}) with ID: ${docRef.id}`);

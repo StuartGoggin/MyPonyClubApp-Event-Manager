@@ -179,7 +179,8 @@ async function syncPublicHolidays(yearsAhead: number = 5): Promise<SyncResult> {
           // Add new
           await adminDb!.collection('events').add({
             ...eventData,
-            createdAt: new Date()
+            createdAt: new Date(),
+            submittedAt: new Date()
           });
           stats.added++;
         }

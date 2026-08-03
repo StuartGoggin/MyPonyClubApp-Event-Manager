@@ -27,9 +27,21 @@ export async function GET(request: NextRequest) {
     const zoneId = searchParams.get('zoneId');
     const status = searchParams.get('status');
     const clubId = searchParams.get('clubId');
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
 
     // Use cached getAllEvents which includes public holidays
     let allEvents = await getAllEvents();
+
+    // Calendar clients request only the dates they are currently displaying.
+    if (startDate || endDate) {
+      allEvents = allEvents.filter(event => {
+        const eventDate = typeof event.date === 'string'
+          ? event.date
+          : new Date(event.date).toISOString().split('T')[0];
+        return (!startDate || eventDate >= startDate) && (!endDate || eventDate <= endDate);
+      });
+    }
 
     // Apply filters if provided
     if (zoneId) {

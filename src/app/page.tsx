@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import Image from 'next/image';
 import { EventCalendar } from '@/components/dashboard/event-calendar';
 import { Event, Club, EventType, Zone } from '@/lib/types';
@@ -18,24 +18,38 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [databaseWarning, setDatabaseWarning] = useState<string | null>(null);
   const [eventSources] = useAtom(eventSourceAtom);
+  const [calendarYear, setCalendarYear] = useState(() => new Date().getFullYear() + 1);
+  const [equipmentEvents, setEquipmentEvents] = useState<Event[]>([]);
+  const hasLoadedCalendarData = useRef(false);
+
+  const calendarRange = useMemo(() => ({
+    startDate: `${calendarYear}-01-01`,
+    endDate: `${calendarYear}-12-31`,
+  }), [calendarYear]);
+
+  const calendarEvents = useMemo(
+    () => [...events, ...equipmentEvents],
+    [events, equipmentEvents]
+  );
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading(true);
+        if (!hasLoadedCalendarData.current) {
+          setLoading(true);
+        }
         setError(null);
 
         // Fetch all data from APIs
         const requests = [
           fetch('/api/zones', { cache: 'no-store' }),
           fetch('/api/clubs', { cache: 'no-store' }),
-          fetch('/api/events', { cache: 'no-store' }),
+          fetch(`/api/events?startDate=${calendarRange.startDate}&endDate=${calendarRange.endDate}`, { cache: 'no-store' }),
           fetch('/api/event-types', { cache: 'no-store' }),
-          fetch('/api/calendar/equipment-bookings', { cache: 'no-store' })
         ];
 
         const responses = await Promise.all(requests);
-        const [zonesResponse, clubsResponse, eventsResponse, eventTypesResponse, equipmentResponse] = responses;
+        const [zonesResponse, clubsResponse, eventsResponse, eventTypesResponse] = responses;
 
         // Handle responses with error checking
         const zonesData = zonesResponse.ok ? await zonesResponse.json() : { zones: [] };
@@ -69,35 +83,45 @@ export default function DashboardPage() {
         // Extract arrays from API responses, ensuring they are always arrays
         const extractedEvents = Array.isArray(eventsData.events) ? eventsData.events : Array.isArray(eventsData) ? eventsData : [];
         
-        // Fetch and merge equipment bookings if enabled
-        let equipmentEvents: Event[] = [];
-        if (eventSources.includes('equipment_booking')) {
-          const equipmentData = equipmentResponse.ok ? await equipmentResponse.json() : { data: [] };
-          equipmentEvents = Array.isArray(equipmentData.data) ? equipmentData.data : [];
-          console.log('📦 Equipment bookings loaded:', equipmentEvents.length);
-        }
-        
-        // Merge regular events with equipment booking events
-        const allEvents = [...extractedEvents, ...equipmentEvents];
-        
         setZones(Array.isArray(zonesData.zones) ? zonesData.zones : Array.isArray(zonesData) ? zonesData : []);
         setClubs(Array.isArray(clubsData.clubs) ? clubsData.clubs : Array.isArray(clubsData) ? clubsData : []);
-        setEvents(allEvents);
+        setEvents(extractedEvents);
         setEventTypes(Array.isArray(eventTypesData.eventTypes) ? eventTypesData.eventTypes : Array.isArray(eventTypesData) ? eventTypesData : []);
         
-        console.log('📅 Calendar - Total events loaded:', allEvents.length);
-        console.log('🎯 Calendar - State events (no zoneId/clubId):', allEvents.filter((e: Event) => !e.zoneId && !e.clubId));
-
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
         setError('Failed to load dashboard data. Please try again.');
       } finally {
+        hasLoadedCalendarData.current = true;
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [eventSources]); // Re-fetch when event sources change
+  }, [calendarRange]);
+
+  useEffect(() => {
+    if (!eventSources.includes('equipment_booking')) {
+      setEquipmentEvents([]);
+      return;
+    }
+
+    const fetchEquipmentBookings = async () => {
+      try {
+        const response = await fetch(
+          `/api/calendar/equipment-bookings?startDate=${calendarRange.startDate}&endDate=${calendarRange.endDate}`,
+          { cache: 'no-store' }
+        );
+        const data = response.ok ? await response.json() : { data: [] };
+        setEquipmentEvents(Array.isArray(data.data) ? data.data : []);
+      } catch (err) {
+        console.error('Error fetching equipment bookings:', err);
+        setEquipmentEvents([]);
+      }
+    };
+
+    fetchEquipmentBookings();
+  }, [calendarRange, eventSources]);
 
   if (loading) {
     return (
@@ -187,12 +211,13 @@ export default function DashboardPage() {
         )}
         
         <EventCalendar 
-          events={events} 
+          events={calendarEvents}
           clubs={clubs} 
           eventTypes={eventTypes} 
           zones={zones} 
           today={new Date()}
           currentUser={user} 
+          onDisplayedYearChange={setCalendarYear}
         />
       </div>
     </div>

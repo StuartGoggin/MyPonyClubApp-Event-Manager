@@ -1,6 +1,6 @@
 "use client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { useState, useMemo, useEffect } from 'react';
+import { memo, useState, useMemo, useEffect, useCallback } from 'react';
 import {
   eachDayOfInterval,
   endOfMonth,
@@ -41,6 +41,7 @@ interface EventCalendarProps {
   zones: Zone[];
   today: Date;
   bypassSourceFiltering?: boolean; // New prop to bypass event source filtering
+  onDisplayedYearChange?: (year: number) => void;
   currentUser?: {
     id: string;
     role: string;
@@ -56,7 +57,8 @@ export function EventCalendar({
   zones,
   today,
   bypassSourceFiltering = false,
-  currentUser
+  currentUser,
+  onDisplayedYearChange,
 }: EventCalendarProps) {
   const currentYear = getYear(new Date());
   const yearOptions = Array.from({ length: 6 }, (_, i) => currentYear - 2 + i); // 2 years back, 3 forward
@@ -299,6 +301,31 @@ export function EventCalendar({
     });
   }, [sourceFilteredEvents, clubs, filterMode, homeClubId, distance, selectedZoneId, selectedClubId]);
 
+  const eventsByDate = useMemo(() => {
+    const indexedEvents = new Map<string, Event[]>();
+
+    for (const event of filteredEvents) {
+      const key = format(new Date(event.date), 'yyyy-MM-dd');
+      const dayEvents = indexedEvents.get(key) || [];
+      dayEvents.push(event);
+      indexedEvents.set(key, dayEvents);
+    }
+
+    for (const dayEvents of indexedEvents.values()) {
+      dayEvents.sort((a, b) => {
+        const aHoliday = a.source === 'public_holiday' || a.status === 'public_holiday';
+        const bHoliday = b.source === 'public_holiday' || b.status === 'public_holiday';
+        return Number(bHoliday) - Number(aHoliday);
+      });
+    }
+
+    return indexedEvents;
+  }, [filteredEvents]);
+
+  useEffect(() => {
+    onDisplayedYearChange?.(getYear(currentDate));
+  }, [currentDate, onDisplayedYearChange]);
+
   const handleZoneChange = (zoneId: string) => {
     setSelectedZoneId(zoneId);
     setSelectedClubId('all');
@@ -320,10 +347,10 @@ export function EventCalendar({
     }
   };
 
-  const handleEventClick = (eventId: string) => {
+  const handleEventClick = useCallback((eventId: string) => {
     setSelectedEventId(eventId);
     setDialogOpen(true);
-  };
+  }, []);
 
   const selectedEvent = events.find(e => e.id === selectedEventId);
   const selectedClub = clubs.find(c => c.id === selectedEvent?.clubId);
@@ -344,9 +371,10 @@ export function EventCalendar({
     });
   };
 
-  const yearMonths = Array.from({ length: 12 }, (_, i) => {
-    return setYear(startOfYear(new Date()), getYear(currentDate));
-  }).map((d, i) => addMonths(d, i));
+  const yearMonths = useMemo(() => Array.from({ length: 12 }, (_, i) => {
+    const yearStart = setYear(startOfYear(new Date()), getYear(currentDate));
+    return addMonths(yearStart, i);
+  }), [currentDate]);
 
   if (!today) {
     return null;
@@ -866,7 +894,7 @@ export function EventCalendar({
       
     {view === 'month' && (
       <div className="p-4 min-w-0">
-        <CalendarGrid month={currentDate} events={filteredEvents} onEventClick={handleEventClick} today={today} clubs={clubs} zones={zones} stateLogo={stateLogo} evLogo={evLogo}/>
+        <CalendarGrid month={currentDate} eventsByDate={eventsByDate} onEventClick={handleEventClick} today={today} clubs={clubs} zones={zones} stateLogo={stateLogo} evLogo={evLogo}/>
       </div>
     )}
       
@@ -874,7 +902,7 @@ export function EventCalendar({
       <div className="p-4 grid grid-cols-1 gap-8">
         {yearMonths.map(month => (
           <div key={month.toString()}>
-            <CalendarGrid month={month} events={filteredEvents} onEventClick={handleEventClick} isYearView={true} today={today} clubs={clubs} zones={zones} stateLogo={stateLogo} evLogo={evLogo} />
+            <CalendarGrid month={month} eventsByDate={eventsByDate} onEventClick={handleEventClick} isYearView={true} today={today} clubs={clubs} zones={zones} stateLogo={stateLogo} evLogo={evLogo} />
           </div>
         ))}
       </div>
@@ -917,10 +945,10 @@ const haversineDistance = (
 
 const weekStartsOn = 3; // Wednesday
 
-const CalendarGrid = ({
+const CalendarGrid = memo(function CalendarGrid({
   // ...props destructuring...
   month,
-  events,
+  eventsByDate,
   onEventClick,
   isYearView = false,
   today,
@@ -930,7 +958,7 @@ const CalendarGrid = ({
   evLogo,
 }: {
   month: Date;
-  events: Event[];
+  eventsByDate: Map<string, Event[]>;
   onEventClick: (eventId: string) => void;
   isYearView?: boolean;
   today: Date;
@@ -938,31 +966,33 @@ const CalendarGrid = ({
   zones: Zone[];
   stateLogo: string | null;
   evLogo: string | null;
-}) => {
+}) {
   const start = startOfWeek(startOfMonth(month), { weekStartsOn });
   const end = endOfWeek(endOfMonth(month), { weekStartsOn });
+  const clubById = useMemo(() => new Map(clubs.map(club => [club.id, club])), [clubs]);
+  const zoneById = useMemo(() => new Map(zones.map(zone => [zone.id, zone])), [zones]);
   
   // Helper function to get club name from clubId or zone name for zone events
   const getClubName = (clubId: string | undefined, event?: Event) => {
     // Check if this is a zone-level event
     if (event?.zoneId && !event?.clubId) {
-      const zone = zones.find(z => z.id === event.zoneId);
+      const zone = zoneById.get(event.zoneId);
       return zone ? `${zone.name} (Zone Event)` : 'Zone Event';
     }
     if (!clubId) return '';
-    return clubs.find(club => club.id === clubId)?.name || '';
+    return clubById.get(clubId)?.name || '';
   };
 
   // Helper function to get club logo URL from clubId
   const getClubLogo = (clubId: string | undefined) => {
     if (!clubId) return null;
-    return clubs.find(club => club.id === clubId)?.logoUrl || null;
+    return clubById.get(clubId)?.logoUrl || null;
   };
 
   // Helper function to get zone logo URL from zoneId
   const getZoneLogo = (zoneId: string | undefined) => {
     if (!zoneId) return null;
-    const zoneLogo = zones.find(zone => zone.id === zoneId)?.imageUrl || null;
+    const zoneLogo = zoneById.get(zoneId)?.imageUrl || null;
     // Only return if it's a valid base64 data URI
     return zoneLogo && zoneLogo.startsWith('data:image') ? zoneLogo : null;
   };
@@ -1005,20 +1035,6 @@ const CalendarGrid = ({
   const dayOrder = ['Wed', 'Thu', 'Fri', 'Sat', 'Sun', 'Mon', 'Tue'];
   const dayIndexMap = [3, 4, 5, 6, 0, 1, 2]; // Wed=3, Thu=4, ..., Tue=2
 
-  const activeDaysOfMonth = useMemo(() => {
-    if (!isYearView) return new Set();
-    if (!Array.isArray(events)) return new Set();
-
-    const activeDays = new Set<number>();
-    const monthEvents = events.filter(event => isSameMonth(new Date(event.date), month));
-    
-    monthEvents.forEach(event => {
-      activeDays.add(getDay(new Date(event.date)));
-    });
-    
-    return activeDays;
-  }, [events, month, isYearView]);
-
   return (
     <div className={cn("enhanced-card rounded-lg border shadow-md", { "p-2": isYearView, "p-4": !isYearView })}>
       {isYearView && (
@@ -1045,19 +1061,7 @@ const CalendarGrid = ({
                   const isSaturday = getDay(day) === 6;
                   const isSunday = getDay(day) === 0;
                   const isCurrentDayToday = isSameDay(day, today);
-                  const dayEvents = Array.isArray(events) ? 
-                    events
-                      .filter(event => isSameDay(new Date(event.date), day))
-                      .sort((a, b) => {
-                        // Public holidays come first
-                        if ((a.source === 'public_holiday' || a.status === 'public_holiday') && 
-                            !(b.source === 'public_holiday' || b.status === 'public_holiday')) return -1;
-                        if (!(a.source === 'public_holiday' || a.status === 'public_holiday') && 
-                            (b.source === 'public_holiday' || b.status === 'public_holiday')) return 1;
-                        return 0;
-                      }) 
-                    : [];
-                  const isDayActiveInMonth = activeDaysOfMonth.has(dayIdx);
+                  const dayEvents = eventsByDate.get(format(day, 'yyyy-MM-dd')) || [];
                   const isDayInCurrentMonth = isSameMonth(day, month);
                   return (
                     <td key={day.toString()} className={cn('relative p-0.5 sm:p-1.5 min-h-[4rem] sm:min-h-[6rem] align-top', {
@@ -1207,4 +1211,4 @@ const CalendarGrid = ({
     </div>
   );
 
-}
+});

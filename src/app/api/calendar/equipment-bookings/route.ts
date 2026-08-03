@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { listBookings, getEquipment } from '@/lib/equipment-service';
+import { adminDb, isDatabaseConnected } from '@/lib/firebase-admin';
 import { type Event } from '@/lib/types';
 import { eachDayOfInterval } from 'date-fns';
 
@@ -18,11 +19,38 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(request: NextRequest) {
   try {
+    // Local development can run without Firebase Admin credentials. Keep the
+    // calendar usable rather than turning an optional data source into a 500.
+    if (!adminDb || !isDatabaseConnected()) {
+      if (process.env.NODE_ENV !== 'development') {
+        return NextResponse.json(
+          { success: false, error: 'Database connection unavailable' },
+          { status: 503 }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        data: [],
+        count: 0,
+        bookingsCount: 0,
+        unavailable: true,
+      });
+    }
+
     const { searchParams } = new URL(request.url);
     
     const filters: any = {};
     const zoneId = searchParams.get('zoneId');
     const clubId = searchParams.get('clubId');
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
+    const rangeStart = startDate ? new Date(`${startDate}T00:00:00`) : null;
+    const rangeEnd = endDate ? new Date(`${endDate}T23:59:59.999`) : null;
+
+    if ((rangeStart && Number.isNaN(rangeStart.getTime())) || (rangeEnd && Number.isNaN(rangeEnd.getTime()))) {
+      return NextResponse.json({ success: false, error: 'Invalid date range' }, { status: 400 });
+    }
     
     if (zoneId && zoneId !== 'all') {
       filters.zoneId = zoneId;
@@ -36,9 +64,12 @@ export async function GET(request: NextRequest) {
     const bookings = await listBookings(filters);
     
     // Filter to show all bookings except cancelled/rejected
-    const activeBookings = bookings.filter(b => 
-      !['cancelled', 'rejected'].includes(b.status)
-    );
+    const activeBookings = bookings.filter(b => {
+      if (['cancelled', 'rejected'].includes(b.status)) return false;
+      const pickupDate = new Date(b.pickupDate);
+      const returnDate = new Date(b.returnDate);
+      return (!rangeStart || returnDate >= rangeStart) && (!rangeEnd || pickupDate <= rangeEnd);
+    });
 
     // Fetch all equipment upfront to avoid N+1 queries
     const uniqueEquipmentIds = [...new Set(activeBookings.map(b => b.equipmentId))];
@@ -61,13 +92,15 @@ export async function GET(request: NextRequest) {
     for (const booking of activeBookings) {
       const pickupDate = new Date(booking.pickupDate);
       const returnDate = new Date(booking.returnDate);
+      const visibleStart = rangeStart && pickupDate < rangeStart ? rangeStart : pickupDate;
+      const visibleEnd = rangeEnd && returnDate > rangeEnd ? rangeEnd : returnDate;
       
       // Get the equipment icon from our pre-fetched map
       const equipment = equipmentMap.get(booking.equipmentId);
       const equipmentIcon = equipment?.icon || '📦';
       
       // Generate an event for each day of the booking
-      const days = eachDayOfInterval({ start: pickupDate, end: returnDate });
+      const days = eachDayOfInterval({ start: visibleStart, end: visibleEnd });
       
       for (const day of days) {
         // Map booking status to calendar event status

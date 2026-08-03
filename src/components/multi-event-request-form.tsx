@@ -289,7 +289,7 @@ export function MultiEventRequestForm({
         location: '',
         isQualifier: false,
         isHistoricallyTraditional: false,
-        date: new Date(),
+        date: undefined as unknown as Date,
         description: '',
         coordinatorName: '',
         coordinatorContact: '',

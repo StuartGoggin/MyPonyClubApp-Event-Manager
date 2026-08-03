@@ -30,7 +30,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { SingleEventForm } from '@/components/single-event-form';
 
 import { createMultiEventRequestAction } from '@/lib/actions';
-import { useRouter } from 'next/navigation';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
 import { formatClubAddress } from '@/lib/utils';
 
@@ -96,7 +95,6 @@ export function MultiEventRequestForm({
   onSubmit
 }: MultiEventRequestFormProps) {
   const { toast } = useToast();
-  const router = useRouter();
   
   // Data loading state - silent refresh for event types
   const [clubs, setClubs] = useState<Club[]>(propClubs || []);
@@ -596,6 +594,15 @@ export function MultiEventRequestForm({
         const result = await createMultiEventRequestAction(data);
         
         if (result.success) {
+          toast({
+            title: 'Request Submitted!',
+            description: result.message,
+          });
+
+          // Keep the page open while the optional notification work finishes.
+          form.reset();
+
+          void (async () => {
           // Generate PDF for email (but don't download it)
           let pdfBuffer: ArrayBuffer | null = null;
           try {
@@ -687,16 +694,7 @@ export function MultiEventRequestForm({
             });
           }
           
-          toast({
-            title: 'Request Submitted!',
-            description: result.message,
-          });
-          
-          // Reset form
-          form.reset();
-          
-          // Redirect to home page
-          router.push('/');
+          })();
         } else {
           toast({
             title: 'Submission Failed',

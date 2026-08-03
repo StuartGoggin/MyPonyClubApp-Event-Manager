@@ -19,6 +19,7 @@ export default function DashboardPage() {
   const [databaseWarning, setDatabaseWarning] = useState<string | null>(null);
   const [eventSources] = useAtom(eventSourceAtom);
   const [calendarYear, setCalendarYear] = useState(() => new Date().getFullYear() + 1);
+  const [loadedCalendarYear, setLoadedCalendarYear] = useState<number | null>(null);
   const [equipmentEvents, setEquipmentEvents] = useState<Event[]>([]);
   const hasLoadedCalendarData = useRef(false);
 
@@ -86,6 +87,7 @@ export default function DashboardPage() {
         setZones(Array.isArray(zonesData.zones) ? zonesData.zones : Array.isArray(zonesData) ? zonesData : []);
         setClubs(Array.isArray(clubsData.clubs) ? clubsData.clubs : Array.isArray(clubsData) ? clubsData : []);
         setEvents(extractedEvents);
+        setLoadedCalendarYear(calendarYear);
         setEventTypes(Array.isArray(eventTypesData.eventTypes) ? eventTypesData.eventTypes : Array.isArray(eventTypesData) ? eventTypesData : []);
         
       } catch (err) {
@@ -98,7 +100,7 @@ export default function DashboardPage() {
     };
 
     fetchData();
-  }, [calendarRange]);
+  }, [calendarRange, calendarYear]);
 
   useEffect(() => {
     if (!eventSources.includes('equipment_booking')) {
@@ -218,6 +220,7 @@ export default function DashboardPage() {
           today={new Date()}
           currentUser={user} 
           onDisplayedYearChange={setCalendarYear}
+          loadedCalendarYear={loadedCalendarYear}
         />
       </div>
     </div>

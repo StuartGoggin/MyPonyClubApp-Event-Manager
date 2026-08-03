@@ -42,6 +42,7 @@ interface EventCalendarProps {
   today: Date;
   bypassSourceFiltering?: boolean; // New prop to bypass event source filtering
   onDisplayedYearChange?: (year: number) => void;
+  loadedCalendarYear?: number | null;
   currentUser?: {
     id: string;
     role: string;
@@ -59,6 +60,7 @@ export function EventCalendar({
   bypassSourceFiltering = false,
   currentUser,
   onDisplayedYearChange,
+  loadedCalendarYear,
 }: EventCalendarProps) {
   const currentYear = getYear(new Date());
   const yearOptions = Array.from({ length: 6 }, (_, i) => currentYear - 2 + i); // 2 years back, 3 forward
@@ -79,6 +81,7 @@ export function EventCalendar({
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [currentDate, setCurrentDate] = useState(new Date(new Date().getFullYear() + 1, 0, 1));
+  const [pendingDate, setPendingDate] = useState<Date | null>(null);
   const [view, setView] = useState<'month' | 'year'>('year');
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [isDialogOpen, setDialogOpen] = useState(false);
@@ -323,8 +326,21 @@ export function EventCalendar({
   }, [filteredEvents]);
 
   useEffect(() => {
-    onDisplayedYearChange?.(getYear(currentDate));
-  }, [currentDate, onDisplayedYearChange]);
+    if (pendingDate && loadedCalendarYear === getYear(pendingDate)) {
+      setCurrentDate(pendingDate);
+      setPendingDate(null);
+    }
+  }, [loadedCalendarYear, pendingDate]);
+
+  const requestDateChange = useCallback((nextDate: Date) => {
+    if (!onDisplayedYearChange) {
+      setCurrentDate(nextDate);
+      return;
+    }
+
+    setPendingDate(nextDate);
+    onDisplayedYearChange(getYear(nextDate));
+  }, [onDisplayedYearChange]);
 
   const handleZoneChange = (zoneId: string) => {
     setSelectedZoneId(zoneId);
@@ -333,17 +349,17 @@ export function EventCalendar({
 
   const next = () => {
     if (view === 'month') {
-      setCurrentDate(addMonths(currentDate, 1));
+      requestDateChange(addMonths(currentDate, 1));
     } else {
-      setCurrentDate(addMonths(currentDate, 12));
+      requestDateChange(addMonths(currentDate, 12));
     }
   };
 
   const prev = () => {
     if (view === 'month') {
-      setCurrentDate(subMonths(currentDate, 1));
+      requestDateChange(subMonths(currentDate, 1));
     } else {
-      setCurrentDate(addMonths(currentDate, -12));
+      requestDateChange(addMonths(currentDate, -12));
     }
   };
 
@@ -686,6 +702,7 @@ export function EventCalendar({
             variant="ghost" 
             size="icon" 
             onClick={prev} 
+            disabled={pendingDate !== null}
             className="h-9 w-9 sm:h-8 sm:w-8 rounded-lg text-muted-foreground hover:bg-slate-200/50 dark:hover:bg-slate-700/50 hover:text-foreground transition-all duration-200 flex-shrink-0"
           >
             <ChevronLeft className="h-5 w-5 sm:h-4 sm:w-4" />
@@ -697,6 +714,7 @@ export function EventCalendar({
             variant="ghost" 
             size="icon" 
             onClick={next} 
+            disabled={pendingDate !== null}
             className="h-9 w-9 sm:h-8 sm:w-8 rounded-lg text-muted-foreground hover:bg-slate-200/50 dark:hover:bg-slate-700/50 hover:text-foreground transition-all duration-200 flex-shrink-0"
           >
             <ChevronRight className="h-5 w-5 sm:h-4 sm:w-4" />

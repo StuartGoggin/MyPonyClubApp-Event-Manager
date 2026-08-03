@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { EventCalendar } from '@/components/dashboard/event-calendar';
 import { Event, Club, EventType, Zone } from '@/lib/types';
@@ -14,7 +14,8 @@ export default function DashboardPage() {
   const [clubs, setClubs] = useState<Club[]>([]);
   const [eventTypes, setEventTypes] = useState<EventType[]>([]);
   const [zones, setZones] = useState<Zone[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [referenceDataLoading, setReferenceDataLoading] = useState(true);
+  const [calendarDataLoading, setCalendarDataLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [databaseWarning, setDatabaseWarning] = useState<string | null>(null);
   const [eventSources] = useAtom(eventSourceAtom);
@@ -22,47 +23,80 @@ export default function DashboardPage() {
   const [loadedCalendarYear, setLoadedCalendarYear] = useState<number | null>(null);
   const [equipmentEvents, setEquipmentEvents] = useState<Event[]>([]);
   const hasLoadedCalendarData = useRef(false);
-
-  const calendarRange = useMemo(() => ({
-    startDate: `${calendarYear}-01-01`,
-    endDate: `${calendarYear}-12-31`,
-  }), [calendarYear]);
+  const eventCache = useRef(new Map<number, Event[]>());
+  const equipmentCache = useRef(new Map<number, Event[]>());
+  const eventRequests = useRef(new Map<number, Promise<Event[]>>());
+  const equipmentRequests = useRef(new Map<number, Promise<Event[]>>());
 
   const calendarEvents = useMemo(
     () => [...events, ...equipmentEvents],
     [events, equipmentEvents]
   );
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        if (!hasLoadedCalendarData.current) {
-          setLoading(true);
-        }
-        setError(null);
+  const getEventsForYear = useCallback((year: number) => {
+    const cachedEvents = eventCache.current.get(year);
+    if (cachedEvents) {
+      return Promise.resolve(cachedEvents);
+    }
 
-        // Fetch all data from APIs
-        const requests = [
+    const pendingRequest = eventRequests.current.get(year);
+    if (pendingRequest) {
+      return pendingRequest;
+    }
+
+    const request = fetch(`/api/events?startDate=${year}-01-01&endDate=${year}-12-31`, { cache: 'no-store' })
+      .then(async (response) => {
+        const data = response.ok ? await response.json() : { events: [] };
+        const yearEvents = Array.isArray(data.events) ? data.events : Array.isArray(data) ? data : [];
+        eventCache.current.set(year, yearEvents);
+        return yearEvents;
+      })
+      .finally(() => eventRequests.current.delete(year));
+
+    eventRequests.current.set(year, request);
+    return request;
+  }, []);
+
+  const getEquipmentEventsForYear = useCallback((year: number) => {
+    const cachedEvents = equipmentCache.current.get(year);
+    if (cachedEvents) {
+      return Promise.resolve(cachedEvents);
+    }
+
+    const pendingRequest = equipmentRequests.current.get(year);
+    if (pendingRequest) {
+      return pendingRequest;
+    }
+
+    const request = fetch(`/api/calendar/equipment-bookings?startDate=${year}-01-01&endDate=${year}-12-31`, { cache: 'no-store' })
+      .then(async (response) => {
+        const data = response.ok ? await response.json() : { data: [] };
+        const yearEvents = Array.isArray(data.data) ? data.data : [];
+        equipmentCache.current.set(year, yearEvents);
+        return yearEvents;
+      })
+      .finally(() => equipmentRequests.current.delete(year));
+
+    equipmentRequests.current.set(year, request);
+    return request;
+  }, []);
+
+  useEffect(() => {
+    let isCurrent = true;
+
+    const fetchReferenceData = async () => {
+      try {
+        const [zonesResponse, clubsResponse, eventTypesResponse] = await Promise.all([
           fetch('/api/zones', { cache: 'no-store' }),
           fetch('/api/clubs', { cache: 'no-store' }),
-          fetch(`/api/events?startDate=${calendarRange.startDate}&endDate=${calendarRange.endDate}`, { cache: 'no-store' }),
           fetch('/api/event-types', { cache: 'no-store' }),
-        ];
+        ]);
 
-        const responses = await Promise.all(requests);
-        const [zonesResponse, clubsResponse, eventsResponse, eventTypesResponse] = responses;
-
-        // Handle responses with error checking
         const zonesData = zonesResponse.ok ? await zonesResponse.json() : { zones: [] };
         const clubsData = clubsResponse.ok ? await clubsResponse.json() : { clubs: [] };
-        const eventsData = eventsResponse.ok ? await eventsResponse.json() : { events: [] };
         const eventTypesData = eventTypesResponse.ok ? await eventTypesResponse.json() : { eventTypes: [] };
 
-        // Check for database warnings
         let warnings: string[] = [];
-        if (!eventsResponse.ok && eventsData.message) {
-          warnings.push(`Events: ${eventsData.message}`);
-        }
         if (!eventTypesResponse.ok && eventTypesData.message) {
           warnings.push(`Event Types: ${eventTypesData.message}`);
         }
@@ -73,57 +107,86 @@ export default function DashboardPage() {
           warnings.push(`Clubs: ${clubsData.message}`);
         }
         
+        if (!isCurrent) return;
+
         if (warnings.length > 0) {
           setDatabaseWarning(`Database connection issues detected: ${warnings.join('; ')}`);
         } else {
           setDatabaseWarning(null);
         }
 
-        console.log('Main dashboard API responses:', { zonesData, clubsData, eventsData, eventTypesData });
-
-        // Extract arrays from API responses, ensuring they are always arrays
-        const extractedEvents = Array.isArray(eventsData.events) ? eventsData.events : Array.isArray(eventsData) ? eventsData : [];
-        
         setZones(Array.isArray(zonesData.zones) ? zonesData.zones : Array.isArray(zonesData) ? zonesData : []);
         setClubs(Array.isArray(clubsData.clubs) ? clubsData.clubs : Array.isArray(clubsData) ? clubsData : []);
-        setEvents(extractedEvents);
-        setLoadedCalendarYear(calendarYear);
         setEventTypes(Array.isArray(eventTypesData.eventTypes) ? eventTypesData.eventTypes : Array.isArray(eventTypesData) ? eventTypesData : []);
-        
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
-        setError('Failed to load dashboard data. Please try again.');
+        if (isCurrent) {
+          setError('Failed to load dashboard data. Please try again.');
+        }
       } finally {
-        hasLoadedCalendarData.current = true;
-        setLoading(false);
+        if (isCurrent) {
+          setReferenceDataLoading(false);
+        }
       }
     };
 
-    fetchData();
-  }, [calendarRange, calendarYear]);
+    fetchReferenceData();
+
+    return () => {
+      isCurrent = false;
+    };
+  }, []);
 
   useEffect(() => {
-    if (!eventSources.includes('equipment_booking')) {
-      setEquipmentEvents([]);
-      return;
-    }
+    let isCurrent = true;
+    const includeEquipmentBookings = eventSources.includes('equipment_booking');
 
-    const fetchEquipmentBookings = async () => {
+    const fetchCalendarData = async () => {
       try {
-        const response = await fetch(
-          `/api/calendar/equipment-bookings?startDate=${calendarRange.startDate}&endDate=${calendarRange.endDate}`,
-          { cache: 'no-store' }
-        );
-        const data = response.ok ? await response.json() : { data: [] };
-        setEquipmentEvents(Array.isArray(data.data) ? data.data : []);
+        if (!hasLoadedCalendarData.current) {
+          setCalendarDataLoading(true);
+        }
+        setError(null);
+
+        const [yearEvents, yearEquipmentEvents] = await Promise.all([
+          getEventsForYear(calendarYear),
+          includeEquipmentBookings ? getEquipmentEventsForYear(calendarYear) : Promise.resolve([]),
+        ]);
+
+        if (!isCurrent) return;
+
+        setEvents(yearEvents);
+        setEquipmentEvents(yearEquipmentEvents);
+        setLoadedCalendarYear(calendarYear);
+
+        // Warm the adjacent years so normal next/previous navigation is instant.
+        void getEventsForYear(calendarYear - 1).catch(error => console.warn('Unable to prefetch previous year events:', error));
+        void getEventsForYear(calendarYear + 1).catch(error => console.warn('Unable to prefetch next year events:', error));
+        if (includeEquipmentBookings) {
+          void getEquipmentEventsForYear(calendarYear - 1).catch(error => console.warn('Unable to prefetch previous year equipment bookings:', error));
+          void getEquipmentEventsForYear(calendarYear + 1).catch(error => console.warn('Unable to prefetch next year equipment bookings:', error));
+        }
       } catch (err) {
-        console.error('Error fetching equipment bookings:', err);
-        setEquipmentEvents([]);
+        console.error('Error fetching calendar data:', err);
+        if (isCurrent) {
+          setError('Failed to load calendar data. Please try again.');
+        }
+      } finally {
+        if (isCurrent) {
+          hasLoadedCalendarData.current = true;
+          setCalendarDataLoading(false);
+        }
       }
     };
 
-    fetchEquipmentBookings();
-  }, [calendarRange, eventSources]);
+    fetchCalendarData();
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [calendarYear, eventSources, getEquipmentEventsForYear, getEventsForYear]);
+
+  const loading = referenceDataLoading || calendarDataLoading;
 
   if (loading) {
     return (

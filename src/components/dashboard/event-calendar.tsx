@@ -1084,10 +1084,22 @@ const CalendarGrid = memo(function CalendarGrid({
                   const isCurrentDayToday = isSameDay(day, today);
                   const dayEvents = eventsByDate.get(format(day, 'yyyy-MM-dd')) || [];
                   const isDayInCurrentMonth = isSameMonth(day, month);
+
+                  if (!isDayInCurrentMonth) {
+                    return (
+                      <td
+                        key={day.toString()}
+                        aria-hidden="true"
+                        className="w-[14.285%] border-b border-r border-border/40 bg-muted/15 p-1 align-top last:border-r-0 sm:p-1.5"
+                      >
+                        <div className={cn('min-h-[4.75rem]', { 'min-h-[5.5rem] sm:min-h-[6.25rem]': !isYearView })} />
+                      </td>
+                    );
+                  }
+
                   return (
                     <td key={day.toString()} className={cn('relative w-[14.285%] border-b border-r border-border/60 p-1 align-top last:border-r-0 sm:p-1.5', {
-                      'bg-muted/25 text-muted-foreground': !isDayInCurrentMonth,
-                      'bg-slate-50/80 dark:bg-slate-900/30': (isSaturday || isSunday) && isDayInCurrentMonth,
+                      'bg-slate-50/80 dark:bg-slate-900/30': isSaturday || isSunday,
                       'bg-primary/5': isCurrentDayToday,
                     })}>
                       <div className={cn('flex min-h-[4.75rem] flex-col', { 'min-h-[5.5rem] sm:min-h-[6.25rem]': !isYearView })}>

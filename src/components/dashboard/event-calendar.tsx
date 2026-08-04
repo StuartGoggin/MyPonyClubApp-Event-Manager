@@ -1054,16 +1054,19 @@ const CalendarGrid = memo(function CalendarGrid({
   const dayIndexMap = [3, 4, 5, 6, 0, 1, 2]; // Wed=3, Thu=4, ..., Tue=2
 
   return (
-    <div className={cn("enhanced-card rounded-lg border shadow-md", { "p-2": isYearView, "p-4": !isYearView })}>
+    <div className={cn("enhanced-card overflow-hidden rounded-lg border shadow-md", { "p-2": isYearView, "p-4": !isYearView })}>
       {isYearView && (
-        <h3 className="text-base font-semibold font-headline mb-2 text-center bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{format(month, 'MMMM')}</h3>
+        <h3 className="mb-2 text-center font-headline text-base font-semibold text-foreground">{format(month, 'MMMM')}</h3>
       )}
       <div className="overflow-x-auto w-full">
-        <table className={cn("w-full text-xs text-center font-medium text-muted-foreground bg-muted/30 rounded-t-lg", { "max-h-[22rem]": isYearView, "overflow-y-auto": isYearView, "p-2": isYearView }, "min-w-[640px]")}>
+        <table className={cn("w-full min-w-[640px] table-fixed border-collapse text-xs font-medium text-muted-foreground", { "max-h-[22rem]": isYearView })}>
+          <colgroup>
+            {dayOrder.map(day => <col key={day} className="w-[14.285%]" />)}
+          </colgroup>
           <thead>
-            <tr>
+            <tr className="bg-muted/50">
               {dayOrder.map((day) => (
-                <th key={day} className="py-2 sm:py-3 font-semibold text-[10px] sm:text-xs">{day}</th>
+                <th key={day} className="border-b border-border/70 px-1 py-2 text-center font-semibold text-[10px] text-slate-600 sm:py-2.5 sm:text-xs dark:text-slate-300">{day}</th>
               ))}
             </tr>
           </thead>
@@ -1082,36 +1085,35 @@ const CalendarGrid = memo(function CalendarGrid({
                   const dayEvents = eventsByDate.get(format(day, 'yyyy-MM-dd')) || [];
                   const isDayInCurrentMonth = isSameMonth(day, month);
                   return (
-                    <td key={day.toString()} className={cn('relative p-0.5 sm:p-1.5 min-h-[4rem] sm:min-h-[6rem] align-top', {
-                      'text-muted-foreground': !isDayInCurrentMonth,
-                      // Uniform darker blue for weekends
-                      'bg-blue-100': isSaturday || isSunday,
-                      'relative': isCurrentDayToday,
+                    <td key={day.toString()} className={cn('relative w-[14.285%] border-b border-r border-border/60 p-1 align-top last:border-r-0 sm:p-1.5', {
+                      'bg-muted/25 text-muted-foreground': !isDayInCurrentMonth,
+                      'bg-slate-50/80 dark:bg-slate-900/30': (isSaturday || isSunday) && isDayInCurrentMonth,
+                      'bg-primary/5': isCurrentDayToday,
                     })}>
-                      <div className="flex flex-col items-center">
+                      <div className={cn('flex min-h-[4.75rem] flex-col', { 'min-h-[5.5rem] sm:min-h-[6.25rem]': !isYearView })}>
                         <span
                           className={cn(
-                            'font-bold text-[10px] sm:text-sm mb-0.5 sm:mb-1 mt-0 text-center w-full flex justify-center items-start',
-                            { 'text-blue-700': isCurrentDayToday, 'text-gray-700': !isCurrentDayToday }
+                            'mb-1 flex h-4 items-center justify-start text-[10px] font-bold sm:text-xs',
+                            { 'text-primary': isCurrentDayToday, 'text-slate-700 dark:text-slate-200': isDayInCurrentMonth && !isCurrentDayToday }
                           )}
                         >
                           {day.getDate()}
                         </span>
                         {/* Events for this day */}
-                        <div className="flex flex-col gap-1 sm:gap-2 w-full items-center">
+                        <div className="flex w-full flex-col gap-1">
                           {dayEvents.map((event, i) => (
                             <button
                               key={event.id || i}
                               className={cn(
-                                "rounded-lg sm:rounded-xl shadow-sm border p-1 sm:p-2 text-left transition hover:ring-2 hover:ring-primary inline-block max-w-full",
+                                "w-full overflow-hidden rounded-md border border-l-[3px] p-1.5 text-left shadow-sm transition hover:ring-2 hover:ring-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                                 // Equipment bookings get teal/cyan background
-                                event.source === 'equipment_booking' ? "bg-gradient-to-br from-yellow-50 to-orange-50 hover:from-yellow-100 hover:to-orange-100 border-orange-300" :
+                                event.source === 'equipment_booking' ? "border-l-orange-500 bg-orange-50 hover:bg-orange-100" :
                                 // Zone events get distinctive brighter background
-                                event.zoneId && !event.clubId ? "bg-gradient-to-br from-blue-100 to-indigo-100 hover:from-blue-200 hover:to-indigo-200 border-blue-300" :
+                                event.zoneId && !event.clubId ? "border-l-blue-500 bg-blue-50 hover:bg-blue-100" :
                                 // EV events get purple background
-                                event.status === 'ev_event' ? "bg-gradient-to-br from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-150 border-purple-300" :
+                                event.status === 'ev_event' ? "border-l-purple-500 bg-purple-50 hover:bg-purple-100" :
                                 // Only apply bg-white for non-public holidays and non-zone events
-                                !(event.status === 'public_holiday' || event.source === 'public_holiday') && "bg-white",
+                                !(event.status === 'public_holiday' || event.source === 'public_holiday') && "border-l-amber-500 bg-white hover:bg-amber-50/40 dark:bg-slate-950",
                                 event.status === 'approved' ? 'event-approved' :
                                 event.status === 'proposed' ? 'event-proposed' :
                                 (event.status === 'public_holiday' || event.source === 'public_holiday') ? 'event-holiday' :
@@ -1123,25 +1125,25 @@ const CalendarGrid = memo(function CalendarGrid({
                               )}
                               onClick={() => onEventClick(event.id)}
                             >
-                              <div className={cn("flex items-stretch gap-1 sm:gap-2 h-full")}> 
+                              <div className="flex items-start gap-1.5">
                                 {/* Left side content */}
-                                <div className="flex-1 min-w-0 flex items-start gap-1 sm:gap-1.5">
+                                <div className="flex min-w-0 flex-1 items-start gap-1">
                                   <div className="flex-shrink-0 pt-0.5">
                                     {event.source === 'equipment_booking' ? <Package className={cn("h-2.5 w-2.5 sm:h-3 sm:w-3 text-orange-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
                                      event.status === 'approved' ? <CheckCircle className={cn("h-2.5 w-2.5 sm:h-3 sm:w-3 text-primary flex-shrink-0", { "h-2 w-2": isYearView })}/> :
                                      event.status === 'proposed' ? <AlertCircle className={cn("h-2.5 w-2.5 sm:h-3 sm:w-3 text-amber-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
-                                     (event.status === 'public_holiday' || event.source === 'public_holiday') ? <FerrisWheel className={cn("h-2.5 w-2.5 sm:h-3 sm:w-3 text-white flex-shrink-0", { "h-2 w-2": isYearView })}/> :
+                                     (event.status === 'public_holiday' || event.source === 'public_holiday') ? <FerrisWheel className={cn("h-2.5 w-2.5 flex-shrink-0 text-emerald-600 sm:h-3 sm:w-3", { "h-2 w-2": isYearView })}/> :
                                      event.status === 'rejected' ? <Clock className={cn("h-2.5 w-2.5 sm:h-3 sm:w-3 text-red-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
                                      event.status === 'ev_event' ? <CheckCircle className={cn("h-2.5 w-2.5 sm:h-3 sm:w-3 text-purple-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
                                      <Clock className={cn("h-2.5 w-2.5 sm:h-3 sm:w-3 text-accent flex-shrink-0", { "h-2 w-2": isYearView })}/>}
                                   </div>
-                                  <div className="flex-1 min-w-0 space-y-0.5">
+                                  <div className="min-w-0 flex-1 space-y-0.5">
                                     <div className={cn("font-medium leading-tight truncate", 
-                                      isYearView ? "text-[10px]" : "text-[9px] sm:text-xs",
+                                      isYearView ? "text-[10px]" : "text-[10px] sm:text-xs",
                                       event.source === 'equipment_booking' ? 'text-orange-800 font-semibold' :
                                       event.status === 'approved' ? 'text-primary' : 
                                       event.status === 'proposed' ? 'text-amber-800' :
-                                      (event.status === 'public_holiday' || event.source === 'public_holiday') ? 'text-white font-bold' :
+                                      (event.status === 'public_holiday' || event.source === 'public_holiday') ? 'font-semibold text-emerald-800' :
                                       event.status === 'rejected' ? 'text-red-700' :
                                       event.status === 'ev_event' ? 'text-purple-700' :
                                       'text-accent'
@@ -1202,8 +1204,8 @@ const CalendarGrid = memo(function CalendarGrid({
                                       src={getEventLogo(event)!} 
                                       alt={`${event.source === 'equestrian_victoria' ? 'Equestrian Victoria' : event.source === 'state' ? 'State' : event.source === 'zone' ? 'Zone' : getClubName(event.clubId, event)} logo`}
                                       className={cn(
-                                        "rounded object-contain bg-white border border-gray-200 max-w-full max-h-full",
-                                        isYearView ? "w-10 h-10" : "w-14 h-14"
+                                        "h-8 w-8 rounded border border-slate-200 bg-white object-contain",
+                                        !isYearView && "sm:h-10 sm:w-10"
                                       )}
                                       onError={(e) => {
                                         // Hide the image if it fails to load

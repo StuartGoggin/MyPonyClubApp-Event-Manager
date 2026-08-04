@@ -1059,7 +1059,7 @@ const CalendarGrid = memo(function CalendarGrid({
         <h3 className="mb-2 text-center font-headline text-base font-semibold text-foreground">{format(month, 'MMMM')}</h3>
       )}
       <div className="overflow-x-auto w-full">
-        <table className={cn("w-full min-w-[640px] table-fixed border-collapse text-xs font-medium text-muted-foreground", { "max-h-[22rem]": isYearView })}>
+        <table className={cn("w-full min-w-[832px] table-fixed border-collapse text-xs font-medium text-muted-foreground sm:min-w-[640px]", { "max-h-[22rem]": isYearView })}>
           <colgroup>
             {dayOrder.map(day => <col key={day} className="w-[14.285%]" />)}
           </colgroup>
@@ -1125,10 +1125,9 @@ const CalendarGrid = memo(function CalendarGrid({
                               )}
                               onClick={() => onEventClick(event.id)}
                             >
-                              <div className="flex items-start gap-1.5">
-                                {/* Left side content */}
-                                <div className="flex min-w-0 flex-1 items-start gap-1">
-                                  <div className="flex-shrink-0 pt-0.5">
+                              <div className="flex flex-col gap-1.5">
+                                <div className="flex min-w-0 items-start gap-1">
+                                  <div className="hidden flex-shrink-0 pt-0.5 sm:block">
                                     {event.source === 'equipment_booking' ? <Package className={cn("h-2.5 w-2.5 sm:h-3 sm:w-3 text-orange-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
                                      event.status === 'approved' ? <CheckCircle className={cn("h-2.5 w-2.5 sm:h-3 sm:w-3 text-primary flex-shrink-0", { "h-2 w-2": isYearView })}/> :
                                      event.status === 'proposed' ? <AlertCircle className={cn("h-2.5 w-2.5 sm:h-3 sm:w-3 text-amber-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
@@ -1137,74 +1136,74 @@ const CalendarGrid = memo(function CalendarGrid({
                                      event.status === 'ev_event' ? <CheckCircle className={cn("h-2.5 w-2.5 sm:h-3 sm:w-3 text-purple-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
                                      <Clock className={cn("h-2.5 w-2.5 sm:h-3 sm:w-3 text-accent flex-shrink-0", { "h-2 w-2": isYearView })}/>}
                                   </div>
-                                  <div className="min-w-0 flex-1 space-y-0.5">
-                                    <div className={cn("font-medium leading-tight truncate", 
-                                      isYearView ? "text-[10px]" : "text-[10px] sm:text-xs",
-                                      event.source === 'equipment_booking' ? 'text-orange-800 font-semibold' :
-                                      event.status === 'approved' ? 'text-primary' : 
-                                      event.status === 'proposed' ? 'text-amber-800' :
-                                      (event.status === 'public_holiday' || event.source === 'public_holiday') ? 'font-semibold text-emerald-800' :
-                                      event.status === 'rejected' ? 'text-red-700' :
-                                      event.status === 'ev_event' ? 'text-purple-700' :
-                                      'text-accent'
-                                    )}>{event.name}</div>
+                                  <div className={cn("min-w-0 flex-1 font-semibold leading-snug whitespace-normal break-words sm:truncate",
+                                    isYearView ? "text-[12px] sm:text-[10px]" : "text-[13px] sm:text-xs",
+                                    event.source === 'equipment_booking' ? 'text-orange-800' :
+                                    event.status === 'approved' ? 'text-primary' :
+                                    event.status === 'proposed' ? 'text-amber-800' :
+                                    (event.status === 'public_holiday' || event.source === 'public_holiday') ? 'text-emerald-800' :
+                                    event.status === 'rejected' ? 'text-red-700' :
+                                    event.status === 'ev_event' ? 'text-purple-700' :
+                                    'text-accent'
+                                  )}>{event.name}</div>
+                                </div>
+
+                                <div className="flex min-w-0 items-end justify-between gap-1.5 border-t border-current/10 pt-1 sm:gap-2">
+                                  <div className="min-w-0 flex-1 space-y-1">
                                     {event.source !== 'public_holiday' && (
-                                      <div className={cn("text-muted-foreground font-medium leading-tight truncate",
-                                        isYearView ? "text-[8px]" : "text-[8px] sm:text-[9px]",
+                                      <div className={cn("font-medium leading-tight whitespace-normal break-words text-muted-foreground sm:truncate",
+                                        isYearView ? "text-[10px] sm:text-[8px]" : "text-[10px] sm:text-[9px]",
                                         // Make zone events brighter
                                         event.zoneId && !event.clubId ? "text-blue-700 font-semibold" : ""
                                       )}>
                                         {getClubName(event.clubId, event)}
                                       </div>
                                     )}
-                                    <div className="flex">
+                                    <div className="flex flex-wrap gap-1">
                                       {event.source === 'equipment_booking' && (event.metadata as any)?.equipmentName && (
                                         <span className={cn("inline-flex items-center rounded-full font-medium bg-orange-100 text-orange-800 border border-orange-200",
-                                          isYearView ? "px-1 py-0.5 text-[7px]" : "px-1 sm:px-1.5 py-0.5 text-[7px] sm:text-[8px]"
+                                          isYearView ? "px-1 py-0.5 text-[9px] sm:text-[7px]" : "px-1 sm:px-1.5 py-0.5 text-[9px] sm:text-[8px]"
                                         )}>
                                           {(event.metadata as any).equipmentName}
                                         </span>
                                       )}
                                       {event.source !== 'equipment_booking' && event.status === 'proposed' && (
                                         <span className={cn("inline-flex items-center rounded-full font-medium bg-amber-100 text-amber-700 border border-amber-200",
-                                          isYearView ? "px-1 py-0.5 text-[7px]" : "px-1 sm:px-1.5 py-0.5 text-[7px] sm:text-[8px]"
+                                          isYearView ? "px-1 py-0.5 text-[9px] sm:text-[7px]" : "px-1 sm:px-1.5 py-0.5 text-[9px] sm:text-[8px]"
                                         )}>
                                           Pending
                                         </span>
                                       )}
                                       {event.source !== 'equipment_booking' && event.status === 'approved' && (
                                         <span className={cn("inline-flex items-center rounded-full font-medium bg-green-100 text-green-700 border border-green-200",
-                                          isYearView ? "px-1 py-0.5 text-[7px]" : "px-1 sm:px-1.5 py-0.5 text-[7px] sm:text-[8px]"
+                                          isYearView ? "px-1 py-0.5 text-[9px] sm:text-[7px]" : "px-1 sm:px-1.5 py-0.5 text-[9px] sm:text-[8px]"
                                         )}>
                                           Approved
                                         </span>
                                       )}
                                       {event.status === 'rejected' && (
                                         <span className={cn("inline-flex items-center rounded-full font-medium bg-red-100 text-red-700 border border-red-200",
-                                          isYearView ? "px-1 py-0.5 text-[7px]" : "px-1.5 py-0.5 text-[8px]"
+                                          isYearView ? "px-1 py-0.5 text-[9px] sm:text-[7px]" : "px-1.5 py-0.5 text-[9px] sm:text-[8px]"
                                         )}>
                                           Rejected
                                         </span>
                                       )}
                                       {event.status === 'ev_event' && (
                                         <span className={cn("inline-flex items-center rounded-full font-medium bg-purple-100 text-purple-700 border border-purple-200",
-                                          isYearView ? "px-1 py-0.5 text-[7px]" : "px-1 sm:px-1.5 py-0.5 text-[7px] sm:text-[8px]"
+                                          isYearView ? "px-1 py-0.5 text-[9px] sm:text-[7px]" : "px-1 sm:px-1.5 py-0.5 text-[9px] sm:text-[8px]"
                                         )}>
                                           EV Event
                                         </span>
                                       )}
                                     </div>
                                   </div>
-                                </div>
-                                
-                                {/* Event Logo - Full height right side (Club, Zone, State, or EV) */}
-                                {getEventLogo(event) && (
-                                  <div className="flex-shrink-0 flex items-center">
+                                  {getEventLogo(event) && (
+                                    <div className="flex-shrink-0 self-end">
                                     <img 
                                       src={getEventLogo(event)!} 
                                       alt={`${event.source === 'equestrian_victoria' ? 'Equestrian Victoria' : event.source === 'state' ? 'State' : event.source === 'zone' ? 'Zone' : getClubName(event.clubId, event)} logo`}
                                       className={cn(
-                                        "h-8 w-8 rounded border border-slate-200 bg-white object-contain",
+                                        "h-7 w-7 rounded border border-slate-200 bg-white object-contain sm:h-8 sm:w-8",
                                         !isYearView && "sm:h-10 sm:w-10"
                                       )}
                                       onError={(e) => {
@@ -1212,8 +1211,9 @@ const CalendarGrid = memo(function CalendarGrid({
                                         (e.target as HTMLImageElement).style.display = 'none';
                                       }}
                                     />
-                                  </div>
-                                )}
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             </button>
                           ))}

@@ -1164,7 +1164,7 @@ const CalendarGrid = memo(function CalendarGrid({
                                   <div className="min-w-0 flex-1 space-y-1">
                                     {event.source !== 'public_holiday' && (
                                       <div className={cn("font-medium leading-tight whitespace-normal break-words text-muted-foreground sm:truncate",
-                                        isYearView ? "text-[10px] sm:text-[8px]" : "text-[10px] sm:text-[9px]",
+                                        isYearView ? "text-[12px] sm:text-[9px]" : "text-[12px] sm:text-[10px]",
                                         // Make zone events brighter
                                         event.zoneId && !event.clubId ? "text-blue-700 font-semibold" : ""
                                       )}>

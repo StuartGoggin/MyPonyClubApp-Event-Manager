@@ -1,6 +1,6 @@
 "use client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { memo, useState, useMemo, useEffect, useCallback } from 'react';
+import { memo, useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import {
   eachDayOfInterval,
   endOfMonth,
@@ -1052,13 +1052,38 @@ const CalendarGrid = memo(function CalendarGrid({
   
   const dayOrder = ['Wed', 'Thu', 'Fri', 'Sat', 'Sun', 'Mon', 'Tue'];
   const dayIndexMap = [3, 4, 5, 6, 0, 1, 2]; // Wed=3, Thu=4, ..., Tue=2
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const scrollToWeekend = () => {
+      const container = scrollContainerRef.current;
+      if (!container || container.scrollWidth <= container.clientWidth) {
+        return;
+      }
+
+      const weekendCenter = container.scrollWidth * (4 / 7);
+      const centeredScrollLeft = weekendCenter - container.clientWidth / 2;
+      container.scrollLeft = Math.max(
+        0,
+        Math.min(centeredScrollLeft, container.scrollWidth - container.clientWidth)
+      );
+    };
+
+    const animationFrame = window.requestAnimationFrame(scrollToWeekend);
+    window.addEventListener('resize', scrollToWeekend);
+
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+      window.removeEventListener('resize', scrollToWeekend);
+    };
+  }, [month]);
 
   return (
     <div className={cn("enhanced-card overflow-hidden rounded-lg border shadow-md", { "p-2": isYearView, "p-4": !isYearView })}>
       {isYearView && (
         <h3 className="mb-2 text-center font-headline text-base font-semibold text-foreground">{format(month, 'MMMM')}</h3>
       )}
-      <div className="overflow-x-auto w-full">
+      <div ref={scrollContainerRef} className="overflow-x-auto w-full">
         <table className={cn("w-full min-w-[832px] table-fixed border-collapse text-xs font-medium text-muted-foreground sm:min-w-[640px]", { "max-h-[22rem]": isYearView })}>
           <colgroup>
             {dayOrder.map(day => <col key={day} className="w-[14.285%]" />)}

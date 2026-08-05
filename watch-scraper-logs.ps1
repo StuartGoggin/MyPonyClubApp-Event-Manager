@@ -19,7 +19,7 @@ while ($true) {
     # Get logs since last check
     $logs = gcloud functions logs read scrapeEquestrianEvents `
         --limit=50 `
-        --project=ponycloud-events `
+        --project=ponyclub-events `
         --region=asia-east1 `
         --format='table(timestamp,severity,log)' 2>$null
     

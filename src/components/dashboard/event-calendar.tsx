@@ -1083,8 +1083,8 @@ const CalendarGrid = memo(function CalendarGrid({
       {isYearView && (
         <h3 className="mb-2 text-center font-headline text-base font-semibold text-foreground">{format(month, 'MMMM')}</h3>
       )}
-      <div ref={scrollContainerRef} className="overflow-x-auto w-full">
-        <table className={cn("w-full min-w-[832px] table-fixed border-collapse text-xs font-medium text-muted-foreground sm:min-w-[640px]", { "max-h-[22rem]": isYearView })}>
+      <div ref={scrollContainerRef} className="w-full overflow-x-auto overscroll-x-contain">
+        <table className={cn("w-full min-w-[832px] table-fixed border-collapse text-xs font-medium text-muted-foreground sm:min-w-[1120px] lg:min-w-[1260px]", { "max-h-[22rem]": isYearView })}>
           <colgroup>
             {dayOrder.map(day => <col key={day} className="w-[14.285%]" />)}
           </colgroup>
@@ -1117,7 +1117,7 @@ const CalendarGrid = memo(function CalendarGrid({
                         aria-hidden="true"
                         className="w-[14.285%] border-b border-r border-border/40 bg-muted/15 p-1 align-top last:border-r-0 sm:p-1.5"
                       >
-                        <div className={cn('min-h-[4.75rem]', { 'min-h-[5.5rem] sm:min-h-[6.25rem]': !isYearView })} />
+                      <div className={cn('min-h-[4.75rem]', { 'min-h-[5.75rem] sm:min-h-[6.5rem]': isYearView, 'min-h-[5.5rem] sm:min-h-[6.25rem]': !isYearView })} />
                       </td>
                     );
                   }
@@ -1127,7 +1127,7 @@ const CalendarGrid = memo(function CalendarGrid({
                       'bg-slate-50/80 dark:bg-slate-900/30': isSaturday || isSunday,
                       'bg-primary/5': isCurrentDayToday,
                     })}>
-                      <div className={cn('flex min-h-[4.75rem] flex-col', { 'min-h-[5.5rem] sm:min-h-[6.25rem]': !isYearView })}>
+                      <div className={cn('flex min-h-[4.75rem] flex-col', { 'min-h-[5.75rem] sm:min-h-[6.5rem]': isYearView, 'min-h-[5.5rem] sm:min-h-[6.25rem]': !isYearView })}>
                         <span
                           className={cn(
                             'mb-1 flex h-4 items-center justify-start text-[10px] font-bold sm:text-xs',
@@ -1157,8 +1157,8 @@ const CalendarGrid = memo(function CalendarGrid({
                                 event.status === 'rejected' ? 'event-rejected' :
                                 event.status === 'ev_event' ? 'event-default' :
                                 event.source === 'equipment_booking' ? 'event-equipment' :
-                                'event-default',
-                                isYearView ? "text-xs" : "text-sm"
+                                 'event-default',
+                                 'text-sm'
                               )}
                               onClick={() => onEventClick(event.id)}
                             >
@@ -1173,8 +1173,8 @@ const CalendarGrid = memo(function CalendarGrid({
                                      event.status === 'ev_event' ? <CheckCircle className={cn("h-2.5 w-2.5 sm:h-3 sm:w-3 text-purple-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
                                      <Clock className={cn("h-2.5 w-2.5 sm:h-3 sm:w-3 text-accent flex-shrink-0", { "h-2 w-2": isYearView })}/>}
                                   </div>
-                                  <div className={cn("min-w-0 flex-1 font-semibold leading-snug whitespace-normal break-words sm:truncate",
-                                    isYearView ? "text-[12px] sm:text-[10px]" : "text-[13px] sm:text-xs",
+                                   <div className={cn("min-w-0 flex-1 font-semibold leading-snug whitespace-normal break-words",
+                                     isYearView ? "text-[13px] sm:text-xs" : "text-[13px] sm:text-xs",
                                     event.source === 'equipment_booking' ? 'text-orange-800' :
                                     event.status === 'approved' ? 'text-primary' :
                                     event.status === 'proposed' ? 'text-amber-800' :
@@ -1188,8 +1188,8 @@ const CalendarGrid = memo(function CalendarGrid({
                                 <div className="flex min-w-0 items-end justify-between gap-1.5 border-t border-current/10 pt-1 sm:gap-2">
                                   <div className="min-w-0 flex-1 space-y-1">
                                     {event.source !== 'public_holiday' && (
-                                      <div className={cn("font-medium leading-tight whitespace-normal break-words text-muted-foreground sm:truncate",
-                                        isYearView ? "text-[12px] sm:text-[9px]" : "text-[12px] sm:text-[10px]",
+                                      <div className={cn("font-medium leading-tight whitespace-normal break-words text-muted-foreground",
+                                        isYearView ? "text-[12px] sm:text-[11px]" : "text-[12px] sm:text-[10px]",
                                         // Make zone events brighter
                                         event.zoneId && !event.clubId ? "text-blue-700 font-semibold" : ""
                                       )}>

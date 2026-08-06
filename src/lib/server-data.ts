@@ -19,6 +19,19 @@ const cache = {
 const CACHE_TTL = 12 * 60 * 60 * 1000; // 12 hours for clubs, zones, eventTypes
 const EVENTS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes for events (they change frequently)
 
+const calendarDateFormatter = new Intl.DateTimeFormat('en-AU', {
+  timeZone: 'Australia/Melbourne',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+});
+
+function toCalendarDate(date: Date): string {
+  const parts = calendarDateFormatter.formatToParts(date);
+  const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
 function getCached<T>(key: keyof typeof cache, customTTL?: number): T | null {
   const entry = cache[key] as CacheEntry<T> | null;
   if (!entry) return null;
@@ -241,18 +254,10 @@ export async function getAllEvents(): Promise<Event[]> {
     eventsSnapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
       if (doc.exists) {
         const data = doc.data();
-        // Convert Firestore timestamp to ISO date string (YYYY-MM-DD)
-        // Add 12 hours to the timestamp to ensure we get the correct calendar date
-        // This handles edge cases where events stored at midnight in one timezone 
-        // become previous day when converted to UTC
+        // Calendar dates are Victoria dates, not UTC instants. Convert using the
+        // calendar's timezone instead of applying a fixed offset.
         if (data.date && typeof data.date.toDate === 'function') {
-          const dateObj = data.date.toDate();
-          // Add 12 hours to move to middle of day, avoiding timezone boundary issues
-          const adjustedDate = new Date(dateObj.getTime() + 12 * 60 * 60 * 1000);
-          const year = adjustedDate.getUTCFullYear();
-          const month = String(adjustedDate.getUTCMonth() + 1).padStart(2, '0');
-          const day = String(adjustedDate.getUTCDate()).padStart(2, '0');
-          data.date = `${year}-${month}-${day}`;
+          data.date = toCalendarDate(data.date.toDate());
         }
         // Clean event name - remove priority suffixes
         if (data.name) {

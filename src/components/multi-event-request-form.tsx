@@ -111,6 +111,12 @@ interface SubmissionConfirmation {
   emailStatus: 'preparing' | 'sent' | 'queued' | 'warning';
 }
 
+function toCalendarDateValue(date: Date): string {
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
 interface MultiEventRequestFormProps {
   clubs?: Club[];
   eventTypes?: EventType[];
@@ -884,7 +890,14 @@ export function MultiEventRequestForm({
         await onSubmit(data);
       } else {
         // Use the server action
-        const result = await createMultiEventRequestAction(data);
+        const result = await createMultiEventRequestAction({
+          ...data,
+          // Send the selected calendar date rather than serializing a timezone-dependent instant.
+          events: data.events.map(event => ({
+            ...event,
+            date: toCalendarDateValue(event.date),
+          })),
+        });
         
         if (result.success) {
           const referenceNumber = result.referenceNumber || `ER-${Date.now()}`;

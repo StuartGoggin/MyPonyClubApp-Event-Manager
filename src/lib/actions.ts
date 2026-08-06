@@ -55,6 +55,14 @@ export type FormState = {
   };
 };
 
+function parseCalendarDate(value: unknown): Date {
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        return new Date(`${value}T00:00:00.000Z`);
+    }
+
+    return new Date(value as string | number | Date);
+}
+
 export async function createEventRequestAction(
   prevState: FormState | null,
   formData: FormData
@@ -119,7 +127,7 @@ export async function createMultiEventRequestAction(data: any): Promise<FormStat
             ...data,
             events: data.events.map((event: any) => ({
                 ...event,
-                date: typeof event.date === 'string' ? new Date(event.date) : event.date
+                date: typeof event.date === 'string' ? parseCalendarDate(event.date) : event.date
             }))
         };
 

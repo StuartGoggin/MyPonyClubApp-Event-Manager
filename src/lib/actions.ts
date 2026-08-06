@@ -36,8 +36,8 @@ const multiEventRequestSchema = z.object({
     isHistoricallyTraditional: z.boolean().default(false),
     date: z.date({ required_error: 'Please select a date for this event.' }),
     description: z.string().optional(),
-    coordinatorName: z.string().optional(),
-    coordinatorContact: z.string().optional(),
+    coordinatorName: z.string().trim().min(1, 'Please enter the event coordinator name.'),
+    coordinatorContact: z.string().trim().min(1, 'Please enter the event coordinator contact details.'),
     notes: z.string().optional(),
   }))
     .min(1, 'You must add at least one event request.')

@@ -44,8 +44,8 @@ const eventDetailsSchema = z.object({
   isHistoricallyTraditional: z.boolean().default(false),
   date: z.date({ required_error: 'Please select a date for this event.' }),
   description: z.string().optional(),
-  coordinatorName: z.string().optional(),
-  coordinatorContact: z.string().optional(),
+  coordinatorName: z.string().trim().min(1, 'Please enter the event coordinator name.'),
+  coordinatorContact: z.string().trim().min(1, 'Please enter the event coordinator contact details.'),
   notes: z.string().optional(),
 });
 
@@ -198,7 +198,10 @@ export function MultiEventRequestForm({
   const watchedEvents = form.watch('events');
   const hasValidEmail = /^\S+@\S+\.\S+$/.test(submittedByEmail || '');
   const contactDetailsComplete = Boolean(submittedBy?.trim() && hasValidEmail && submittedByPhone?.trim());
-  const incompleteEventIndex = watchedEvents.findIndex(event => !event?.name || !event?.eventTypeId || !event?.location || !event?.date);
+  const requesterCoordinatorContact = [submittedByEmail, submittedByPhone].filter(Boolean).join(' | ');
+  const incompleteEventIndex = watchedEvents.findIndex(event =>
+    !event?.name || !event?.eventTypeId || !event?.location || !event?.date || !event?.coordinatorName || !event?.coordinatorContact
+  );
   const requiredFieldsRemaining =
     (submittedBy?.trim() ? 0 : 1) +
     (hasValidEmail ? 0 : 1) +
@@ -206,7 +209,26 @@ export function MultiEventRequestForm({
     (form.watch('clubId') ? 0 : 1) +
     (watchedEvents.length === 0
       ? 1
-      : watchedEvents.reduce((total, event) => total + [event?.name, event?.eventTypeId, event?.location, event?.date].filter(value => !value).length, 0));
+      : watchedEvents.reduce((total, event) => total + [
+        event?.name,
+        event?.eventTypeId,
+        event?.location,
+        event?.date,
+        event?.coordinatorName,
+        event?.coordinatorContact,
+      ].filter(value => !value).length, 0));
+
+  // Use the requester as the starting coordinator for each event without replacing a chosen coordinator.
+  useEffect(() => {
+    form.getValues('events').forEach((event, index) => {
+      if (submittedBy?.trim() && !event.coordinatorName?.trim()) {
+        form.setValue(`events.${index}.coordinatorName`, submittedBy.trim(), { shouldDirty: true });
+      }
+      if (requesterCoordinatorContact && !event.coordinatorContact?.trim()) {
+        form.setValue(`events.${index}.coordinatorContact`, requesterCoordinatorContact, { shouldDirty: true });
+      }
+    });
+  }, [eventFields.length, form, requesterCoordinatorContact, submittedBy]);
 
   const loadPreviousEventTemplates = async (token: string) => {
     setIsLoadingPreviousEvents(true);
@@ -597,8 +619,8 @@ export function MultiEventRequestForm({
       isHistoricallyTraditional: template.isHistoricallyTraditional,
       date: suggestedDate,
       description: template.description,
-      coordinatorName: '',
-      coordinatorContact: '',
+      coordinatorName: submittedBy?.trim() || '',
+      coordinatorContact: requesterCoordinatorContact,
       notes: '',
     };
 
@@ -641,11 +663,13 @@ export function MultiEventRequestForm({
     }
 
     const currentEvents = form.getValues('events');
-    const firstIncompleteIndex = currentEvents.findIndex(event => !event.name || !event.eventTypeId || !event.location || !event.date);
+    const firstIncompleteIndex = currentEvents.findIndex(event =>
+      !event.name || !event.eventTypeId || !event.location || !event.date || !event.coordinatorName || !event.coordinatorContact
+    );
     if (firstIncompleteIndex >= 0) {
       toast({
         title: 'Complete the current event first',
-        description: 'Add the event name, type, preferred date, and location before adding another priority.',
+        description: 'Add the event name, type, preferred date, location, and coordinator details before adding another priority.',
         variant: 'destructive',
       });
       scrollToNextIncompleteField();
@@ -664,8 +688,8 @@ export function MultiEventRequestForm({
       isHistoricallyTraditional: false,
       date: undefined as unknown as Date,
       description: '',
-      coordinatorName: '',
-      coordinatorContact: '',
+      coordinatorName: submittedBy?.trim() || '',
+      coordinatorContact: requesterCoordinatorContact,
       notes: '',
     });
   };

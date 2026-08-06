@@ -184,6 +184,31 @@ export function SingleEventForm({
         />
       </div>
 
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <FormField
+          control={control}
+          name={`events.${eventIndex}.coordinatorName`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Event Coordinator Name *</FormLabel>
+              <FormControl><Input placeholder="Coordinator name" {...field} /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={control}
+          name={`events.${eventIndex}.coordinatorContact`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Coordinator Contact *</FormLabel>
+              <FormControl><Input placeholder="Phone or email" {...field} /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+
       <Collapsible open={detailsOpen} onOpenChange={setDetailsOpen}>
         <CollapsibleTrigger asChild>
           <Button type="button" variant="ghost" className="w-full justify-between px-0 text-muted-foreground hover:bg-transparent hover:text-foreground">
@@ -243,31 +268,6 @@ export function SingleEventForm({
               </FormItem>
             )}
           />
-
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <FormField
-              control={control}
-              name={`events.${eventIndex}.coordinatorName`}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Event Coordinator Name</FormLabel>
-                  <FormControl><Input placeholder="Coordinator name" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={control}
-              name={`events.${eventIndex}.coordinatorContact`}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Coordinator Contact</FormLabel>
-                  <FormControl><Input placeholder="Phone or email" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
 
           <FormField
             control={control}

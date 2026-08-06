@@ -414,8 +414,8 @@ export interface EventRequestDetails {
   isHistoricallyTraditional?: boolean;  // Track if this is a traditional event with historical date significance
   date: Date;  // Single preferred date for this event
   description?: string;
-  coordinatorName?: string;
-  coordinatorContact?: string;
+  coordinatorName: string;
+  coordinatorContact: string;
   notes?: string;
 }
 

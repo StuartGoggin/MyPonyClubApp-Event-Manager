@@ -2,6 +2,7 @@ import jsPDF from 'jspdf';
 import { PDFDocument, rgb } from 'pdf-lib';
 import fs from 'fs';
 import path from 'path';
+import { formatCalendarDate, getCalendarDateParts } from '@/lib/calendar-date';
 
 export interface EventRequestFormData {
   // Organizer Information
@@ -39,12 +40,7 @@ export interface EventRequestPDFOptions {
 }
 
 function formatDate(date: Date | string): string {
-  const d = new Date(date);
-  return d.toLocaleDateString('en-AU', {
-    day: 'numeric',
-    month: 'long', 
-    year: 'numeric'
-  });
+  return formatCalendarDate(date);
 }
 
 export async function generateEventRequestPDF(options: EventRequestPDFOptions): Promise<Buffer> {
@@ -130,10 +126,7 @@ function generateFormPage(formData: EventRequestFormData): Buffer {
     // Determine the year from events (use first event's year, or current year + 1 if no events)
     let targetYear = new Date().getFullYear() + 1; // Default to next year
     if (formData.events && formData.events.length > 0) {
-      const firstEventDate = new Date(formData.events[0].date);
-      if (!isNaN(firstEventDate.getTime())) {
-        targetYear = firstEventDate.getFullYear();
-      }
+      targetYear = Number(getCalendarDateParts(formData.events[0].date).year);
     }
     
     // Date range title - centered and larger

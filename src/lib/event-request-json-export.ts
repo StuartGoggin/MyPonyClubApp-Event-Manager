@@ -1,4 +1,5 @@
 import { getClubById, getEventTypeById, getZoneByClubId } from '@/lib/data';
+import { toCalendarDate } from '@/lib/calendar-date';
 
 // Define the API request type to match what's used in the email API
 interface EventRequestFormData {
@@ -74,10 +75,8 @@ export async function exportEventRequestAsJSON(
       formData.events.map(async (event) => {
         const eventType = await getEventTypeById(event.eventTypeId);
         
-        // Ensure date is converted to string consistently
-        const dateString = typeof event.date === 'string' 
-          ? event.date 
-          : event.date.toISOString();
+        // Event dates are Victoria calendar dates, not UTC instants.
+        const dateString = toCalendarDate(event.date);
         
         return {
           priority: event.priority,

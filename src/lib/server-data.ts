@@ -1,4 +1,5 @@
 import { adminDb, isDatabaseConnected, getDatabaseErrorMessage } from './firebase-admin';
+import { toCalendarDate } from './calendar-date';
 import type { Zone, Club, EventType, Event } from './types';
 import type { QueryDocumentSnapshot, DocumentData } from 'firebase-admin/firestore';
 
@@ -18,19 +19,6 @@ const cache = {
 // Cache TTLs - events have shorter cache due to frequent updates
 const CACHE_TTL = 12 * 60 * 60 * 1000; // 12 hours for clubs, zones, eventTypes
 const EVENTS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes for events (they change frequently)
-
-const calendarDateFormatter = new Intl.DateTimeFormat('en-AU', {
-  timeZone: 'Australia/Melbourne',
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit',
-});
-
-function toCalendarDate(date: Date): string {
-  const parts = calendarDateFormatter.formatToParts(date);
-  const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
-  return `${values.year}-${values.month}-${values.day}`;
-}
 
 function getCached<T>(key: keyof typeof cache, customTTL?: number): T | null {
   const entry = cache[key] as CacheEntry<T> | null;

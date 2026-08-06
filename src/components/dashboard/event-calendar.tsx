@@ -1165,13 +1165,13 @@ const CalendarGrid = memo(function CalendarGrid({
                               <div className="flex flex-col gap-1.5">
                                 <div className="flex min-w-0 items-start gap-1">
                                   <div className="hidden flex-shrink-0 pt-0.5 sm:block">
-                                    {event.source === 'equipment_booking' ? <Package className={cn("h-2.5 w-2.5 sm:h-3 sm:w-3 text-orange-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
-                                     event.status === 'approved' ? <CheckCircle className={cn("h-2.5 w-2.5 sm:h-3 sm:w-3 text-primary flex-shrink-0", { "h-2 w-2": isYearView })}/> :
-                                     event.status === 'proposed' ? <AlertCircle className={cn("h-2.5 w-2.5 sm:h-3 sm:w-3 text-amber-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
-                                     (event.status === 'public_holiday' || event.source === 'public_holiday') ? <FerrisWheel className={cn("h-2.5 w-2.5 flex-shrink-0 text-emerald-600 sm:h-3 sm:w-3", { "h-2 w-2": isYearView })}/> :
-                                     event.status === 'rejected' ? <Clock className={cn("h-2.5 w-2.5 sm:h-3 sm:w-3 text-red-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
-                                     event.status === 'ev_event' ? <CheckCircle className={cn("h-2.5 w-2.5 sm:h-3 sm:w-3 text-purple-600 flex-shrink-0", { "h-2 w-2": isYearView })}/> :
-                                     <Clock className={cn("h-2.5 w-2.5 sm:h-3 sm:w-3 text-accent flex-shrink-0", { "h-2 w-2": isYearView })}/>}
+                                    {event.source === 'equipment_booking' ? <Package className={cn("h-3 w-3 sm:h-3.5 sm:w-3.5 text-orange-600 flex-shrink-0", { "h-2.5 w-2.5": isYearView })}/> :
+                                     event.status === 'approved' ? <CheckCircle className={cn("h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary flex-shrink-0", { "h-2.5 w-2.5": isYearView })}/> :
+                                     event.status === 'proposed' ? <AlertCircle className={cn("h-3 w-3 sm:h-3.5 sm:w-3.5 text-amber-600 flex-shrink-0", { "h-2.5 w-2.5": isYearView })}/> :
+                                     (event.status === 'public_holiday' || event.source === 'public_holiday') ? <FerrisWheel className={cn("h-3 w-3 flex-shrink-0 text-emerald-600 sm:h-3.5 sm:w-3.5", { "h-2.5 w-2.5": isYearView })}/> :
+                                     event.status === 'rejected' ? <Clock className={cn("h-3 w-3 sm:h-3.5 sm:w-3.5 text-red-600 flex-shrink-0", { "h-2.5 w-2.5": isYearView })}/> :
+                                     event.status === 'ev_event' ? <CheckCircle className={cn("h-3 w-3 sm:h-3.5 sm:w-3.5 text-purple-600 flex-shrink-0", { "h-2.5 w-2.5": isYearView })}/> :
+                                     <Clock className={cn("h-3 w-3 sm:h-3.5 sm:w-3.5 text-accent flex-shrink-0", { "h-2.5 w-2.5": isYearView })}/>}
                                   </div>
                                    <div className={cn("min-w-0 flex-1 font-semibold leading-snug whitespace-normal break-words",
                                      isYearView ? "text-[13px] sm:text-xs" : "text-[13px] sm:text-xs",

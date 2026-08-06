@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { PlusCircle, Send, AlertCircle, FileText } from 'lucide-react';
+import { PlusCircle, Send, AlertCircle, FileText, Copy, MailCheck } from 'lucide-react';
 import { type Club, type EventType, type Event, type Zone } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -79,6 +79,31 @@ const multiEventRequestSchema = z.object({
 
 export type MultiEventRequestFormValues = z.infer<typeof multiEventRequestSchema>;
 
+interface DirectoryMember {
+  id: string;
+  firstName?: string;
+  lastName?: string;
+}
+
+interface EventRequestVerification {
+  token: string;
+  userId: string;
+  clubId: string;
+  displayName: string;
+}
+
+interface PreviousEventTemplate {
+  id: string;
+  name: string;
+  date: string;
+  eventTypeId: string;
+  location: string;
+  eventLink: string;
+  isQualifier: boolean;
+  isHistoricallyTraditional: boolean;
+  description: string;
+}
+
 interface MultiEventRequestFormProps {
   clubs?: Club[];
   eventTypes?: EventType[];
@@ -116,7 +141,11 @@ export function MultiEventRequestForm({
   const [availableNames, setAvailableNames] = useState<any[]>([]);
   const [isLoadingNames, setIsLoadingNames] = useState(false);
   const nameAutocompleteRef = useRef<HTMLDivElement>(null);
-  const [selectedUserData, setSelectedUserData] = useState<any>(null);
+  const [selectedUserData, setSelectedUserData] = useState<DirectoryMember | null>(null);
+  const [verification, setVerification] = useState<EventRequestVerification | null>(null);
+  const [previousEventTemplates, setPreviousEventTemplates] = useState<PreviousEventTemplate[]>([]);
+  const [isSendingVerification, setIsSendingVerification] = useState(false);
+  const [isLoadingPreviousEvents, setIsLoadingPreviousEvents] = useState(false);
   const hasInitializedEvent = useRef(false);
   const nameInputRef = useRef<HTMLInputElement>(null);
 
@@ -155,6 +184,66 @@ export function MultiEventRequestForm({
     control: form.control,
     name: 'events',
   });
+
+  const loadPreviousEventTemplates = async (token: string) => {
+    setIsLoadingPreviousEvents(true);
+    try {
+      const response = await fetch(`/api/event-request/previous-events?token=${encodeURIComponent(token)}`);
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Unable to load previous events.');
+      }
+
+      setPreviousEventTemplates(result.templates || []);
+    } catch (error) {
+      console.error('Unable to load previous event templates:', error);
+      setPreviousEventTemplates([]);
+      toast({
+        title: 'Previous events unavailable',
+        description: error instanceof Error ? error.message : 'Please request another verification link.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoadingPreviousEvents(false);
+    }
+  };
+
+  useEffect(() => {
+    const token = new URLSearchParams(window.location.search).get('verification');
+    if (!token) return;
+
+    // Do not leave a bearer token in the address bar after it has been consumed by the page.
+    window.history.replaceState({}, document.title, window.location.pathname);
+
+    const verify = async () => {
+      try {
+        const response = await fetch(`/api/event-request/verification?token=${encodeURIComponent(token)}`);
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || 'This verification link is no longer valid.');
+        }
+
+        const verifiedMember = result.verification as Omit<EventRequestVerification, 'token'>;
+        setVerification({ token, ...verifiedMember });
+        setSelectedUserData({ id: verifiedMember.userId });
+        setNameSearchTerm(verifiedMember.displayName);
+        form.setValue('submittedBy', verifiedMember.displayName);
+        await loadPreviousEventTemplates(token);
+      } catch (error) {
+        toast({
+          title: 'Verification link unavailable',
+          description: error instanceof Error ? error.message : 'Please request a new verification link.',
+          variant: 'destructive',
+        });
+      }
+    };
+
+    void verify();
+  // This runs once for a link opened from an email. The form state is intentionally preserved afterwards.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Fetch data for embed mode
   useEffect(() => {
@@ -380,6 +469,11 @@ export function MultiEventRequestForm({
   const handleNameInputChange = (value: string) => {
     setNameSearchTerm(value);
     form.setValue('submittedBy', value);
+    if (selectedUserData) {
+      setSelectedUserData(null);
+      setVerification(null);
+      setPreviousEventTemplates([]);
+    }
     setShowNameSuggestions(value.length >= 2);
     
     // Debounce the API call
@@ -398,16 +492,8 @@ export function MultiEventRequestForm({
     form.setValue('submittedBy', selectedResult.name);
     setShowNameSuggestions(false);
     setSelectedUserData(selectedResult.user);
-    
-    // Auto-populate contact details if available
-    if (selectedResult.user) {
-      if (selectedResult.user.email) {
-        form.setValue('submittedByEmail', selectedResult.user.email);
-      }
-      if (selectedResult.user.mobileNumber) {
-        form.setValue('submittedByPhone', selectedResult.user.mobileNumber);
-      }
-    }
+    setVerification(null);
+    setPreviousEventTemplates([]);
     
     // Auto-populate club and zone if available
     if (selectedResult.clubId) {
@@ -419,6 +505,95 @@ export function MultiEventRequestForm({
         setClubSearchTerm(club.name);
       }
     }
+  };
+
+  const handleSendVerification = async () => {
+    const email = form.getValues('submittedByEmail');
+    if (!selectedUserData?.id || !email) {
+      toast({
+        title: 'Email required',
+        description: 'Select your name from the directory and enter your email address first.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsSendingVerification(true);
+    try {
+      const response = await fetch('/api/event-request/verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: selectedUserData.id, email }),
+      });
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Unable to send the verification email.');
+      }
+
+      toast({
+        title: 'Check your email',
+        description: result.message,
+      });
+    } catch (error) {
+      toast({
+        title: 'Verification email unavailable',
+        description: error instanceof Error ? error.message : 'Please try again later.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSendingVerification(false);
+    }
+  };
+
+  const handleUsePreviousEvent = (template: PreviousEventTemplate) => {
+    const currentEvents = form.getValues('events');
+    const emptyEventIndex = currentEvents.findIndex(event => !event.name && !event.eventTypeId);
+    const targetIndex = emptyEventIndex >= 0 ? emptyEventIndex : currentEvents.length;
+
+    if (targetIndex >= 4) {
+      toast({
+        title: 'Maximum Events Reached',
+        description: 'Remove an event before adding another template.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const sourceDate = new Date(template.date);
+    const today = new Date();
+    const targetYear = today.getFullYear() + (today.getMonth() >= 6 ? 1 : 0);
+    const suggestedDate = new Date(targetYear, sourceDate.getMonth(), sourceDate.getDate());
+    const newEvent = {
+      priority: targetIndex + 1,
+      name: template.name,
+      eventTypeId: template.eventTypeId,
+      location: template.location,
+      eventLink: template.eventLink,
+      isQualifier: template.isQualifier,
+      isHistoricallyTraditional: template.isHistoricallyTraditional,
+      date: suggestedDate,
+      description: template.description,
+      coordinatorName: '',
+      coordinatorContact: '',
+      notes: '',
+    };
+
+    const verifiedClub = clubs.find(club => club.id === verification?.clubId);
+    if (verifiedClub) {
+      handleClubSelection(verifiedClub);
+    }
+
+    if (emptyEventIndex >= 0) {
+      form.setValue(`events.${emptyEventIndex}`, newEvent);
+    } else {
+      appendEvent(newEvent);
+    }
+
+    toast({
+      title: 'Previous event copied',
+      description: `The preferred date has been moved to ${targetYear}. Review it before submitting.`,
+    });
   };
 
   // Handle name input keyboard events
@@ -751,7 +926,7 @@ export function MultiEventRequestForm({
             <CardHeader>
               <CardTitle>Your Details</CardTitle>
               <p className="text-sm text-muted-foreground">
-                Start by entering your name - we'll auto-fill your club and contact details
+                Start by entering your name. Selecting a directory result can fill in your club, but you will enter your own contact details.
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -764,7 +939,7 @@ export function MultiEventRequestForm({
                     <div className="flex items-center gap-2">
                       <FormLabel>Your Name *</FormLabel>
                       <HelpTooltip 
-                        content="Start typing your name to search our member directory. We'll auto-fill your club and contact details when you select your name."
+                        content="Start typing your name to search the member directory. Selecting a result can fill in your club; enter your own email address and phone number below."
                         side="right"
                       />
                     </div>
@@ -796,9 +971,9 @@ export function MultiEventRequestForm({
                             >
                               <div className="flex items-center justify-between">
                                 <span className="font-medium text-gray-900">{result.name}</span>
-                                {result.user?.clubId && (
+                                {result.clubId && (
                                   <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
-                                    Auto-fill details
+                                    Select member
                                   </span>
                                 )}
                               </div>
@@ -837,11 +1012,11 @@ export function MultiEventRequestForm({
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                     <span className="text-sm font-medium text-green-700">
-                      Profile Found: {selectedUserData.firstName} {selectedUserData.lastName}
+                      Member selected
                     </span>
                   </div>
                   <p className="text-xs text-green-600 mt-1">
-                    Club, zone, and contact details auto-filled from your profile (you can still change them below)
+                    Your club can be selected from the member record. Enter and confirm your own contact details below.
                   </p>
                 </div>
               )}
@@ -977,6 +1152,48 @@ export function MultiEventRequestForm({
                   )}
                 />
               </div>
+
+              {selectedUserData && !verification && (
+                <Alert className="border-blue-200 bg-blue-50">
+                  <MailCheck className="h-4 w-4 text-blue-700" />
+                  <AlertDescription className="space-y-3 text-blue-950">
+                    <p>Verify the email address on your membership record to reuse a previous event as a template. This is optional and does not affect submitting a new request.</p>
+                    <Button type="button" variant="outline" size="sm" onClick={handleSendVerification} disabled={isSendingVerification}>
+                      <MailCheck />
+                      {isSendingVerification ? 'Sending verification link...' : 'Email me a verification link'}
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {verification && (
+                <Alert className="border-green-200 bg-green-50">
+                  <MailCheck className="h-4 w-4 text-green-700" />
+                  <AlertDescription className="space-y-3 text-green-950">
+                    <p>Email verified for {verification.displayName}. Choose an earlier club event to use as a starting point. Personal contacts and internal notes are not copied.</p>
+                    {isLoadingPreviousEvents ? (
+                      <p className="text-sm">Loading previous events...</p>
+                    ) : previousEventTemplates.length === 0 ? (
+                      <p className="text-sm">No earlier events are available for this club.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {previousEventTemplates.map(template => (
+                          <div key={template.id} className="flex flex-col gap-2 border border-green-200 bg-background p-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                              <p className="font-medium">{template.name}</p>
+                              <p className="text-sm text-muted-foreground">{new Date(template.date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                            </div>
+                            <Button type="button" variant="outline" size="sm" onClick={() => handleUsePreviousEvent(template)}>
+                              <Copy />
+                              Use as template
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </AlertDescription>
+                </Alert>
+              )}
             </CardContent>
           </Card>
 

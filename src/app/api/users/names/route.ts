@@ -12,7 +12,13 @@ const CACHE_TTL = 60000; // 60 seconds
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const search = searchParams.get('search') || '';
+    const search = (searchParams.get('search') || '').trim();
+
+    // The client already waits for two characters. Enforce the same rule on the
+    // server so callers cannot request a directory listing by omitting search.
+    if (search.length < 2) {
+      return NextResponse.json({ success: true, results: [], count: 0 });
+    }
     
     // Check cache first
     const now = Date.now();
@@ -29,8 +35,9 @@ export async function GET(request: NextRequest) {
       users = namesCache.data;
     }
     
-    // Create names list with associated user data
-    const namesWithData = new Map<string, { clubId?: string; zoneId?: string; user: any }>();
+    // The public request form only needs enough information to identify a member and their club.
+    // Contact details must never be exposed by this anonymous endpoint.
+    const namesWithData = new Map<string, { clubId?: string; zoneId?: string; user: { id: string; firstName?: string; lastName?: string } }>();
     
     users.forEach(user => {
       // Add full name if both first and last name exist
@@ -43,10 +50,6 @@ export async function GET(request: NextRequest) {
             id: user.id,
             firstName: user.firstName,
             lastName: user.lastName,
-            email: user.email,
-            mobileNumber: user.mobileNumber,
-            clubId: user.clubId,
-            zoneId: user.zoneId
           }
         });
       }
@@ -62,10 +65,6 @@ export async function GET(request: NextRequest) {
               id: user.id,
               firstName: user.firstName,
               lastName: user.lastName,
-              email: user.email,
-              mobileNumber: user.mobileNumber,
-              clubId: user.clubId,
-              zoneId: user.zoneId
             }
           });
         }

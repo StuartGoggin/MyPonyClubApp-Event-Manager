@@ -48,6 +48,7 @@ const multiEventRequestSchema = z.object({
 export type FormState = {
   message: string;
   success: boolean;
+  referenceNumber?: string;
   errors?: {
     [key: string]: string[] | undefined;
      _errors?: string[];
@@ -133,6 +134,7 @@ export async function createMultiEventRequestAction(data: any): Promise<FormStat
         }
 
         const { clubId, submittedBy, submittedByEmail, submittedByPhone, events, generalNotes } = validatedFields.data;
+        const referenceNumber = `ER-${Date.now()}`;
 
         // Combine contact information for backward compatibility
         const submittedByContact = [submittedByEmail, submittedByPhone].filter(Boolean).join(' | ');
@@ -170,6 +172,7 @@ export async function createMultiEventRequestAction(data: any): Promise<FormStat
                 submittedByContact,
                 submittedByEmail,
                 submittedByPhone,
+                referenceNumber,
             });
         }
 
@@ -179,6 +182,7 @@ export async function createMultiEventRequestAction(data: any): Promise<FormStat
         const eventCount = events.length;
         return { 
             success: true, 
+            referenceNumber,
             message: `Your ${eventCount} event request${eventCount > 1 ? 's have' : ' has'} been submitted for approval. They will appear on the calendar as pending events.` 
         };
 

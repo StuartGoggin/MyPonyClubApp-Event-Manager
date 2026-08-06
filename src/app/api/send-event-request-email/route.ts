@@ -54,6 +54,7 @@ async function getSuperUserEmails(): Promise<string[]> {
 }
 
 interface EventRequestEmailData {
+  referenceNumber?: string;
   formData: {
     clubId: string;
     clubName?: string;
@@ -112,8 +113,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate reference number
-    const referenceNumber = `ER-${Date.now()}`;
+    // Use the reference generated when the request was saved so the confirmation,
+    // events, and notification all refer to the same submission.
+    const referenceNumber = data.referenceNumber || `ER-${Date.now()}`;
 
     // Generate JSON export for super users
     const jsonExport = await exportEventRequestAsJSON(formData, referenceNumber);

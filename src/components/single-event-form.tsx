@@ -1,7 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import { Control, UseFormWatch } from 'react-hook-form';
-import { Calendar as CalendarLucide, Trash2, Wand2, AlertTriangle } from 'lucide-react';
+import { Calendar as CalendarLucide, Trash2, Wand2, AlertTriangle, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -21,6 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { EventDatePicker } from '@/components/event-date-picker';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { type EventType } from '@/lib/types';
 
 interface SingleEventFormProps {
@@ -50,6 +52,7 @@ export function SingleEventForm({
 }: SingleEventFormProps) {
 
   const isHistoricallyTraditional = watch(`events.${eventIndex}.isHistoricallyTraditional`);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   const priorityColors = {
     1: 'border-red-200 bg-red-50',
@@ -71,7 +74,7 @@ export function SingleEventForm({
     : priorityColors[priority as keyof typeof priorityColors] || 'border-gray-200 bg-gray-50';
 
   return (
-    <div className={`space-y-4 p-4 rounded-lg border-2 ${cardStyle}`}>
+    <div data-event-request-index={eventIndex} className={`space-y-4 p-4 rounded-lg border-2 ${cardStyle}`}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -144,187 +147,141 @@ export function SingleEventForm({
         )}
       />
 
-      {/* Location */}
-      <FormField
-        control={control}
-        name={`events.${eventIndex}.location`}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Location *</FormLabel>
-            <FormControl>
-              <Input placeholder="Enter event location" {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      {/* Event Link */}
-      <FormField
-        control={control}
-        name={`events.${eventIndex}.eventLink`}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Event Link (URL) <span className="text-muted-foreground font-normal">(Optional)</span></FormLabel>
-            <FormControl>
-              <Input placeholder="https://example.com/event" type="url" {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      {/* Qualifier and Historical Checkboxes */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <FormField
           control={control}
-          name={`events.${eventIndex}.isQualifier`}
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-              <FormControl>
-                <Checkbox
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-              <div className="space-y-1 leading-none">
-                <FormLabel className="text-sm font-normal">
-                  This is a Zone Qualifier Event
-                </FormLabel>
-              </div>
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={control}
-          name={`events.${eventIndex}.isHistoricallyTraditional`}
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-              <FormControl>
-                <Checkbox
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-              <div className="space-y-1 leading-none">
-                <FormLabel className="text-sm font-normal">
-                  Historically traditional event
-                </FormLabel>
-                <p className="text-xs text-muted-foreground">
-                  This event has traditionally been held on this date
-                </p>
-              </div>
-            </FormItem>
-          )}
-        />
-      </div>
-
-      {/* Description */}
-      <FormField
-        control={control}
-        name={`events.${eventIndex}.description`}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Description</FormLabel>
-            <FormControl>
-              <Textarea 
-                placeholder="Enter event description (optional)"
-                className="resize-none"
-                rows={3}
-                {...field} 
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      {/* Coordinator Details */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormField
-          control={control}
-          name={`events.${eventIndex}.coordinatorName`}
+          name={`events.${eventIndex}.date`}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Event Coordinator Name</FormLabel>
-              <FormControl>
-                <Input placeholder="Coordinator name" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={control}
-          name={`events.${eventIndex}.coordinatorContact`}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Coordinator Contact</FormLabel>
-              <FormControl>
-                <Input placeholder="Phone or email" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
-
-      {/* Preferred Date */}
-      <div className="space-y-3">
-        <FormLabel>Preferred Date *</FormLabel>
-        <div className="flex items-center gap-2">
-          <FormField
-            control={control}
-            name={`events.${eventIndex}.date`}
-            render={({ field }) => (
-              <FormItem className="flex-1">
+              <FormLabel>Preferred Date *</FormLabel>
+              <div className="flex items-center gap-2">
                 <FormControl>
                   <EventDatePicker value={field.value} onChange={field.onChange} />
+                </FormControl>
+                {onAnalyzeDate && (
+                  <Button type="button" variant="outline" size="sm" onClick={() => onAnalyzeDate(eventIndex)} disabled={isLoadingSuggestions}>
+                    {isLoadingSuggestions ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary" /> : <Wand2 className="h-4 w-4" />}
+                  </Button>
+                )}
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={control}
+          name={`events.${eventIndex}.location`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Location *</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter event location" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+
+      <Collapsible open={detailsOpen} onOpenChange={setDetailsOpen}>
+        <CollapsibleTrigger asChild>
+          <Button type="button" variant="ghost" className="w-full justify-between px-0 text-muted-foreground hover:bg-transparent hover:text-foreground">
+            Additional event details (optional)
+            <ChevronDown className={`h-4 w-4 transition-transform ${detailsOpen ? 'rotate-180' : ''}`} />
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="space-y-4 border-t pt-4">
+          <FormField
+            control={control}
+            name={`events.${eventIndex}.eventLink`}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Event Link</FormLabel>
+                <FormControl>
+                  <Input placeholder="https://example.com/event" type="url" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
 
-          {onAnalyzeDate && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => onAnalyzeDate(eventIndex)}
-              disabled={isLoadingSuggestions}
-            >
-              {isLoadingSuggestions ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-              ) : (
-                <Wand2 className="h-4 w-4" />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <FormField
+              control={control}
+              name={`events.${eventIndex}.isQualifier`}
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                  <FormLabel className="text-sm font-normal">This is a Zone Qualifier Event</FormLabel>
+                </FormItem>
               )}
-            </Button>
-          )}
-        </div>
-      </div>
+            />
+            <FormField
+              control={control}
+              name={`events.${eventIndex}.isHistoricallyTraditional`}
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel className="text-sm font-normal">Historically traditional event</FormLabel>
+                    <p className="text-xs text-muted-foreground">This event has traditionally been held on this date.</p>
+                  </div>
+                </FormItem>
+              )}
+            />
+          </div>
 
-      {/* Event-specific Notes */}
-      <FormField
-        control={control}
-        name={`events.${eventIndex}.notes`}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Event Notes</FormLabel>
-            <FormControl>
-              <Textarea 
-                placeholder="Any additional notes for this event..."
-                className="resize-none"
-                rows={2}
-                {...field} 
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+          <FormField
+            control={control}
+            name={`events.${eventIndex}.description`}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description</FormLabel>
+                <FormControl><Textarea placeholder="Enter event description" className="resize-none" rows={3} {...field} /></FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <FormField
+              control={control}
+              name={`events.${eventIndex}.coordinatorName`}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Event Coordinator Name</FormLabel>
+                  <FormControl><Input placeholder="Coordinator name" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={control}
+              name={`events.${eventIndex}.coordinatorContact`}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Coordinator Contact</FormLabel>
+                  <FormControl><Input placeholder="Phone or email" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <FormField
+            control={control}
+            name={`events.${eventIndex}.notes`}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Event Notes</FormLabel>
+                <FormControl><Textarea placeholder="Any additional notes for this event" className="resize-none" rows={2} {...field} /></FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </CollapsibleContent>
+      </Collapsible>
 
       {/* Conflict Suggestions */}
       {conflictSuggestions && (

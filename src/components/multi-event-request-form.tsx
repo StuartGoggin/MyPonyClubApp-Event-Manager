@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { PlusCircle, Send, AlertCircle, FileText, Copy, MailCheck } from 'lucide-react';
+import { PlusCircle, Send, AlertCircle, FileText, Copy, MailCheck, CheckCircle2, ChevronRight } from 'lucide-react';
 import { type Club, type EventType, type Event, type Zone } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -104,6 +104,13 @@ interface PreviousEventTemplate {
   description: string;
 }
 
+interface SubmissionConfirmation {
+  clubName: string;
+  eventCount: number;
+  referenceNumber: string;
+  emailStatus: 'preparing' | 'sent' | 'queued' | 'warning';
+}
+
 interface MultiEventRequestFormProps {
   clubs?: Club[];
   eventTypes?: EventType[];
@@ -146,6 +153,7 @@ export function MultiEventRequestForm({
   const [previousEventTemplates, setPreviousEventTemplates] = useState<PreviousEventTemplate[]>([]);
   const [isSendingVerification, setIsSendingVerification] = useState(false);
   const [isLoadingPreviousEvents, setIsLoadingPreviousEvents] = useState(false);
+  const [submissionConfirmation, setSubmissionConfirmation] = useState<SubmissionConfirmation | null>(null);
   const hasInitializedEvent = useRef(false);
   const nameInputRef = useRef<HTMLInputElement>(null);
 
@@ -172,6 +180,8 @@ export function MultiEventRequestForm({
   }, []);
 
   const submittedBy = form.watch('submittedBy');
+  const submittedByEmail = form.watch('submittedByEmail');
+  const submittedByPhone = form.watch('submittedByPhone');
 
   // Initialize nameSearchTerm with form value
   useEffect(() => {
@@ -184,6 +194,19 @@ export function MultiEventRequestForm({
     control: form.control,
     name: 'events',
   });
+
+  const watchedEvents = form.watch('events');
+  const hasValidEmail = /^\S+@\S+\.\S+$/.test(submittedByEmail || '');
+  const contactDetailsComplete = Boolean(submittedBy?.trim() && hasValidEmail && submittedByPhone?.trim());
+  const incompleteEventIndex = watchedEvents.findIndex(event => !event?.name || !event?.eventTypeId || !event?.location || !event?.date);
+  const requiredFieldsRemaining =
+    (submittedBy?.trim() ? 0 : 1) +
+    (hasValidEmail ? 0 : 1) +
+    (submittedByPhone?.trim() ? 0 : 1) +
+    (form.watch('clubId') ? 0 : 1) +
+    (watchedEvents.length === 0
+      ? 1
+      : watchedEvents.reduce((total, event) => total + [event?.name, event?.eventTypeId, event?.location, event?.date].filter(value => !value).length, 0));
 
   const loadPreviousEventTemplates = async (token: string) => {
     setIsLoadingPreviousEvents(true);
@@ -617,6 +640,18 @@ export function MultiEventRequestForm({
       return;
     }
 
+    const currentEvents = form.getValues('events');
+    const firstIncompleteIndex = currentEvents.findIndex(event => !event.name || !event.eventTypeId || !event.location || !event.date);
+    if (firstIncompleteIndex >= 0) {
+      toast({
+        title: 'Complete the current event first',
+        description: 'Add the event name, type, preferred date, and location before adding another priority.',
+        variant: 'destructive',
+      });
+      scrollToNextIncompleteField();
+      return;
+    }
+
     const nextPriority = eventFields.length + 1;
     const defaultLocation = selectedClub ? formatClubAddress(selectedClub) : '';
     
@@ -627,7 +662,7 @@ export function MultiEventRequestForm({
       location: defaultLocation,
       isQualifier: false,
       isHistoricallyTraditional: false,
-      date: new Date(),
+      date: undefined as unknown as Date,
       description: '',
       coordinatorName: '',
       coordinatorContact: '',
@@ -645,6 +680,65 @@ export function MultiEventRequestForm({
         form.setValue(`events.${eventIndex}.priority`, eventIndex + 1);
       }
     });
+  };
+
+  const scrollToNextIncompleteField = () => {
+    let target: HTMLElement | null = null;
+
+    if (!submittedBy?.trim()) {
+      target = document.getElementById('request-submitted-by');
+    } else if (!hasValidEmail) {
+      target = document.getElementById('request-submitted-by-email');
+    } else if (!submittedByPhone?.trim()) {
+      target = document.getElementById('request-submitted-by-phone');
+    } else if (!form.getValues('clubId')) {
+      target = document.getElementById('request-club');
+    } else if (incompleteEventIndex >= 0) {
+      target = document.querySelector(`[data-event-request-index="${incompleteEventIndex}"]`);
+    }
+
+    if (!target) return;
+
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    window.setTimeout(() => {
+      const focusTarget = target?.matches('input, button, textarea')
+        ? target
+        : target?.querySelector<HTMLElement>('input, button, textarea, [role="combobox"]');
+      focusTarget?.focus();
+    }, 350);
+  };
+
+  const startAnotherRequest = () => {
+    form.reset({
+      clubId: '',
+      submittedBy: '',
+      submittedByEmail: '',
+      submittedByPhone: '',
+      events: [{
+        priority: 1,
+        name: '',
+        eventTypeId: '',
+        location: '',
+        eventLink: '',
+        isQualifier: false,
+        isHistoricallyTraditional: false,
+        date: undefined as unknown as Date,
+        description: '',
+        coordinatorName: '',
+        coordinatorContact: '',
+        notes: '',
+      }],
+      generalNotes: '',
+    });
+    setSubmissionConfirmation(null);
+    setSelectedClub(null);
+    setSelectedZoneId(undefined);
+    setClubSearchTerm('');
+    setNameSearchTerm('');
+    setSelectedUserData(null);
+    setVerification(null);
+    setPreviousEventTemplates([]);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const generateAndDownloadPDF = async (data: MultiEventRequestFormValues) => {
@@ -769,12 +863,14 @@ export function MultiEventRequestForm({
         const result = await createMultiEventRequestAction(data);
         
         if (result.success) {
-          toast({
-            title: 'Request Submitted!',
-            description: result.message,
+          const referenceNumber = result.referenceNumber || `ER-${Date.now()}`;
+          const clubName = selectedClub?.name || 'your selected club';
+          setSubmissionConfirmation({
+            clubName,
+            eventCount: data.events.length,
+            referenceNumber,
+            emailStatus: 'preparing',
           });
-
-          // Keep the page open while the optional notification work finishes.
           form.reset();
 
           void (async () => {
@@ -802,7 +898,7 @@ export function MultiEventRequestForm({
                 formData: formDataForPDF,
                 title: 'Event Request Submission',
                 submissionDate: new Date().toISOString(),
-                referenceNumber: `ER-${Date.now()}`
+                referenceNumber
               }),
             });
 
@@ -819,6 +915,7 @@ export function MultiEventRequestForm({
               description: 'Your request was submitted successfully, but the PDF could not be generated for email.',
               variant: 'default',
             });
+            setSubmissionConfirmation(current => current ? { ...current, emailStatus: 'warning' } : current);
           }
           
           // Send email notification to zone approvers
@@ -832,6 +929,7 @@ export function MultiEventRequestForm({
                 body: JSON.stringify({
                   formData: data,
                   pdfData: Array.from(new Uint8Array(pdfBuffer)),
+                  referenceNumber,
                 }),
               });
 
@@ -843,21 +941,19 @@ export function MultiEventRequestForm({
                   description: 'Your request was submitted successfully, but the email notification could not be sent.',
                   variant: 'default',
                 });
+                setSubmissionConfirmation(current => current ? { ...current, emailStatus: 'warning' } : current);
               } else {
                 const emailResult = await emailResponse.json();
                 console.log('Email result:', emailResult);
                 
                 // Show different messages based on whether email was queued or sent
                 if (emailResult.queuedForReview) {
-                  toast({
-                    title: 'Email Queued for Review',
-                    description: 'Your request has been submitted and the notification email is queued for admin review before sending.',
-                    variant: 'default',
-                  });
+                  setSubmissionConfirmation(current => current ? { ...current, emailStatus: 'queued' } : current);
                 } else if (emailResult.success) {
-                  // Email was sent immediately
-                  console.log('Email sent successfully to:', emailResult.recipients);
-                } // No additional toast needed for immediate send - the main success message covers it
+                  setSubmissionConfirmation(current => current ? { ...current, emailStatus: 'sent' } : current);
+                } else {
+                  setSubmissionConfirmation(current => current ? { ...current, emailStatus: 'warning' } : current);
+                }
               }
             }
           } catch (emailError) {
@@ -867,6 +963,7 @@ export function MultiEventRequestForm({
               description: 'Your request was submitted successfully, but the email notification could not be sent.',
               variant: 'default',
             });
+            setSubmissionConfirmation(current => current ? { ...current, emailStatus: 'warning' } : current);
           }
           
           })();
@@ -910,8 +1007,49 @@ export function MultiEventRequestForm({
     );
   }
 
+  if (submissionConfirmation) {
+    const emailStatus = submissionConfirmation.emailStatus === 'preparing'
+      ? 'Preparing your confirmation email'
+      : submissionConfirmation.emailStatus === 'sent'
+        ? 'Confirmation email sent'
+        : submissionConfirmation.emailStatus === 'queued'
+          ? 'Confirmation email queued for review'
+          : 'Your request is saved; the confirmation email needs attention';
+
+    return (
+      <Card className="border-green-200 bg-green-50">
+        <CardContent className="space-y-6 p-6 sm:p-8">
+          <div className="flex items-start gap-4">
+            <CheckCircle2 className="mt-0.5 h-8 w-8 shrink-0 text-green-600" />
+            <div className="space-y-2">
+              <h2 className="text-xl font-semibold">Your event request is saved</h2>
+              <p className="text-muted-foreground">{submissionConfirmation.eventCount} event request{submissionConfirmation.eventCount > 1 ? 's have' : ' has'} been sent to {submissionConfirmation.clubName} for review.</p>
+            </div>
+          </div>
+
+          <div className="grid gap-3 border-y border-green-200 py-4 text-sm sm:grid-cols-2">
+            <div>
+              <p className="text-muted-foreground">Reference number</p>
+              <p className="font-semibold">{submissionConfirmation.referenceNumber}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Email update</p>
+              <p className="font-semibold">{emailStatus}</p>
+            </div>
+          </div>
+
+          <p className="text-sm text-muted-foreground">Keep the reference number for your records. Your zone coordinator will review the request and contact you using the details supplied.</p>
+          <Button type="button" onClick={startAnotherRequest}>
+            <PlusCircle />
+            Start another request
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <div className="space-y-4 sm:space-y-6 pb-8 sm:pb-4">
+    <div className="space-y-4 pb-24 sm:space-y-6 sm:pb-4">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmitForm, (errors) => {
           console.error('Form validation errors:', errors);
@@ -946,6 +1084,7 @@ export function MultiEventRequestForm({
                     <div className="relative" ref={nameAutocompleteRef}>
                       <FormControl>
                         <Input 
+                          id="request-submitted-by"
                           ref={nameInputRef}
                           placeholder="Start typing your name..." 
                           value={nameSearchTerm || (typeof field.value === 'string' ? field.value : '')}
@@ -1040,6 +1179,7 @@ export function MultiEventRequestForm({
                         <div className="flex-1 relative">
                           <FormControl>
                             <Input
+                              id="request-club"
                               placeholder="Type your club name..."
                               value={clubSearchTerm}
                               onChange={(e) => handleClubInputChange(e.target.value)}
@@ -1125,7 +1265,7 @@ export function MultiEventRequestForm({
                         />
                       </div>
                       <FormControl>
-                        <Input type="email" placeholder="your.email@example.com" {...field} />
+                        <Input id="request-submitted-by-email" type="email" placeholder="your.email@example.com" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -1145,7 +1285,7 @@ export function MultiEventRequestForm({
                         />
                       </div>
                       <FormControl>
-                        <Input type="tel" placeholder="0400 123 456" {...field} />
+                        <Input id="request-submitted-by-phone" type="tel" placeholder="0400 123 456" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -1200,7 +1340,7 @@ export function MultiEventRequestForm({
           {/* Event Requests */}
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <div className="flex items-center gap-2">
                     <CardTitle>Event Requests ({eventFields.length}/4)</CardTitle>
@@ -1239,10 +1379,10 @@ export function MultiEventRequestForm({
                   variant="outline"
                   onClick={handleAddEvent}
                   disabled={eventFields.length >= 4}
-                  className="relative"
+                  className="relative w-full sm:w-auto"
                 >
                   <PlusCircle className="h-4 w-4 mr-2" />
-                  Add Event
+                  {eventFields.length > 0 ? 'Add another event' : 'Add first event'}
                   {eventFields.length >= 4 && (
                     <span className="absolute -top-2 -right-2 bg-amber-100 text-amber-800 text-xs px-1.5 py-0.5 rounded-full border border-amber-200">
                       Max
@@ -1333,8 +1473,8 @@ export function MultiEventRequestForm({
                 {/* Submission checklist */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 text-xs px-2 sm:px-0">
                   <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${form.watch('submittedBy') ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                    <span className={form.watch('submittedBy') ? 'text-green-700' : 'text-muted-foreground'}>
+                    <div className={`w-2 h-2 rounded-full ${contactDetailsComplete ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                    <span className={contactDetailsComplete ? 'text-green-700' : 'text-muted-foreground'}>
                       Contact details provided
                     </span>
                   </div>
@@ -1345,9 +1485,9 @@ export function MultiEventRequestForm({
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${eventFields.length > 0 ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                    <span className={eventFields.length > 0 ? 'text-green-700' : 'text-muted-foreground'}>
-                      Events added ({eventFields.length}/4)
+                    <div className={`w-2 h-2 rounded-full ${eventFields.length > 0 && incompleteEventIndex === -1 ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                    <span className={eventFields.length > 0 && incompleteEventIndex === -1 ? 'text-green-700' : 'text-muted-foreground'}>
+                      Events ready ({eventFields.length}/4)
                     </span>
                   </div>
                 </div>
@@ -1358,7 +1498,7 @@ export function MultiEventRequestForm({
                       type="button"
                       variant="outline"
                       onClick={generatePDFPreview}
-                      disabled={isGeneratingPDF || isSubmitting || eventFields.length === 0}
+                      disabled={isGeneratingPDF || isSubmitting || requiredFieldsRemaining > 0}
                       size="lg"
                       className="w-full sm:min-w-[160px] sm:w-auto"
                     >
@@ -1378,7 +1518,7 @@ export function MultiEventRequestForm({
                   
                   <Button 
                     type="submit" 
-                    disabled={isSubmitting || isGeneratingPDF || eventFields.length === 0}
+                    disabled={isSubmitting || isGeneratingPDF || requiredFieldsRemaining > 0}
                     size="lg"
                     className="w-full sm:min-w-[200px] sm:w-auto"
                   >
@@ -1390,11 +1530,35 @@ export function MultiEventRequestForm({
                     {isSubmitting ? 'Submitting...' : `Submit ${eventFields.length} Event Request${eventFields.length > 1 ? 's' : ''}`}
                   </Button>
                 </div>
+
+                {requiredFieldsRemaining > 0 && (
+                  <div className="hidden justify-center sm:flex">
+                    <Button type="button" variant="link" onClick={scrollToNextIncompleteField}>
+                      Complete the next missing detail
+                      <ChevronRight />
+                    </Button>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
         </form>
       </Form>
+
+      <div className="fixed bottom-3 left-3 right-3 z-40 flex items-center justify-between gap-3 border border-border bg-background p-3 shadow-lg sm:hidden">
+        <div className="min-w-0">
+          <p className="text-sm font-medium">{requiredFieldsRemaining === 0 ? 'Ready to submit' : `${requiredFieldsRemaining} detail${requiredFieldsRemaining === 1 ? '' : 's'} remaining`}</p>
+          <p className="truncate text-xs text-muted-foreground">{eventFields.length > 0 ? `${eventFields.length} event${eventFields.length === 1 ? '' : 's'} in this request` : 'Add your first event request'}</p>
+        </div>
+        {requiredFieldsRemaining > 0 ? (
+          <Button type="button" size="sm" onClick={scrollToNextIncompleteField}>
+            Continue
+            <ChevronRight />
+          </Button>
+        ) : (
+          <CheckCircle2 className="h-5 w-5 shrink-0 text-green-600" aria-label="Ready to submit" />
+        )}
+      </div>
     </div>
   );
 }

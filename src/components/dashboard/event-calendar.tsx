@@ -1065,14 +1065,14 @@ const CalendarGrid = memo(function CalendarGrid({
 
   const getLogoPanelColor = (event: Event) => {
     const colorClasses = [
-      'border-sky-200 bg-sky-100 dark:border-sky-900 dark:bg-sky-950/40',
-      'border-emerald-200 bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/40',
-      'border-rose-200 bg-rose-100 dark:border-rose-900 dark:bg-rose-950/40',
-      'border-violet-200 bg-violet-100 dark:border-violet-900 dark:bg-violet-950/40',
-      'border-amber-200 bg-amber-100 dark:border-amber-900 dark:bg-amber-950/40',
-      'border-teal-200 bg-teal-100 dark:border-teal-900 dark:bg-teal-950/40',
-      'border-fuchsia-200 bg-fuchsia-100 dark:border-fuchsia-900 dark:bg-fuchsia-950/40',
-      'border-lime-200 bg-lime-100 dark:border-lime-900 dark:bg-lime-950/40',
+      'border-sky-500 bg-sky-200 dark:border-sky-500 dark:bg-sky-950/70',
+      'border-emerald-500 bg-emerald-200 dark:border-emerald-500 dark:bg-emerald-950/70',
+      'border-rose-500 bg-rose-200 dark:border-rose-500 dark:bg-rose-950/70',
+      'border-violet-500 bg-violet-200 dark:border-violet-500 dark:bg-violet-950/70',
+      'border-teal-500 bg-teal-200 dark:border-teal-500 dark:bg-teal-950/70',
+      'border-fuchsia-500 bg-fuchsia-200 dark:border-fuchsia-500 dark:bg-fuchsia-950/70',
+      'border-lime-500 bg-lime-200 dark:border-lime-500 dark:bg-lime-950/70',
+      'border-indigo-500 bg-indigo-200 dark:border-indigo-500 dark:bg-indigo-950/70',
     ];
     const identifier = getClubName(event.clubId, event) || event.source;
     const hash = Array.from(identifier).reduce(
@@ -1291,14 +1291,14 @@ const CalendarGrid = memo(function CalendarGrid({
                                     </div>
                                   </div>
                                 {getEventLogo(event) && (
-                                    <div className="flex min-h-[4.5rem] min-w-0 items-stretch border-l border-current/10 pl-1.5 sm:pl-2">
+                                    <div className={cn(
+                                      "flex min-h-[4.5rem] min-w-0 items-stretch rounded border p-1",
+                                      getLogoPanelColor(event)
+                                    )}>
                                     <img 
                                       src={getEventLogo(event)!} 
                                       alt={`${event.source === 'equestrian_victoria' ? 'Equestrian Victoria' : event.source === 'state' ? 'State' : event.source === 'zone' ? 'Zone' : getClubName(event.clubId, event)} logo`}
-                                      className={cn(
-                                        "h-full min-h-0 w-full rounded border object-contain",
-                                        getLogoPanelColor(event)
-                                      )}
+                                      className="h-full min-h-0 w-full rounded bg-white object-contain"
                                       onError={(e) => {
                                         // Hide the image if it fails to load
                                         (e.target as HTMLImageElement).style.display = 'none';

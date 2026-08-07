@@ -21,7 +21,7 @@ import {
   addDays,
   getDaysInMonth,
 } from 'date-fns';
-import { Award, ChevronLeft, ChevronRight, ChevronDown, CheckCircle, Clock, Pin, Route, FerrisWheel, AlertCircle, Database, Package } from 'lucide-react';
+import { Award, ChevronLeft, ChevronRight, ChevronDown, CheckCircle, Clock, Pin, Route, FerrisWheel, AlertCircle, Database, Package, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -87,6 +87,7 @@ export function EventCalendar({
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [eventSources, setEventSources] = useAtom(eventSourceAtom);
   const [filterMode, setFilterMode] = useState<'location' | 'distance'>('location');
+  const [isFilterSectionVisible, setIsFilterSectionVisible] = useState(false);
   // PDF export state - default to year scope and next year
   const nextYear = currentYear + 1;
   const [pdfScope, setPdfScope] = useState<'month' | 'year' | 'custom'>('year');
@@ -749,8 +750,31 @@ export function EventCalendar({
         </div>
       </div>
       
-      {/* Filter Section - Single line on desktop with framed groups */}
-      <div className="flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-2 p-3 bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900 rounded-xl border border-border/40 shadow-md">
+       <div className="sm:hidden">
+         <Button
+           type="button"
+           variant="outline"
+           className="h-10 w-full justify-between rounded-lg border-border/60 bg-card px-3 shadow-sm"
+           onClick={() => setIsFilterSectionVisible(visible => !visible)}
+           aria-controls="calendar-filter-controls"
+           aria-expanded={isFilterSectionVisible}
+         >
+           <span className="flex items-center gap-2">
+             <SlidersHorizontal className="h-4 w-4" />
+             Filters
+           </span>
+           <ChevronDown className={cn("h-4 w-4 transition-transform", isFilterSectionVisible && "rotate-180")} />
+         </Button>
+       </div>
+
+       {/* Filter Section - Single line on desktop with framed groups */}
+       <div
+         id="calendar-filter-controls"
+         className={cn(
+           "flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-2 p-3 bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900 rounded-xl border border-border/40 shadow-md sm:flex",
+           !isFilterSectionVisible && "hidden"
+         )}
+       >
             {/* Filter Mode Group - Framed */}
             <div className="flex flex-col sm:flex-row gap-2 p-2 rounded-lg bg-white/40 dark:bg-slate-900/40 border border-slate-200/50 dark:border-slate-700/50">
               <Button 

@@ -1062,6 +1062,26 @@ const CalendarGrid = memo(function CalendarGrid({
     // For club events, use club logo
     return event.clubId ? getClubLogo(event.clubId) : null;
   };
+
+  const getLogoPanelColor = (event: Event) => {
+    const colorClasses = [
+      'border-sky-200 bg-sky-100 dark:border-sky-900 dark:bg-sky-950/40',
+      'border-emerald-200 bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/40',
+      'border-rose-200 bg-rose-100 dark:border-rose-900 dark:bg-rose-950/40',
+      'border-violet-200 bg-violet-100 dark:border-violet-900 dark:bg-violet-950/40',
+      'border-amber-200 bg-amber-100 dark:border-amber-900 dark:bg-amber-950/40',
+      'border-teal-200 bg-teal-100 dark:border-teal-900 dark:bg-teal-950/40',
+      'border-fuchsia-200 bg-fuchsia-100 dark:border-fuchsia-900 dark:bg-fuchsia-950/40',
+      'border-lime-200 bg-lime-100 dark:border-lime-900 dark:bg-lime-950/40',
+    ];
+    const identifier = getClubName(event.clubId, event) || event.source;
+    const hash = Array.from(identifier).reduce(
+      (value, character) => ((value * 31) + character.charCodeAt(0)) >>> 0,
+      0
+    );
+
+    return colorClasses[hash % colorClasses.length];
+  };
   
   const weeks: Date[][] = [];
   let day = start;
@@ -1275,7 +1295,10 @@ const CalendarGrid = memo(function CalendarGrid({
                                     <img 
                                       src={getEventLogo(event)!} 
                                       alt={`${event.source === 'equestrian_victoria' ? 'Equestrian Victoria' : event.source === 'state' ? 'State' : event.source === 'zone' ? 'Zone' : getClubName(event.clubId, event)} logo`}
-                                      className="h-full min-h-0 w-full rounded border border-slate-200 bg-white object-contain"
+                                      className={cn(
+                                        "h-full min-h-0 w-full rounded border object-contain",
+                                        getLogoPanelColor(event)
+                                      )}
                                       onError={(e) => {
                                         // Hide the image if it fails to load
                                         (e.target as HTMLImageElement).style.display = 'none';

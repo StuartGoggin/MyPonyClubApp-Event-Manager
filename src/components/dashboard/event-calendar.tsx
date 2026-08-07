@@ -1162,12 +1162,7 @@ const CalendarGrid = memo(function CalendarGrid({
                               )}
                               onClick={() => onEventClick(event.id)}
                             >
-                              <div className={cn(
-                                "grid min-w-0 gap-1.5",
-                                getEventLogo(event) ? "grid-cols-[minmax(0,1fr)_3.5rem] sm:grid-cols-[minmax(0,1fr)_4rem]" : "grid-cols-1",
-                                !isYearView && getEventLogo(event) && "sm:grid-cols-[minmax(0,1fr)_5rem]"
-                              )}>
-                                <div className="grid min-w-0 grid-rows-[minmax(2.75rem,auto)_minmax(2.75rem,auto)]">
+                              <div className="flex min-w-0 flex-col gap-1.5">
                                 <div className="flex min-w-0 items-start gap-1">
                                   <div className="hidden flex-shrink-0 pt-0.5 sm:block">
                                     {event.source === 'equipment_booking' ? <Package className={cn("h-3 w-3 sm:h-3.5 sm:w-3.5 text-orange-600 flex-shrink-0", { "h-2.5 w-2.5": isYearView })}/> :
@@ -1199,8 +1194,11 @@ const CalendarGrid = memo(function CalendarGrid({
                                   )}
                                 </div>
 
-                                <div className="flex min-w-0 items-end border-t border-current/10 pt-1">
-                                  <div className="min-w-0 flex-1 space-y-1">
+                                <div className={cn(
+                                  "grid min-w-0 grid-cols-1 border-t border-current/10 pt-1",
+                                  getEventLogo(event) && "grid-cols-2 gap-1.5"
+                                )}>
+                                  <div className="min-w-0 space-y-1">
                                     {event.source !== 'public_holiday' && (
                                       <div className={cn("font-medium leading-tight whitespace-normal break-words text-muted-foreground",
                                         isYearView ? "text-[12px] sm:text-[11px]" : "text-[12px] sm:text-[10px]",
@@ -1248,10 +1246,8 @@ const CalendarGrid = memo(function CalendarGrid({
                                       )}
                                     </div>
                                   </div>
-                                </div>
-                                </div>
                                 {getEventLogo(event) && (
-                                    <div className="flex min-h-[5.5rem] items-stretch border-l border-current/10 pl-1.5 sm:pl-2">
+                                    <div className="flex min-h-[4.5rem] min-w-0 items-stretch border-l border-current/10 pl-1.5 sm:pl-2">
                                     <img 
                                       src={getEventLogo(event)!} 
                                       alt={`${event.source === 'equestrian_victoria' ? 'Equestrian Victoria' : event.source === 'state' ? 'State' : event.source === 'zone' ? 'Zone' : getClubName(event.clubId, event)} logo`}
@@ -1263,6 +1259,7 @@ const CalendarGrid = memo(function CalendarGrid({
                                     />
                                     </div>
                                 )}
+                                </div>
                               </div>
                             </button>
                           ))}

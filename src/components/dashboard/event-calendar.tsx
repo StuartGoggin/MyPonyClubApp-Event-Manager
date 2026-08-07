@@ -911,13 +911,13 @@ export function EventCalendar({
     </div>
       
     {view === 'month' && (
-      <div className="p-4 min-w-0">
+      <div className="-mx-4 min-w-0 sm:mx-0 sm:p-4">
         <CalendarGrid month={currentDate} eventsByDate={eventsByDate} onEventClick={handleEventClick} today={today} clubs={clubs} zones={zones} stateLogo={stateLogo} evLogo={evLogo}/>
       </div>
     )}
       
     {view === 'year' && (
-      <div className="p-4 grid grid-cols-1 gap-8">
+      <div className="-mx-4 grid grid-cols-1 gap-6 sm:mx-0 sm:gap-8 sm:p-4">
         {yearMonths.map(month => (
           <div key={month.toString()}>
             <CalendarGrid month={month} eventsByDate={eventsByDate} onEventClick={handleEventClick} isYearView={true} today={today} clubs={clubs} zones={zones} stateLogo={stateLogo} evLogo={evLogo} />
@@ -1079,12 +1079,12 @@ const CalendarGrid = memo(function CalendarGrid({
   }, [month]);
 
   return (
-    <div className={cn("enhanced-card overflow-hidden rounded-lg border shadow-md", { "p-2": isYearView, "p-4": !isYearView })}>
+    <div className={cn("enhanced-card overflow-hidden rounded-none border-0 shadow-none sm:rounded-lg sm:border sm:shadow-md", { "p-0 sm:p-2": isYearView, "p-0 sm:p-4": !isYearView })}>
       {isYearView && (
-        <h3 className="mb-2 text-center font-headline text-base font-semibold text-foreground">{format(month, 'MMMM')}</h3>
+        <h3 className="mb-2 px-4 pt-2 text-center font-headline text-base font-semibold text-foreground sm:px-0 sm:pt-0">{format(month, 'MMMM')}</h3>
       )}
       <div ref={scrollContainerRef} className="w-full overflow-x-auto overscroll-x-contain">
-        <table className={cn("w-full min-w-[1050px] table-fixed border-collapse text-xs font-medium text-muted-foreground sm:min-w-[1120px] lg:min-w-[1260px]", { "max-h-[22rem]": isYearView })}>
+        <table className={cn("w-full min-w-[1120px] table-fixed border-collapse text-xs font-medium text-muted-foreground lg:min-w-[1260px]", { "max-h-[22rem]": isYearView })}>
           <colgroup>
             {dayOrder.map(day => <col key={day} className="w-[14.285%]" />)}
           </colgroup>

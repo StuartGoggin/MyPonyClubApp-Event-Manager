@@ -1084,7 +1084,7 @@ const CalendarGrid = memo(function CalendarGrid({
         <h3 className="mb-2 text-center font-headline text-base font-semibold text-foreground">{format(month, 'MMMM')}</h3>
       )}
       <div ref={scrollContainerRef} className="w-full overflow-x-auto overscroll-x-contain">
-        <table className={cn("w-full min-w-[832px] table-fixed border-collapse text-xs font-medium text-muted-foreground sm:min-w-[1120px] lg:min-w-[1260px]", { "max-h-[22rem]": isYearView })}>
+        <table className={cn("w-full min-w-[1050px] table-fixed border-collapse text-xs font-medium text-muted-foreground sm:min-w-[1120px] lg:min-w-[1260px]", { "max-h-[22rem]": isYearView })}>
           <colgroup>
             {dayOrder.map(day => <col key={day} className="w-[14.285%]" />)}
           </colgroup>
